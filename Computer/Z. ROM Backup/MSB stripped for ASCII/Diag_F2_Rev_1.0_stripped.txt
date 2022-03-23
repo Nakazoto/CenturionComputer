@@ -1,0 +1,47 @@
+ICPU INSTRUCTION TEST
+;CPU-6 MAPPING RAM TEST
+_ROM SELF TEST
+
+LP}
+   PU INSTRUCTION TEST, CONTROL-C TO EXIT
+m"U5"` !P\Eae?y@
+*+"p p!p!p p"` `!`!` `2 0 !01 0 "0#0&0%0 0#0#0$0'0#02`3`6`5`0`3`3`4`7`3`2@>??>:;<9=8888:*%@%0:**5`5@*@*A@U@1+*C1+UD1UUPUUQP**P ;UUS ;**T *UUUUU
+U
+ UP P@P`Q
+Q,QBPU*DgDvDgTbEiExDHDYPYX3 **PUU^[ZZUU@ZQ@?|^&Q$a"1,,q,Q,i,a,TBX3 ?|^P1P1P1P1P1RT ;TT ;
+        S
+         X:Xs"$` PYA;AUAT ;BUBT ;P$e(~T@(|e)P@;e*|T@;`DPYE;EUET ;FUFT ;`DUL~T ;L|UMP ;DUN|T ;
+PQ:_`  {sAPT P  T >     `       o5AUB   qY`     oAPAI`f//!YF//#Yr,r@C1@I
+                                                                        a?~?|PtXu !q
+?|_!^e!}Pu13579UU**LP}
+                      PU-6 MAPPING RAM TEST, CONTROL-C TO EXIT
+"2:LP}
+*** THIS TEST WILL NOT RUN ON CPU-5 ***
+
+PuYP}G@{6{3{0{-{*{'{${S{{s!q
+r,Mr@C1@IAtPu:A5 ~E\^ ` P
+                         (+,{v{IGi1 k0`0?aE     .x.
+                                                   y%"*%"m"%"`BP{G@     .y.
+                                                                           x*sZ.x.y .z@.{`.|.} .~@.`    s).
+                           x.
+                             y .
+                                z@.
+                                   {`.
+                                      |.
+                                        } .
+                                           ~@.
+                                              ` Ee!LP}
+*** MAP RAM ERROR ***
+!q
+  !q
+
+PuU:a@P]PQbs
+            A2{V
+*** PASS ***
+!q
+{@PRESS SPACE
+r,zru@{$
+*** CHECK SUM ERROR ***
+!q
+  !q
+    s>r,,yA     !rso
