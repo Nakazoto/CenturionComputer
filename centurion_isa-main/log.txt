@@ -1,0 +1,700 @@
+## Day 1:
+
+The information from Key about the system was an extremely useful starting point.
+
+The first things I took note of was:
+
+ * the program counter and address space is 16bit.
+ * general memory is in the range 0x0100 to 0xefff
+ * IO devices are in the range 0xf000 to 0xffff
+
+I started with throwing DIAG_F1 in a hex editor and immediately noticed lots of things that looked
+suspicious like IO addresses. There were sections of the dump where the repeating patterns of
+
+    A1 Fn nn
+
+stood out like a sore thumb. This gives out us our first candidate instruction:
+
+    0b10100001 NNNN - Do something with memory NNNN
+
+Because there instruction butt right up next to each other ie:
+
+    76
+    3a
+    a1 f1 09
+    a1 f1 0b
+    a1 f1 0d
+    a1 f1 0f
+    81 f1 10
+    c0 0f
+    42 31
+
+We can make the assumption that this is an instruction that operate directly on memory (instead of
+loading the address into an index register, and a second instruction using the index register to do
+the actual memory op.
+It's also likely a write.
+
+At this point I decided to look at the bootstrap ROM, because Ken Romaine gave a lot of useful
+information about it's function in his comment on the video part 7.
+
+My bootstrap takeaways:
+  * the bootstrap is the PROM sitting on the backplane (bit of a weird place)
+  * It lives at address 0xfc00
+  * It's job is to interact with:
+    * the first MUX board (at 0xf200) for a minimal serial terminal user interface on mux port 0
+    * The buttons/switches on the front panel
+    * the hawk disk controller at ~0xf140-0xf14f
+
+  * Depending on the buttons/switches, it load an IPL off the selected disk
+    * Sectors 0 to F are loaded to 0x0100
+    * Will loop doing RTZ and retrying if there is a failure
+
+This detailed information, plus bootstrap's small size and constrained scope, it is an ideal candidate
+for ISA reversing.
+
+So I throw BPN-TBP18S42N into a hex editor and quickly find the 0xf2nn and 0xf14n addresses that I'm expecting.
+
+At this point, I dump it out to a text file and start splitting up bytes that look like instructions
+onto their own line, and adding comments.
+Due to some weirdness,  I decide that this bootstrap ROM is backwards comapred to the DIAG rom and reverse it
+with a small python program. Things start to make significantly more sense.
+
+Some of the memory instructions are using opcodes other than A1. 81, 91 and b1 are seen.
+Ken Romaine's docs say there are 16 interrupt banks of 8 registers (each 16 bit), and that all
+memory writes are 8 bit, so lets assume there will be 3 bits dedicated to selected which register
+is written to memory and our assumed instruction to:
+
+    0b1rrr0001 NNNN - Write 8bits of register R to absolute memory address NNNN
+
+At this point, I'm also making the assumption that execution starts at the start of bootstrap (0xfc00)
+because I haven't seen anything looking like a reset vector, and the start of both bootstrap and
+DIAG_F1 look kind of like initialization code (setting MMIO registers to known values)
+
+Splitting the bytes in bootstrap up into assumed instructions produces some candidates for one, two
+and three byte instructions, but I kind of stall out on progress. At this stage of ISA Reversing,
+I'm really looking for control flow instructions along of:
+
+  * relative conditional branches
+  * relative unconditional branches
+  * absolute jumps
+  * absolute calls
+  * returns
+
+Finding and understanding these will give us a good idea of program control flow, and give us more
+clues about where the variable length instructions start.
+
+So, I started looking at the DIAG_F2, DIAG_F3 and DIAG_F4 roms. The good thing about these roms is
+that they have lots of ASCII strings. Especially F3 and F4, so I'll focus on those.
+
+What they don't have is an entry point. Bootstrap and F1 both look like they might start execution
+at 0x0000, but at 0x0000, F2/F3/F4 have a list test entries, with a 16 bit address, followed by a
+null-terminated ascii string. The list is terminated by a 16 bit null value.
+
+The 16 bit values are all in the range 0x0040 to 0x0700, and these are 0x800 byte roms, so we can make
+some assumptions.
+
+ * Execution on the DIAG board starts on the F1 chip.
+ * It initializes the serial terminal, enumerates one or more of the other roms and prints out a
+ * numbered list of tests for the user to select.
+ * When the user selects a test, F1 transfers control to `rom base address + address entry point`
+ * There are also other modes to select tests via dip switches and get output via leds.
+
+With these assumptions we get series of entry points, one per test. And we can start looking for
+similarities and differences in the function body.
+
+Notably, the last test right at the end of each F2/F3/F4 is a ROM self test (presumably a checksum)
+We have 3 versions of it, so we can compare differences.
+
+#### Function calls
+
+The other thing that stands out is F3 and F4 each contain a section of common code before the first
+test's entry point, which is going to give us a good clue about how function calls stand out.
+
+the first instruction that stood out as being call, was 90 NN NN. However, we already have evidence
+to suggest this is actually a load immediate instrction.
+
+In F3/F4, the next bytes after 90 NN NN (where NNNN looks like a function address) are always 50 80
+and the byte after that is commonly B1 or 7d.
+
+This hints that the call pattern these roms are using is something like:
+
+    90 NN NN ; R1 = 0xNNNN
+    50 80 ; PC = R1 + Rb; Rl = NextPC
+
+    Where Rb is the base address of this rom, set by the F1 ROM before transferring execution
+    and Rl is the register where the return address is stored.
+
+or more likely
+
+    90 NN NN ; R1 = 0xNNNN
+    50 80 ; R1 = R1 + Rb
+    7d ; PC = R1, Rl = Next PC
+
+    Rl is probably R1
+
+    and these are tail calls
+
+    90 NN NN ; R1 = 0xNNNN
+    50 80 ; R1 = R1 + Rb
+    b1 ; PC = R1 AKA, branch to register
+
+It seems the return instruction is 09 (which might actually be branch to register R1)
+
+It seems the F3/F4 roms are using this call pattern because they don't know their own base address
+Prephaps the code was written with the assumption that you could put these chips in any ROM socket
+of the diag board, and they would work at whatever hard-coded address they ended up at.
+
+Bootstrap, F1 and F2 don't use this function call pattern.
+
+#### ROM self test (relative branches)
+
+The F3 and F4 rom tests are almost identical. The only differences are:
+
+The address of the single function they call.
+A load immediate instrction which matches the length of the data in this rom.
+
+This function is quite short, and probally functions by looping from Rb + 0 to Rb + RomEnd, adding or
+xoring all bytes. The last non-zero byte in each rom is different, and is probably set to whatever
+results in the loop producing zero.
+
+The self test function in F2 is slightly different. It doesn't call out to a common function and
+it directly pokes the MUX registers to output data to the serial terminal. F3/F4 seem to use what
+looks like a syscall to do this (which we will cover later)
+
+These 3 versions of the rom test are perfect to work out relative branch instruction.
+
+this is my understanding of the F3/F4 self test at this point:
+
+    55 86
+    3a
+    85 61
+    40 10
+    d0 07 96 ; r5 = 0x796 ; address of last byte of data in this rom
+    50 82
+    51 62
+    15 f3
+    8b 41 01
+    15 18
+    7a 01 12 ; print syscall
+    "\n\r*** PASS ***\0" ; Null terminate string embedded in program control flow
+                        ; The print syscall consumes it and resumed execution afterwards.
+
+    a1 f1 0a ; r2 -> [0xf10a] (mux regsiter?)
+    72 01 0e ; exit syscall?
+
+
+    7a 01 12 ; print sycall
+    "*** FAIL ***\0"
+
+    a1 f1 0b ; r2 -> [0xf10b] (mux regsiter?)
+    a1 f1 0c ; r2 -> [0xf10c] (mux regsiter?)
+    72 01 0e ; exit syscall
+
+We want to find at least two branches. Backwards branches are easier to spot, as they use negative
+numbers. We want a small negative number, so an instruction with operand like 0xf0 would be perfect.
+
+The best candidate is 15 f3, which would be branch -13 bytes. We can also see a second 15 instrction, 15 18
+which is a good candidate for a positive 24 byte skipping over the pass branch to the fail code.
+
+We can insert lables and extrapolate to get
+
+    55 86
+    3a
+
+checksum_loop:
+    85 61
+    40 10
+    d0 07 96 ; r5 = 0x796 ; address of last byte of data in this rom
+    50 82
+    51 62
+    15 f3 ; conditional branch to checksum_loop
+    8b 41 01 ; this somehow sets the flags for the following branch
+    15 18 ; conditional branch to checksum_fail
+
+checksum_pass:
+    7a 01 12 ; print syscall
+    "\n\r*** PASS ***\0" ; Null terminate string embedded in program control flow
+                        ; The print syscall consumes it and resumed execution afterwards.
+
+    a1 f1 0a ; r2 -> [0xf10a] (mux regsiter?)
+    72 01 0e ; exit syscall?
+
+checksum_fail:
+    7a 01 12 ; print sycall
+    "*** FAIL ***\0"
+
+    a1 f1 0b ; r2 -> [0xf10b] (mux regsiter?)
+    a1 f1 0c ; r2 -> [0xf10c] (mux regsiter?)
+    72 01 0e ; exit syscall
+
+It is likely there are more version of the conditional branch instruction. Cross checking
+
+The F2 version of checksum is then useful for finding more types of relative branches
+
+Instead of using syscalls, it has it's own loop for writing bytes to the serial terminal.
+
+It still embeds strings like above, but instead abuses the relative call instructions to record the string
+address and jump to the send loop, which allows us to discover the relative call instruction.
+
+    7B NN
+
+#### syscalls pattern
+
+The F3 and F4 roms use what look like syscalls. It is not currently known where these syscalls are
+implemented, or even if these are actually syscalls, and not just a "call register" instruction.
+
+But they probally point somewhere in the F1 rom. The syscall pattern
+
+    7a 01 NN
+    <0 or more bytes of Call data>
+
+where NN are typically even numbers in the range 0x0 to 0x20
+
+The exit syscall uses a opcode 72 instead.
+
+Known syscalls:
+
+    7a 01 12 - print to stdout, takes null terminated string.
+    7a 01 02 - block until keypress, takes no arguments (probally returns the input char too)
+    72 01 0e - exit syscall
+
+## Day two:
+
+First, I wrote up these logs so there is a record of the steps I took.
+
+Next, I'm planning to write a hacky disassembler in python. Now that we have an idea about relative
+branch instructions, an automated tool starts to become useful
+
+...
+
+Ok, variable length instructions make this a lot harder. I have a disassembler, it's flexible, it
+can follow branches. But I'm not really liking the instructions I have programmed into it.
+
+I'm reasonably happy about control flow instructions, but suspicious about my 16bit store instruction.
+And I really need to find ALU instructions.
+
+## Day three:
+
+Big info dump from Ken here: https://discord.com/channels/768194223576842281/953305332912893973/954796823908843602
+
+Which points out something I've been ignoring. This serial interface doesn't have a FIFO, and it's
+reasonably slow. So our serial write code needs to poll the status register to make sure the previous
+byte is sent before sending the next byte.
+
+And the my current assumptions haven't found a read instruction, my listings have writes to both
+f200 and f201 in serial send code.
+
+So out with our previous write instruction 1rrr0001. It might actually be 10100rrr, but I'm getting
+a feeling these memory instructions might not be fully orthogonal.
+
+So for now we will assume:
+
+  a1 - 10100001 NN NN is write some register to NNNN
+  81 - 10000001 NN NN is read NNNN to some register
+
+
+With those new assumptions, we can take a look at F2's send byte function and get:
+
+    send_string:
+    wait_status:
+        81 f2 00 ; ld r? f200
+        ; These two instructions somehow mask off unwanted status bits,
+        ; or otherwise prepare status for the conditional branch
+        2c ; might be shr r?
+        2c ; might be shr r?
+        11 f9 ; b?? conditional branch wait_status
+
+        85 41 ; something like ld r1, [r?++]. Sets flags
+        15 01 ; bnz send_byte
+        09 ; ret
+    send_byte:
+        a1 f2 01 ; st r?, 0xf201
+        73 ef ; unconditional branch send_string
+
+The fact that 85 41 is a two byte instruction, kind of messes up any hope that the load/store
+instructions are orthogonal. There isn't really a sane way to make the 81 instruction select
+between 7 registers without conflicting with the encoding of this 85 instruction.
+
+#### Diag memory map
+
+Nakazoto has been beeping out the Diag board, and he finally got it far enough that I think I can see
+how it maps the ROMs and it's IO into the memory map.
+
+https://cdn.discordapp.com/attachments/953305332912893973/954946213038411916/Diag_Schema_-_Schematic.png
+
+The A, B and C lines of the two 74LS138 chips are feed directly from the backplane (via bus transceivers).
+Chances are these lines are A11, A12, A13. The outputs of the 74LS138s control 13 rom sockets (each
+with a 0x800 or 2KB rom), plus a 14th slot where the IO lives.
+
+This indicates that all ROMs are mapped into the memory map sequentially, and that these is no bank
+switching (though, we would need to know how the 138s are enabled to be sure)
+
+If we assume this rom board maps in at 0x8000, then 0x8000 + 14 * 0x800 is 0xf000, which happens to
+be the start of IO.
+Essentially, this Diag board has been designed with the maximum number of ROM sockets that it could
+have if mapped them sequentially starting from 0x8000.
+
+It's probally mapped at 0x8000, because this takes up a full 0x7000 bytes of memory, and it doesn't
+look like there is enough logic to map it anywhere other than 0x0000 or 0x8000. And if it was mapped
+at 0x0000, then it would conflict with the registers which are mapped from 0x0000 to 0x0100.
+Besides, 0x8000 is a classic place to map ROMs in this era of computing.
+
+--------------
+
+
+At this point I coincidentally started looking at bootstrap again, trying to make the dissembler output
+of the entry point look sane.
+
+The second instruction in was a relative jump that skipped over 3 bytes, and the first instrction
+kind of looked like a conditional branch, but with a 1a code that I wasn't sure was a branch.
+
+But when I set it up in my dissembler, I immediately noticed that it jumped into those 3 skipped bytes
+and those 3 skipped bytes (71 80 81) looked like they might be an absolute jump to 0x8001.
+
+when implemented, I got this output for the bootstrap entry point"
+
+    fc00:    1a 02              b? (10) L0
+    fc02:    73 03              jump L2
+
+    L0:
+    fc04:    71 80 01           jump 0x8001 L1
+
+    L2:
+    fc07:    80 c5              li r0, 0xc5
+    fc09:    a1 f2 00           st r0, 0xf200
+    fc0c:    80 8c              li r0, 0x8c
+    fc0e:    a1 f2 01           st r0, 0xf201
+    fc11:    0e                 unknown
+    fc12:    0e                 unknown
+    fc13:    90 10 00           90 r1, 0x1000
+    fc16:    5f                 unknown
+    fc17:    7b 79              call L3
+    fc19:    c4                 unknown
+    fc1a:    bd                 unknown
+    fc1b:    00                 unknown
+    fc1c:    7b 72              call L19
+    fc1e:    c0                 unknown
+    fc1f:    c6                 unknown
+    fc20:    71 fc 00           jump 0xfc00 L20
+
+
+We can see that this code at the start of bootstrap checks some condition, and if it's true, it jumps
+to address 0x8001, which is the second byte into F1, if our Diag memory map from above it correct.
+(and the first byte of F1 is empty, so it fits)
+
+Otherwise it calls some functions that try to boot off the disk drive and if they fail, it loops,
+checking if it should branch to diag or retry booting off disk.
+
+
+this unknown conditional branch is weird, there is no compare instruction. I'm guessing it might be
+a branch instruction that is feed directly from an external an IO line, kind of like the 6502's
+set-overflow pin, which can be used to control the branch direction of a conditional branch from
+outside the cpu.
+
+If so, It would theoretically be wired to some signal on the backplane, which the Diag board would
+assert when plugged in (potentially controlled by a dip switch, or it's button?)
+
+
+#### Death of the syscalls
+
+I so wanted syscalls to be a thing. They probally still are, but Diag doesn't use them.
+
+Turns out the thing I and assumed was a syscall was simply the indirect call instruction.
+Takes a 16bit address, reads a 16bit value from that address and calls it.
+each test in F3/F4 calls a function in F3/F4 that calculates the absolute function pointers
+and writes them to the table at memory starting from 0x0102. 0x0100 is probally written by F1
+as a way of returning control to F1 after the test.
+
+Good news is that the init function gives us the second instruction we know for sure that is
+writing to memory, B1 NN NN
+
+Chances are A1 is write r0 to NNNN, and B1 is write r1 to NNNN
+
+--------------
+
+Oh, I'm stupid. This is a 16 bit write instruction. It needs to be 16bit for this Init function to
+make sense.
+
+I'm now coming to the conclusion that this CPU has a very strong sense of an Accumulator, with
+large numbers of instructions directly operating on it.
+
+So new assumptions:
+
+    80 NN - load 8bit immediate into A
+    90 NN NN - load 16bit immediate into A
+    81 NN NN - read 8 bits from memory into A
+    91 NN NN - read 16 bits from memory into A
+    A1 NN NN - write 8 bits of A to [NNNN]
+    B1 NN NN - write 16 bits of A to [NNNN]
+
+---------------
+
+Knowing how the function calls in the F3/F4 roms work, I set about making wrapper disassembler scripts
+for them.
+
+These scripts allow me to manually specify things (function names, entry points, comments) for the
+disassembler to add to the output during each run.
+
+**F3 and F4 share a lot of common code.**
+
+#### CPU instruction tests.
+
+Perhaps I spent too long ignoring the F2 rom. This was mostly because it was different from F3/F4.
+But the strings indicate it has a CPU instruction test, so I really should take a look at it.
+
+We need a wrapper script for it, and since scan_strings doesn't work for it, I deicide to manually
+enter the strings.
+
+One of the first things I notice is that the 7d instruction actually takes a one byte argument
+(not sure if signed or unsigned), though in the common, ldw A, fn_address; add_base_address, 7d
+pattern, it's always zero.
+
+Then looking at the instruction tests themselves, they start off with a strong pattern of
+ unconditional branch + 1, followed by a 00 opcode.
+
+This strongly suggest that 00 is halt.
+It could also theoretically be a software interrupt, but I don't see any sign of an interrupt
+handler that prints out information about the failed test. Probally the technician was supposed to
+operate this instruction test by watching the front panel. If the run light stays on, the cpu is good.
+If the halt light comes on, then the cpu test is a fail. The address LEDs will then actually tell
+you the address where the instruction test failed, which can be used to further diagnose the problem.
+
+Are field technicians expected to repair CPU boards in the field? chances are they get swapped out and
+sent back to the main company for repair by an expert.
+
+The two most useful part of the tests for today was:
+
+ * the tests of all conditional branch instructions (except for the sense switch instructions)
+ * the instruction length tests.
+
+ I managed to stub in a good chunk of multi-byte instruction.
+
+## Unscrambling the bootstrap rom.
+
+We are already assuming the bootstrap rom's address lines are inverted (which means the dump needs
+to be reversed) but things still don't quite make sense.
+
+There are long stretches that do make sense. The code at the start looks right, we have the
+"\r\nERROR\r\n" string. We have most of the WriteString code from Diag_F2, but it goes off the rails
+near the end. Instead of writing the char to 0xf201, it writes the char to 0xf273.
+
+Looking at where it goes wrong, it's on a 32 byte boundary. So something is probally wrong with
+address line A5.
+
+Looking at the rom in a hex editor, I manage to spot the code sections I expect both before and after
+my WriteString code block.
+
+At this point my brain power is running out, and I sit here trying random permutations of address
+lines trying to get the right answer for over an hour.
+
+I eventually get the right answer:
+
+    BUS A8 is wired to ROM A5
+    BUS A5 is wired to ROM A6
+    BUS A6 is wired to ROM A7
+    BUS A7 is wired to ROM A8
+
+And we get a bootrom disassembly that makes a lot more sense. Notably, WriteString is called for
+both the "D=" prompt during init, and for the ERROR text.
+
+Still don't have the complete control flow, I had to add a bunch of extra entry points.
+But getting closer.
+
+---------------------
+
+Lol, this cpu has an instruction that takes an 8bit signed offset, loads a 16bit address from
+pc+offset, then loads an 8bit value from that address.
+And the programmer of the bootstrap ROM is using it to save one byte each time a MMIO register is
+referenced twice within a short range. They pointed right at the operand of the first MMIO access
+instrction.
+A total of 4 bytes saved.
+
+classic 70s CISC machines
+
+## Day 3
+
+Ken showed up and named a few instructions I didn't already know about. NOP and Delay, which delays
+execution for 4.5ms
+
+Spent some time disassembling F1, It's where I expect to find the TOS operating system, along with
+the code to launch the tests.
+
+Found a new absolute call instruction.
+
+Also improved bootstrap slightly.
+
+-----------------
+
+Next, we really need a Rosetta stone to decode the ALU instructions.
+
+First, I'm going to take a look at the rom checksums and see if I can work out the algorithm.
+if I can implement in python, maybe I can line it up. I'm expected either an XOR or ADD all bytes
+style algorithm
+
+(got distracted commenting bootcode, discovered the "mov SP, A" instruction)
+
+....
+
+Worked out the checksum. Sum all bytes except the last non-zero byte. The result should match
+the last byte in the ROM.
+
+The algorithm works with both 8bit overflow or 16 bit overflow and only comparing the low byte.
+Which means we don't get any insight into the width of the operations, but it's a start.
+
+------------------
+
+I'm having a hard time making this checksum function work with my current assumptions,
+even knowing more or less what algorithm it's implementing.
+
+So lets experiment with a fresh assumption:
+    What if this machine two Accumulators. An A Accumulator and a B Accumulator?
+    What if for most instructions that operate on A, there is a version that operates on B?
+
+There are two instructions, C0 NN and D0 NN NN instructions show up often, and I've flipped back and
+forwards between them being "Compare A with Byte/Word Immediate" or "Subtract Byte/Word Immediate from A"
+many times. One meaning would fit better in one place, and the other would fit better in the other.
+But neither really worked well, and wouldn't work at all in other places.
+
+But these are natural candidates for "Load Byte/Word Immediate into B"
+
+....
+
+While looking around after applying these changes, I happen to spot this function in F3/F4:
+
+Fn_0C5:
+90c5:    a5 a2        unknown
+90c7:    c0 f0        lib B, 0xf0
+90c9:    42 31        unknown
+90cb:    07           flag7
+90cc:    26 10        unknown
+90ce:    2c           unknown
+90cf:    2c           unknown
+90d0:    2c           unknown
+90d1:    c0 b0        lib B, 0xb0
+90d3:    40 31        unknown
+90d5:    c0 b9        lib B, 0xb9
+90d7:    49           unknown
+90d8:    19 04        b9 L1
+90da:    c0 07        lib B, 0x07
+90dc:    40 31        unknown
+
+L1:
+90de:    7b c3        call WriteByte
+90e0:    85 a1        ld r?, [r?++]
+90e2:    c0 0f        lib B, 0x0f
+90e4:    42 31        unknown
+90e6:    c0 b0        lib B, 0xb0
+90e8:    40 31        unknown
+90ea:    c0 b9        lib B, 0xb9
+90ec:    49           unknown
+90ed:    19 04        b9 L2
+90ef:    c0 07        lib B, 0x07
+90f1:    40 31        unknown
+
+L2:
+90f3:    7b ae        call WriteByte
+90f5:    09           ret 9
+
+Which does some math on it's input, and calls WriteByte one or two times.
+WriteByte takes Ascii, so the 0xb0 and 0xb9 constants stick out as the
+characters '0' and '9'
+
+(This would be a lot easier to spot, if this machine used ASCII with bit 7 cleared)
+
+And when we check where this function is called we see it's used something like:
+
+    WriteString("*** ERROR, ADDR=");
+    95 a1 ; unknown instruction
+    39 ; unknown instruction
+    Fn_0C5();
+    WriteString(" ***\0");
+
+(code simplified)
+
+I went though a few options (WriteInteger, WriteBCD) before deciding that this
+is WriteHexByte
+
+This allows us to make some more progress.
+
+    a5 a2      pushes a byte to the stack
+    42 31      is A = A & B
+    2c         is probably rotate right
+               (if it was shift right, this function would just four of them)
+    49         is compare A with B (subtract B from A and discard result)
+    19 04      is branch less than
+
+    85 a1      pops a byte off the stack
+
+And the corresponding WriteHexWord function gives us:
+
+    45 01      swap upper and lower bytes of A
+               OR move upper byte of A to lower byte of A
+
+It also confirms the there are two Accumulators theory.
+
+One remaining mystery is the 07 26 10 sequence that WriteHex uses to
+start the shift sequence. 07 might be clear carry, and then 26 10 is arithmetic shift right
+
+....
+
+Fleshed out the comments/labels in Bootstrap some more. Found "or A, B" and narrowed down
+some more branch instructions.
+
+### DMA
+
+I also think I understand DMA now. It's super cool and innovative.
+
+It's not an MMIO device. you don't configure it with MMIO register writes.
+It's not really a device at all.
+The CPU is the DMA. The code simply puts the arguments for source address and destinatio
+(and size?, and mode?) into the CPU's index registers. Then the code tells the device to start
+a transfer and then loops checking the device's status register.
+When it's ready, the device (ie Hawk Disk drive) sends a signal to the CPU board, the CPU halts
+execution of the code, and switches to a microcoded copy loop that's significantly faster for copying
+code. When the transfer finishes, regular code execution resumes. It sees the device status register
+has changed and it knows the DMA has finished.
+
+If I was to speculate how this functionality might interact with the multiple interrupt level register
+sets, it's possible that the DMA control cable from the device includes 4 bits to control what
+interrupt level the DMA transfer belongs to.
+If so, you would be able issue a long-running IO operation request from one "process", switch to a
+completely different process and the incoming DMA trigger from the device would trigger the CPU
+ to switch to the right register set during the transfer.
+The DMA transfer could be be slow, only stealing a few cycles from the foreground process until
+ it completes.
+There could be multiple outstanding DMA transfers in parallel. Very useful for a multi-user system.
+
+Though, I'm just speculating here.
+
+## Day 4
+
+Spent a lot of time on Improving the Bootcode and F1 disasembly.
+
+Major breakthrough of the day was working out where the DIAG MMIO was mapped.
+Previously I thought it was at address 0xb800-0xbfff, But turns out that's DIAG's onboard DRAM.
+
+DIAG MMIO is mapped to 0xf100-0xf11f
+
+f100-f10f toggle several lines on and off. A0 controls on or off, A1, A2, A3 select which line to toggle.
+The first 3 lines are connected to empty sockets, so don't do anything on our DIAG board
+
+Which results in this memory map:
+
+f106 - Unblank Hex Displays
+f107 - Blank Hex Displays
+f108 - Decimal Point 1 Set
+f109 - Decimal Point 1 Clear
+f10a - Decimal Point 2 Set
+f10b - Decimal Point 2 Clear
+f10c - Decimal Point 3 Set
+f10d - Decimal Point 3 Clear
+f10e - Decimal Point 4 Set
+f10f - Decimal Point 4 Clear
+
+And then both the DIP switches and Hex Displays are mapped to 0xf110 (maybe mirrored upto 0xf11f ?)
+
+Read from 0xf110 to get the DIP switch value, Write to 0xf110 to set the hex Displays.
+
+This makes the DiagROMs make a lot more sense.
+
+## Day 5

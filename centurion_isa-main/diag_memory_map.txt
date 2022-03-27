@@ -1,0 +1,22 @@
+8000-87ff - F1 ROM
+8800-8fff - F2 ROM
+9000-97ff - F3 ROM
+9800-9fff - F4 ROM
+a000-b7ff - Unpopulated Sockets
+b800-bfff - 1KB of RAM (two mirrors?)
+c000-efff - Unpopulated Sockets
+
+
+f106 - Unblank Hex Displays
+f107 - Blank Hex Displays
+f108 - Decimal Point 1 Set
+f109 - Decimal Point 1 Clear
+f10a - Decimal Point 2 Set
+f10b - Decimal Point 2 Clear
+f10c - Decimal Point 3 Set
+f10d - Decimal Point 3 Clear
+f10e - Decimal Point 4 Set
+f10f - Decimal Point 4 Clear
+
+f110 - Read to get state of Front Dip switches
+       Write to set the value of hex displays
