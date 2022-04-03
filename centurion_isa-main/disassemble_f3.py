@@ -22,6 +22,10 @@ functions = [
     (0x0a3, 0,     "WriteByte"),
 ]
 
+labels = [
+    (0x9156, "repeat_test", "Resets stack, takes 16bit test start address from RT"),
+]
+
 if __name__ == "__main__":
     with open(filename, "rb") as f:
         bytes = f.read()

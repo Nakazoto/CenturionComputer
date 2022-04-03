@@ -1,0 +1,43 @@
+FFFF >> End of MMIO
+
+FC00 - FDFF: Bootstrap ROM
+F808 / F809: CMD Registers
+F800 / F801: Finch / Floppy Registers
+F200 - F201: MUX Port 0 status/control, send/receive byte  
+F148: CMD register write (00: Read, 01: Write, 02: Seek, 03: Return Track Zero)
+F144: Hawk status register
+F141 / F142: Sector address register (Cyl., Head, Sect.: CCCCCCCCCCCHSSSS)
+F140: Unit select register (00: drive 0, platter 0; 01: drive 0, platter 1; etc. )
+
+//DIAG//
+F110: Read DIP, write to HEX displays
+F10E / F10F: Decimal point 4 set / clear
+F10C / F10D: Decimal point 3 set / clear
+F10A / F10B: Decimal point 2 set / clear
+F108 / F109: Decimal point 1 set / clear
+F106 / F107: Unblank / blank hex displays
+//DIAG//
+
+F000 >> Start of MMIO
+-------------------------------------------------------------------------------------------
+EFFF >> End of Memory
+
+//DIAG//
+C000 - CFFF: Unpopulated sockets
+B000 - Bfff: 1KB of SRAM
+A000 - B7FF: Unpopulated sockets
+9800 - 9FFF: F4 ROM
+9000 - 97FF: F3 ROM
+8800 - 8FFF: F2 ROM
+8000 - 87FF: F1 ROM
+//DIAG//
+
+0100 >> Start of Memory
+-------------------------------------------------------------------------------------------
+00FF >> End of CPU Registers
+
+
+RT = 16-bit Return Register
+SP = 16-bit Stack Pointer
+
+0000 >> Start of CPU Registers

@@ -17,6 +17,10 @@ strings = [
 functions = [
     (0x8077, "Fail", "Takes 4 bit error code, displays ((error code << 4) | 0xf) on hex displays"),
 
+    (0x80e3, "FlashFail", "Takes a error code, sets the fail decimal places and flashes the error\n"
+                          "code until button is pressed (450ms on, 450ms off)\n"
+                          "continues execution"),
+
     (0x850e, "WriteByte"),
     (0x8519, "WriteHexByte"),
     (0x8520, "WriteHexNibble"),
@@ -29,7 +33,20 @@ functions = [
     (0x8568, "AsciiToHexNibble"), # sets flags if conversion fails
     (0x853a, "ReadHexWord"),
 
+    (0x8171, "Test02_Vector"),
+
+    (0x81a3, "Test03_Vector"),
+
+    (0x8229, "CheckUart", "Check (UART_status & 0x1c == 0); Pass/Fail"),
+    (0x826f, "Test06_Vector"),
+    (0x8467, "Test09_Vector"),
+
     # Tests
+    (0x8247, "MuxInterruptTest", "Test06: Tests interrupts on something at Mux's MMIO ports\n"
+                                 "This machine has the 4 port MUX, which doesn't do interrupts.\n"
+                                 "But there is a 16 port \"Smart\" Mux that does, but DIAG is too\n"
+                                 "old to know about it. "),
+    (0x837f, "HawkTest", "Test_09: Tests Hawk and DMA"),
     (0x846f, "TOS_Entry", "TestOS: This is a Monitor that operates over serial console"),
 
 ]
@@ -39,8 +56,9 @@ lables = [
              "The above code indexes into it based on DIP switches"),
     (0x8774, "NextRom"),
     (0x84a3, "TOS_PromptLoop"),
-    (0x84bf, "G_Command"),
+    (0x84bf, "G_Command", "Go: Takes a "),
     (0x84c3, "Q_Command"),
+    (0x84e3, "M_Command"),
     (0x8001, "DiagEntryPoint"),
     (0x874f, "Aux_ReadTestEntry"),
     (0x876b, "Aux_PrintTestName"),
