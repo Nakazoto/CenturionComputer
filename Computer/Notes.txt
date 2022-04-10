@@ -1,0 +1,78 @@
+DIAG BOARD
+
+ROM and RAM Select
+X*** *XXX XXXX XXXX
+000 0 = F1 (Auxiliary Tests + TOS): 1000 0000 0000 0001
+000 1 = F2 (Memory Test)
+001 0 = F3 (CMD/Floppy Tests)
+001 1 = F4 (CMD/Finch Tests)
+011 1 = F7/F8 (RAM)
+
+Decimal Control
+XXXX XXXX XXXX ****
+A0 = Data input
+0111 = BLANKING
+1001 = LO_R
+1011 = LO_L
+1101 = UP_R
+1111 = UP_L 
+
+DIP/HEX Control
+XXXX XXXX XX** XXXX
+01 + J8(Y2-1, Y3-0) = DIP Switch Pass Through
+00 + J8(Y1-0, Y3-0) = HEX Decimal Value Latch
+01 + J8(Y1-0, Y3-0) = HEX Latch Strobe
+
+1111 0001 0001 XXXX + T6_LOW = DIP Switch Strobe
+1111 0001 0000 XXXX + T6_HIGH + SR1 + SR3 = HEX Decimal Enable
+1111 0001 0001 XXXX + T6_HIGH + SR1 + SR3 = HEX Latch Strobe
+
+AM25LS2521 Comparator Control
+XXXX 0001 000X XXXX
+AM25LS2521 Comparator Enable
+1111 XXXX XXXX XXXX
+MMIO Control = Combination
+1111 0001 000X XXXX
+
+WAIT STATE?
+T6 and T7 go high, resets shift register clock
+Shift register 3 goes high, pulls T8 low
+
+BANK CONTROL
+T23, T24 and T25
+100 = DIAG Board active
+
+DIAG TESTS
+Fail clear 2 set 3?
+Pass set 2?
+0: Blank
+1: DMA Register Reading and Writing Test
+2: Writes every memory word to its address (ex. 0x0100 into 0x0100) 
+3: 
+4: 
+5: 
+6: MUX Interrupt Test?
+7: Hawk Test
+8: Hawk Test
+9: Hawk DMA Test
+A: TOS
+B: Same as Bootstrap (Supports Finch/Floppy and Hawk)
+C: DIAG RAM Test
+D: Aux Tests (These set LEDs too!)
+E:
+F:
+
+
+
+BACKPLANE
+
+BOOTSTRAP Enable
+0000 001X XXXX XXXX 
+Plus low mystery signal from CPU6
+But has to be inverted
+1111 110X XXXX XXXX 
+
+
+PRINTER
+
+MMIO = 1111 0000 1110 1101 (F0ED)?

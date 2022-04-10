@@ -1,0 +1,262 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CPU7Plus.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="420"
+        x:Class="CPU7Plus.Views.MainWindow"
+        Icon="/Assets/centurion-logo.ico"
+        CanResize="False"
+        Width="600"
+        Height="420"
+        Title="CPU 7+">
+    
+    
+        <Window.Styles>
+        <Style Selector="Label">
+            <Setter Property="FontSize" Value="16"/>
+
+            <Setter Property="FontFamily" Value="Consolas"/>
+        </Style>
+    </Window.Styles>
+    
+    
+    
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <!-- Menu Panel -->
+    
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" FontFamily="Segoe UI" Height="20">
+            <MenuItem Header="_File" FontSize="12" CornerRadius="0">
+                <MenuItem IsEnabled="False" Header="_Import Context"/>
+                <MenuItem IsEnabled="False" Header="_Dump Context"/>
+                <Separator/>
+                <MenuItem Click="OnExitButton" Header="_Exit"/>
+            </MenuItem>
+            <MenuItem Header="_Simuation" FontSize="12" CornerRadius="0">
+                <MenuItem IsEnabled="False" Header="Processor Speed"/>
+                <MenuItem IsEnabled="False" Header="Runtime Display"/>
+            </MenuItem>
+            <MenuItem Header="_View" FontSize="12" CornerRadius="0">
+                <MenuItem Header="Memory Viewer"/>
+                <MenuItem IsEnabled="False" Header="BIN Loader"/>
+                <Separator/>
+                <MenuItem IsEnabled="False" Header="Disassembler"/>
+            </MenuItem>
+            <MenuItem Header="_Help" FontSize="12" CornerRadius="0">
+                <MenuItem IsEnabled="False" Header="Documentation"/>
+                <MenuItem IsEnabled="False" Header="About"/>
+            </MenuItem>
+        </Menu>
+        
+        <Grid Background="#5AFFFFFF">
+        
+        <Border BorderThickness="1,0,0,0" BorderBrush="#5A000000"/>
+
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="600"/>
+            <ColumnDefinition Width="600"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="270"/>
+            <RowDefinition Height="150"/>
+        </Grid.RowDefinitions>
+        
+        <Grid Background="LightGray" Grid.Column="0" Grid.Row="0">
+            <Border BorderThickness="1,0,0,0" BorderBrush="#5A000000"/>
+            <Border BorderThickness="0,1,0,0" BorderBrush="#5A000000"/>
+            <Border BorderThickness="0,0,1,0" BorderBrush="#5AFFFFFF"/>
+            <Border BorderThickness="0,0,0,1" BorderBrush="#5AFFFFFF"/>
+        
+            <Canvas>
+                
+                <!-- Headers -->
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="0" Canvas.Top="5" Width="210" TextAlignment="Center">
+                    Context Registers
+                </TextBlock>
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="220" Canvas.Top="5" Width="100" TextAlignment="Center">
+                    Status
+                </TextBlock>
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="300" Canvas.Top="5" Width="300" TextAlignment="Center">
+                    Register File
+                </TextBlock>
+                
+                <!-- CPU Context Register -->
+                
+                <!-- WX -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="30"> W: </TextBlock>
+                <TextBox Name="RegWInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="27"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="30"> X: </TextBlock>
+                <TextBox Name="RegXInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="27"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="30"> WX: </TextBlock>
+                <TextBox Name="RegWxInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="27"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+                
+                <!-- YZ -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="60"> Y: </TextBlock>
+                <TextBox Name="RegYInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="57"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="60"> Z: </TextBlock>
+                <TextBox Name="RegZInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="57"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="60"> YZ: </TextBlock>
+                <TextBox Name="RegYzInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="57"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+                
+                <!-- RT -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="90"> R: </TextBlock>
+                <TextBox Name="RegRInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="87"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="90"> T: </TextBlock>
+                <TextBox Name="RegTInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="87"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="90"> RT: </TextBlock>
+                <TextBox Name="RegRtInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="87"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+                
+                <!-- MN -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="120"> M: </TextBlock>
+                <TextBox Name="RegMInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="117"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="120"> N: </TextBlock>
+                <TextBox Name="RegNInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="117"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="120"> MN: </TextBlock>
+                <TextBox Name="RegMnInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="117"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+
+                <!-- KL -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="150"> K: </TextBlock>
+                <TextBox Name="RegKInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="147"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="150"> L: </TextBlock>
+                <TextBox Name="RegLInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="147"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="150"> KL: </TextBlock>
+                <TextBox Name="RegKlInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="147"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+
+                <!-- SP -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="180"> S: </TextBlock>
+                <TextBox Name="RegSInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="177"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="180"> P: </TextBlock>
+                <TextBox Name="RegPInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="177"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="180"> SP: </TextBlock>
+                <TextBox Name="RegSpInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="177"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+
+                <!-- GH -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="210"> G: </TextBlock>
+                <TextBox Name="RegGInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="210"> H: </TextBlock>
+                <TextBox Name="RegHInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="210"> GH: </TextBlock>
+                <TextBox Name="RegGhInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+
+                <!-- IJ -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="240"> I: </TextBlock>
+                <TextBox Name="RegIInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="237"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="240"> J: </TextBlock>
+                <TextBox Name="RegJInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="237"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="240"> IJ: </TextBlock>
+                <TextBox Name="RegIjInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="237"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+
+                <!-- Flags -->
+                
+                <CheckBox Name="FlagI" Canvas.Left="220" Canvas.Top="22" CornerRadius="0"></CheckBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="250" Canvas.Top="30"> I </TextBlock>
+                
+                <CheckBox Name="FlagF" Canvas.Left="220" Canvas.Top="52" CornerRadius="0"></CheckBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="250" Canvas.Top="60"> F </TextBlock>
+                
+                <CheckBox Name="FlagL" Canvas.Left="220" Canvas.Top="82" CornerRadius="0"></CheckBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="250" Canvas.Top="90"> L </TextBlock>
+                
+                <CheckBox Name="FlagM" Canvas.Left="220" Canvas.Top="112" CornerRadius="0"></CheckBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="250" Canvas.Top="120"> M </TextBlock>
+                
+                <CheckBox Name="FlagO" Canvas.Left="280" Canvas.Top="22" CornerRadius="0"></CheckBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="310" Canvas.Top="30"> O </TextBlock>
+                
+                <CheckBox Name="FlagC" Canvas.Left="280" Canvas.Top="52" CornerRadius="0"></CheckBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="310" Canvas.Top="60"> C </TextBlock>
+                
+                <CheckBox Name="FlagZ" Canvas.Left="280" Canvas.Top="82" CornerRadius="0"></CheckBox>
+                <TextBlock FontFamily="Consolas" Canvas.Left="310" Canvas.Top="90"> Z </TextBlock>
+                
+                <!-- INT -->
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="220" Canvas.Top="150"> Level: </TextBlock>
+                <TextBox Name="LevelInput" FontFamily="Consolas" Canvas.Left = "280" Canvas.Top="147"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="1" Padding="2" CornerRadius="0" TextAlignment="Center">0</TextBox>
+                
+                <!-- PC -->
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="220" Canvas.Top="210"> PC: </TextBlock>
+                <TextBox Name="RegPcInput" FontFamily="Consolas" Canvas.Left = "280" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+                
+                <TextBlock Name="CurrIsr" FontFamily="Consolas" Canvas.Left="220" Canvas.Top="240" Width="100" TextAlignment="Center"> Isr: 0x00 </TextBlock>
+                
+                <!-- Register File -->
+                
+                <Border Canvas.Top="27" Canvas.Left="340" BorderBrush="Black" BorderThickness="1" Background="White">
+
+                    <StackPanel Width="240" Height="225">
+
+                        <TextBlock Name="FileRow0" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">00: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow1" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">10: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow2" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">20: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow3" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">30: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow4" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">40: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow5" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">50: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow6" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">60: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow7" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">70: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow8" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">80: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow9" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">90: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow10" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">A0: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow11" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">B0: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow12" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">C0: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow13" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">D0: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow14" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">E0: 00000000000000000000000000000000</TextBlock>
+                        <TextBlock Name="FileRow15" FontFamily="Consolas" FontSize="12" Padding="1,0,0,0">F0: 00000000000000000000000000000000</TextBlock>
+
+
+                    </StackPanel>
+
+                </Border>
+            </Canvas>
+        </Grid>
+        
+        <Grid Background="LightGray" Grid.Column="0" Grid.Row="1">
+            <Border BorderThickness="1,0,0,0" BorderBrush="#5A000000"/>
+            <Border BorderThickness="0,1,0,0" BorderBrush="#5A000000"/>
+            <Border BorderThickness="0,0,1,0" BorderBrush="#5AFFFFFF"/>
+            <Border BorderThickness="0,0,0,1" BorderBrush="#5AFFFFFF"/>
+        
+            <Canvas>
+                
+                <!-- Headers -->
+                <TextBlock FontFamily="Consolas" Canvas.Left="0" Canvas.Top="5" Width="245" TextAlignment="Center">
+                    CPU Control
+                </TextBlock>
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="250" Canvas.Top="5" Width="100" TextAlignment="Center">
+                    Front Panel
+                </TextBlock>
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="360" Canvas.Top="5" Width="200" TextAlignment="Center">
+                    Terminal Control
+                </TextBlock>
+                
+                <!-- CPU Control Buttons -->
+                
+                <Button Click="OnRunButton" Canvas.Left="20" Canvas.Top="30" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Run</Button>
+                <Button Click="OnStopButton" Canvas.Left="20" Canvas.Top="75" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Stop</Button>
+                <Button Click="OnStepButton" Canvas.Left="125" Canvas.Top="30" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Step</Button>
+                <Button Click="OnStepButton" Canvas.Left="125" Canvas.Top="75" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Step Over</Button>
+                
+                <!-- Front Panel -->
+                
+                <Button Canvas.Left="250" Canvas.Top="30" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Select</Button>
+                <Button Canvas.Left="250" Canvas.Top="75" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Load/Opsys</Button>
+            </Canvas>
+        </Grid>
+
+    </Grid>
+    </DockPanel>
+    
+
+
+</Window>

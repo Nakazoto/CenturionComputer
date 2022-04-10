@@ -33,22 +33,44 @@ functions = [
     (0x8568, "AsciiToHexNibble"), # sets flags if conversion fails
     (0x853a, "ReadHexWord"),
 
+    (0x808e, "DmaRegTest", "Test_01: Write every single bit pattern to DMA's address and count\n"
+                           "registers, checks that it reads back correctly\n"
+                           "On error, flashes hex 11 if address failed, and hex 12 if count failed\n"
+                           "waits for button press to continue.\n"
+                           "On success, lights the success DP pattern and loops."),
+
+    (0x811b, "MemoryTest", "Test_02: A basic memory test.\n"
+                           "Writes every memory word from 0x0100 to 0x7fff with it's address,\n"
+                           "then loops back and checks the the memory value hasn't changed.\n"
+                           "Also installs an interrupt handler, which probally catches parity errors\n"
+                           "On invalid memory data, flashes an error with some hex value ?2\n"
+                           "On parity interrupt, shows some error hex value ?2\n"
+                           "On any other interrupt, shows error hex ?f where x is the interrupt\n"
+                           "On success, lights the success DP pattern and loops.\n"),
+
     (0x8171, "Test02_Vector"),
 
     (0x81a3, "Test03_Vector"),
 
-    (0x8229, "CheckUart", "Check (UART_status & 0x1c == 0); Pass/Fail"),
+    (0x81dc, "MuxSendTest", "Test_04: Continually writes U to mux port 0.\n"
+                              "Fails if MMIO f200 & 0x1c is not zero"),
+    (0x8203, "MuxRecvTest", "Test_05: Echos whatever is received on mux port 0 back\n"
+                              "Fails if MMIO f200 & 0x1c is not zero"),
+
+    (0x8229, "CheckMuxStatus", "Check (UART_status & 0x1c == 0); Pass/Fail"),
     (0x826f, "Test06_Vector"),
     (0x8467, "Test09_Vector"),
 
-    # Tests
-    (0x8247, "MuxInterruptTest", "Test06: Tests interrupts on something at Mux's MMIO ports\n"
-                                 "This machine has the 4 port MUX, which doesn't do interrupts.\n"
-                                 "But there is a 16 port \"Smart\" Mux that does, but DIAG is too\n"
-                                 "old to know about it. "),
+    (0x8247, "MuxRecvInterruptTest", "Test_06: Same as Test_05, but uses interrupts instead of polling\n"),
     (0x837f, "HawkTest", "Test_09: Tests Hawk and DMA"),
     (0x846f, "TOS_Entry", "TestOS: This is a Monitor that operates over serial console"),
 
+    (0x859d, "Bootstrap_test", "Test_0b: This seems to be a copy/paste of bootstrap, letting you\n"
+                               "boot off a disk. But doesn't support CMD/Phoenix"),
+    (0x86b2, "Diag_self_test", "Test_0c: Checksum's the F1 rom, flashes 1c if fail.\n"
+                               "Then test diag's sram from b800 to bfff, flashes 2c if fail.\n"
+                               "If everything passes, it lights up all decimal points, sets the\n"
+                               "hex displays to 88 (aka Christmas tree) and loops. "),
 ]
 
 lables = [
@@ -65,7 +87,7 @@ lables = [
     (0x879f, "Aux_CheckDIPs", "If the DIPs are nolonger configured for the Auxiliary Test Menu, then\n"
                               "jump back to start of DIAG"),
     (0x87ad, "Aux_CheckSerial"),
-    (0x87bf, "Aux_GotByte")
+    (0x87bf, "Aux_GotByte"),
 
 ]
 
@@ -93,7 +115,7 @@ comments = [
 
     (0x8063, "TOS_Entry"),
 
-
+    (0x827a, "Copy the stack pointer from Interrupt level 0"),
 
 
     (0x8498, "Configure UART"),
