@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using Avalonia.Threading;
 using CPU7Plus.Views;
+using JetBrains.Annotations;
 
 namespace CPU7Plus.Emulation {
     public class EmulationHandler {
@@ -16,10 +17,11 @@ namespace CPU7Plus.Emulation {
         private EmulationContext _context;
 
         private MainWindow _window;
+        private MemoryViewer _viewer;
 
         private ConcurrentQueue<string> _commandQueue;
 
-        public EmulationHandler(MainWindow window) {
+        public EmulationHandler(MainWindow window, MemoryViewer viewer) {
             // Prepare to create emulation thread
             _run = true;
             _execute = false;
@@ -28,11 +30,17 @@ namespace CPU7Plus.Emulation {
             
             // Save passed objects
             _window = window;
+            _viewer = viewer;
 
             // Create emulator
             _context = new EmulationContext();
             _emulator = new EmulationCore(_context);
-
+            
+            // Set context
+            _viewer.Context = _context;
+            _viewer.Handler = this;
+            _viewer.UpdateDisplay();
+            
             // Create the thread
             Thread emulationThread = new Thread(new ThreadStart(this.HandleEmulation));
             
@@ -69,6 +77,12 @@ namespace CPU7Plus.Emulation {
             _commandQueue.Enqueue(command);
         }
 
+        [NotNull]
+        public EmulationContext Context {
+            get => _context;
+            set => _context = value ?? throw new ArgumentNullException(nameof(value));
+        }
+
         /**
          * Emulation handler thread
          */
@@ -90,6 +104,7 @@ namespace CPU7Plus.Emulation {
                     
                     Dispatcher.UIThread.Post(() => {
                         ViewUpdater.UpdateView(_context, _window);
+                        _viewer.UpdateDisplay();
                     });
                 }
 
@@ -99,14 +114,36 @@ namespace CPU7Plus.Emulation {
                     
                     _commandQueue.TryDequeue(out string? command);
 
-                    if (command != null && command.Equals("STEP")) {
-                        
+                    if (command != null && command.StartsWith("S")) {
+                        // Single step command
                         ViewUpdater.UpdateContext(_context, _window);
 
+                        // Step processor
                         _emulator.Step();
                         
+                        // Update all visuals
                         Dispatcher.UIThread.Post(() => {
                             ViewUpdater.UpdateView(_context, _window);
+                            _viewer.UpdateDisplay();
+                        });
+                    } else if (command != null && command.StartsWith("W")) {
+                        // Write memory command
+                        string[] split = command.Split(',');
+
+                        // Read the command and write the byte
+                        try {
+                            _context.Core[Int32.Parse(split[1])] = Convert.ToByte(Int32.Parse(split[2]));
+                        } catch (FormatException) {
+                            // Do nothing lmao
+                        } catch (NullReferenceException) {
+                            // Still nothing, fool!
+                            // (I am good at programming)
+                        }
+                        
+                        // Update all visuals
+                        Dispatcher.UIThread.Post(() => {
+                            ViewUpdater.UpdateView(_context, _window);
+                            _viewer.UpdateDisplay();
                         });
                     }
                 }

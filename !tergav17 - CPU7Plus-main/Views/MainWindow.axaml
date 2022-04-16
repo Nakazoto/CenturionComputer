@@ -41,7 +41,7 @@
                 <MenuItem IsEnabled="False" Header="Runtime Display"/>
             </MenuItem>
             <MenuItem Header="_View" FontSize="12" CornerRadius="0">
-                <MenuItem Header="Memory Viewer"/>
+                <MenuItem Click="OnMemoryViewerButton" Header="Memory Viewer"/>
                 <MenuItem IsEnabled="False" Header="BIN Loader"/>
                 <Separator/>
                 <MenuItem IsEnabled="False" Header="Disassembler"/>
@@ -54,7 +54,7 @@
         
         <Grid Background="#5AFFFFFF">
         
-        <Border BorderThickness="1,0,0,0" BorderBrush="#5A000000"/>
+        <Border BorderThickness="0,0,0,0" BorderBrush="#5A000000"/>
 
         
         <Grid.ColumnDefinitions>
@@ -91,67 +91,67 @@
                 <!-- CPU Context Register -->
                 
                 <!-- WX -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="30"> W: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="30"> H: </TextBlock>
                 <TextBox Name="RegWInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="27"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="30"> X: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="30"> L: </TextBlock>
                 <TextBox Name="RegXInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="27"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="30"> WX: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="30"> AX: </TextBlock>
                 <TextBox Name="RegWxInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="27"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
                 
                 <!-- YZ -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="60"> Y: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="60"> H: </TextBlock>
                 <TextBox Name="RegYInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="57"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="60"> Z: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="60"> L: </TextBlock>
                 <TextBox Name="RegZInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="57"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="60"> YZ: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="60"> BX: </TextBlock>
                 <TextBox Name="RegYzInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="57"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
                 
                 <!-- RT -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="90"> R: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="90"> H: </TextBlock>
                 <TextBox Name="RegRInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="87"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="90"> T: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="90"> L: </TextBlock>
                 <TextBox Name="RegTInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="87"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
                 <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="90"> RT: </TextBlock>
                 <TextBox Name="RegRtInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="87"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
                 
                 <!-- MN -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="120"> M: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="120"> H: </TextBlock>
                 <TextBox Name="RegMInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="117"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="120"> N: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="120"> L: </TextBlock>
                 <TextBox Name="RegNInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="117"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="120"> MN: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="120"> DX: </TextBlock>
                 <TextBox Name="RegMnInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="117"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
 
                 <!-- KL -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="150"> K: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="150"> H: </TextBlock>
                 <TextBox Name="RegKInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="147"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
                 <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="150"> L: </TextBlock>
                 <TextBox Name="RegLInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="147"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="150"> KL: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="150"> EX: </TextBlock>
                 <TextBox Name="RegKlInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="147"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
 
                 <!-- SP -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="180"> S: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="180"> H: </TextBlock>
                 <TextBox Name="RegSInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="177"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="180"> P: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="180"> L: </TextBlock>
                 <TextBox Name="RegPInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="177"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
                 <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="180"> SP: </TextBlock>
                 <TextBox Name="RegSpInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="177"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
 
                 <!-- GH -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="210"> G: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="210"> H: </TextBlock>
                 <TextBox Name="RegGInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="210"> H: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="210"> L: </TextBlock>
                 <TextBox Name="RegHInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="210"> GH: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="210"> YX: </TextBlock>
                 <TextBox Name="RegGhInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
 
                 <!-- IJ -->
-                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="240"> I: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="20" Canvas.Top="240"> H: </TextBlock>
                 <TextBox Name="RegIInput" FontFamily="Consolas" Canvas.Left = "40" Canvas.Top="237"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="240"> J: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="80" Canvas.Top="240"> L: </TextBlock>
                 <TextBox Name="RegJInput" FontFamily="Consolas" Canvas.Left = "100" Canvas.Top="237"  MinWidth="0" MinHeight="0" Width="23" Height="24" FontSize="15" MaxLength="2" Padding="2" CornerRadius="0">00</TextBox>
-                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="240"> IJ: </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="140" Canvas.Top="240"> ZX: </TextBlock>
                 <TextBox Name="RegIjInput" FontFamily="Consolas" Canvas.Left = "170" Canvas.Top="237"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
 
                 <!-- Flags -->

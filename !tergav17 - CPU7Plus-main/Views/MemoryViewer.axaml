@@ -1,0 +1,105 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+        x:Class="CPU7Plus.Views.MemoryViewer"
+        Icon="/Assets/centurion-logo.ico"
+        CanResize="False"
+        Width="600"
+        Height="400"
+        Title="Memory Viewer">
+    
+        <Grid Background="LightGray">
+                <Border BorderThickness="1,0,0,0" BorderBrush="#5A000000"/>
+                <Border BorderThickness="0,1,0,0" BorderBrush="#5A000000"/>
+                <Border BorderThickness="0,0,1,0" BorderBrush="#5AFFFFFF"/>
+                <Border BorderThickness="0,0,0,1" BorderBrush="#5AFFFFFF"/>
+                
+                <Canvas>
+                        <!-- Memory Input Block -->
+                        
+                        <TextBox
+                                Name="MemoryInput"
+                                CornerRadius="0"
+                                Width="600"
+                                Height="360"
+                                AcceptsReturn="True"
+                                FontFamily="Consolas"
+                                Padding="1"
+                                KeyDown="OnKeyDown"
+                                IsReadOnly="true">
+                                
+                                Default
+                                
+                        </TextBox>
+                        
+                        <!-- Block Selection -->
+                        
+                        <TextBlock
+                                Canvas.Top="370"
+                                Canvas.Left="15"
+                                FontFamily="Consolas"
+                                FontSize="15">
+                                Block:        
+                        </TextBlock>
+                        
+                        <TextBox
+                                Name="BlockInput"
+                                CornerRadius="0"
+                                Canvas.Top = "360"
+                                Canvas.Left="80"
+                                Width="70"
+                                Height="40"
+                                FontFamily="Consolas"
+                                FontSize="18"
+                                MaxLength="2"
+                                Padding="6"
+                                TextAlignment="Center">
+                                0
+                        </TextBox>
+                        
+                        <!-- Page Selection -->
+                        
+                        <TextBlock
+                                Canvas.Top="370"
+                                Canvas.Left="170"
+                                FontFamily="Consolas"
+                                FontSize="15">
+                                Page:        
+                        </TextBlock>
+                        
+                        <TextBox
+                                Name="PageInput"
+                                CornerRadius="0"
+                                Canvas.Top = "360"
+                                Canvas.Left="230"
+                                Width="70"
+                                Height="40"
+                                FontFamily="Consolas"
+                                FontSize="18"
+                                MaxLength="2"
+                                Padding="6"
+                                TextAlignment="Center">
+                                0
+                        </TextBox>
+                        
+                        <Button
+                                Click="OnReAddress"
+                                Canvas.Top = "360"
+                                Canvas.Left="530"
+                                Width="70"
+                                Height="40"
+                                BorderThickness="1"
+                                BorderBrush="Black"
+                                CornerRadius="3"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                FontFamily="Consolas"
+                                FontSize="18">
+                                Go
+                        </Button>
+                </Canvas>
+        </Grid>
+        
+</Window>
