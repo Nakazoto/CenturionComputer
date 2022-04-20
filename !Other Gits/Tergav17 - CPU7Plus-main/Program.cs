@@ -2,6 +2,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.ReactiveUI;
+using CPU7Plus.Terminal;
 
 namespace CPU7Plus {
     class Program {
@@ -10,10 +11,15 @@ namespace CPU7Plus {
         // yet and stuff might break.
         [STAThread]
         public static void Main(string[] args) {
+            
+            // Init all terminals
+            // This exists to avoid AvaloniaUI related bullshit
+            TerminalBlock.InitializeTerminals();
+            
+            // Jump into Avalonia stuff
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
-            
-            
+
         } 
 
         // Avalonia configuration, don't remove; also used by visual designer.

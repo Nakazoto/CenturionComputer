@@ -141,9 +141,9 @@ namespace CPU7Plus.Views {
             }
 
             // Write the value
-            _handler?.IssueCommand("W," + address + "," + write);
+            _handler?.IssueCommand(new Command(1, address, write));
 
-            Console.Write(write + ", Line: " + line + ", Column: " + column + "\n");
+            // Console.Write(write + ", Line: " + line + ", Column: " + column + "\n");
 
             // Advance cursor
             // This is lazy logic, but idk

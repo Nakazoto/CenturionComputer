@@ -8,10 +8,28 @@ namespace CPU7Plus.Emulation {
          * Synchronizes windows with emulator context
          */
         public static void UpdateView(EmulationContext context, MainWindow window) {
+
+            string temp;
             
+            // Update Registers
+            if (!window.RegWInput.Text.Equals((temp = context.GetRegister8(0).ToString("X2")))) window.RegWInput.Text = temp;
+            if (!window.RegXInput.Text.Equals((temp = context.GetRegister8(1).ToString("X2")))) window.RegXInput.Text = temp;
+            if (!window.RegYInput.Text.Equals((temp = context.GetRegister8(2).ToString("X2")))) window.RegYInput.Text = temp;
+            if (!window.RegZInput.Text.Equals((temp = context.GetRegister8(3).ToString("X2")))) window.RegZInput.Text = temp;
+            if (!window.RegRInput.Text.Equals((temp = context.GetRegister8(4).ToString("X2")))) window.RegRInput.Text = temp;
+            if (!window.RegTInput.Text.Equals((temp = context.GetRegister8(5).ToString("X2")))) window.RegTInput.Text = temp;
+            if (!window.RegMInput.Text.Equals((temp = context.GetRegister8(6).ToString("X2")))) window.RegMInput.Text = temp;
+            if (!window.RegNInput.Text.Equals((temp = context.GetRegister8(7).ToString("X2")))) window.RegNInput.Text = temp;
+            if (!window.RegKInput.Text.Equals((temp = context.GetRegister8(8).ToString("X2")))) window.RegKInput.Text = temp;
+            if (!window.RegLInput.Text.Equals((temp = context.GetRegister8(9).ToString("X2")))) window.RegLInput.Text = temp;
+            if (!window.RegSInput.Text.Equals((temp = context.GetRegister8(10).ToString("X2")))) window.RegSInput.Text = temp;
+            if (!window.RegPInput.Text.Equals((temp = context.GetRegister8(11).ToString("X2")))) window.RegPInput.Text = temp;
+            if (!window.RegGInput.Text.Equals((temp = context.GetRegister8(12).ToString("X2")))) window.RegGInput.Text = temp;
+            if (!window.RegHInput.Text.Equals((temp = context.GetRegister8(13).ToString("X2")))) window.RegHInput.Text = temp;
+            if (!window.RegIInput.Text.Equals((temp = context.GetRegister8(14).ToString("X2")))) window.RegIInput.Text = temp;
+            if (!window.RegJInput.Text.Equals((temp = context.GetRegister8(15).ToString("X2")))) window.RegJInput.Text = temp;
             
-            // Update registers
-            window.RegWInput.Text = context.GetRegister8(0).ToString("X2");
+            /*window.RegWInput.Text = context.GetRegister8(0).ToString("X2");
             window.RegXInput.Text = context.GetRegister8(1).ToString("X2");
             window.RegYInput.Text = context.GetRegister8(2).ToString("X2");
             window.RegZInput.Text = context.GetRegister8(3).ToString("X2");
@@ -25,25 +43,61 @@ namespace CPU7Plus.Emulation {
             window.RegPInput.Text = context.GetRegister8(11).ToString("X2");
             window.RegGInput.Text = context.GetRegister8(12).ToString("X2");
             window.RegHInput.Text = context.GetRegister8(13).ToString("X2");
-            window.RegKInput.Text = context.GetRegister8(14).ToString("X2");
-            window.RegJInput.Text = context.GetRegister8(15).ToString("X2");
+            window.RegIInput.Text = context.GetRegister8(14).ToString("X2");
+            window.RegJInput.Text = context.GetRegister8(15).ToString("X2");*/
             
             // Update combination registers
-            window.RegWxInput.Text = context.GetRegister16(0).ToString("X4");
+            if (!window.RegWxInput.Text.Equals((temp = context.GetRegister16(0).ToString("X4")))) window.RegWxInput.Text = temp;
+            if (!window.RegYzInput.Text.Equals((temp = context.GetRegister16(1).ToString("X4")))) window.RegYzInput.Text = temp;
+            if (!window.RegRtInput.Text.Equals((temp = context.GetRegister16(2).ToString("X4")))) window.RegRtInput.Text = temp;
+            if (!window.RegMnInput.Text.Equals((temp = context.GetRegister16(3).ToString("X4")))) window.RegMnInput.Text = temp;
+            if (!window.RegKlInput.Text.Equals((temp = context.GetRegister16(4).ToString("X4")))) window.RegKlInput.Text = temp;
+            if (!window.RegSpInput.Text.Equals((temp = context.GetRegister16(5).ToString("X4")))) window.RegSpInput.Text = temp;
+            if (!window.RegGhInput.Text.Equals((temp = context.GetRegister16(6).ToString("X4")))) window.RegGhInput.Text = temp;
+            if (!window.RegIjInput.Text.Equals((temp = context.GetRegister16(7).ToString("X4")))) window.RegIjInput.Text = temp;
+            
+            
+            /*window.RegWxInput.Text = context.GetRegister16(0).ToString("X4");
             window.RegYzInput.Text = context.GetRegister16(1).ToString("X4");
             window.RegRtInput.Text = context.GetRegister16(2).ToString("X4");
             window.RegMnInput.Text = context.GetRegister16(3).ToString("X4");
             window.RegKlInput.Text = context.GetRegister16(4).ToString("X4");
             window.RegSpInput.Text = context.GetRegister16(5).ToString("X4");
             window.RegGhInput.Text = context.GetRegister16(6).ToString("X4");
-            window.RegIjInput.Text = context.GetRegister16(7).ToString("X4");
+            window.RegIjInput.Text = context.GetRegister16(7).ToString("X4");*/
             
             // Update Status
             window.LevelInput.Text = context.Level.ToString("X1");
             window.RegPcInput.Text = context.Pc.ToString("X4");
 
+            // Update Flags
+            if (window.FlagC.IsChecked != context.FlagC) window.FlagC.IsChecked = context.FlagC;
+            if (window.FlagF.IsChecked != context.FlagF) window.FlagF.IsChecked = context.FlagF;
+            if (window.FlagI.IsChecked != context.FlagI) window.FlagI.IsChecked = context.FlagI;
+            if (window.FlagL.IsChecked != context.FlagL) window.FlagL.IsChecked = context.FlagL;
+            if (window.FlagM.IsChecked != context.FlagM) window.FlagM.IsChecked = context.FlagM;
+            if (window.FlagO.IsChecked != context.FlagO) window.FlagO.IsChecked = context.FlagO;
+            if (window.FlagZ.IsChecked != context.FlagZ) window.FlagZ.IsChecked = context.FlagZ;
+
             // Register File
-            window.FileRow0.Text = ToByteString(context, 0x00);
+            if (!window.FileRow0.Text.Equals((temp = ToByteString(context, 0x00)))) window.FileRow0.Text = temp;
+            if (!window.FileRow1.Text.Equals((temp = ToByteString(context, 0x10)))) window.FileRow1.Text = temp;
+            if (!window.FileRow2.Text.Equals((temp = ToByteString(context, 0x20)))) window.FileRow2.Text = temp;
+            if (!window.FileRow3.Text.Equals((temp = ToByteString(context, 0x30)))) window.FileRow3.Text = temp;
+            if (!window.FileRow4.Text.Equals((temp = ToByteString(context, 0x40)))) window.FileRow4.Text = temp;
+            if (!window.FileRow5.Text.Equals((temp = ToByteString(context, 0x50)))) window.FileRow5.Text = temp;
+            if (!window.FileRow6.Text.Equals((temp = ToByteString(context, 0x60)))) window.FileRow6.Text = temp;
+            if (!window.FileRow7.Text.Equals((temp = ToByteString(context, 0x70)))) window.FileRow7.Text = temp;
+            if (!window.FileRow8.Text.Equals((temp = ToByteString(context, 0x80)))) window.FileRow8.Text = temp;
+            if (!window.FileRow9.Text.Equals((temp = ToByteString(context, 0x90)))) window.FileRow9.Text = temp;
+            if (!window.FileRow10.Text.Equals((temp = ToByteString(context, 0xA0)))) window.FileRow10.Text = temp;
+            if (!window.FileRow11.Text.Equals((temp = ToByteString(context, 0xB0)))) window.FileRow11.Text = temp;
+            if (!window.FileRow12.Text.Equals((temp = ToByteString(context, 0xC0)))) window.FileRow12.Text = temp;
+            if (!window.FileRow13.Text.Equals((temp = ToByteString(context, 0xD0)))) window.FileRow13.Text = temp;
+            if (!window.FileRow14.Text.Equals((temp = ToByteString(context, 0xE0)))) window.FileRow14.Text = temp;
+            if (!window.FileRow15.Text.Equals((temp = ToByteString(context, 0xF0)))) window.FileRow15.Text = temp;
+            
+            /*window.FileRow0.Text = ToByteString(context, 0x00);
             window.FileRow1.Text = ToByteString(context, 0x10);
             window.FileRow2.Text = ToByteString(context, 0x20);
             window.FileRow3.Text = ToByteString(context, 0x30);
@@ -58,7 +112,10 @@ namespace CPU7Plus.Emulation {
             window.FileRow12.Text = ToByteString(context, 0xC0);
             window.FileRow13.Text = ToByteString(context, 0xD0);
             window.FileRow14.Text = ToByteString(context, 0xE0);
-            window.FileRow15.Text = ToByteString(context, 0xF0);
+            window.FileRow15.Text = ToByteString(context, 0xF0);*/
+            
+            // Current ISR
+            window.CurrIsr.Text = "Isr: 0x" + context.Fetch8(context.Pc).ToString("X2");
         }
 
         /**
@@ -233,6 +290,15 @@ namespace CPU7Plus.Emulation {
             catch (FormatException) {
                 Console.Write("Bad Format Written To Register!\n");
             }
+            
+            // Flags
+            if (window.FlagC.IsChecked != null) context.FlagC = (bool) window.FlagC.IsChecked;
+            if (window.FlagF.IsChecked != null) context.FlagF = (bool) window.FlagF.IsChecked;
+            if (window.FlagI.IsChecked != null) context.FlagI = (bool) window.FlagI.IsChecked;
+            if (window.FlagL.IsChecked != null) context.FlagL = (bool) window.FlagL.IsChecked;
+            if (window.FlagM.IsChecked != null) context.FlagM = (bool) window.FlagM.IsChecked;
+            if (window.FlagO.IsChecked != null) context.FlagO = (bool) window.FlagO.IsChecked;
+            if (window.FlagZ.IsChecked != null) context.FlagZ = (bool) window.FlagZ.IsChecked;
         }
 
         /**

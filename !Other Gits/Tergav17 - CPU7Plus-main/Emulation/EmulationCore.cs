@@ -20,7 +20,7 @@ namespace CPU7Plus.Emulation {
 
             if ((isr & 0xF0) == 0x70) {
                 // Jump/Call Class Instruction
-                ushort destination = 0;
+                int destination = 0;
 
                 // Get addressing mode
                 int mode = isr & 0x07;
@@ -28,7 +28,7 @@ namespace CPU7Plus.Emulation {
                 switch (mode) {
                     case 0:
                         // Invalid mode, just skip it
-                        destination = Convert.ToUInt16(pc + 1);
+                        destination = pc + 1;
                         break;
                     
                     case 1:
@@ -43,7 +43,7 @@ namespace CPU7Plus.Emulation {
                     
                     case 3:
                         // PC absolute addressing
-                        destination = Convert.ToUInt16(pc + ToSignedOffset(Context.Fetch8(pc + 1)) + 2);
+                        destination = pc + ToSignedOffset(Context.Fetch8(pc + 1)) + 2;
                         break;
                     
                     case 4:
@@ -57,38 +57,38 @@ namespace CPU7Plus.Emulation {
                         break;
                     
                     default:
+                        destination = Context.Pc + 1;
                         break;
                 }
 
 
 
-                Context.Pc = destination;
+                Context.Pc = ToUShort(destination);
             }  else {
                 // NOP / Unsupported
-                Context.Pc = Convert.ToUInt16(Context.Pc + 1); }
+                Context.Pc = ToUShort(Context.Pc + 1); 
+            }
         }
 
         /**
          * Does calculations for indexed operations
          */
         private ushort GetIndexedAddr(int pc) {
-            ushort addr = 0;
-            
+
             // Index mode
             byte imode = Context.Fetch8(pc + 1);
-
             // Get register
             int reg = (imode % 0xF0) >> 1;
 
-            int offset;
+            int offset = 0;
             if ((imode & 0x07) == 0x01) {
                 // Increment mode
                 offset = Context.GetRegister16(reg);
-                Context.SetRegister16(reg, Convert.ToUInt16(offset + 2));
+                Context.SetRegister16(reg, ToUShort(offset + 2));
             } else if ((imode % 0x07) == 0x02) {
                 // Decrement mode
                 offset = Context.GetRegister16(reg) - 2;
-                Context.SetRegister16(reg, Convert.ToUInt16(offset));
+                Context.SetRegister16(reg, ToUShort(offset));
             } else {
                 // Neutral Mode
                 offset = Context.GetRegister16(reg);
@@ -99,7 +99,11 @@ namespace CPU7Plus.Emulation {
                 offset += ToSignedOffset(Context.Fetch8(pc + 2));
             }
 
-            return addr;
+            return Context.Fetch16(ToUShort(offset), true);
+        }
+
+        private ushort ToUShort(int i) {
+            return Convert.ToUInt16(i & 0xFFFF);
         }
 
         /**

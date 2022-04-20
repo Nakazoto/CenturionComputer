@@ -1,0 +1,29 @@
+ROM 2
+M11 - FE on 2909H via NAND
+M12 - PUP on 2909H
+M13 - S0 on 2909L via NAND
+M14 - S1 on 2909L via NAND
+
+ROM 3
+M21 - A2 on 2901L
+M22 - S1 on 2909H via NANDs
+
+ROM 5
+M32 ?
+M33 ?
+M34 - I0 on 2901L
+M35 - I1 on 2901L
+M36 - I2 on 2901L
+M37 ? I3 on 2901L
+M38 ? I4 on 2901L
+M39 - I5 on 2901L
+
+ROM 6
+M40 - I6 on 2901H
+M41 - I7 on 2901H + Shift control on UG6
+M42 - I8 on 2901H
+M43 ? Cin on 2901H
+M44 ? A3 on 2901H
+M45 ? A2 on 2901H
+M46 ? A1 on 2901H
+M47 - A0 on 2901H

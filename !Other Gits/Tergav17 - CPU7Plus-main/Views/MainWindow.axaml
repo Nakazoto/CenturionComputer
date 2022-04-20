@@ -42,7 +42,7 @@
             </MenuItem>
             <MenuItem Header="_View" FontSize="12" CornerRadius="0">
                 <MenuItem Click="OnMemoryViewerButton" Header="Memory Viewer"/>
-                <MenuItem IsEnabled="False" Header="BIN Loader"/>
+                <MenuItem Click="OnBinaryLoaderButton" Header="BIN Loader"/>
                 <Separator/>
                 <MenuItem IsEnabled="False" Header="Disassembler"/>
             </MenuItem>
@@ -185,7 +185,7 @@
                 <!-- PC -->
                 
                 <TextBlock FontFamily="Consolas" Canvas.Left="220" Canvas.Top="210"> PC: </TextBlock>
-                <TextBox Name="RegPcInput" FontFamily="Consolas" Canvas.Left = "280" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">0000</TextBox>
+                <TextBox Name="RegPcInput" FontFamily="Consolas" Canvas.Left = "280" Canvas.Top="207"  MinWidth="0" MinHeight="0" Width="40" Height="24" FontSize="15" MaxLength="4" Padding="2" CornerRadius="0">FC00</TextBox>
                 
                 <TextBlock Name="CurrIsr" FontFamily="Consolas" Canvas.Left="220" Canvas.Top="240" Width="100" TextAlignment="Center"> Isr: 0x00 </TextBlock>
                 
@@ -251,6 +251,16 @@
                 
                 <Button Canvas.Left="250" Canvas.Top="30" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Select</Button>
                 <Button Canvas.Left="250" Canvas.Top="75" Width="100" Height="40" BorderThickness="1" BorderBrush="Black" CornerRadius="3" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontFamily="Consolas">Load/Opsys</Button>
+                
+                <!-- Terminal Control -->
+                
+                <TextBlock FontFamily="Consolas" Canvas.Left="360" Canvas.Top="30" Width="200" TextAlignment="Center">
+                    Control Terminal:
+                </TextBlock>
+                <TextBlock FontFamily="Consolas" Canvas.Left="360" Canvas.Top="50" Width="200" TextAlignment="Center">
+                    Port 50500
+                </TextBlock>
+                
             </Canvas>
         </Grid>
 

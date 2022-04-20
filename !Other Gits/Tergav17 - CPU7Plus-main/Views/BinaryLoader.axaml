@@ -1,0 +1,96 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="270" d:DesignHeight="80"
+        x:Class="CPU7Plus.Views.BinaryLoader"
+        Icon="/Assets/centurion-logo.ico"
+        CanResize="False"
+        Width="270"
+        Height="80"
+        Title="Binary Loader">
+    
+        <Grid Background="LightGray">
+                <Border BorderThickness="1,0,0,0" BorderBrush="#5A000000"/>
+                <Border BorderThickness="0,1,0,0" BorderBrush="#5A000000"/>
+                <Border BorderThickness="0,0,1,0" BorderBrush="#5AFFFFFF"/>
+                <Border BorderThickness="0,0,0,1" BorderBrush="#5AFFFFFF"/>
+                
+                <Canvas>
+                        
+                        <!-- File Open -->
+                        
+                        <Button
+                                Click="OnFileOpen"
+                                Canvas.Top = "0"
+                                Canvas.Left="0"
+                                Width="70"
+                                Height="40"
+                                BorderThickness="1"
+                                BorderBrush="Black"
+                                CornerRadius="3"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                FontFamily="Consolas"
+                                FontSize="15">
+                                File
+                        </Button>
+                        
+                        <!-- Load Memory -->
+                        
+                        <Button
+                                Click="OnLoadMemory"
+                                Canvas.Top = "0"
+                                Canvas.Left="200"
+                                Width="70"
+                                Height="40"
+                                BorderThickness="1"
+                                BorderBrush="Black"
+                                CornerRadius="3"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                FontFamily="Consolas"
+                                FontSize="15">
+                                Load
+                        </Button>
+                        
+                        <!-- Memory Base -->
+                        
+                        <TextBlock
+                                Canvas.Top="10"
+                                Canvas.Left="80"
+                                FontFamily="Consolas"
+                                FontSize="15">
+                                Base:        
+                        </TextBlock>
+                        
+                        <TextBox 
+                                Name="MemoryBase" 
+                                FontFamily="Consolas" 
+                                Canvas.Left = "130" 
+                                Canvas.Top="0"  
+                                MinWidth="70" 
+                                MinHeight="40" 
+                                Width="23" 
+                                Height="24" 
+                                FontSize="15"
+                                MaxLength="6" 
+                                Padding="9" 
+                                CornerRadius="0">
+                                0/0000
+                        </TextBox>
+                        
+                        <!-- Selected File -->
+                        
+                        <TextBlock
+                                Name="SelectedFile"
+                                Canvas.Top="50"
+                                Canvas.Left="10"
+                                FontFamily="Consolas"
+                                FontSize="15">
+                                Selected File:      
+                        </TextBlock>
+                        
+                </Canvas>
+        </Grid>
+</Window>
