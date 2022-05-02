@@ -1,0 +1,25 @@
+    0 1 0 SH.0 r05 r05 RAM  A.XOR.B          DATA  DATA  DATA       0b7 b7 (48) e7.4    h11.0      k11.3      LOAD.PTBR d3.0      (000) ; r05 <- 0; PTBR <- 0; Set F11 address 2 high
+    0 1 0 SH.0 r05 r07 RAMA NOT.D            PC    PC    PC         01e 1e (e1) e7.4    h11.0      k11.3      LOAD.MCR  CONST     (0b7) ; r07 <- 30; MDR <- 0 (from r05); Set F11 address 3 high
+    0 1 0 SH.0 r11 r11 RAM  A.XOR.B          DATA  DATA  DATA       1ec ec (13) e7.4    h11.0      k11.2      LOAD.D9   d3.0      (0b8) ; r11 <- 0; D9 <- 0; ??
+    0 1 0 SH.0 r00 r00 PASS NOT.D            PC    PC    PC         010 10 (ef) e7.4    h11.0      k11.0      LOAD.RIR  CONST     (1ec) ; RIR <- 16
+    0 1 0 SH.0 r00 r00 PASS A+Q              DATA  DATA  DATA       0b1 b1 (4e) e7.4    h11.0      k11.4      e6.0      d3.0      (1ed) ; ?
+0b1 0 1 0 SH.0 r00 r00 PASS A+Q              DATA  DATA  DATA  PUSH 07e 7e (81) e7.4    h11.0      k11.1      e6.0      d3.0      (0b1) ; call 7e (page init);
+    0 1 0 SH.0 r06 r06 RAM  A.XOR.B     CASE PC    PC    DATA       0c1 c1 (3e) e7.4    h11.0      k11.0      e6.0      d3.0      (0b2) ; result zero? Non zero loop to b1, else b3 (OR bit 1 is zero); r06 = 0. Loop 30 times
+0b3 0 1 0 SH.0 r00 r11 RAM  NOT.D            DATA  DATA  DATA  PUSH 07e 7e (81) e7.4    h11.0      k11.0      e6.0      CONST     (0b3) ; r11 < 0x7e; call 7e
+    0 1 0 SH.0 r00 r00 RAM  D                DATA  DATA  DATA  PUSH 07e 7e (81) e7.4    h11.0      k11.0      e6.0      d3.11     (0b4) ; r0 <- d3.11 output (poss dip switches or front panel); call 7e
+    0 1 0 SH.0 r00 r05 PASS D.AND.A          PC    PC    PC         0fd fd (02) e7.6    h11.7      k11.2      e6.0      CONST     (0b5) ; test bit 1 of ALU input (possibly dip switch or front panel switch);
+    0 1 0 SH.0 r00 r00 PASS A.XOR.B     CASE PC    PC    DATA       0c9 c9 (36) e7.4    h11.7      k11.0      LOAD.MCR  d3.0      (0b6) ; r0 <- 0; non-zero from test bb else b9; PTER <- 0
+0b9 0 1 0 SH.0 r00 r00 PASS NOT.D            PC    PC    PC         000 00 (ff) e7.4    h11.0      LOAD.WK.LO LOAD.MCR  d3.0      (0b9) ; load MWR low; load PTER
+    0 1 0 SH.0 r00 r09 PASS A+Q              PC    PC    DATA       00c 0c (f3) e7.4    LOAD.WK.HI k11.2      e6.0      d3.0      (0ba) ; load MWR high; jump to 0bc; turn on line 4 on F11?
+0bb 0 1 0 SH.0 r00 r09 RAM  NOT.D            DATA  DATA  DATA       71e 1e (e1) e7.4    h11.0      k11.0      LOAD.RIR  CONST     (0bb) ; r09 <- 30; RIR <- 30; jump to 71e (hard path)
+0bc 0 1 0 SH.0 r00 r12 PASS A+Q              DATA  DATA  DATA       100 00 (ff) e7.4    h11.0      k11.2      LOAD.MAR  d3.0      (0bc) ; load MAR; turn off line 6 on F11?
+    0 1 0 SH.0 r00 r00 PASS A+Q              PC    PC    PC    PUSH 000 00 (ff) e7.4    h11.1      k11.0      e6.0      d3.0      (100) ; save loop address
+    0 1 0 SH.0 r09 r09 RAM  A.XOR.B          PC    PC    PC         633 33 (cc) LOAD.SR h11.0      k11.0      LOAD.RIR  d3.0      (101) ; r09 <- 0; SR <- ALU flags; RIR <- 0;
+    0 1 0 SH.1 r09 r08 RAMA A+0              PC    PC    PC         77f 7f (80) e7.3    h11.5      k11.0      LOAD.MCR  d3.0      (102) ; PTER <- 0; r8++
+    1 1 1 SH.0 r00 r07 RAM  D                PC    PC    PC         466 66 (99) e7.0    h11.6      k11.0      LOAD.SEQR d3.10     (103) ; SEQR <- d3.10 output; r07 <- d3.10 output
+    1 0 0 SH.0 r07 r01 RAMA D                DATA  REG   REG        100 00 (ff) e7.4    h11.1      k11.0      LOAD.SEQR READ.REG  (104) ; mapped SEQR jump; SEQR <- r07; r01 <- ISA register 0
+
+    0 1 0 SH.0 r05 r05 RAMA D+A              PC    PC    PC         0f7 f7 (08) e7.4    h11.0      k11.0      LOAD.MCR  CONST     (07e) ; MCR <- r05; r05 += 8 
+    0 1 0 SH.1 r11 r11 RAMA A+0              PC    PC    PC         000 00 (ff) e7.4    LOAD.WK.HI k11.0      LOAD.MCR  d3.0      (07f) ; MWR high <- MCR; MCR <- r11; r11++;
+    0 1 0 SH.0 r00 r00 PASS A+Q              DATA  DATA  DATA       09d 9d (62) e7.4    h11.0      k11.0      LOAD.MAR  d3.0      (080) ; load MAR
+    0 1 0 SH.0 r07 r07 RAM  A-1              STACK STACK STACK POP  000 00 (ff) e7.6    h11.0      k11.5      e6.0      d3.0      (09d) ; load PT memory? ; r07--; return

@@ -1,0 +1,40 @@
+Bit Board     Meaning
+    Order
+
+0   48-51     D3/D2 control lines
+    52-54     E6 control lines
+    55      ? (?? K11 pin 1? from E5 pin 15) maybe something different
+
+8   24      ? (?? K11 pin 2? from J5 pin 19)
+    25      ? (?? K11 pin 3? from J5 pin 16)
+    26-28   ? H11 control lines (Bit 28/Pin 3 identified, confirm pin 1 and 2 from J5 pin 6 and 9)
+    29-31   ? E7 control lines (Bit 30/Pin 2 identified, confirm pin 1 and 3 from J5 pin 15 and 2)
+ 
+16  0-7       (inverted) data field (confirm pins to M6 and AM2909s from M3 output pins)
+    0-10      micropc address mux input (confirm pins to AM29011 inputs from M3 output pins and L3 pins 19, 16 and 6 for bits 8-10) 
+    11        ~FE
+    12        PUP
+    13-14     (inverted) sequencer 0-3 control
+    15      ? (inverted) sequencer 4-11 S0 (confirm K6 pin 3 to L9 pin 10)
+
+32  32      ? sequencer 4-11 S1/2 pin (check J6 pin 5 from K5 pin 15)
+    33        Mux disable (confirm J13/K13 enable pins and other mux input pins from H5 pin 16)
+    34-36     ALU I012
+    37-39   ? ALU I345 (confirm AM2901 pins 26, 28, 27 respectively from H5 pins 15, 5 and 2)
+
+40  40-42     ALU I678
+    43      ? (B0 to confirm AM2901 pin 17 from F5 pin 9) note overloaded to F11 input pins (D and I0-2 for B0-3 respectively)
+    44      ? (B1 to confirm AM2901 pin 18 from F5 pin 12)
+    45      ? (B2 to confirm AM2901 pin 19 from F5 pin 15)
+    46      ? (B3 to confirm AM2901 pin 20 from F5 pin 5)
+    47        A0 maybe overloaded to M13 see above for B pins
+
+48  16      ? (A1 to confirm AM2901 pin 3 from K5 pin 19)
+    17        A2
+    18      ? (A3 to confirm AM2901 pin 1 from K5 pin 6)
+    19        Shift/carry S0
+    20      ? Shift/carry S1 confirm F6 pin 2 from K5 pin 12)
+
+    21      ? Possibly ALU /OE AM2901 pin 40
+    22        sequencer 4-11 (S1/1) 
+    23      ? Possibly ALU /OE AM2901 pin 40
