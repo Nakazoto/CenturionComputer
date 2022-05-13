@@ -10,96 +10,103 @@ DiagEntryPoint:
 800d:    a1 f2 0f     STAL 	(0xf20f)	; Store byte of AL register into direct address 0xf20f (Stores 0 into address)
 8010:    90 c0 00     LDAW 	#0xc000		; Load literal address 0xc000 into word of AW register 
 8013:    5f           XASW 				; Transfer byte of implicit AW into SW (Sets stack pointer to A register value)
-8014:    22 32        CLR 	BL, 2		; Clear byte of BL and replace with constant??  
-8016:    14 0b        BZ 	L_8023		; Branch to L_8023 if equal to zero (If what is equal to zero??)
+8014:    22 32        CLR 	BL, 2		; Clear byte of BL and replace with constant (0000 0010??)  
+
+
+; I'm pretty sure that from here to TOS entry is not strictly needed on a custom TOS only board
+8016:    14 0b        BZ 	0b			; Branch 0b bytes ahead (to L_8023) if equal to zero (If what is equal to zero??)
 8018:    90 80 77     LDAW	#0x8077		; Load literal address 0x8077 into word of AW register (This address is the FAIL subroutine in F1, maybe not needed here)
 801b:    b1 00 fe     STAW	(0x00fe) 	; Store word of AW register into direct address 0xb800 (Write pointer directly into register??)
 801e:    3a           CLAW				; Clear full word of implicit AW register
 801f:    b1 00 fc     STAW	(0x00fc) 	; Store word of AW register into direct address 0x00fc
-8022:    76           syscall			; Call interrupt level 15
+8022:    76           SYSCALL			; Call interrupt level 15
 
 L_8023:
-8023:    3a           clr.w BA
-8024:    a1 f1 09     st.b A, (0xf109) ; Turn Decimal Point 1 off
-8027:    a1 f1 0b     st.b A, (0xf10b) ; Turn Decimal Point 2 off
-802a:    a1 f1 0d     st.b A, (0xf10d) ; Turn Decimal Point 3 off
-802d:    a1 f1 0f     st.b A, (0xf10f) ; Turn Decimal Point 4 off
-8030:    81 f1 10     ld.b A, (0xf110) ; A = Dip swiches value
-8033:    c0 0f        ld.b C, #0x0f
-8035:    42 31        and.b A, C ; A = A & 0x0f
-8037:    a1 f1 10     st.b A, (0xf110) ; Write A to hex displays
-803a:    a1 f1 06     st.b A, (0xf106) ; Unblank the hex displys
+8023:    3a           CLAW				; Clear full word of implicit AW register
+8024:    a1 f1 09     STAL 	(0xf109) 	; Store byte of AL register into direct address 0xf109 (Turn Decimal Point 1 off)
+8027:    a1 f1 0b     STAL 	(0xf10b) 	; Store byte of AL register into direct address 0xf10b (Turn Decimal Point 2 off)
+802a:    a1 f1 0d     STAL 	(0xf10d) 	; Store byte of AL register into direct address 0xf10d (Turn Decimal Point 3 off)
+802d:    a1 f1 0f     STAL 	(0xf10f) 	; Store byte of AL register into direct address 0xf10f (Turn Decimal Point 4 off)
+8030:    81 f1 10     LDAL	(0xf110) 	; Load direct address (0xf110) into byte of AL register (Load Dip swiches value into AL)
+8033:    c0 0f        LDBL	#0x0f		; Load literal address #0x0F into byte of BL register
+8035:    42 31        AND	3, 1 		; AND BL with AL and store in AL (A = A & 0x0f)
+8037:    a1 f1 10     STAL	(0xf110) 	; Store byte of AL register into direct address 0xf110 (Write A to hex displays)
+803a:    a1 f1 06     STAL	(0xf106) 	; Store byte of AL register into direct address 0xf106 (Unblank the hex displys)
 
+
+; This is the true start to TOS
 TOS_Entry:
-    ; TestOS: This is a Monitor that operates over serial console
-846f:    b5 a2        st.w BA, -(SP)
-8471:    a1 f1 0a     st.b A, (0xf10a)
-8474:    b1 00 10     st.w BA, (0x0010)
-8477:    90 00 12     ld.w BA, #0x0012
-847a:    f5 01        st.w DC, (BA)+
-847c:    6d 01        st.w RT, (BA)+
-847e:    55 62        mov.w DC, EF
-8480:    f5 01        st.w DC, (BA)+
-8482:    55 82        mov.w DC, HL
-8484:    f5 01        st.w DC, (BA)+
-8486:    55 a2        mov.w DC, SP
-8488:    30 20        inc.w DC
-848a:    30 20        inc.w DC
-848c:    f5 01        st.w DC, (BA)+
-848e:    55 c2        mov.w DC, QU
-8490:    f5 01        st.w DC, (BA)+
-8492:    55 e2        mov.w DC, YZ
-8494:    f5 01        st.w DC, (BA)+
-8496:    80 c5        ld.b A, #0xc5
-8498:    a1 f2 00     st.b A, (0xf200) ; Configure UART
-849b:    85 a1        ld.b A, (SP)+
-849d:    7b 7a        call (PC+0x7a) WriteHexByte
-849f:    85 a1        ld.b A, (SP)+
-84a1:    7b 76        call (PC+0x76) WriteHexByte
+846f:    b5 a2        STAW	SW, 2		; Store word from register SW into AW and decrement and index (I blieve this is moving the stack pointer to AW)
+8471:    a1 f1 0a     STAL	(0xf10a)	; Store byte of AL register into direct address 0xf10a (This moves part of the stack pointer to f10a which is DIAG MMIO)
+8474:    b1 00 10     STAW	(0x0010)	; Store word of AW register into direct address 0x0010 (No clue what's at 0010)
+8477:    90 00 12     LDAW	#0x0012		; Load literall address 0x0012 into word of AW register
+847a:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+847c:    6d 01        STXW	AW, 1		; Use register AW as address and store in XW, then increment AW after
+847e:    55 62        XFR	YW, BW		; Copy register BW into register YW
+8480:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8482:    55 82        XFR	ZW, BW		; Copy register BW into register ZW
+8484:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8486:    55 a2        XFR	SW, BW 		; Copy register BW into register SW
+8488:    30 20        INR	BW, 1+0		; Increment BW by 1+0
+848a:    30 20        INR	BW, 1+0		; Increment BW by 1+0
+848c:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+848e:    55 c2        XFR	CW, BW		; Copy register BW into register CW
+8490:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8492:    55 e2        XFR	PW, BW		; Copy register BW into register PW
+8494:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8496:    80 c5        LDAL	#0xc5		; Load literal address byte 0xc5 into AL register
+8498:    a1 f2 00     STAL	(0xf200) 	; Store byte of AL register into direct adress of 0xf200 (0xf200 = UART MMIO -> Configure UART)
+849b:    85 a1        LDAL	SW, 1		; Use register AW as address and load into SW, then increment AW after
+849d:    7b 7a        JSR	(PC+0x7a) 	; Jump to subroutine that is 0x7a bytes ahead of PC (WriteHexByte) (I think this is writing "86"?)
+849f:    85 a1        LDAL	SW, 1		; Use register AW as address and load into SW, then increment AW after (I think this is writing "4F"?)
+84a1:    7b 76        JSR	(PC+0x76) 	; Jump to subroutine that is 0x76 bytes ahead of PC (WriteHexByte)
 
+; This is the main loop that shows the prompt and looks for a keypress of M, G, or Q
 TOS_PromptLoop:
-84a3:    c0 5c        ld.b C, #0x5c ; ''
-84a5:    7b 67        call (PC+0x67) WriteByte
-84a7:    7b 57        call (PC+0x57) ReadByteWithEcho
-84a9:    45 31        mov.b A, C
-84ab:    c0 4d        ld.b C, #0x4d ; 'M'
-84ad:    49           sub.b C, A
-84ae:    14 33        bz M_Command
-84b0:    c0 47        ld.b C, #0x47 ; 'G'
-84b2:    49           sub.b C, A
-84b3:    14 0a        bz G_Command
-84b5:    c0 51        ld.b C, #0x51 ; 'Q'
-84b7:    49           sub.b C, A
-84b8:    15 e9        bnz TOS_PromptLoop
-84ba:    90 80 01     ld.w BA, #0x8001 ; Start of ROM
-84bd:    73 04        jump (PC+0x04) Q_Command
+84a3:    c0 5c        LDBL	#0x5c 		; Load literal address byte 0xc5 into BL register (Load " " into BL?)
+84a5:    7b 67        JSR	(PC+0x67)	; Jump to subroutine at PC+0x67 (WriteByte)
+84a7:    7b 57        JSR	(PC+0x57) 	; Jump to subroutine at PC+0x67 (ReadByteWithEcho)
+84a9:    45 31        XFR	BL, AL		; Copy byte AL into byte BL (Backwards?)
+84ab:    c0 4d        LDBL	#0x4d 		; Load literal address byte 0x4d into BL register (Load "M" into BL?)
+84ad:    49           SABL				; Subtract bytes AL minus BL and store in AL
+84ae:    14 33        BZ	33			; If equal to 0 branch 33 bytes ahead of current PC (M_Command) 
+84b0:    c0 47        LDBL	#0x47 		; Load literal address byte 0x47 into BL register (Load "G" into BL?)
+84b2:    49           SABL				; Subtract bytes AL minus BL and store in AL
+84b3:    14 0a        BZ	0a			; If equal to 0 branch 0a bytes ahead of current PC (G_Command)
+84b5:    c0 51        LDBL	#0x51 		; Load literal address byte 0x51 into BL register (Load "Q" into BL?)
+84b7:    49           SABL				; Subtract bytes AL minus BL and store in AL
+84b8:    15 e9        BNZ	e9			; If not equal to zero, branch to ???? bytes behind current PC (TOS_PromptLoop)
+84ba:    90 80 01     LDAW	#0x8001 	; Load literal address word 0x8001 into AW (8001 = Start of ROM)
+84bd:    73 04        JMP	(PC+0x04)	; Jump to PC+0x04 bytes ahead (Q_Command)
 
-G_Command:
-    ; Go: Takes a 
-84bf:    7b 79        call (PC+0x79) ReadHexWord
-84c1:    55 80        mov.w BA, HL
+; This is the GO command (type G followed by addres to execute code)
+G_Command: 
+84bf:    7b 79        JSR	(PC+0x79)	; Jump to subroutine at PC+0x79 (ReadHexWord)
+84c1:    55 80        XFR	ZW, AW		; Copy word AW into word ZW (Backwards?)
 
+; I don't actually know what this command does yet (Copies a bunch of registers among each other and then jumps to start? Q = Quit?)
 Q_Command:
-84c3:    b1 00 20     st.w BA, (0x0020)
-84c6:    d0 00 1e     ld.w DC, #0x001e
-84c9:    99           ld.w BA, (DC)
-84ca:    55 0e        mov.w YZ, BA
-84cc:    95 22        ld.w BA, -(DC)
-84ce:    55 0c        mov.w QU, BA
-84d0:    95 22        ld.w BA, -(DC)
-84d2:    5f           mov SP, BA
-84d3:    95 22        ld.w BA, -(DC)
-84d5:    5e           mov HL, BA
-84d6:    95 22        ld.w BA, -(DC)
-84d8:    5c           mov EF, BA
-84d9:    65 22        ld.w RT, -(DC)
-84db:    d5 22        ld.w DC, -(DC)
-84dd:    91 00 10     ld.w BA, (0x0010)
-84e0:    72 00 20     jump @(0x0020) ;
+84c3:    b1 00 20     STAW	(0x0020)	; Store word of AW register into direct address 0x0020 (I believe this stores 0x8001 at 0x0020?)
+84c6:    d0 00 1e     LDBW	#0x001e		; Load literal address 0x001e into word of BW register
+84c9:    99           LDAW	[BW]		; Load word from memory addres stored in BW into AW register (one byte instruction)
+84ca:    55 0e        XFR	AW, P		; Copy word P into word AW (Backwards?)
+84cc:    95 22        LDAW	BW, 2		; Use register BW as address and load into AW, then decrement BW after
+84ce:    55 0c        XFR	AW, CW		; Copy word CW into word AW (Backwards?)
+84d0:    95 22        LDAW	BW, 2		; Use register BW as address and load into AW, then decrement BW after
+84d2:    5f           XASW				; Copy implicit AW into implicit SW
+84d3:    95 22        LDAW	BW, 2		; Use register BW as address and load into AW, then decrement BW after
+84d5:    5e           XAZW				; Copy implicit AW into implicit ZW
+84d6:    95 22        LDAW	BW, 2		; Use register BW as address and load into AW, then decrement BW after
+84d8:    5c           XAYW				; Copy implicit AW into implicit YW
+84d9:    65 22        LDXW	BW, 2		; Use register BW as address and load into XW, then decrement BW after
+84db:    d5 22        LDBW	BW, 2		; Use register BW as address and load into BW, then decrement BW after
+84dd:    91 00 10     LDAW	(0x0010)	; Load direct address 0x0010 into word AW
+84e0:    72 00 20     JMP	[0x0020]	; Jump to indrect address stored at 0x0020 (I believe this jumps to 0x8001 which was stored at 0x0020?)
 
+; This is the Modify command (type M followed by an address and it shows the value and you can change it)
 M_Command:
-84e3:    7b 55        call (PC+0x55) ReadHexWord
-84e5:    55 86        mov.w EF, HL
+84e3:    7b 55        JSR	(PC+0x55)	; Jump to subroutine at PC+0x79 (ReadHexWord)
+84e5:    55 86        XFR	ZW, YW		; Copy word YW into word ZW (Backwards?)mov.w EF, HL
 
 L_84e7:
 84e7:    8b           ld.b A, (EF)
@@ -166,15 +173,15 @@ L_8536:
 8538:    73 f9        jump (PC-0x07) L_8533
 
 ReadHexWord:
-853a:    3a           clr.w BA
-853b:    5e           mov HL, BA
-853c:    a1 bf 92     st.b A, (0xbf92) ; Diag SRAM
+853a:    3a           CLAW				; Clear full word of AW register
+853b:    5e           XAZW				; Copy implicit AW into implicit ZW
+853c:    a1 bf 92     STAL	(0xbf92)	; Store byte of AL register directly into address 0xbf92 (Diag SRAM?)
 
 L_853f:
-853f:    7b bf        call (PC-0x41) ReadByteWithEcho
-8541:    7b 25        call (PC+0x25) AsciiToHexNibble
-8543:    17 01        ble L_8546
-8545:    09           ret
+853f:    7b bf        JSR	(PC-0x41)	; Jump to subroutine 41 bytes behind current PC (ReadByteWithEcho:)
+8541:    7b 25        JSR 	(PC+0x25) 	; Jump to subroutine 25 bytes ahead current PC (AsciiToHexNibble:)
+8543:    17 01        BP	(PC+0x01)	; Branch on positive to 1 byte ahead of current PC (L_8546:)
+8545:    09           RSR				; Return from subroutine
 
 L_8546:
 8546:    35 80        sll.w HL

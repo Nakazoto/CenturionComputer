@@ -179,12 +179,12 @@ end TCL_Generic;&#13;
     <comp lib="0" loc="(1040,750)" name="Pin">
       <a name="appearance" val="NewPins"/>
       <a name="facing" val="west"/>
-      <a name="label" val="T6"/>
+      <a name="label" val="T6_WTIN"/>
     </comp>
     <comp lib="0" loc="(1040,770)" name="Pin">
       <a name="appearance" val="NewPins"/>
       <a name="facing" val="west"/>
-      <a name="label" val="T7"/>
+      <a name="label" val="T7_RDIN"/>
     </comp>
     <comp lib="0" loc="(1060,720)" name="Clock">
       <a name="facing" val="west"/>
@@ -443,7 +443,7 @@ end TCL_Generic;&#13;
       <a name="label" val="T_11"/>
     </comp>
     <comp lib="5" loc="(1060,670)" name="LED">
-      <a name="label" val="T8_ASSERTLOW"/>
+      <a name="label" val="T8_DRDY_ASSERTLOW"/>
     </comp>
     <comp lib="5" loc="(1070,260)" name="LED">
       <a name="label" val="DIP_STROBE"/>
