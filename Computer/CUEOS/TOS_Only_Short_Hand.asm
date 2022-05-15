@@ -88,7 +88,7 @@ G_Command:
 Q_Command:
 84c3:    b1 00 20     STAW	(0x0020)	; Store word of AW register into direct address 0x0020 (I believe this stores 0x8001 at 0x0020?)
 84c6:    d0 00 1e     LDBW	#0x001e		; Load literal address 0x001e into word of BW register
-84c9:    99           LDAW	[BW]		; Load word from memory addres stored in BW into AW register (one byte instruction)
+84c9:    99           LAWB				; Load word from memory addres stored in implicit BW into AW register (one byte instruction)
 84ca:    55 0e        XFR	AW, P		; Copy word P into word AW (Backwards?)
 84cc:    95 22        LDAW	BW, 2		; Use register BW as address and load into AW, then decrement BW after
 84ce:    55 0c        XFR	AW, CW		; Copy word CW into word AW (Backwards?)
@@ -105,12 +105,12 @@ Q_Command:
 
 ; This is the Modify command (type M followed by an address and it shows the value and you can change it)
 M_Command:
-84e3:    7b 55        JSR	(PC+0x55)	; Jump to subroutine at PC+0x79 (ReadHexWord)
+84e3:    7b 55        JSR	(PC+0x55)	; Jump to subroutine at 0x55 bytes ahead of current PC (ReadHexWord)
 84e5:    55 86        XFR	ZW, YW		; Copy word YW into word ZW (Backwards?)mov.w EF, HL
 
 L_84e7:
-84e7:    8b           ld.b A, (EF)
-84e8:    7b 2f        call (PC+0x2f) WriteHexByte
+84e7:    8b           LALY				; Load byte from memory address in implicit YW into AL
+84e8:    7b 2f        JSR	(PC+0x2f)	; Jump to subroutine at 0x2f bytes ahead of current PC (WriteHexByte:)
 
 L_84ea:
 84ea:    7b 4e        call (PC+0x4e) ReadHexWord
@@ -130,9 +130,9 @@ L_84fa:
 84fe:    73 e7        jump (PC-0x19) L_84e7
 
 ReadByteWithEcho:
-8500:    7b 55        call (PC+0x55) CheckForReset ; Jumps back to the start of F1 if some condition is met
-8502:    81 f2 00     ld.b A, (0xf200)
-8505:    2c           srl.b A
+8500:    7b 55        JSR	(PC+0x55)	; Jump to subroutine 55 bytes ahead current PC (CheckForReset:)
+8502:    81 f2 00     LDAL	(0xf200)	; Load direct address 0xf200 into byte of AL register
+8505:    2c           SRAL				; Shift byte of implicit register AL left 
 8506:    11 f8        bnc ReadByteWithEcho
 8508:    81 f2 01     ld.b A, (0xf201)
 850b:    c0 7f        ld.b C, #0x7f
@@ -194,16 +194,16 @@ L_8546:
 8555:    73 e8        jump (PC-0x18) L_853f
 
 CheckForReset:
-8557:    80 0f        ld.b A, #0x0f
-8559:    c1 f1 10     ld.b C, (0xf110)
-855c:    4a           and.b C, A
-855d:    80 0a        ld.b A, #0x0a
-855f:    49           sub.b C, A
-8560:    15 01        bnz L_8563
-8562:    09           ret
+8557:    80 0f        LDAL	#0x0f		; Load literal address byte 0x0f into AL register
+8559:    c1 f1 10     LDBL	(0xf110)	; Load direct address 0xF110 into byte of BL register
+855c:    4a           NABL				; AND implicit bytes of AL and BL and store in AL
+855d:    80 0a        LDAL	#0x0a		; Load literal address byte 0x0a into AL register
+855f:    49           SABL				; SUB implicit bytes of AL and BL and store in AL
+8560:    15 01        BNZ	(PC+0x01)	; Branch if not zero to 1 byte ahead of current PC (L_8563:)
+8562:    09           RSR
 
 L_8563:
-8563:    71 80 01     jump #0x8001 DiagEntryPoint
+8563:    71 80 01     JMP	#0x8001		; Jump to direct address 0x8001 (DiagEntryPoint:)
 
 WriteByteTramp:
 8566:    73 a6        jump (PC-0x5a) WriteByte
