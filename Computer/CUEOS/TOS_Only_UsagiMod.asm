@@ -1,4 +1,4 @@
-8000:    00           HALT
+8000:    00           HLT
 
 DiagEntryPoint:
 8001:    3a           CLAW				; Clear full word of implicit AW register
@@ -10,57 +10,59 @@ DiagEntryPoint:
 800d:    a1 f2 0f     STAL 	(0xf20f)	; Store byte of AL register into direct address 0xf20f (Stores 0 into address)
 8010:    90 c0 00     LDAW 	#0xc000		; Load literal address 0xc000 into word of AW register 
 8013:    5f           XASW 				; Transfer byte of implicit AW into SW (Sets stack pointer to A register value)
-8014:    22 32        CLR 	BL, 2		; Clear byte of BL and replace with constant (0000 0010??)  
+8014:    22 32        CLR 	BL, 2		; Clear byte of BL and replace with constant (0010??)  
 
 ; This is the true start to TOS
 TOS_Entry:
-846f:    b5 a2        STAW	SW, 2		; Store word from register SW into AW and decrement and index (I blieve this is moving the stack pointer to AW)
-8471:    a1 f1 0a     STAL	(0xf10a)	; Store byte of AL register into direct address 0xf10a (This moves part of the stack pointer to f10a which is DIAG MMIO)
-8474:    b1 00 10     STAW	(0x0010)	; Store word of AW register into direct address 0x0010 (No clue what's at 0010)
-8477:    90 00 12     LDAW	#0x0012		; Load literall address 0x0012 into word of AW register
-847a:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
-847c:    6d 01        STXW	AW, 1		; Use register AW as address and store in XW, then increment AW after
-847e:    55 62        XFR	YW, BW		; Copy register BW into register YW
-8480:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
-8482:    55 82        XFR	ZW, BW		; Copy register BW into register ZW
-8484:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
-8486:    55 a2        XFR	SW, BW 		; Copy register BW into register SW
-8488:    30 20        INR	BW, 1+0		; Increment BW by 1+0
-848a:    30 20        INR	BW, 1+0		; Increment BW by 1+0
-848c:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
-848e:    55 c2        XFR	CW, BW		; Copy register BW into register CW
-8490:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
-8492:    55 e2        XFR	PW, BW		; Copy register BW into register PW
-8494:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
-8496:    80 c5        LDAL	#0xc5		; Load literal address byte 0xc5 into AL register
-8498:    a1 f2 00     STAL	(0xf200) 	; Store byte of AL register into direct adress of 0xf200 (0xf200 = UART MMIO -> Configure UART)
-849b:    85 a1        LDAL	SW, 1		; Use register AW as address and load into SW, then increment AW after
-849d:    7b 7a        JSR	(PC+0x7a) 	; Jump to subroutine that is 0x7a bytes ahead of PC (WriteHexByte) (I think this is writing "86"?)
-849f:    85 a1        LDAL	SW, 1		; Use register AW as address and load into SW, then increment AW after (I think this is writing "4F"?)
-84a1:    7b 76        JSR	(PC+0x76) 	; Jump to subroutine that is 0x76 bytes ahead of PC (WriteHexByte)
+8016:    b5 a2        STAW	SW, 2		; Store word from register SW into AW and decrement and index (I blieve this is moving the stack pointer to AW)
+8018:    b1 00 10     STAW	(0x0010)	; Store word of AW register into direct address 0x0010 (This is one of the interrupt levels?)
+801b:    90 00 12     LDAW	#0x0012		; Load literal address 0x0012 into word of AW register
+801e:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8020:    6d 01        STXW	AW, 1		; Use register AW as address and store in XW, then increment AW after
+8022:    55 62        XFR	YW, BW		; Copy register BW into register YW
+8024:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8026:    55 82        XFR	ZW, BW		; Copy register BW into register ZW
+8028:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+802a:    55 a2        XFR	SW, BW 		; Copy register BW into register SW
+802c:    30 20        INR	BW, 1+0		; Increment BW by 1+0
+802e:    30 20        INR	BW, 1+0		; Increment BW by 1+0
+8030:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8032:    55 c2        XFR	CW, BW		; Copy register BW into register CW
+8034:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+8036:    55 e2        XFR	PW, BW		; Copy register BW into register PW
+8038:    f5 01        STBW	AW, 1		; Use register AW as address and store in BW, then increment AW after
+803a:    80 c5        LDAL	#0xc5		; Load literal address byte 0xc5 into AL register
+803c:    a1 f2 00     STAL	(0xf200) 	; Store byte of AL register into direct adress of 0xf200 (0xf200 = UART MMIO -> Configure UART)
+803f:    7b ??        JSR	(PC+0x??) 	; Jump to subroutine that is 0x?? bytes ahead of PC (WriteString)
+8041:    c3	d5 c5 cf d3 dc 00			; ASCII for "CUEOS\"	
+
+;803f:    85 a1        LDAL	SW, 1		; Use register SW as address and load into AL, then increment SW after
+;8041:    7b 7a        JSR	(PC+0x7a) 	; Jump to subroutine that is 0x7a bytes ahead of PC (WriteHexByte) (I think this is writing "86"?)
+;8043:    85 a1        LDAL	SW, 1		; Use register SW as address and load into AL, then increment SW after
+;8044:    7b 76        JSR	(PC+0x76) 	; Jump to subroutine that is 0x76 bytes ahead of PC (WriteHexByte) (I think this is writing "4F"?)
 
 ; This is the main loop that shows the prompt and looks for a keypress of M, G, or Q
 TOS_PromptLoop:
-84a3:    c0 5c        LDBL	#0x5c 		; Load literal address byte 0xc5 into BL register (Load " " into BL?)
-84a5:    7b 67        JSR	(PC+0x67)	; Jump to subroutine at PC+0x67 (WriteByte)
-84a7:    7b 57        JSR	(PC+0x57) 	; Jump to subroutine at PC+0x67 (ReadByteWithEcho)
-84a9:    45 31        XFR	BL, AL		; Copy byte AL into byte BL (Backwards?)
-84ab:    c0 4d        LDBL	#0x4d 		; Load literal address byte 0x4d into BL register (Load "M" into BL?)
-84ad:    49           SABL				; Subtract bytes AL minus BL and store in AL
-84ae:    14 33        BZ	(PC+0x33)	; If equal to 0 branch 33 bytes ahead of current PC (M_Command) 
-84b0:    c0 47        LDBL	#0x47 		; Load literal address byte 0x47 into BL register (Load "G" into BL?)
-84b2:    49           SABL				; Subtract bytes AL minus BL and store in AL
-84b3:    14 0a        BZ	(PC+0x0a)	; If equal to 0 branch 0a bytes ahead of current PC (G_Command)
-84b5:    c0 51        LDBL	#0x51 		; Load literal address byte 0x51 into BL register (Load "Q" into BL?)
-84b7:    49           SABL				; Subtract bytes AL minus BL and store in AL
-84b8:    15 e9        BNZ	(PC-0x15)	; If not equal to zero, branch to 0x15 bytes behind current PC (TOS_PromptLoop)
-84ba:    90 80 01     LDAW	#0x8001 	; Load literal address word 0x8001 into AW (8001 = Start of ROM)
-84bd:    73 04        JMP	(PC+0x04)	; Jump to PC+0x04 bytes ahead (Q_Command)
+8048:    c0 5c        LDBL	#0x5c 		; Load literal address byte 0xc5 into BL register (Load " " into BL?)
+804a:    7b ??        JSR	(PC+0x??)	; Jump to subroutine at PC+0x?? (WriteByte)
+804c:    7b ??        JSR	(PC+0x??) 	; Jump to subroutine at PC+0x?? (ReadByteWithEcho)
+804e:    45 31        XFR	BL, AL		; Copy byte AL into byte BL (Backwards?)
+8050:    c0 4d        LDBL	#0x4d 		; Load literal address byte 0x4d into BL register (Load "M" into BL?)
+8052:    49           SABL				; Subtract bytes AL minus BL and store in AL
+8053:    14 ??        BZ	(PC+0x??)	; If equal to 0 branch 0x?? bytes ahead of current PC (M_Command) 
+8055:    c0 47        LDBL	#0x47 		; Load literal address byte 0x47 into BL register (Load "G" into BL?)
+8057:    49           SABL				; Subtract bytes AL minus BL and store in AL
+8058:    14 ??        BZ	(PC+0x??)	; If equal to 0 branch 0x?? bytes ahead of current PC (G_Command)
+805a:    c0 51        LDBL	#0x51 		; Load literal address byte 0x51 into BL register (Load "Q" into BL?)
+805c:    49           SABL				; Subtract bytes AL minus BL and store in AL
+805d:    15 ??        BNZ	(PC-0x??)	; If not equal to zero, branch to 0x?? bytes behind current PC (TOS_PromptLoop)
+805f:    90 80 01     LDAW	#0x8001 	; Load literal address word 0x8001 into AW (8001 = Start of ROM)
+8062:    73 ??        JMP	(PC+0x??)	; Jump to PC+0x?? bytes ahead (Q_Command)
 
 ; This is the GO command (type G followed by addres to execute code)
 G_Command: 
-84bf:    7b 79        JSR	(PC+0x79)	; Jump to subroutine at PC+0x79 (ReadHexWord)
-84c1:    55 80        XFR	ZW, AW		; Copy word AW into word ZW (Backwards?)
+8064:    7b ??        JSR	(PC+0x??)	; Jump to subroutine at PC+0x?? (ReadHexWord)
+8066:    55 80        XFR	ZW, AW		; Copy word AW into word ZW (Backwards?)
 
 ; I don't actually know what this command does yet (Copies a bunch of registers among each other and then jumps to start? Q = Quit?)
 Q_Command:
@@ -231,3 +233,20 @@ L_8592:
 859b:    2b           IVAL				; Invert byte of implicit AL register
 859c:    09           RSR				; Return from subroutine
 ; This is where the ASCII Hex to Nibble Subroutine ends
+
+
+
+
+; THIS IS OUR WRITE STRING SUBROUTINE! (Used by TOS?)
+WriteString:
+8623:    81 f2 00     LDAL	(0xf200)	; Load direct address 0xf200 into byte of AL register (MUX MMIO?)
+8626:    2c           SRAL				; Shift byte of implicit register AL left
+8627:    2c           SRAL				; Shift byte of implicit register AL left
+8628:    11 f9        BNL	(PC-0x06)	; Branch if link not set to 6 bytes behind program counter (WriteString:)
+862a:    85 41        LDAL	XW, 1		; Use register XW as address and load into AL, then increment XW after
+862c:    15 01        BNZ	(PC+0x01)	; Branch if not equal to zero to 0x01 bytes ahead current PC (L_862f:)
+862e:    09           RSR				; Return from subroutine
+
+L_862f:
+862f:    a1 f2 01     STAL	(0xf201)	; Store byte of AL register directly into address 0xf201 (MUX MMIO?)
+8632:    73 ef        JMP	(PC-0x11) 	; Jump to 11 bytes behind current PC (WriteString:)
