@@ -186,15 +186,15 @@ Fn_1ee:
 99f3:    60 03 e8     ld RT, #0x03e8
 
 L_99f6:
-99f6:    82 01 16     ld AL, @(0x0116)
-99f9:    c0 08        ld BL, #0x08
-99fb:    4a           and! BL, AL
-99fc:    14 2b        bz L_9a29
-99fe:    0e           delay 4.5ms
-99ff:    3f           dec RT
-9a00:    15 f4        bnz L_99f6
-9a02:    7a 01 12     call @(0x0112)
-9a05:    "*** BUSY DID NOT CLEAR ***\0"
+99f6:    82 01 16     LDAL	[0x0116]		; Load indirect address into byte AL
+99f9:    c0 08        LDBL	#0x08			; Load literal address into byte BL
+99fb:    4a           NABL					; AND AL and BL and store in AL
+99fc:    14 2b        BZ	(PC+0x2b)		; Branch if equal to zero to 2b bytes ahead of current PC (L_9a29)			
+99fe:    0e           DLY					; Delay 4.5ms
+99ff:    3f           DCX					; Decrement full word of implicit X register
+9a00:    15 f4        BNZ	(PC-0x0C)		; Branch if not equal to zero to 0xC bytes behind current PC (bnz L_99f6)
+9a02:    7a 01 12     JSR	[0x0112]		; Jump to subroutine at indirect address in 0x0112 (Jumping to WriteString?)
+9a05:    									; "*** BUSY DID NOT CLEAR ***\0"
 9a20:    a1 f1 0b     st AL, (0xf10b)
 9a23:    a1 f1 0c     st AL, (0xf10c)
 9a26:    72 01 0e     jump @(0x010e) ;
