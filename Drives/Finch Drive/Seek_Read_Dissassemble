@@ -1,0 +1,174 @@
+Entry_FINCH_SEEK_TEST:
+9d3c:    90 01 8b     ld AX, #0x018b
+9d3f:    50 80        add AX, EX
+9d41:    7d 00        call (A + 0x00)
+9d43:    f8 00 7a     stb? A, [0x0007a]
+9d46:    01           nop
+9d47:    06           fsc
+9d48:    d0 41 4d     ld BX, #0x414d
+9d4b:    90 81 02     ld AX, #0x8102
+9d4e:    b5 21        st AX, (BX)+
+9d50:    90 84 00     ld AX, #0x8400
+9d53:    b5 21        st AX, (BX)+
+9d55:    90 82 ff     ld AX, #0x82ff
+9d58:    b9           st AX, (BX)
+9d59:    90 ff f9     ld AX, #0xfff9
+9d5c:    2f 02        dma_load_count WX
+9d5e:    90 41 4d     ld AX, #0x414d
+9d61:    2f 00        dma_load_addr WX
+9d63:    2f 34        dma_set_mode 3
+9d65:    2f 06        dma_enable
+9d67:    80 43        ld AL, #0x43
+9d69:    a2 01 14     st AL, @(0x0114)
+9d6c:    7a 01 18     call @(0x0118)
+9d6f:    13 09        bnn L_9d7a
+
+L_9d71:
+9d71:    a1 f1 0b     st AL, (0xf10b)
+9d74:    a1 f1 0c     st AL, (0xf10c)
+9d77:    72 01 0e     jump @(0x010e) ;
+
+L_9d7a:
+9d7a:    80 45        ld AL, #0x45
+9d7c:    a2 01 14     st AL, @(0x0114)
+9d7f:    7a 01 18     call @(0x0118)
+9d82:    12 ed        bn L_9d71
+9d84:    d0 41 4f     ld BX, #0x414f
+9d87:    90 84 00     ld AX, #0x8400
+9d8a:    b5 21        st AX, (BX)+
+9d8c:    80 83        ld AL, #0x83
+9d8e:    a5 21        st AL, (BX)+
+9d90:    3a           clr! AX
+9d91:    b5 21        st AX, (BX)+
+9d93:    39           dec! AX
+9d94:    a9           st AL, (BX)
+9d95:    38           inc! AX
+9d96:    38           inc! AX
+9d97:    b1 41 b1     st AX, (0x41b1)
+
+L_9d9a:
+9d9a:    90 41 4d     ld AX, #0x414d
+9d9d:    2f 00        dma_load_addr WX
+9d9f:    90 ff f7     ld AX, #0xfff7
+9da2:    2f 02        dma_load_count WX
+9da4:    2f 34        dma_set_mode 3
+9da6:    2f 06        dma_enable
+9da8:    80 43        ld AL, #0x43
+9daa:    a2 01 14     st AL, @(0x0114)
+9dad:    7a 01 18     call @(0x0118)
+9db0:    12 bf        bn L_9d71
+9db2:    80 45        ld AL, #0x45
+9db4:    a2 01 14     st AL, @(0x0114)
+9db7:    7a 01 18     call @(0x0118)
+9dba:    13 1c        bnn L_9dd8
+9dbc:    7a 01 12     call @(0x0112)
+9dbf:    "TRACK=\0"
+9dc6:    91 41 52     ld AX, (0x4152)
+9dc9:    7a 01 10     call @(0x0110)
+9dcc:    7a 01 12     call @(0x0112)
+9dcf:    "\r\n\0"
+9dd2:    a1 f1 0b     st AL, (0xf10b)
+9dd5:    a1 f1 0c     st AL, (0xf10c)
+
+L_9dd8:
+9dd8:    91 41 b1     ld AX, (0x41b1)
+9ddb:    16 14        blt L_9df1
+9ddd:    91 41 52     ld AX, (0x4152)
+9de0:    38           inc! AX
+9de1:    b1 41 52     st AX, (0x4152)
+9de4:    d0 02 5c     ld BX, #0x025c
+9de7:    59           sub! BX, AX
+9de8:    15 b0        bnz L_9d9a
+9dea:    3a           clr! AX
+9deb:    39           dec! AX
+9dec:    b1 41 b1     st AX, (0x41b1)
+9def:    73 a9        jump (PC-0x57) L_9d9a
+
+L_9df1:
+9df1:    91 41 52     ld AX, (0x4152)
+9df4:    39           dec! AX
+9df5:    b1 41 52     st AX, (0x4152)
+9df8:    17 a0        ble L_9d9a
+9dfa:    7a 01 04     call @(0x0104)
+9dfd:    05           fci
+9dfe:    48           add! BL, AL
+
+Entry_FINCH_READ_TEST:
+9dff:    90 01 8b     ld AX, #0x018b
+9e02:    50 80        add AX, EX
+9e04:    7d 00        call (A + 0x00)
+9e06:    f8 00 7a     stb? A, [0x0007a]
+9e09:    01           nop
+9e0a:    06           fsc
+9e0b:    90 41 4d     ld AX, #0x414d
+9e0e:    5c           mov DX, AX
+9e0f:    90 81 02     ld AX, #0x8102
+9e12:    b5 61        st AX, (DX)+
+9e14:    90 84 00     ld AX, #0x8400
+9e17:    b5 61        st AX, (DX)+
+9e19:    80 83        ld AL, #0x83
+9e1b:    a5 61        st AL, (DX)+
+9e1d:    3a           clr! AX
+9e1e:    b5 61        st AX, (DX)+
+9e20:    80 8a        ld AL, #0x8a
+9e22:    a5 61        st AL, (DX)+
+9e24:    d0 10 00     ld BX, #0x1000
+
+L_9e27:
+9e27:    e5 61        st BL, (DX)+
+9e29:    90 01 90     ld AX, #0x0190
+9e2c:    b5 61        st AX, (DX)+
+9e2e:    20 30        inc BL
+9e30:    21 20        dec BH
+9e32:    15 f3        bnz L_9e27
+9e34:    80 ff        ld AL, #0xff
+9e36:    ab           st AL, (DX)
+
+L_9e37:
+9e37:    90 ff c3     ld AX, #0xffc3
+9e3a:    2f 02        dma_load_count WX
+9e3c:    90 41 4d     ld AX, #0x414d
+9e3f:    2f 00        dma_load_addr WX
+9e41:    2f 34        dma_set_mode 3
+9e43:    2f 06        dma_enable
+9e45:    80 43        ld AL, #0x43
+9e47:    a2 01 14     st AL, @(0x0114)
+9e4a:    7a 01 18     call @(0x0118)
+9e4d:    13 09        bnn L_9e58
+9e4f:    a1 f1 0b     st AL, (0xf10b)
+9e52:    a1 f1 0c     st AL, (0xf10c)
+9e55:    72 01 0e     jump @(0x010e) ;
+
+L_9e58:
+9e58:    90 e6 ff     ld AX, #0xe6ff
+9e5b:    2f 02        dma_load_count WX
+9e5d:    90 01 1c     ld AX, #0x011c
+9e60:    2f 00        dma_load_addr WX
+9e62:    2f 34        dma_set_mode 3
+9e64:    2f 06        dma_enable
+9e66:    80 45        ld AL, #0x45
+9e68:    a2 01 14     st AL, @(0x0114)
+9e6b:    7a 01 18     call @(0x0118)
+9e6e:    13 16        bnn L_9e86
+9e70:    7a 01 12     call @(0x0112)
+9e73:    "TRACK=\0"
+9e7a:    91 41 52     ld AX, (0x4152)
+9e7d:    7a 01 10     call @(0x0110)
+9e80:    7a 01 12     call @(0x0112)
+9e83:    "\r\n\0"
+
+L_9e86:
+9e86:    91 41 52     ld AX, (0x4152)
+9e89:    15 01        bnz L_9e8c
+9e8b:    38           inc! AX
+
+L_9e8c:
+9e8c:    3d           sll! AX
+9e8d:    b1 41 52     st AX, (0x4152)
+9e90:    d0 02 5d     ld BX, #0x025d
+9e93:    59           sub! BX, AX
+9e94:    19 a1        ble L_9e37
+9e96:    a1 f1 0a     st AL, (0xf10a)
+9e99:    7a 01 04     call @(0x0104)
+9e9c:    06           fsc
+9e9d:    0b           unknown
