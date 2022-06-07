@@ -37,6 +37,9 @@
 				var disAddr = parseInt(entryPoint, 16) + i;
 				result.value += disAddr.toString(16).padStart(4, '0');
 				
+				//Check for String/ASCII data
+				checkForString();
+				
 				// Do disassembly stuff from here
 				result.value += ":     ";
 				result.value += splitData[i];
@@ -1140,7 +1143,7 @@
 				}
 				
 				if (splitData[i] == "90") {
-					result.value += " " + splitData[i+1] + "            LDAW";
+					result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         LDAW";
 					i = i + 1; address1(); result.value += "; Load literal address into byte of AW" + "\r\n";
 					continue;
 				}
@@ -1683,7 +1686,7 @@
 			result.value += " #" + splitData[i] + splitData[i+1] + "         "; i = i + 1;
 		}
 		var address1a = function() {
-			result.value += " #" + splitData[i] + splitData[i+1] + "         ";
+			result.value += " #" + splitData[i] + "            ";
 		}
 		var address2 = function() {
 			result.value += " " + splitData[i] + splitData[i+1] + "          "; i = i + 1;
@@ -1735,6 +1738,15 @@
 			result.value += ", " + splitData[i].charAt(1) + ", " 
 			i = i + 1; 
 			result.value += "0x" + splitData[i] + "   ";
+		}
+		
+		
+		//Check for String/ASCII
+		var checkForString = function() {
+			//Check if JSR to Direct Address
+			if (splitData[i] == 79) {
+				
+			};
 		}
 		
         //Main loop
