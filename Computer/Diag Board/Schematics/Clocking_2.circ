@@ -179,12 +179,12 @@ end TCL_Generic;&#13;
     <comp lib="0" loc="(1040,750)" name="Pin">
       <a name="appearance" val="NewPins"/>
       <a name="facing" val="west"/>
-      <a name="label" val="T6_WTIN"/>
+      <a name="label" val="T6_RDIN"/>
     </comp>
     <comp lib="0" loc="(1040,770)" name="Pin">
       <a name="appearance" val="NewPins"/>
       <a name="facing" val="west"/>
-      <a name="label" val="T7_RDIN"/>
+      <a name="label" val="T7_WTIN"/>
     </comp>
     <comp lib="0" loc="(1060,720)" name="Clock">
       <a name="facing" val="west"/>
