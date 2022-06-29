@@ -1,0 +1,97 @@
+1 0000 :                         ; --- EQUATES ---
+1 0000 :                         
+1 0000 :                         sys_done	equ 0x0100
+1 0000 :                         tty_putc	equ 0x0103
+1 0000 :                         tty_putb	equ 0x0106
+1 0000 :                         tty_putw	equ 0x0109
+1 0000 :                         tty_puts	equ 0x010C
+1 0000 :                         tty_getc	equ 0x010F
+1 0000 :                         tty_gets	equ 0x0112
+1 0000 :                         fs_open		equ 0x0115
+1 0000 :                         fs_close	equ 0x0118
+1 0000 :                         fs_make		equ 0x011B
+1 0000 :                         fs_delete	equ 0x011E
+1 0000 :                         fs_list		equ 0x0121
+1 0000 :                         fs_read		equ 0x0124
+1 0000 :                         fs_write	equ 0x0127
+1 0000 :                         
+1 0000 :                         combuf		equ 0x01C0
+1 0000 :                         	
+1 0000 :                         ;	Program starts at 0x0200
+1 0000 :                         	
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         
+1 0000 : D0 01 C0                	ld		b,combuf
+1 0003 : 55 26                   	xfr		b,y
+1 0005 :                         arg_loop1:
+1 0005 : 85 61                   	ld		al,(y+)
+1 0007 : 15 01                   	bnz		arg_space1
+1 0009 : 09                      	rsr		; no argument, done
+1 000A :                         arg_space1:
+1 000A : C0 20                   	ld		bl,' '
+1 000C : 49                      	sub		al,bl
+1 000D : 15 F6                   	bnz		arg_loop1
+1 000F : 55 62                   	xfr		y,b
+1 0011 : F1 00 65                	st		b,(fname_src)
+1 0014 :                         arg_loop2:
+1 0014 : 85 61                   	ld		al,(y+)
+1 0016 : 15 01                   	bnz		arg_space2
+1 0018 : 09                      	rsr		; no argument, done
+1 0019 :                         arg_space2:
+1 0019 : C0 20                   	ld		bl,' '
+1 001B : 49                      	sub		al,bl
+1 001C : 15 F6                   	bnz		arg_loop2
+1 001E : 55 62                   	xfr		y,b
+1 0020 : F1 00 67                	st		b,(fname_dst)
+1 0023 : 2A                      	clr		al
+1 0024 : A5 62                   	st		al,(-y)
+1 0026 :                         	
+1 0026 :                         copy_make:
+1 0026 : 79 01 1B                	jsr		fs_make
+1 0029 : 43 11                   	ori		al,al
+1 002B : 17 01                   	bp		copy_start
+1 002D : 09                      	rsr		; cannot make destination
+1 002E :                         	
+1 002E :                         copy_start:
+1 002E : 32 80                   	clr		z
+1 0030 :                         copy_loop:
+1 0030 : D1 00 65                	ld		b,(fname_src)
+1 0033 : 79 01 15                	jsr		fs_open
+1 0036 : 43 11                   	ori		al,al
+1 0038 : 17 01                   	bp		copy_readsrc
+1 003A : 09                      	rsr	
+1 003B :                         copy_readsrc:
+1 003B : 55 80                   	xfr		z,a
+1 003D : D0 00 69                	ld		b,buffer
+1 0040 : 79 01 24                	jsr		fs_read
+1 0043 : 43 11                   	ori		al,al
+1 0045 : 17 01                   	bp		copy_opendst
+1 0047 : 09                      	rsr
+1 0048 :                         copy_opendst:
+1 0048 : D1 00 67                	ld		b,(fname_dst)
+1 004B : 79 01 15                	jsr		fs_open
+1 004E : 43 11                   	ori		al,al
+1 0050 : 17 01                   	bp		copy_writedst
+1 0052 : 09                      	rsr
+1 0053 :                         copy_writedst:
+1 0053 : 55 80                   	xfr		z,a
+1 0055 : D0 00 69                	ld		b,buffer
+1 0058 : 79 01 27                	jsr		fs_write
+1 005B : 43 11                   	ori		al,al
+1 005D : 17 01                   	bp		copy_next
+1 005F : 09                      	rsr
+1 0060 :                         copy_next:
+1 0060 : 30 80                   	inr		z
+1 0062 : 15 CC                   	bnz		copy_loop
+1 0064 : 09                      	rsr
+1 0065 :                         	
+1 0065 :                         ; --- VARIABLES ---
+1 0065 :                         	
+1 0065 :                         fname_src:
+1 0065 : 00 00                   	.byte 0x00, 0x00
+1 0067 :                         	
+1 0067 :                         fname_dst:
+1 0067 : 00 00                   	.byte 0x00, 0x00
+1 0069 :                         	
+1 0069 :                         buffer:
+1 0069 : 00                      	.byte 0x00

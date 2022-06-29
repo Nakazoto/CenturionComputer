@@ -1,0 +1,437 @@
+1 0000 :                         ; --- EQUATES ---
+1 0000 :                         
+1 0000 :                         sys_done	equ 0x0100
+1 0000 :                         tty_putc	equ 0x0103
+1 0000 :                         tty_putb	equ 0x0106
+1 0000 :                         tty_putw	equ 0x0109
+1 0000 :                         tty_puts	equ 0x010C
+1 0000 :                         tty_getc	equ 0x010F
+1 0000 :                         tty_gets	equ 0x0112
+1 0000 :                         fs_open		equ 0x0115
+1 0000 :                         fs_close	equ 0x0118
+1 0000 :                         fs_make		equ 0x011B
+1 0000 :                         fs_delete	equ 0x011E
+1 0000 :                         fs_list		equ 0x0121
+1 0000 :                         fs_read		equ 0x0124
+1 0000 :                         fs_write	equ 0x0127
+1 0000 :                         gen_htoi	equ 0x012A
+1 0000 :                         tty_next	equ 0x012D
+1 0000 :                         
+1 0000 :                         combuf		equ 0x01C0
+1 0000 :                         	
+1 0000 :                         ;	Program starts at 0x0200
+1 0000 :                         	
+1 0000 :                         ; --- TEXT ---
+1 0000 : D0 01 D5                	ld		b,str_hello
+1 0003 : 79 01 0C                	jsr		tty_puts
+1 0006 :                         options:
+1 0006 : D0 01 FD                	ld		b,str_opt
+1 0009 : 79 01 0C                	jsr		tty_puts
+1 000C : 80 01                   	ld		al,1
+1 000E : D0 03 A7                	ld		b,sel_buffer
+1 0011 : 79 01 12                	jsr		tty_gets
+1 0014 : 81 03 A7                	ld		al,(sel_buffer)
+1 0017 :                         
+1 0017 : C0 30                   	ld		bl,'0'
+1 0019 : 49                      	sub		al,bl
+1 001A : 14 13                   	bz		init
+1 001C :                         	
+1 001C : C0 31                   	ld		bl,'1'
+1 001E : 49                      	sub		al,bl
+1 001F : 14 2C                   	bz		seek
+1 0021 :                         	
+1 0021 : C0 32                   	ld		bl,'2'
+1 0023 : 49                      	sub		al,bl
+1 0024 : 14 48                   	bz		read
+1 0026 :                         	
+1 0026 : C0 33                   	ld		bl,'3'
+1 0028 : 49                      	sub		al,bl
+1 0029 : 14 03                   	bz		exit
+1 002B :                         	
+1 002B :                         	
+1 002B : 71 00 06                	jmp		options
+1 002E :                         	
+1 002E :                         ; Exit the program
+1 002E :                         exit:
+1 002E : 09                      	rsr
+1 002F :                         	
+1 002F :                         ; Init test
+1 002F :                         init:
+1 002F : D0 01 FA                	ld		b,str_crlf
+1 0032 : 79 01 0C                	jsr		tty_puts
+1 0035 : 90 FF F9                	ld		a,0xFFF9
+1 0038 : D0 03 5D                	ld		b,cmd_seek_a
+1 003B : 79 01 35                	jsr		set_ac
+1 003E : 79 01 3C                	jsr		exec_start
+1 0041 : 79 01 60                	jsr		exec_end
+1 0044 : D0 02 E3                	ld		b,str_cmdfinish
+1 0047 : 79 01 0C                	jsr		tty_puts
+1 004A : 71 00 06                	jmp		options
+1 004D :                         	
+1 004D :                         	
+1 004D :                         ; Seek test
+1 004D :                         seek:
+1 004D : 79 00 ED                	jsr		seltrack
+1 0050 : 91 03 AE                	ld		a,(track)
+1 0053 : B1 03 68                	st		a,(cmd_seek_b_track)
+1 0056 : 90 FF F7                	ld		a,0xFFF7
+1 0059 : D0 03 63                	ld		b,cmd_seek_b
+1 005C : 79 01 35                	jsr		set_ac
+1 005F : 79 01 3C                	jsr		exec_start
+1 0062 : 79 01 60                	jsr		exec_end
+1 0065 : D0 02 E3                	ld		b,str_cmdfinish
+1 0068 : 79 01 0C                	jsr		tty_puts
+1 006B : 71 00 06                	jmp		options
+1 006E :                         	
+1 006E :                         ; Read test
+1 006E :                         read:
+1 006E : 79 00 ED                	jsr		seltrack
+1 0071 : 91 03 AE                	ld		a,(track)
+1 0074 : B1 03 70                	st		a,(cmd_read_track)
+1 0077 : D0 02 7A                	ld		b,str_short
+1 007A : 79 01 0C                	jsr		tty_puts
+1 007D : 80 01                   	ld		al,1
+1 007F : D0 03 A7                	ld		b,sel_buffer
+1 0082 : 79 01 12                	jsr		tty_gets
+1 0085 : 81 03 A7                	ld		al,(sel_buffer)
+1 0088 : C0 59                   	ld		bl,'Y'
+1 008A : 49                      	sub		al,bl
+1 008B : 14 06                   	bz		read_short
+1 008D : 90 FF C3                	ld		a,0xFFC3
+1 0090 : 71 00 96                	jmp		read_cmd
+1 0093 :                         read_short:
+1 0093 : 90 FF C6                	ld		a,0xFFC6
+1 0096 :                         read_cmd:
+1 0096 : D0 03 6B                	ld		b,cmd_read
+1 0099 : 79 01 35                	jsr		set_ac
+1 009C : D0 01 FA                	ld		b,str_crlf
+1 009F : 79 01 0C                	jsr		tty_puts
+1 00A2 : 79 01 3C                	jsr		exec_start
+1 00A5 : 90 E6 FF                	ld		a,0xE6FF
+1 00A8 : D0 03 B0                	ld		b,heap
+1 00AB : 79 01 4E                	jsr		exec_end_dma
+1 00AE : D0 02 E3                	ld		b,str_cmdfinish
+1 00B1 : 79 01 0C                	jsr		tty_puts
+1 00B4 : 79 00 BA                	jsr		heapdump
+1 00B7 : 71 00 06                	jmp		options
+1 00BA :                         
+1 00BA :                         ; Dumps the heap into a file	
+1 00BA :                         heapdump:
+1 00BA : D0 03 50                	ld		b,str_output
+1 00BD : 79 01 1B                	jsr		fs_make
+1 00C0 : D0 03 50                	ld		b,str_output
+1 00C3 : 79 01 15                	jsr		fs_open
+1 00C6 : 43 11                   	ori		al,al
+1 00C8 : 17 06                   	bp		heapdump_w
+1 00CA : D0 03 3D                	ld		b,str_filerr
+1 00CD : 71 01 0C                	jmp		tty_puts
+1 00D0 :                         heapdump_w:
+1 00D0 : D0 03 B0                	ld		b,heap
+1 00D3 : 55 28                   	xfr		b,z
+1 00D5 : 3A                      	clr		a
+1 00D6 :                         heapdump_l:
+1 00D6 : B5 A2                   	st		a,(-s)
+1 00D8 : 55 82                   	xfr		z,b
+1 00DA : 79 01 27                	jsr		fs_write
+1 00DD : 95 A1                   	ld		a,(s+)
+1 00DF : D0 01 00                	ld		b,256
+1 00E2 : 50 28                   	add		b,z
+1 00E4 : 28                      	inr		al
+1 00E5 : C0 19                   	ld		bl,25
+1 00E7 : 49                      	sub		al,bl
+1 00E8 : 15 EC                   	bnz		heapdump_l
+1 00EA : 71 01 18                	jmp		fs_close
+1 00ED :                         
+1 00ED :                         	
+1 00ED :                         
+1 00ED :                         ; Select a track
+1 00ED :                         seltrack:
+1 00ED : D0 02 67                	ld		b,str_track
+1 00F0 : 79 01 0C                	jsr		tty_puts
+1 00F3 : D0 03 A9                	ld		b,hex_buffer
+1 00F6 : 80 04                   	ld		al,4
+1 00F8 : 79 01 12                	jsr		tty_gets		
+1 00FB : D1 03 A9                	ld		b,(hex_buffer)
+1 00FE : 79 01 2A                	jsr		gen_htoi
+1 0101 : A5 A2                   	st		al,(-s)
+1 0103 : D1 03 AB                	ld		b,(hex_buffer+2)
+1 0106 : 79 01 2A                	jsr		gen_htoi
+1 0109 : C5 A1                   	ld		bl,(s+)
+1 010B : 45 30                   	xfr		bl,ah
+1 010D : 53 00                   	ori		a,a
+1 010F : 16 1B                   	bm		seltrack_e
+1 0111 : D0 02 5D                	ld		b,0x025D
+1 0114 : 59                      	sub		a,b
+1 0115 : 17 15                   	bp		seltrack_e
+1 0117 : B1 03 AE                	st		a,(track)
+1 011A : D0 02 95                	ld		b,str_showtrack
+1 011D : 79 01 0C                	jsr		tty_puts
+1 0120 : D1 03 AE                	ld		b,(track)
+1 0123 : 79 01 09                	jsr		tty_putw
+1 0126 : D0 01 FA                	ld		b,str_crlf
+1 0129 : 71 01 0C                	jmp		tty_puts
+1 012C :                         seltrack_e:
+1 012C : D0 02 A7                	ld		b,str_trackerr
+1 012F : 79 01 0C                	jsr		tty_puts
+1 0132 : 71 00 ED                	jmp		seltrack
+1 0135 :                         
+1 0135 :                         	
+1 0135 :                         ; Sets DMA Addr/Cnt
+1 0135 :                         ; A = Count
+1 0135 :                         ; B = Address
+1 0135 :                         set_ac:
+1 0135 : 2F 02                   	.byte	0x2F,0x02 ; dma_load_count A
+1 0137 : 55 20                   	xfr		b,a
+1 0139 : 2F 00                   	.byte	0x2F,0x00 ; dma_load_addr B
+1 013B : 09                      	rsr
+1 013C :                         	
+1 013C :                         	
+1 013C :                         ; Starts a command
+1 013C :                         exec_start:
+1 013C : D0 02 B9                	ld		b,str_cmdstart
+1 013F : 79 01 0C                	jsr		tty_puts
+1 0142 : 2F 34                   	.byte	0x2F,0x34 ; dma_set_mode 3
+1 0144 : 2F 06                   	.byte	0x2F,0x06 ; dma_enable
+1 0146 : 80 43                   	ld		al,0x43
+1 0148 : A1 F8 00                	st		al,(0xF800)
+1 014B : 71 01 6B                	jmp		wait_done
+1 014E :                         	
+1 014E :                         exec_end_dma:
+1 014E : D0 02 CF                	ld		b,str_cmdend
+1 0151 : 79 01 0C                	jsr		tty_puts
+1 0154 : 2F 34                   	.byte	0x2F,0x34 ; dma_set_mode 3
+1 0156 : 2F 06                   	.byte	0x2F,0x06 ; dma_enable
+1 0158 : 80 45                   	ld		al,0x45
+1 015A : A1 F8 00                	st		al,(0xF800)
+1 015D : 71 01 6B                	jmp		wait_done
+1 0160 :                         	
+1 0160 :                         ; Ends a command
+1 0160 :                         exec_end:
+1 0160 : D0 02 CF                	ld		b,str_cmdend
+1 0163 : 79 01 0C                	jsr		tty_puts
+1 0166 : 80 45                   	ld		al,0x45
+1 0168 : A1 F8 00                	st		al,(0xF800)
+1 016B :                         	
+1 016B :                         ; Waits for a command to complete
+1 016B :                         wait_done:
+1 016B : 79 01 B7                	jsr		wait_done_fin
+1 016E : 6D A2                   	st		x,(-s)
+1 0170 : 60 03 E8                	ld		x,0x03E8
+1 0173 :                         wait_done_l:
+1 0173 : 81 F8 01                	ld		al,(0xF801)
+1 0176 : C0 08                   	ld		bl,0x08
+1 0178 : 4A                      	and		al,bl
+1 0179 : 14 0E                   	bz		wait_done_f
+1 017B : 0E                      	dly
+1 017C : 31 40                   	dcr		x
+1 017E : 15 F3                   	bnz		wait_done_l
+1 0180 : D0 03 0B                	ld		b,str_busyerr
+1 0183 : 79 01 0C                	jsr		tty_puts
+1 0186 : 65 A1                   	ld		x,(s+)
+1 0188 : 09                      	rsr
+1 0189 :                         wait_done_f:
+1 0189 : 60 03 E8                	ld		x,0x03E8
+1 018C :                         wait_done_fl:
+1 018C : 2C                      	srr		al
+1 018D : 10 0E                   	bl		wait_done_r
+1 018F : 0E                      	dly
+1 0190 : 31 40                   	dcr		x
+1 0192 : 15 F8                   	bnz		wait_done_fl
+1 0194 : D0 03 20                	ld		b,str_fouterr
+1 0197 : 79 01 0C                	jsr		tty_puts
+1 019A : 65 A1                   	ld		x,(s+)
+1 019C : 09                      	rsr
+1 019D :                         wait_done_r:
+1 019D : 03                      	rf
+1 019E : 81 F8 00                	ld		al,(0xF800)
+1 01A1 : 15 03                   	bnz		wait_done_err
+1 01A3 : 65 A1                   	ld		x,(s+)
+1 01A5 : 09                      	rsr
+1 01A6 :                         wait_done_err:
+1 01A6 : A5 A2                   	st		al,(-s)
+1 01A8 : D0 03 35                	ld		b,str_err
+1 01AB : 79 01 0C                	jsr		tty_puts
+1 01AE : C5 A1                   	ld		bl,(s+)
+1 01B0 : 79 01 06                	jsr		tty_putb
+1 01B3 : 65 A1                   	ld		x,(s+)
+1 01B5 : 02                      	sf
+1 01B6 : 09                      	rsr
+1 01B7 :                         	
+1 01B7 :                         wait_done_fin:
+1 01B7 : 6D A2                   	st		x,(-s)
+1 01B9 : 0E                      	dly
+1 01BA : 60 03 E8                	ld		x,0x03E8
+1 01BD :                         wait_done_fin_l:
+1 01BD : 81 F8 01                	ld		al,(0xF801)
+1 01C0 : 2C                      	srr		al
+1 01C1 : 2C                      	srr		al
+1 01C2 : 11 0E                   	bnl		wait_done_fin_e
+1 01C4 : 0E                      	dly
+1 01C5 : 31 40                   	dcr		x
+1 01C7 : 15 F4                   	bnz		wait_done_fin_l
+1 01C9 : D0 02 F6                	ld		b,str_finerr
+1 01CC : 79 01 0C                	jsr		tty_puts
+1 01CF : 65 A1                   	ld		x,(s+)
+1 01D1 : 09                      	rsr
+1 01D2 :                         wait_done_fin_e:
+1 01D2 : 65 A1                   	ld		x,(s+)
+1 01D4 : 09                      	rsr
+1 01D5 :                         
+1 01D5 :                         ; --- STRINGS ---
+1 01D5 :                         str_hello:
+1 01D5 : 46 46 43 20 4D 4F 4E 49 	.ascii "FFC MONITOR/DIAGNOSTIC UTILITY V0.1.1"
+1 01DE : 54 4F 52 2F 44 49 41 47 ...
+1 01E6 : 4E 4F 53 54 49 43 20 55 ...
+1 01EE : 54 49 4C 49 54 59 20 56 ...
+1 01F6 : 30 2E 31 2E 31          ...
+1 01FA :                         str_crlf:
+1 01FA : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 01FD :                         
+1 01FD :                         str_opt:
+1 01FD : 53 45 4C 45 43 54 20 41 	.ascii "SELECT AN OPTION:"
+1 0206 : 4E 20 4F 50 54 49 4F 4E ...
+1 020E : 3A                      ...
+1 020E : 0D 0A                   	.byte	0x0D,0x0A
+1 0210 : 20 30 3A 20 49 4E 49 54 	.ascii	" 0: INIT FINCH DRIVE"
+1 0219 : 20 46 49 4E 43 48 20 44 ...
+1 0221 : 52 49 56 45             ...
+1 0224 : 0D 0A                   	.byte	0x0D,0x0A
+1 0226 : 20 31 3A 20 53 45 45 4B 	.ascii	" 1: SEEK FINCH DRIVE"
+1 022F : 20 46 49 4E 43 48 20 44 ...
+1 0237 : 52 49 56 45             ...
+1 023A : 0D 0A                   	.byte	0x0D,0x0A
+1 023C : 20 32 3A 20 52 45 41 44 	.ascii	" 2: READ FINCH DRIVE (16x400)"
+1 0245 : 20 46 49 4E 43 48 20 44 ...
+1 024D : 52 49 56 45 20 28 31 36 ...
+1 0255 : 78 34 30 30 29          ...
+1 0259 : 0D 0A                   	.byte	0x0D,0x0A
+1 025B : 20 33 3A 20 45 58 49 54 	.ascii	" 3: EXIT"
+1 0263 : 0D 0A                   	.byte	0x0D,0x0A
+1 0265 : 3E                      	.ascii	">"
+1 0266 : 00                      	.byte	0x00
+1 0267 :                         	
+1 0267 :                         str_track:
+1 0267 : 0D 0A                   	.byte	0x0D,0x0A
+1 0269 : 54 52 41 43 4B 20 23 20 	.ascii	"TRACK # (XXXX)? "
+1 0272 : 28 58 58 58 58 29 3F 20 ...
+1 0279 : 00                      	.byte	0x00
+1 027A :                         	
+1 027A :                         str_short:
+1 027A : 53 48 4F 52 54 45 4E 20 	.ascii	"SHORTEN CMD PACKET (Y/N)? "
+1 0283 : 43 4D 44 20 50 41 43 4B ...
+1 028B : 45 54 20 28 59 2F 4E 29 ...
+1 0293 : 3F 20                   ...
+1 0294 : 00                      	.byte	0x00
+1 0295 :                         	
+1 0295 :                         str_showtrack:
+1 0295 : 0D 0A                   	.byte	0x0D,0x0A
+1 0297 : 53 45 4C 45 43 54 45 44 	.ascii	"SELECTED TRACK "
+1 02A0 : 20 54 52 41 43 4B 20    ...
+1 02A6 : 00                      	.byte	0x00
+1 02A7 :                         	
+1 02A7 :                         str_trackerr:
+1 02A7 : 0D 0A                   	.byte	0x0D,0x0A
+1 02A9 : 49 4E 56 41 4C 49 44 20 	.ascii	"INVALID TRACK"
+1 02B2 : 54 52 41 43 4B          ...
+1 02B6 : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 02B9 :                         	
+1 02B9 :                         str_cmdstart:
+1 02B9 : 53 54 41 52 54 49 4E 47 	.ascii	"STARTING COMMAND..."
+1 02C2 : 20 43 4F 4D 4D 41 4E 44 ...
+1 02CA : 2E 2E 2E                ...
+1 02CC : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 02CF :                         	
+1 02CF :                         str_cmdend:
+1 02CF : 45 4E 44 49 4E 47 20 43 	.ascii	"ENDING COMMAND..."
+1 02D8 : 4F 4D 4D 41 4E 44 2E 2E ...
+1 02E0 : 2E                      ...
+1 02E0 : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 02E3 :                         	
+1 02E3 :                         str_cmdfinish:
+1 02E3 : 43 4F 4D 4D 41 4E 44 20 	.ascii	"COMMAND COMPLETE"
+1 02EC : 43 4F 4D 50 4C 45 54 45 ...
+1 02F3 : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 02F6 :                         	
+1 02F6 :                         str_finerr:
+1 02F6 : 46 49 4E 20 44 49 44 20 	.ascii	"FIN DID NOT GO OFF"
+1 02FF : 4E 4F 54 20 47 4F 20 4F ...
+1 0307 : 46 46                   ...
+1 0308 : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 030B :                         	
+1 030B :                         str_busyerr:
+1 030B : 42 55 53 59 20 44 49 44 	.ascii	"BUSY DID NOT CLEAR"
+1 0314 : 20 4E 4F 54 20 43 4C 45 ...
+1 031C : 41 52                   ...
+1 031D : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 0320 :                         	
+1 0320 :                         str_fouterr:
+1 0320 : 46 4F 55 54 20 4E 45 56 	.ascii	"FOUT NEVER CAME ON"
+1 0329 : 45 52 20 43 41 4D 45 20 ...
+1 0331 : 4F 4E                   ...
+1 0332 : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 0335 :                         	
+1 0335 :                         str_err:
+1 0335 : 45 52 52 4F 52 20 23    	.ascii	"ERROR #"
+1 033C : 00                      	.byte	0x00
+1 033D :                         
+1 033D :                         str_filerr:
+1 033D : 43 41 4E 4E 4F 54 20 4F 	.ascii "CANNOT OPEN FILE"
+1 0346 : 50 45 4E 20 46 49 4C 45 ...
+1 034D : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 0350 :                         
+1 0350 :                         str_output:
+1 0350 : 46 46 43 44 45 42 55 47 	.ascii	"FFCDEBUG.DAT"
+1 0359 : 2E 44 41 54             ...
+1 035C : 00                      	.byte	0x00
+1 035D :                         
+1 035D :                         ; --- COMMANDS ---
+1 035D :                         
+1 035D :                         cmd_seek_a:
+1 035D : 81 02 84 00 82 FF       	.byte	0x81,0x02,0x84,0x00,0x82,0xFF
+1 0363 :                         	
+1 0363 :                         cmd_seek_b:
+1 0363 : 81 02 84 00 83          	.byte	0x81,0x02,0x84,0x00,0x83
+1 0368 :                         cmd_seek_b_track:
+1 0368 : 00 00                   	.byte	0x00,0x00
+1 036A : FF                      	.byte 	0xFF
+1 036B :                         	
+1 036B :                         cmd_read:
+1 036B : 81 02 84 00 83          	.byte	0x81,0x02,0x84,0x00,0x83
+1 0370 :                         cmd_read_track:
+1 0370 : 00 00                   	.byte	0x00,0x00
+1 0372 : 8A                      	.byte	0x8A
+1 0373 : 00 01 90                	.byte	0x00,0x01,0x90
+1 0376 : 01 01 90                	.byte	0x01,0x01,0x90
+1 0379 : 02 01 90                	.byte	0x02,0x01,0x90
+1 037C : 03 01 90                	.byte	0x03,0x01,0x90
+1 037F : 04 01 90                	.byte	0x04,0x01,0x90
+1 0382 : 05 01 90                	.byte	0x05,0x01,0x90
+1 0385 : 06 01 90                	.byte	0x06,0x01,0x90
+1 0388 : 07 01 90                	.byte	0x07,0x01,0x90
+1 038B : 08 01 90                	.byte	0x08,0x01,0x90
+1 038E : 09 01 90                	.byte	0x09,0x01,0x90
+1 0391 : 0A 01 90                	.byte	0x0A,0x01,0x90
+1 0394 : 0B 01 90                	.byte	0x0B,0x01,0x90
+1 0397 : 0C 01 90                	.byte	0x0C,0x01,0x90
+1 039A : 0D 01 90                	.byte	0x0D,0x01,0x90
+1 039D : 0E 01 90                	.byte	0x0E,0x01,0x90
+1 03A0 : 0F 01 90                	.byte	0x0F,0x01,0x90
+1 03A3 : FF                      	.byte	0xFF 
+1 03A4 : 00 00 00                	.byte	0x00,0x00,0x00
+1 03A7 :                         	
+1 03A7 :                         
+1 03A7 :                         ; --- VARIABLES ---
+1 03A7 :                         
+1 03A7 :                         sel_buffer:
+1 03A7 : 00 00                   	.byte	0x00,0x00
+1 03A9 :                         	
+1 03A9 :                         hex_buffer:
+1 03A9 : 00 00 00 00 00          	.byte	0x00,0x00,0x00,0x00,0x00
+1 03AE :                         	
+1 03AE :                         track:
+1 03AE : 00 00                   	.byte	0x00,0x00
+1 03B0 :                         	
+1 03B0 :                         heap:
+1 03B0 : 00                      	.byte	0x00
+1 03B1 :                         	
+1 03B1 :                         

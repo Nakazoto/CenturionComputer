@@ -1,0 +1,663 @@
+1 0000 :                         ; --- EQUATES ---
+1 0000 :                         
+1 0000 :                         combuf		equ 0x01C0
+1 0000 :                         crc_poly	equ 10100111b
+1 0000 :                         
+1 0000 :                         ; --- VARIABLES ---
+1 0000 :                         
+1 0000 :                         ; System variable block base
+1 0000 :                         v_base		equ textop
+1 0000 :                         
+1 0000 :                         
+1 0000 :                         ; Save registers
+1 0000 :                         v_asave		equ v_base
+1 0000 :                         v_bsave		equ v_base+2
+1 0000 :                         
+1 0000 :                         ; CRC variable
+1 0000 :                         v_crc		equ v_base+4
+1 0000 :                         
+1 0000 :                         ; Execution variables
+1 0000 :                         v_execbuf	equ v_base+5
+1 0000 :                         
+1 0000 :                         ; Image top
+1 0000 :                         
+1 0000 :                         top			equ	v_base+15
+1 0000 :                         
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         
+1 0000 :                         stack: ; stack pointer symbol, bottom of image for now
+1 0000 :                         start: ; bottom of image
+1 0000 :                         
+1 0000 :                         ; -- COLD BOOT OPERATIONS --
+1 0000 :                         
+1 0000 :                         	; set stack pointer
+1 0000 : 90 00 00                	ld		a,stack
+1 0003 : 5F                      	xfr		a,s ; this right <- left syntax is *super* annoying
+1 0004 :                         	
+1 0004 :                         	; start post-bootstrap init
+1 0004 : D0 03 11                	ld		b,str_hello
+1 0007 : 79 02 85                	jsr		tty_puts
+1 000A :                         	
+1 000A :                         	; print system vectors 
+1 000A : C0 09                   	ld		bl,9
+1 000C : 79 02 93                	jsr		tty_putc
+1 000F : D0 00 00                	ld		b,start
+1 0012 : 79 02 56                	jsr		tty_putw
+1 0015 : D0 03 2D                	ld		b,str_start
+1 0018 : 79 02 85                	jsr		tty_puts
+1 001B :                         	
+1 001B : C0 09                   	ld		bl,9
+1 001D : 79 02 93                	jsr		tty_putc
+1 0020 : D0 00 6F                	ld		b,con_prompt
+1 0023 : 79 02 56                	jsr		tty_putw
+1 0026 : D0 03 42                	ld		b,str_prompt
+1 0029 : 79 02 85                	jsr		tty_puts
+1 002C :                         	
+1 002C : C0 09                   	ld		bl,9
+1 002E : 79 02 93                	jsr		tty_putc
+1 0031 : D0 03 D3                	ld		b,top
+1 0034 : 79 02 56                	jsr		tty_putw
+1 0037 : D0 03 5C                	ld		b,str_top
+1 003A : 79 02 85                	jsr		tty_puts
+1 003D :                         	
+1 003D : C0 09                   	ld		bl,9
+1 003F : 79 02 93                	jsr		tty_putc
+1 0042 : D0 00 00                	ld		b,stack
+1 0045 : 79 02 56                	jsr		tty_putw
+1 0048 : D0 03 6A                	ld		b,str_stack
+1 004B : 79 02 85                	jsr		tty_puts
+1 004E :                         	
+1 004E : D0 00 5E                	ld		b,autoexec
+1 0051 : 55 26                   	xfr		b,y
+1 0053 : D0 01 C0                	ld		b,combuf
+1 0056 : 80 40                   	ld		al,64
+1 0058 : 79 00 FD                	jsr		gen_memcpy
+1 005B : 71 00 87                	jmp		con_exec
+1 005E :                         
+1 005E :                         autoexec:
+1 005E : 54 59 50 45 20 57 45 4C 	.ascii	"TYPE WELCOME.TXT"
+1 0067 : 43 4F 4D 45 2E 54 58 54 ...
+1 006E : 00                      	.byte	0x00
+1 006F :                         	
+1 006F :                         ; --- CONSOLE OPERATIONS ---
+1 006F :                         
+1 006F :                         ; Prompts the user for a command
+1 006F :                         con_prompt:
+1 006F : D0 03 78                	ld		b,str_ready
+1 0072 : 79 02 85                	jsr		tty_puts
+1 0075 : D0 01 C0                	ld		b,combuf
+1 0078 : 80 3F                   	ld		al,63
+1 007A : 79 02 C0                	jsr		tty_gets
+1 007D : C0 0A                   	ld		bl,0x0A
+1 007F : 79 02 93                	jsr		tty_putc
+1 0082 : C0 0D                   	ld		bl,0x0D
+1 0084 : 79 02 93                	jsr		tty_putc
+1 0087 :                         	
+1 0087 :                         ; Executes whatever is in the combuf
+1 0087 :                         con_exec:
+1 0087 : D0 01 C0                	ld		b,combuf
+1 008A : 55 28                   	xfr		b,z
+1 008C : D0 03 C9                	ld		b,v_execbuf
+1 008F : 55 26                   	xfr		b,y
+1 0091 : C0 09                   	ld		bl,9
+1 0093 : 45 32                   	xfr		bl,bh
+1 0095 :                         con_exec_fn:
+1 0095 : 85 81                   	ld		al,(z+)
+1 0097 : C0 21                   	ld		bl,0x21
+1 0099 : 49                      	sub		al,bl
+1 009A : 16 06                   	bm		con_exec_bin
+1 009C : A5 61                   	st		al,(y+)
+1 009E : 21 20                   	dcr		bh
+1 00A0 : 15 F3                   	bnz		con_exec_fn
+1 00A2 :                         con_exec_bin:
+1 00A2 : 55 62                   	xfr		y,b
+1 00A4 : 90 03 83                	ld		a,str_bin
+1 00A7 : 5C                      	xfr		a,y
+1 00A8 : 80 05                   	ld		al,5
+1 00AA : 79 00 FD                	jsr		gen_memcpy
+1 00AD :                         	
+1 00AD : D0 03 C9                	ld		b,v_execbuf
+1 00B0 : 79 01 35                	jsr		fs_open
+1 00B3 : 45 11                   	xfr		al,al
+1 00B5 : 16 3D                   	bm		con_exec_err ; Check for errors
+1 00B7 :                         	
+1 00B7 : 32 80                   	clr		z ; Start at block zero
+1 00B9 :                         con_exec_ld:
+1 00B9 : 45 93                   	xfr		zl,bl
+1 00BB : 80 02                   	ld		al,0x02 ; Program image base is 0x0200
+1 00BD : 48                      	add		al,bl
+1 00BE : 14 34                   	bz		con_exec_err ; Overflow, this is bad!
+1 00C0 : 45 32                   	xfr		bl,bh
+1 00C2 : 22 30                   	clr		bl
+1 00C4 : 55 80                   	xfr		z,a
+1 00C6 : 79 01 A9                	jsr		fs_read ; Read that block into memory
+1 00C9 : C0 FF                   	ld		bl,255
+1 00CB : 49                      	sub		al,bl
+1 00CC : 14 EB                   	bz		con_exec_ld ; If communication error, retry
+1 00CE : 43 11                   	ori		al,al
+1 00D0 : 16 05                   	bm		con_exec_run ; General failure, we must be done loading (hopefully)
+1 00D2 : 20 90                   	inr		zl
+1 00D4 : 71 00 B9                	jmp		con_exec_ld
+1 00D7 :                         con_exec_run:
+1 00D7 : D0 03 94                	ld		b,vec_tab
+1 00DA : 55 26                   	xfr		b,y
+1 00DC : D0 01 00                	ld		b,0x0100 ; Vector table location is 0x0100
+1 00DF : 80 30                   	ld		al,48
+1 00E1 : 79 00 FD                	jsr		gen_memcpy
+1 00E4 : 79 01 4F                	jsr		fs_close
+1 00E7 :                         	
+1 00E7 : 79 02 00                	jsr		0x0200 ; and execute!
+1 00EA :                         	
+1 00EA :                         con_exec_done:
+1 00EA :                         	
+1 00EA : 79 01 4F                	jsr		fs_close ; close stray files
+1 00ED : 90 00 00                	ld		a,stack	; set stack pointer
+1 00F0 : 5F                      	xfr		a,s
+1 00F1 : 71 00 6F                	jmp		con_prompt
+1 00F4 :                         
+1 00F4 :                         	
+1 00F4 :                         	
+1 00F4 :                         	
+1 00F4 :                         con_exec_err:
+1 00F4 : D0 03 88                	ld		b,str_nocmd
+1 00F7 : 79 02 85                	jsr		tty_puts
+1 00FA : 71 00 6F                	jmp		con_prompt
+1 00FD :                         	
+1 00FD :                         ; --- GENERAL OPERATIONS ---
+1 00FD :                         
+1 00FD :                         ; Copies one part of memory to another
+1 00FD :                         ; AL = # bytes
+1 00FD :                         ; B = Destination
+1 00FD :                         ; Y = Source
+1 00FD :                         ; Destroys, A, B, Y
+1 00FD :                         gen_memcpy:
+1 00FD : 45 10                   	xfr		al,ah
+1 00FF :                         gen_memcpy_l:
+1 00FF : 85 61                   	ld		al,(y+)
+1 0101 : A5 21                   	st		al,(b+)
+1 0103 : 21 00                   	dcr		ah
+1 0105 : 15 F8                   	bnz		gen_memcpy_l
+1 0107 : 09                      	rsr
+1 0108 :                         	
+1 0108 :                         ; Turns a hex number in ASCII into a value
+1 0108 :                         ; AL = Returned value
+1 0108 :                         ; B = Hex value
+1 0108 :                         ; Destroys: A, B
+1 0108 :                         gen_htoi:
+1 0108 : 79 01 19                	jsr		gen_htoi_n
+1 010B : 45 10                   	xfr		al,ah
+1 010D : 45 23                   	xfr		bh,bl
+1 010F : 79 01 19                	jsr		gen_htoi_n
+1 0112 : 2D                      	slr		al
+1 0113 : 2D                      	slr		al
+1 0114 : 2D                      	slr		al
+1 0115 : 2D                      	slr		al
+1 0116 : 43 01                   	ori		ah,al
+1 0118 : 09                      	rsr
+1 0119 :                         gen_htoi_n:
+1 0119 : 45 31                   	xfr		bl,al
+1 011B : C0 30                   	ld		bl,'0'
+1 011D : 49                      	sub		al,bl
+1 011E : 17 02                   	bp		gen_htoi_i
+1 0120 :                         gen_htoi_e:
+1 0120 : 2A                      	clr		al
+1 0121 : 09                      	rsr
+1 0122 :                         gen_htoi_i:
+1 0122 : 80 0A                   	ld		al,10
+1 0124 : 41 31                   	sub		bl,al
+1 0126 : 17 03                   	bp		gen_htoi_a
+1 0128 : 45 31                   	xfr		bl,al
+1 012A : 09                      	rsr
+1 012B :                         gen_htoi_a:
+1 012B : 80 07                   	ld		al,7
+1 012D : 41 31                   	sub		bl,al
+1 012F : C0 10                   	ld		bl,16
+1 0131 : 49                      	sub		al,bl
+1 0132 : 17 EC                   	bp 		gen_htoi_e
+1 0134 : 09                      	rsr
+1 0135 :                         
+1 0135 :                         ; --- FILESYSTEM OPERATIONS ---
+1 0135 :                         
+1 0135 :                         ; Required external functions:
+1 0135 :                         ; fs_open, fs_close, fs_make, fs_delete, fs_list, fs_read, fs_write
+1 0135 :                         
+1 0135 :                         ; Opens up a file for use
+1 0135 :                         ; B = Filename string
+1 0135 :                         ; AL = Returned status
+1 0135 :                         ; Destroys: A, B, Y 
+1 0135 :                         fs_open:
+1 0135 : 55 26                   	xfr		b,y
+1 0137 : 79 02 27                	jsr		fs_res_crc
+1 013A : C0 02                   	ld		bl,2
+1 013C :                         fs_filecom:
+1 013C : 79 02 05                	jsr		fs_com_noblk
+1 013F : 80 10                   	ld		al,16
+1 0141 : 45 12                   	xfr		al,bh
+1 0143 :                         fs_open_l: ; Read in 16 bytes of filename
+1 0143 : C5 61                   	ld		bl,(y+)
+1 0145 : 79 02 0B                	jsr		fs_send
+1 0148 : 21 20                   	dcr		bh
+1 014A : 15 F7                   	bnz		fs_open_l
+1 014C : 71 01 57                	jmp		fs_recv_stat
+1 014F :                         
+1 014F :                         ; Closes the currently open file
+1 014F :                         ; AL = Returned status
+1 014F :                         ; Destroys; A, B
+1 014F :                         fs_close:
+1 014F : 79 02 27                	jsr		fs_res_crc
+1 0152 : C0 03                   	ld		bl,3
+1 0154 : 79 02 05                	jsr		fs_com_noblk
+1 0157 :                         fs_recv_stat:
+1 0157 : C1 03 C8                	ld		bl,(v_crc)
+1 015A : 79 02 0B                	jsr		fs_send ; CRC
+1 015D : 79 02 27                	jsr		fs_res_crc ; Prepare to receive
+1 0160 : 79 02 19                	jsr		fs_recv ; Receive status
+1 0163 : 45 10                   	xfr		al,ah
+1 0165 :                         fs_recv_crc: ; status should be in ah
+1 0165 : 81 03 C8                	ld		al,(v_crc)
+1 0168 : 45 12                   	xfr		al,bh
+1 016A : 79 02 19                	jsr		fs_recv ; Recieve CRC
+1 016D : 41 12                   	sub		al,bh
+1 016F : 15 03                   	bnz		fs_close_mis ; CRC mismatch
+1 0171 : 45 01                   	xfr		ah,al
+1 0173 : 09                      	rsr
+1 0174 :                         fs_close_mis:
+1 0174 : 80 FF                   	ld		al,255
+1 0176 : 09                      	rsr
+1 0177 :                         	
+1 0177 :                         ; Makes a new file, but does not open it
+1 0177 :                         ; B = Filename string
+1 0177 :                         ; AL = Returned status
+1 0177 :                         ; Destroys: A, B, Y 
+1 0177 :                         fs_make:
+1 0177 : 55 26                   	xfr		b,y
+1 0179 : 79 02 27                	jsr		fs_res_crc
+1 017C : C0 04                   	ld		bl,4
+1 017E : 71 01 3C                	jmp		fs_filecom
+1 0181 :                         	
+1 0181 :                         ; Deletes an existing file
+1 0181 :                         ; B = Filename string
+1 0181 :                         ; AL = Returned status
+1 0181 :                         ; Destroys: A, B, Y 
+1 0181 :                         fs_delete:
+1 0181 : 55 26                   	xfr		b,y
+1 0183 : 79 02 27                	jsr		fs_res_crc
+1 0186 : C0 05                   	ld		bl,5
+1 0188 : 71 01 3C                	jmp		fs_filecom
+1 018B :                         
+1 018B :                         ; Lists a filename and size from the directory
+1 018B :                         ; A = Entry number
+1 018B :                         ; B = Result buffer
+1 018B :                         ; AL = Returned status
+1 018B :                         ; Destroys: A, B, Y
+1 018B :                         fs_list:
+1 018B : 55 26                   	xfr		b,y
+1 018D : 45 12                   	xfr		al,bh
+1 018F : 79 02 27                	jsr		fs_res_crc
+1 0192 : C0 06                   	ld		bl,6
+1 0194 : 79 01 E9                	jsr		fs_com_blk
+1 0197 : 16 CC                   	bm		fs_recv_crc ; Just receive the CRC and be done with it
+1 0199 : C0 10                   	ld		bl,16
+1 019B : 45 32                   	xfr		bl,bh
+1 019D :                         fs_list_l:
+1 019D : 79 02 19                	jsr		fs_recv
+1 01A0 : A5 61                   	st		al,(y+)
+1 01A2 : 21 20                   	dcr		bh
+1 01A4 : 14 BF                   	bz		fs_recv_crc
+1 01A6 : 71 01 9D                	jmp		fs_list_l
+1 01A9 :                         	
+1 01A9 :                         	
+1 01A9 :                         ; Reads a block from a file
+1 01A9 :                         ; A = Block number
+1 01A9 :                         ; B = Result buffer
+1 01A9 :                         ; AL = Returned status
+1 01A9 :                         ; Destroys: A, B, Y
+1 01A9 :                         fs_read:
+1 01A9 : 55 26                   	xfr		b,y
+1 01AB : 45 12                   	xfr		al,bh
+1 01AD : 79 02 27                	jsr		fs_res_crc
+1 01B0 : C0 07                   	ld		bl,7
+1 01B2 : 79 01 E9                	jsr		fs_com_blk
+1 01B5 : 16 AE                   	bm		fs_recv_crc ; Just receive the CRC and be done with it
+1 01B7 : 22 20                   	clr		bh
+1 01B9 :                         fs_read_l:
+1 01B9 : 79 02 19                	jsr		fs_recv
+1 01BC : A5 61                   	st		al,(y+)
+1 01BE : 20 20                   	inr		bh
+1 01C0 : 14 A3                   	bz		fs_recv_crc
+1 01C2 : 71 01 B9                	jmp		fs_read_l
+1 01C5 :                         	
+1 01C5 :                         ; Writes a block to a file
+1 01C5 :                         ; A = Block number
+1 01C5 :                         ; B = Source address
+1 01C5 :                         ; AL = Returned status
+1 01C5 :                         ; Destroys: A, B, Y
+1 01C5 :                         fs_write:
+1 01C5 : 55 26                   	xfr		b,y
+1 01C7 : 45 12                   	xfr		al,bh
+1 01C9 : 79 02 27                	jsr		fs_res_crc
+1 01CC : C0 08                   	ld		bl,8
+1 01CE : 79 02 0B                	jsr		fs_send ; Command
+1 01D1 : 45 03                   	xfr		ah,bl
+1 01D3 : 79 02 0B                	jsr		fs_send ; Block High
+1 01D6 : 45 23                   	xfr		bh,bl
+1 01D8 : 79 02 0B                	jsr		fs_send ; Block Low
+1 01DB : 22 20                   	clr		bh
+1 01DD :                         fs_write_l:
+1 01DD : C5 61                   	ld		bl,(y+)
+1 01DF : 79 02 0B                	jsr		fs_send
+1 01E2 : 20 20                   	inr		bh
+1 01E4 : 15 F7                   	bnz		fs_write_l
+1 01E6 : 71 01 57                	jmp		fs_recv_stat
+1 01E9 :                         
+1 01E9 :                         fs_com_blk:
+1 01E9 : 79 02 0B                	jsr		fs_send ; Command
+1 01EC : 45 03                   	xfr		ah,bl
+1 01EE : 79 02 0B                	jsr		fs_send ; Block High
+1 01F1 : 45 23                   	xfr		bh,bl
+1 01F3 : 79 02 0B                	jsr		fs_send ; Block Low
+1 01F6 : C1 03 C8                	ld		bl,(v_crc)
+1 01F9 : 79 02 0B                	jsr		fs_send ; CRC
+1 01FC : 79 02 27                	jsr		fs_res_crc ; Prepare to receive
+1 01FF : 79 02 19                	jsr		fs_recv ; Receive status
+1 0202 : 45 10                   	xfr		al,ah
+1 0204 : 09                      	rsr
+1 0205 :                         	
+1 0205 :                         
+1 0205 :                         ; Sends a command with an empty block field
+1 0205 :                         ; BL = Byte to send
+1 0205 :                         ; Destroys: AL, BL
+1 0205 :                         fs_com_noblk:
+1 0205 : 79 02 0B                	jsr		fs_send ; Command
+1 0208 : 79 02 0B                	jsr		fs_send ; Block High
+1 020B :                         	; Block Low (falls through)
+1 020B :                         
+1 020B :                         ; Sends a byte though the SerialDir MUX port
+1 020B :                         ; BL = Byte to send
+1 020B :                         ; Destroys: AL, BL
+1 020B :                         fs_send:
+1 020B : 81 F2 06                	ld		al,(0xF206)
+1 020E : 2C                      	srr		al
+1 020F : 2C                      	srr		al
+1 0210 : 11 F9                   	bnl		fs_send
+1 0212 : E1 F2 07                	st		bl,(0xF207)
+1 0215 : 79 02 2D                	jsr		fs_crc
+1 0218 : 09                      	rsr
+1 0219 :                         	
+1 0219 :                         ; Gets a byte from the SerialDir MUX port
+1 0219 :                         ; AL = Returned byte
+1 0219 :                         ; Destroys: AL, BL
+1 0219 :                         fs_recv:
+1 0219 : 81 F2 06                	ld		al,(0xF206)
+1 021C : 2C                      	srr		al
+1 021D : 11 FA                   	bnl		fs_recv
+1 021F : 81 F2 07                	ld		al,(0xF207)
+1 0222 : 4D                      	xfr		al,bl
+1 0223 : 79 02 2D                	jsr		fs_crc
+1 0226 : 09                      	rsr
+1 0227 :                         	
+1 0227 :                         ; Resets the CRC
+1 0227 :                         ; Destroys: AL
+1 0227 :                         fs_res_crc:
+1 0227 : 80 FB                   	ld		al,251
+1 0229 : A1 03 C8                	st		al,(v_crc)
+1 022C : 09                      	rsr
+1 022D :                         	
+1 022D :                         ; Updates the CRC
+1 022D :                         ; BL: Value to encode
+1 022D :                         ; Destroys: Nothing
+1 022D :                         fs_crc:
+1 022D : F1 03 C6                	st		b,(v_bsave) ; save register B
+1 0230 : B1 03 C4                	st		a,(v_asave) ; save register A
+1 0233 : 80 08                   	ld		al,8
+1 0235 : 45 10                   	xfr		al,ah
+1 0237 : 81 03 C8                	ld		al,(v_crc)
+1 023A :                         fs_crc_l:
+1 023A : 25 30                   	slr		bl
+1 023C : 27 10                   	rlr		al
+1 023E : 11 08                   	bnl		fs_crc_lc
+1 0240 : 45 32                   	xfr		bl,bh
+1 0242 : C0 A7                   	ld		bl,crc_poly
+1 0244 : 44 31                   	ore		bl,al
+1 0246 : 45 23                   	xfr		bh,bl
+1 0248 :                         fs_crc_lc:
+1 0248 : 21 00                   	dcr		ah
+1 024A : 15 EE                   	bnz		fs_crc_l
+1 024C : A1 03 C8                	st		al,(v_crc)
+1 024F : 91 03 C4                	ld		a,(v_asave) ; restore register A
+1 0252 : D1 03 C6                	ld		b,(v_bsave) ; restore register B
+1 0255 : 09                      	rsr
+1 0256 :                         	
+1 0256 :                         
+1 0256 :                         ; --- TTY OPERATIONS ---
+1 0256 :                         
+1 0256 :                         ; Required external functions:
+1 0256 :                         ; tty_putc, tty_putb, tty_putw, tty_puts, tty_getc, tty_gets
+1 0256 :                         
+1 0256 :                         ; Puts a word in hex on the terminal
+1 0256 :                         ; B = Word to print
+1 0256 :                         ; Destroys: A, B
+1 0256 :                         tty_putw:
+1 0256 :                         	; swap bl and bh
+1 0256 : 45 30                   	xfr		bl,ah
+1 0258 : 45 23                   	xfr		bh,bl
+1 025A : 45 02                   	xfr		ah,bh
+1 025C : 79 02 61                	jsr		tty_putb
+1 025F : 45 23                   	xfr		bh,bl
+1 0261 :                         
+1 0261 :                         ; Puts a byte in hex on the terminal
+1 0261 :                         ; BL = Byte to print
+1 0261 :                         ; Destroys: A, BL
+1 0261 :                         tty_putb:
+1 0261 : 45 30                   	xfr		bl,ah
+1 0263 : 24 30                   	srr		bl
+1 0265 : 24 30                   	srr		bl
+1 0267 : 24 30                   	srr		bl
+1 0269 : 24 30                   	srr		bl
+1 026B : 79 02 70                	jsr		tty_putb_nib
+1 026E : 45 03                   	xfr		ah,bl
+1 0270 :                         tty_putb_nib:
+1 0270 : 80 0F                   	ld		al,0x0F
+1 0272 : 4A                      	and		al,bl
+1 0273 : 80 30                   	ld		al,'0'
+1 0275 : 48                      	add		al,bl
+1 0276 : 80 3A                   	ld		al,'9'+1
+1 0278 : 41 31                   	sub		bl,al
+1 027A : 17 03                   	bp		tty_putb_alp
+1 027C : 71 02 93                	jmp		tty_putc
+1 027F :                         tty_putb_alp:
+1 027F : 80 07                   	ld		al,7
+1 0281 : 48                      	add		al,bl
+1 0282 : 71 02 93                	jmp		tty_putc
+1 0285 :                         	
+1 0285 :                         
+1 0285 :                         ; Puts a string on the terminal (zero terminated)
+1 0285 :                         ; B = Address of ASCII string
+1 0285 :                         ; Destroys: AL, B, Y
+1 0285 :                         tty_puts:
+1 0285 : 55 26                   	xfr		b,y ;
+1 0287 :                         tty_puts_l:
+1 0287 : 85 61                   	ld		al,(y+)
+1 0289 : 14 07                   	bz		tty_puts_ex
+1 028B : 4D                      	xfr		al,bl
+1 028C : 79 02 93                	jsr		tty_putc
+1 028F : 71 02 87                	jmp		tty_puts_l
+1 0292 :                         tty_puts_ex:
+1 0292 : 09                      	rsr
+1 0293 :                         
+1 0293 :                         	
+1 0293 :                         ; Puts a character on the terminal
+1 0293 :                         ; BL = ASCII to print
+1 0293 :                         ; Destroys: AL, BL
+1 0293 :                         tty_putc:
+1 0293 : 81 F2 00                	ld		al,(0xF200)
+1 0296 : 2C                      	srr		al
+1 0297 : 2C                      	srr		al
+1 0298 : 11 F9                   	bnl		tty_putc
+1 029A : 80 80                   	ld		al,0x80
+1 029C : 43 13                   	ori		al,bl
+1 029E : E1 F2 01                	st		bl,(0xF201)
+1 02A1 : 09                      	rsr
+1 02A2 :                         
+1 02A2 :                         ; Gets a character from the terminal
+1 02A2 :                         ; AL = Returned ASCII character
+1 02A2 :                         ; Destroys: AL, BL
+1 02A2 :                         tty_getc:
+1 02A2 : 81 F2 00                	ld		al,(0xF200)
+1 02A5 : 2C                      	srr		al
+1 02A6 : 11 FA                   	bnl		tty_getc
+1 02A8 : 81 F2 01                	ld		al,(0xF201)
+1 02AB : C0 7F                   	ld		bl,0x7F
+1 02AD : 42 31                   	and		bl,al
+1 02AF : C0 61                   	ld		bl,'a'
+1 02B1 : 49                      	sub		al,bl
+1 02B2 : 17 01                   	bp		tty_getc_ov
+1 02B4 : 09                      	rsr
+1 02B5 :                         tty_getc_ov:
+1 02B5 : C0 7B                   	ld		bl,'z'+1
+1 02B7 : 49                      	sub		al,bl
+1 02B8 : 16 01                   	bm		tty_getc_lu
+1 02BA : 09                      	rsr
+1 02BB :                         tty_getc_lu:
+1 02BB : C0 DF                   	ld		bl,0xDF
+1 02BD : 42 31                   	and		bl,al
+1 02BF : 09                      	rsr
+1 02C0 :                         
+1 02C0 :                         ; Gets a line of characters from the terminal
+1 02C0 :                         ; AL = Buffer size - 1
+1 02C0 :                         ; B = Buffer location
+1 02C0 :                         ; Destroys: A, B, Y
+1 02C0 :                         tty_gets:
+1 02C0 :                         	; Set up variables (ah = bufsize, bh = bufinx)
+1 02C0 : 55 26                   	xfr		b,y
+1 02C2 : 45 10                   	xfr		al,ah
+1 02C4 : 22 20                   	clr		bh
+1 02C6 :                         tty_gets_l:
+1 02C6 : 79 02 A2                	jsr		tty_getc
+1 02C9 :                         	
+1 02C9 :                         	; Check for backspaces
+1 02C9 : C0 08                   	ld		bl,8
+1 02CB : 49                      	sub		al,bl
+1 02CC : 14 25                   	bz		tty_gets_bs
+1 02CE : C0 7F                   	ld		bl,127
+1 02D0 : 49                      	sub		al,bl
+1 02D1 : 14 20                   	bz		tty_gets_bs
+1 02D3 :                         	
+1 02D3 :                         	; Check for return conditions
+1 02D3 : C0 0A                   	ld		bl,10
+1 02D5 : 49                      	sub		al,bl
+1 02D6 : 14 2B                   	bz		tty_gets_rt
+1 02D8 : C0 0D                   	ld		bl,13
+1 02DA : 49                      	sub		al,bl
+1 02DB : 14 26                   	bz		tty_gets_rt
+1 02DD :                         	
+1 02DD :                         	; Ignore all other lower ASCII codes
+1 02DD : C0 20                   	ld		bl,' '
+1 02DF : 49                      	sub		al,bl
+1 02E0 : 16 E4                   	bm		tty_gets_l
+1 02E2 :                         	
+1 02E2 :                         	; Add it to the buffer
+1 02E2 : 45 03                   	xfr		ah,bl
+1 02E4 : 41 23                   	sub		bh,bl
+1 02E6 : 14 DE                   	bz		tty_gets_l
+1 02E8 : 20 20                   	inr		bh
+1 02EA : A5 61                   	st		al,(y+)
+1 02EC : 4D                      	xfr		al,bl
+1 02ED : 79 02 93                	jsr		tty_putc
+1 02F0 : 71 02 C6                	jmp		tty_gets_l
+1 02F3 :                         tty_gets_bs:
+1 02F3 : 43 22                   	ori		bh,bh
+1 02F5 : 14 CF                   	bz		tty_gets_l
+1 02F7 : 31 60                   	dcr		y
+1 02F9 : 21 20                   	dcr		bh
+1 02FB : C0 7F                   	ld		bl,127
+1 02FD : 79 02 93                	jsr		tty_putc
+1 0300 : 71 02 C6                	jmp		tty_gets_l
+1 0303 :                         tty_gets_rt:
+1 0303 : 2A                      	clr		al
+1 0304 : AB                      	st		al,(y)
+1 0305 : 09                      	rsr
+1 0306 :                         	
+1 0306 :                         ; Returns if there is a character to read or not
+1 0306 :                         ; AL = Returns 0 if no character
+1 0306 :                         ; Destroys: AL
+1 0306 :                         tty_next:
+1 0306 : 81 F2 00                	ld		al,(0xF200)
+1 0309 : 2C                      	srr		al
+1 030A : 11 03                   	bnl		tty_next_n
+1 030C : 80 01                   	ld		al,1
+1 030E : 09                      	rsr
+1 030F :                         tty_next_n:
+1 030F : 2A                      	clr		al
+1 0310 : 09                      	rsr
+1 0311 :                         	
+1 0311 :                         
+1 0311 :                         ; --- CONSTANTS ---
+1 0311 :                         
+1 0311 :                         str_hello:
+1 0311 : 0A 0D                   	.byte	0x0A,0x0D
+1 0313 : 43 43 44 50 20 42 4F 4F 	.ascii "CCDP BOOTSTRAP COMPLETE"
+1 031C : 54 53 54 52 41 50 20 43 ...
+1 0324 : 4F 4D 50 4C 45 54 45    ...
+1 032A : 0A 0D 00                	.byte	0x0A,0x0D,0x00
+1 032D :                         	
+1 032D :                         str_start:
+1 032D : 3A 20 43 4F 4C 44 20 42 	.ascii ": COLD BOOT VECTOR"
+1 0336 : 4F 4F 54 20 56 45 43 54 ...
+1 033E : 4F 52                   ...
+1 033F : 0A 0D 00                	.byte	0x0A,0x0D,0x00
+1 0342 :                         	
+1 0342 :                         str_prompt:
+1 0342 : 3A 20 43 4F 4E 53 4F 4C 	.ascii ": CONSOLE PROMPT VECTOR"
+1 034B : 45 20 50 52 4F 4D 50 54 ...
+1 0353 : 20 56 45 43 54 4F 52    ...
+1 0359 : 0A 0D 00                	.byte	0x0A,0x0D,0x00
+1 035C :                         	
+1 035C :                         str_top:
+1 035C : 3A 20 49 4D 41 47 45 20 	.ascii ": IMAGE TOP"
+1 0365 : 54 4F 50                ...
+1 0367 : 0A 0D 00                	.byte	0x0A,0x0D,0x00
+1 036A :                         	
+1 036A :                         str_stack:
+1 036A : 3A 20 53 54 41 43 4B 20 	.ascii ": STACK TOP"
+1 0373 : 54 4F 50                ...
+1 0375 : 0A 0D 00                	.byte	0x0A,0x0D,0x00
+1 0378 :                         	
+1 0378 :                         str_ready:
+1 0378 : 0A 0D                   	.byte	0x0A,0x0D
+1 037A : 52 45 41 44 59          	.ascii "READY"
+1 037F : 0A 0D                   	.byte	0x0A,0x0D
+1 0381 : 2E                      	.ascii "."
+1 0382 : 00                      	.byte	0x00
+1 0383 :                         	
+1 0383 :                         str_bin:
+1 0383 : 2E 42 49 4E             	.ascii ".BIN"
+1 0387 : 00                      	.byte	0x00
+1 0388 :                         	
+1 0388 :                         str_nocmd:
+1 0388 : 4E 4F 54 20 46 4F 55 4E 	.ascii "NOT FOUND"
+1 0391 : 44                      ...
+1 0391 : 0A 0D 00                	.byte	0x0A,0x0D,0x00
+1 0394 :                         	
+1 0394 :                         ; --- VECTOR TABLE ---
+1 0394 :                         vec_tab:
+1 0394 : 71 00 EA                	jmp		con_exec_done	; 0 - SYS_DONE
+1 0397 : 71 02 93                	jmp		tty_putc		; 1 - TTY_PUTC
+1 039A : 71 02 61                	jmp		tty_putb		; 2 - TTY_PUTB
+1 039D : 71 02 56                	jmp		tty_putw		; 3 - TTY_PUTW
+1 03A0 : 71 02 85                	jmp		tty_puts		; 4 - TTY_PUTS
+1 03A3 : 71 02 A2                	jmp		tty_getc		; 5 - TTY_GETC
+1 03A6 : 71 02 C0                	jmp		tty_gets		; 6 - TTY_GETS
+1 03A9 : 71 01 35                	jmp		fs_open			; 7 - FS_OPEN
+1 03AC : 71 01 4F                	jmp		fs_close		; 8 - FS_CLOSE
+1 03AF : 71 01 77                	jmp		fs_make			; 9 - FS_MAKE
+1 03B2 : 71 01 81                	jmp		fs_delete		; A - FS_DELETE
+1 03B5 : 71 01 8B                	jmp		fs_list			; B - FS_LIST
+1 03B8 : 71 01 A9                	jmp		fs_read			; C - FS_READ
+1 03BB : 71 01 C5                	jmp		fs_write		; D - FS_WRITE
+1 03BE : 71 01 08                	jmp		gen_htoi		; E - GEN_HTOI
+1 03C1 : 71 03 06                	jmp		tty_next		; F - TTY_NEXT
+1 03C4 :                         
+1 03C4 :                         ; --- TEXT TOP ---
+1 03C4 :                         textop:
+1 03C4 :                         ; Do not program beyond this point

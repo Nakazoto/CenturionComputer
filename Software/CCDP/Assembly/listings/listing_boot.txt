@@ -1,0 +1,194 @@
+1 0000 :                         ;	Program starts at 0x0200
+1 0000 :                         	
+1 0000 :                         crc_poly	equ 10100111b
+1 0000 :                         
+1 0000 :                         ; --- VARIABLES ---
+1 0000 :                         
+1 0000 :                         ; Save registers
+1 0000 :                         v_asave		equ 0x0400
+1 0000 :                         v_bsave		equ 0x0402
+1 0000 :                         
+1 0000 :                         ; CRC variable
+1 0000 :                         v_crc		equ 0x0404
+1 0000 :                         
+1 0000 :                         ; Execution vector
+1 0000 :                         v_exec		equ 0x0405
+1 0000 :                         
+1 0000 :                         ; File name
+1 0000 :                         fname		equ open_com+3		
+1 0000 :                         
+1 0000 :                         ; Block buffer
+1 0000 :                         buffer		equ 0x0300
+1 0000 :                         
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         
+1 0000 :                         start:
+1 0000 : C0 0D                   	ld		bl,0x0D
+1 0002 : 79 00 E3                	jsr		tty_putc
+1 0005 : C0 0A                   	ld		bl,0x0A
+1 0007 : 79 00 E3                	jsr		tty_putc
+1 000A : C0 40                   	ld		bl,'@'
+1 000C : 79 00 E3                	jsr		tty_putc
+1 000F : D0 01 00                	ld		b,fname
+1 0012 : 55 26                   	xfr		b,y
+1 0014 :                         getstr:
+1 0014 : 79 00 EC                	jsr		tty_getc
+1 0017 : C0 20                   	ld		bl,0x20
+1 0019 : 49                      	sub		al,bl
+1 001A : 16 05                   	bm		bootstr
+1 001C : A5 61                   	st		al,(y+)
+1 001E : 71 00 14                	jmp		getstr
+1 0021 :                         bootstr:
+1 0021 : 2A                      	clr		al
+1 0022 : AB                      	st		al,(y)
+1 0023 :                         	
+1 0023 : 79 00 B4                	jsr		fs_res_crc ; Reset CRC
+1 0026 : 90 13 00                	ld		a,0x1300
+1 0029 : D0 00 FD                	ld		b,open_com
+1 002C : 55 26                   	xfr		b,y
+1 002E :                         open_body:
+1 002E : C5 61                   	ld		bl,(y+)
+1 0030 : 79 00 98                	jsr		fs_send
+1 0033 : 21 00                   	dcr		ah
+1 0035 : 15 F7                   	bnz		open_body
+1 0037 : C1 04 04                	ld		bl,(v_crc)
+1 003A : 79 00 98                	jsr		fs_send ; send out the CRC
+1 003D : 79 00 A6                	jsr		fs_recv ; get status
+1 0040 : 45 10                   	xfr		al,ah
+1 0042 : 79 00 A6                	jsr		fs_recv ; get CRC, we don't care about it
+1 0045 : 43 00                   	ori		ah,ah
+1 0047 : 16 B7                   	bm		start ; if error, restart
+1 0049 : D0 03 00                	ld		b,buffer
+1 004C : 55 26                   	xfr		b,y
+1 004E : 22 20                   	clr		bh
+1 0050 : 79 00 6B                	jsr		fs_read
+1 0053 : D1 03 00                	ld		b,(buffer)
+1 0056 : F1 04 05                	st		b,(v_exec)
+1 0059 : 55 26                   	xfr		b,y
+1 005B : 22 20                   	clr		bh
+1 005D :                         load_loop:
+1 005D : 20 20                   	inr		bh
+1 005F : 79 00 6B                	jsr		fs_read
+1 0062 : 71 00 5D                	jmp		load_loop
+1 0065 :                         	
+1 0065 :                         execute:
+1 0065 : 79 00 A6                	jsr		fs_recv
+1 0068 : 72                      	.byte	0x72
+1 0069 : 04 05                   	.word	v_exec
+1 006B :                         	
+1 006B :                         ; --- FILESYSTEM OPERATIONS ---
+1 006B :                         
+1 006B :                         ; Mini-fied read command
+1 006B :                         ; BH = Block #
+1 006B :                         ; Y = Result buffer
+1 006B :                         fs_read:
+1 006B : 79 00 B4                	jsr		fs_res_crc
+1 006E : C0 07                   	ld		bl,7
+1 0070 : 79 00 98                	jsr		fs_send
+1 0073 : 22 30                   	clr		bl
+1 0075 : 79 00 98                	jsr		fs_send
+1 0078 : 45 23                   	xfr		bh,bl
+1 007A : 79 00 98                	jsr		fs_send
+1 007D : C1 04 04                	ld		bl,(v_crc)
+1 0080 : 79 00 98                	jsr		fs_send
+1 0083 : 79 00 A6                	jsr		fs_recv
+1 0086 : 4D                      	xfr		al,bl
+1 0087 : 16 DC                   	bm		execute ; nothing more to read, time to exec
+1 0089 : 22 00                   	clr		ah
+1 008B :                         fs_read_l:
+1 008B : 79 00 A6                	jsr		fs_recv
+1 008E : A5 61                   	st		al,(y+)
+1 0090 : 20 00                   	inr		ah
+1 0092 : 15 F7                   	bnz		fs_read_l
+1 0094 : 79 00 A6                	jsr		fs_recv ; get the CRC, but we don't care
+1 0097 : 09                      	rsr
+1 0098 :                         	
+1 0098 :                         
+1 0098 :                         
+1 0098 :                         
+1 0098 :                         ; Sends a byte though the SerialDir MUX port
+1 0098 :                         ; BL = Byte to send
+1 0098 :                         ; Destroys: AL, BL
+1 0098 :                         fs_send:
+1 0098 : 81 F2 06                	ld		al,(0xF206)
+1 009B : 2C                      	srr		al
+1 009C : 2C                      	srr		al
+1 009D : 11 F9                   	bnl		fs_send
+1 009F : E1 F2 07                	st		bl,(0xF207)
+1 00A2 : 79 00 BA                	jsr		fs_crc
+1 00A5 : 09                      	rsr
+1 00A6 :                         	
+1 00A6 :                         ; Gets a byte from the SerialDir MUX port
+1 00A6 :                         ; AL = Returned byte
+1 00A6 :                         ; Destroys: AL, BL
+1 00A6 :                         fs_recv:
+1 00A6 : 81 F2 06                	ld		al,(0xF206)
+1 00A9 : 2C                      	srr		al
+1 00AA : 11 FA                   	bnl		fs_recv
+1 00AC : 81 F2 07                	ld		al,(0xF207)
+1 00AF : 4D                      	xfr		al,bl
+1 00B0 : 79 00 BA                	jsr		fs_crc
+1 00B3 : 09                      	rsr
+1 00B4 :                         	
+1 00B4 :                         ; Resets the CRC
+1 00B4 :                         ; Destroys: AL
+1 00B4 :                         fs_res_crc:
+1 00B4 : 80 FB                   	ld		al,251
+1 00B6 : A1 04 04                	st		al,(v_crc)
+1 00B9 : 09                      	rsr
+1 00BA :                         	
+1 00BA :                         ; Updates the CRC
+1 00BA :                         ; BL: Value to encode
+1 00BA :                         ; Destroys: Nothing
+1 00BA :                         fs_crc:
+1 00BA : F1 04 02                	st		b,(v_bsave) ; save register B
+1 00BD : B1 04 00                	st		a,(v_asave) ; save register A
+1 00C0 : 80 08                   	ld		al,8
+1 00C2 : 45 10                   	xfr		al,ah
+1 00C4 : 81 04 04                	ld		al,(v_crc)
+1 00C7 :                         fs_crc_l:
+1 00C7 : 25 30                   	slr		bl
+1 00C9 : 27 10                   	rlr		al
+1 00CB : 11 08                   	bnl		fs_crc_lc
+1 00CD : 45 32                   	xfr		bl,bh
+1 00CF : C0 A7                   	ld		bl,crc_poly
+1 00D1 : 44 31                   	ore		bl,al
+1 00D3 : 45 23                   	xfr		bh,bl
+1 00D5 :                         fs_crc_lc:
+1 00D5 : 21 00                   	dcr		ah
+1 00D7 : 15 EE                   	bnz		fs_crc_l
+1 00D9 : A1 04 04                	st		al,(v_crc)
+1 00DC : 91 04 00                	ld		a,(v_asave) ; restore register A
+1 00DF : D1 04 02                	ld		b,(v_bsave) ; restore register B
+1 00E2 : 09                      	rsr
+1 00E3 :                         
+1 00E3 :                         ; --- TTY OPERATIONS ---
+1 00E3 :                         
+1 00E3 :                         ; Puts a character on the terminal
+1 00E3 :                         ; BL = ASCII to print
+1 00E3 :                         ; Destroys: AL, BL
+1 00E3 :                         tty_putc:
+1 00E3 : 0E                      	dly		; poor man's wait
+1 00E4 : 80 80                   	ld		al,0x80
+1 00E6 : 43 13                   	ori		al,bl
+1 00E8 : E1 F2 01                	st		bl,(0xF201)
+1 00EB : 09                      	rsr
+1 00EC :                         
+1 00EC :                         ; Gets a character from the terminal
+1 00EC :                         ; AL = Returned ASCII character
+1 00EC :                         ; Destroys: AL, BL
+1 00EC :                         tty_getc:
+1 00EC : 81 F2 00                	ld		al,(0xF200)
+1 00EF : 2C                      	srr		al
+1 00F0 : 11 FA                   	bnl		tty_getc
+1 00F2 : C1 F2 01                	ld		bl,(0xF201)
+1 00F5 : 79 00 E3                	jsr		tty_putc
+1 00F8 : 80 7F                   	ld		al,0x7F
+1 00FA : 42 31                   	and		bl,al
+1 00FC : 09                      	rsr
+1 00FD :                         
+1 00FD :                         ; --- DATA ---
+1 00FD :                         	
+1 00FD :                         ; Special fun byte ;)
+1 00FD :                         open_com:
+1 00FD : 02                      	.byte		0x02

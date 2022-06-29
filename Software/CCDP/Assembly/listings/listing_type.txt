@@ -1,0 +1,60 @@
+1 0000 :                         ; --- EQUATES ---
+1 0000 :                         
+1 0000 :                         sys_done	equ	0x0100
+1 0000 :                         tty_putc	equ	0x0103
+1 0000 :                         tty_putb	equ	0x0106
+1 0000 :                         tty_putw	equ	0x0109
+1 0000 :                         tty_puts	equ	0x010C
+1 0000 :                         tty_getc	equ 0x010F
+1 0000 :                         tty_gets	equ 0x0112
+1 0000 :                         fs_open		equ 0x0115
+1 0000 :                         fs_close	equ 0x0118
+1 0000 :                         fs_make		equ 0x011B
+1 0000 :                         fs_delete	equ 0x011E
+1 0000 :                         fs_list		equ 0x0121
+1 0000 :                         fs_read		equ 0x0124
+1 0000 :                         fs_write	equ 0x0127
+1 0000 :                         
+1 0000 :                         combuf		equ	0x01C0
+1 0000 :                         	
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         
+1 0000 : D0 01 C0                	ld		b,combuf
+1 0003 : 55 26                   	xfr		b,y
+1 0005 :                         arg_loop:
+1 0005 : 85 61                   	ld		al,(y+)
+1 0007 : 15 01                   	bnz		arg_space
+1 0009 : 09                      	rsr		; no argument, done
+1 000A :                         arg_space:
+1 000A : C0 20                   	ld		bl,' '
+1 000C : 49                      	sub		al,bl
+1 000D : 15 F6                   	bnz		arg_loop
+1 000F : 55 62                   	xfr		y,b ; open file
+1 0011 : 79 01 15                	jsr		fs_open
+1 0014 : 43 11                   	ori		al,al
+1 0016 : 17 01                   	bp		type_read
+1 0018 : 09                      	rsr		; cannot read file
+1 0019 :                         type_read:
+1 0019 : 32 80                   	clr		z
+1 001B :                         type_read_l:
+1 001B : 55 80                   	xfr		z,a
+1 001D : D0 00 3C                	ld		b,buffer
+1 0020 : 79 01 24                	jsr		fs_read
+1 0023 : C0 FF                   	ld		bl,255
+1 0025 : 49                      	sub		al,bl
+1 0026 : 14 F3                   	bz		type_read_l ; communication issues
+1 0028 : 43 11                   	ori		al,al
+1 002A : 17 01                   	bp		type_print
+1 002C : 09                      	rsr		; no more blocks to read
+1 002D :                         type_print:
+1 002D : 2A                      	clr		al
+1 002E : A1 01 3C                	st		al,(buffer + 256) ; zero termination
+1 0031 : D0 00 3C                	ld		b,buffer
+1 0034 : 79 01 0C                	jsr		tty_puts
+1 0037 : 30 80                   	inr		z
+1 0039 : 71 00 1B                	jmp		type_read_l
+1 003C :                         	
+1 003C :                         ; --- VARIABLES ---
+1 003C :                         	
+1 003C :                         buffer:
+1 003C : 00                      	.byte 0x00

@@ -1,0 +1,15 @@
+1 0000 :                         ; --- BOOTSTRAP ---
+1 0000 :                         
+1 0000 : C0 01                   	ld		bl,01
+1 0002 : E1 F2 07                	st		bl,(0xF207)
+1 0005 : D0 02 00                	ld		b,0x0200
+1 0008 : 55 2A                   	xfr		b,s
+1 000A :                         loop:
+1 000A : 81 F2 06                	ld		al,(0xF206)
+1 000D : 2C                      	srr		al
+1 000E : 11 FA                   	bnl		loop
+1 0010 : 81 F2 07                	ld		al,(0xF207)
+1 0013 : A9                      	st		al,(b)
+1 0014 : 20 30                   	inr		bl
+1 0016 : 15 F2                   	bnz		loop
+1 0018 :                         	

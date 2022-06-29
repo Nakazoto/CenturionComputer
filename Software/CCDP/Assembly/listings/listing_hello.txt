@@ -1,0 +1,32 @@
+1 0000 :                         ; --- EQUATES ---
+1 0000 :                         
+1 0000 :                         sys_done	equ 0x0100
+1 0000 :                         tty_putc	equ 0x0103
+1 0000 :                         tty_putb	equ 0x0106
+1 0000 :                         tty_putw	equ 0x0109
+1 0000 :                         tty_puts	equ 0x010C
+1 0000 :                         tty_getc	equ 0x010F
+1 0000 :                         tty_gets	equ 0x0112
+1 0000 :                         fs_open		equ 0x0115
+1 0000 :                         fs_close	equ 0x0118
+1 0000 :                         fs_make		equ 0x011B
+1 0000 :                         fs_delete	equ 0x011E
+1 0000 :                         fs_list		equ 0x0121
+1 0000 :                         fs_read		equ 0x0124
+1 0000 :                         fs_write	equ 0x0127
+1 0000 :                         
+1 0000 :                         combuf		equ 0x01C0
+1 0000 :                         	
+1 0000 :                         ;	Program starts at 0x0200
+1 0000 :                         	
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         
+1 0000 : D0 00 07                	ld		b,str_hello
+1 0003 : 79 01 0C                	jsr		tty_puts
+1 0006 : 09                      	rsr
+1 0007 :                         
+1 0007 :                         ; --- STRINGS ---
+1 0007 :                         str_hello:
+1 0007 : 48 45 4C 4C 4F 52 4C 44 	.ascii "HELLORLD!"
+1 0010 : 21                      ...
+1 0010 : 0D 0A 00                	.byte	0x0D,0x0A,0x00

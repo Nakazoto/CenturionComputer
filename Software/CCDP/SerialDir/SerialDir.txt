@@ -1,0 +1,78 @@
+	--- SerialDir ---
+	
+Draft Version 1.0, Outlined by tergav17
+
+	OVERVIEW:
+	
+The purpose of SerialDir is to allow access to an external directory though a 
+serial connection. It provides a simple interface in which a number of files
+can be accessed block-by-block. The program interfaces directly with the
+server's host file system, instead of a custom file system from an image (like
+a TU58 emulator).
+
+Due to limitations in the client implementation (mainly lack on interrupts),
+loss of characters over serial will not be a recoverable situation. This will
+most likely result in either the server or client freezing as it waits for
+information that will never come. This is fine, as the main purpose of this is
+not robustness, but simplicitiy of interface and trustworthiness of sent and 
+received data.
+
+Communication occurs via the client and the server sending packets to each
+other. In any exchange, it will begin with the client sending a packet to the
+server, and then the server responding with a single response packet. All
+information sent or received in this exchange will be found within these two
+packets. In an exchange, there will only ever be two packets involved. A sent
+packet will contain a command for the server to execute. These are as follows:
+
+The first two "commands" do not need to be sent as proper packets
+
+	0: [N]o command, do not send a response
+	1: [B]ootstrap, return the first 256 bytes of BOOT.BIN with no formatting, or all zeros if not found
+	2: [O]pen file, file name is sent to be opened, status is returned
+	3: [C]lose file, currently open file is closed, status is returned
+	4: [M]ake file, a new file name is sent and created on the server, status is returned
+	5: [D]elete file, a file name to delete is sent, status is returned
+	6: [L]ist directory, a number is sent in the block # field, and a file name + status is returned.
+	7: [R]ead block, a block # to read is sent, and the block + status is returned
+	8: [W]rite block, a block # + block data is sent, and a status is returned
+	
+For most packets, an 8 bit CRC will be used to sign the data blocks coming to
+or returning from the server. This will ensure that corrupt information cannot
+make it's way over the connection.
+
+	COMMAND PACKET:
+	
+The format of a command packet sent from the client to the server is as
+follows:
+
+	[0]: Commands code (If command 0,1, omit rest of packet)
+	[1]: Block # (High byte)
+	[2]: Block # (Low byte)
+	[3 - ?]: Data field
+	[? + 1]: 8 Bit CRC
+	
+All values are included in the CRC, the length of the data field is dependent
+on what command is executed.
+
+	[N],[B]: Non-applicable
+	[C],[L],[R]: 0 Bytes
+	[O],[M],[D]: 16 bytes
+	[W]: 256 bytes
+
+	RESPONSE PACKET:
+
+The format of the response packet sent from the server to the client is as
+follows:
+
+	[0]: Status
+	[1 - ?]: Data field
+	[? + 1]: 8 Bit CRC
+	
+All values are included in the CRC, the length of the data field is dependent
+on the returned statis.
+
+	0: Successful, 0 bytes returned
+	1: Successful, 16 bytes returned
+	2: Successful, 256 bytes returned
+	254: Execution Failure, 0 bytes returned
+	255: Communication Failure, 0 bytes returned

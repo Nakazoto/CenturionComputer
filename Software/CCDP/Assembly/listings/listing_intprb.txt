@@ -1,0 +1,377 @@
+1 0000 :                         ; --- EQUATES ---
+1 0000 :                         
+1 0000 :                         sys_done	equ 0x0100
+1 0000 :                         tty_putc	equ 0x0103
+1 0000 :                         tty_putb	equ 0x0106
+1 0000 :                         tty_putw	equ 0x0109
+1 0000 :                         tty_puts	equ 0x010C
+1 0000 :                         tty_getc	equ 0x010F
+1 0000 :                         tty_gets	equ 0x0112
+1 0000 :                         fs_open		equ 0x0115
+1 0000 :                         fs_close	equ 0x0118
+1 0000 :                         fs_make		equ 0x011B
+1 0000 :                         fs_delete	equ 0x011E
+1 0000 :                         fs_list		equ 0x0121
+1 0000 :                         fs_read		equ 0x0124
+1 0000 :                         fs_write	equ 0x0127
+1 0000 :                         gen_htoi	equ 0x012A
+1 0000 :                         tty_next	equ 0x012D
+1 0000 :                         
+1 0000 :                         combuf		equ 0x01C0
+1 0000 :                         	
+1 0000 :                         ;	Program starts at 0x0200
+1 0000 :                         	
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         
+1 0000 :                         	; Print intro message
+1 0000 : D0 01 F4                	ld		b,str_hello
+1 0003 : 79 01 0C                	jsr		tty_puts
+1 0006 :                         	
+1 0006 :                         	; Set up interrupt vectors
+1 0006 : 90 01 13                	ld		a,irq01
+1 0009 : B1 00 1E                	st		a,(0x001E)
+1 000C : 90 01 22                	ld		a,irq02
+1 000F : B1 00 2E                	st		a,(0x002E)
+1 0012 : 90 01 31                	ld		a,irq03
+1 0015 : B1 00 3E                	st		a,(0x003E)
+1 0018 : 90 01 40                	ld		a,irq04
+1 001B : B1 00 4E                	st		a,(0x004E)
+1 001E : 90 01 4F                	ld		a,irq05
+1 0021 : B1 00 5E                	st		a,(0x005E)
+1 0024 : 90 01 5E                	ld		a,irq06
+1 0027 : B1 00 6E                	st		a,(0x006E)
+1 002A : 90 01 6D                	ld		a,irq07
+1 002D : B1 00 7E                	st		a,(0x007E)
+1 0030 : 90 01 7C                	ld		a,irq08
+1 0033 : B1 00 8E                	st		a,(0x008E)
+1 0036 : 90 01 8B                	ld		a,irq09
+1 0039 : B1 00 9E                	st		a,(0x009E)
+1 003C : 90 01 9A                	ld		a,irq10
+1 003F : B1 00 AE                	st		a,(0x00AE)
+1 0042 : 90 01 A9                	ld		a,irq11
+1 0045 : B1 00 BE                	st		a,(0x00BE)
+1 0048 : 90 01 B8                	ld		a,irq12
+1 004B : B1 00 CE                	st		a,(0x00CE)
+1 004E : 90 01 C7                	ld		a,irq13
+1 0051 : B1 00 DE                	st		a,(0x00DE)
+1 0054 : 90 01 D6                	ld		a,irq14
+1 0057 : B1 00 EE                	st		a,(0x00EE)
+1 005A : 90 01 E5                	ld		a,irq15
+1 005D : B1 00 FE                	st		a,(0x00FE)
+1 0060 :                         	
+1 0060 :                         	; Set up Z registers, I guess
+1 0060 : 90 00 01                	ld		a,1
+1 0063 : B1 00 18                	st		a,(0x0018)
+1 0066 : B1 00 28                	st		a,(0x0028)
+1 0069 : B1 00 38                	st		a,(0x0038)
+1 006C : B1 00 48                	st		a,(0x0048)
+1 006F : B1 00 58                	st		a,(0x0058)
+1 0072 : B1 00 68                	st		a,(0x0068)
+1 0075 : B1 00 78                	st		a,(0x0078)
+1 0078 : B1 00 88                	st		a,(0x0088)
+1 007B : B1 00 98                	st		a,(0x0098)
+1 007E : B1 00 A8                	st		a,(0x00A8)
+1 0081 : B1 00 B8                	st		a,(0x00B8)
+1 0084 : B1 00 C8                	st		a,(0x00C8)
+1 0087 : B1 00 D8                	st		a,(0x00D8)
+1 008A : B1 00 E8                	st		a,(0x00E8)
+1 008D : B1 00 F8                	st		a,(0x00F8)
+1 0090 :                         	
+1 0090 : 3A                      	clr		a
+1 0091 : B1 00 1C                	st		a,(0x001C)
+1 0094 : B1 00 2C                	st		a,(0x002C)
+1 0097 : B1 00 3C                	st		a,(0x003C)
+1 009A : B1 00 4C                	st		a,(0x004C)
+1 009D : B1 00 5C                	st		a,(0x005C)
+1 00A0 : B1 00 6C                	st		a,(0x006C)
+1 00A3 : B1 00 7C                	st		a,(0x007C)
+1 00A6 : B1 00 8C                	st		a,(0x008C)
+1 00A9 : B1 00 9C                	st		a,(0x009C)
+1 00AC : B1 00 AC                	st		a,(0x00AC)
+1 00AF : B1 00 BC                	st		a,(0x00BC)
+1 00B2 : B1 00 CC                	st		a,(0x00CC)
+1 00B5 : B1 00 DC                	st		a,(0x00DC)
+1 00B8 : B1 00 EC                	st		a,(0x00EC)
+1 00BB : B1 00 FC                	st		a,(0x00FC)
+1 00BE :                         	
+1 00BE :                         	; Print the instructions
+1 00BE : D0 02 16                	ld		b,str_help
+1 00C1 : 79 01 0C                	jsr		tty_puts
+1 00C4 :                         	
+1 00C4 :                         	; Wait for char
+1 00C4 : 79 01 0F                	jsr		tty_getc
+1 00C7 :                         	
+1 00C7 :                         	; Start the test
+1 00C7 : D0 02 7D                	ld		b,str_begin
+1 00CA : 79 01 0C                	jsr		tty_puts
+1 00CD : 04                      	ei
+1 00CE :                         	
+1 00CE :                         	; Wait for char
+1 00CE : 79 01 0F                	jsr		tty_getc
+1 00D1 :                         	
+1 00D1 :                         	; End test
+1 00D1 : 05                      	di
+1 00D2 : D0 02 92                	ld		b,str_done
+1 00D5 : 79 01 0C                	jsr		tty_puts
+1 00D8 :                         	
+1 00D8 :                         	; Print results
+1 00D8 : 32 80                   	clr		z
+1 00DA :                         loop:
+1 00DA : 80 1E                   	ld		al,30
+1 00DC : 41 91                   	sub		zl,al
+1 00DE : 14 2F                   	bz		exit
+1 00E0 :                         	
+1 00E0 : D0 02 A2                	ld		b,str_level
+1 00E3 : 79 01 0C                	jsr		tty_puts
+1 00E6 : 45 93                   	xfr		zl,bl
+1 00E8 : 24 30                   	srr		bl
+1 00EA : 20 30                   	inr		bl
+1 00EC : 79 01 06                	jsr		tty_putb
+1 00EF :                         	
+1 00EF : C0 3A                   	ld		bl,':'
+1 00F1 : 79 01 03                	jsr		tty_putc
+1 00F4 : C0 20                   	ld		bl,' '
+1 00F6 : 79 01 03                	jsr		tty_putc
+1 00F9 :                         	
+1 00F9 : 90 02 AA                	ld		a,count01
+1 00FC : 50 80                   	add		z,a
+1 00FE : D8                      	ld		b,(a)
+1 00FF : 79 01 09                	jsr		tty_putw
+1 0102 :                         	
+1 0102 : D0 02 13                	ld		b,str_crlf
+1 0105 : 79 01 0C                	jsr		tty_puts
+1 0108 : 20 90                   	inr		zl
+1 010A : 20 90                   	inr		zl
+1 010C : 71 00 DA                	jmp		loop
+1 010F :                         	
+1 010F :                         	; End program
+1 010F :                         exit:
+1 010F : 05                      	di
+1 0110 : 71 01 00                	jmp		sys_done
+1 0113 :                         	
+1 0113 :                         ; --- INTERRUPT VECTORS ---
+1 0113 :                         	
+1 0113 :                         irq01:
+1 0113 : 91 02 AA                	ld		a,(count01)
+1 0116 : 38                      	inr		a
+1 0117 : B1 02 AA                	st		a,(count01)
+1 011A : 90 00 01                	ld		a,1
+1 011D : 5E                      	xfr		a,z
+1 011E : 0A                      	ri
+1 011F : 71 01 13                	jmp		irq01
+1 0122 :                         	
+1 0122 :                         irq02:
+1 0122 : 91 02 AC                	ld		a,(count02)
+1 0125 : 38                      	inr		a
+1 0126 : B1 02 AC                	st		a,(count02)
+1 0129 : 90 00 01                	ld		a,1
+1 012C : 5E                      	xfr		a,z
+1 012D : 0A                      	ri
+1 012E : 71 01 22                	jmp		irq02
+1 0131 :                         	
+1 0131 :                         irq03:
+1 0131 : 91 02 AE                	ld		a,(count03)
+1 0134 : 38                      	inr		a
+1 0135 : B1 02 AE                	st		a,(count03)
+1 0138 : 90 00 01                	ld		a,1
+1 013B : 5E                      	xfr		a,z
+1 013C : 0A                      	ri
+1 013D : 71 01 31                	jmp		irq03
+1 0140 :                         	
+1 0140 :                         irq04:
+1 0140 : 91 02 B0                	ld		a,(count04)
+1 0143 : 38                      	inr		a
+1 0144 : B1 02 B0                	st		a,(count04)
+1 0147 : 90 00 01                	ld		a,1
+1 014A : 5E                      	xfr		a,z
+1 014B : 0A                      	ri
+1 014C : 71 01 40                	jmp		irq04
+1 014F :                         	
+1 014F :                         irq05:
+1 014F : 91 02 B2                	ld		a,(count05)
+1 0152 : 38                      	inr		a
+1 0153 : B1 02 B2                	st		a,(count05)
+1 0156 : 90 00 01                	ld		a,1
+1 0159 : 5E                      	xfr		a,z
+1 015A : 0A                      	ri
+1 015B : 71 01 4F                	jmp		irq05
+1 015E :                         	
+1 015E :                         irq06:
+1 015E : 91 02 B4                	ld		a,(count06)
+1 0161 : 38                      	inr		a
+1 0162 : B1 02 B4                	st		a,(count06)
+1 0165 : 90 00 01                	ld		a,1
+1 0168 : 5E                      	xfr		a,z
+1 0169 : 0A                      	ri
+1 016A : 71 01 5E                	jmp		irq06
+1 016D :                         	
+1 016D :                         irq07:
+1 016D : 91 02 B6                	ld		a,(count07)
+1 0170 : 38                      	inr		a
+1 0171 : B1 02 B6                	st		a,(count07)
+1 0174 : 90 00 01                	ld		a,1
+1 0177 : 5E                      	xfr		a,z
+1 0178 : 0A                      	ri
+1 0179 : 71 01 6D                	jmp		irq07
+1 017C :                         	
+1 017C :                         irq08:
+1 017C : 91 02 B8                	ld		a,(count08)
+1 017F : 38                      	inr		a
+1 0180 : B1 02 B8                	st		a,(count08)
+1 0183 : 90 00 01                	ld		a,1
+1 0186 : 5E                      	xfr		a,z
+1 0187 : 0A                      	ri
+1 0188 : 71 01 7C                	jmp		irq08
+1 018B :                         
+1 018B :                         irq09:
+1 018B : 91 02 BA                	ld		a,(count09)
+1 018E : 38                      	inr		a
+1 018F : B1 02 BA                	st		a,(count09)
+1 0192 : 90 00 01                	ld		a,1
+1 0195 : 5E                      	xfr		a,z
+1 0196 : 0A                      	ri
+1 0197 : 71 01 8B                	jmp		irq09
+1 019A :                         	
+1 019A :                         irq10:
+1 019A : 91 02 BC                	ld		a,(count10)
+1 019D : 38                      	inr		a
+1 019E : B1 02 BC                	st		a,(count10)
+1 01A1 : 90 00 01                	ld		a,1
+1 01A4 : 5E                      	xfr		a,z
+1 01A5 : 0A                      	ri
+1 01A6 : 71 01 9A                	jmp		irq10
+1 01A9 :                         	
+1 01A9 :                         irq11:
+1 01A9 : 91 02 BE                	ld		a,(count11)
+1 01AC : 38                      	inr		a
+1 01AD : B1 02 BE                	st		a,(count11)
+1 01B0 : 90 00 01                	ld		a,1
+1 01B3 : 5E                      	xfr		a,z
+1 01B4 : 0A                      	ri
+1 01B5 : 71 01 A9                	jmp		irq11
+1 01B8 :                         
+1 01B8 :                         irq12:
+1 01B8 : 91 02 C0                	ld		a,(count12)
+1 01BB : 38                      	inr		a
+1 01BC : B1 02 C0                	st		a,(count12)
+1 01BF : 90 00 01                	ld		a,1
+1 01C2 : 5E                      	xfr		a,z
+1 01C3 : 0A                      	ri
+1 01C4 : 71 01 B8                	jmp		irq12
+1 01C7 :                         
+1 01C7 :                         irq13:
+1 01C7 : 91 02 C2                	ld		a,(count13)
+1 01CA : 38                      	inr		a
+1 01CB : B1 02 C2                	st		a,(count13)
+1 01CE : 90 00 01                	ld		a,1
+1 01D1 : 5E                      	xfr		a,z
+1 01D2 : 0A                      	ri
+1 01D3 : 71 01 C7                	jmp		irq13
+1 01D6 :                         	
+1 01D6 :                         irq14:
+1 01D6 : 91 02 C4                	ld		a,(count14)
+1 01D9 : 38                      	inr		a
+1 01DA : B1 02 C4                	st		a,(count14)
+1 01DD : 90 00 01                	ld		a,1
+1 01E0 : 5E                      	xfr		a,z
+1 01E1 : 0A                      	ri
+1 01E2 : 71 01 D6                	jmp		irq14
+1 01E5 :                         
+1 01E5 :                         irq15:
+1 01E5 : 91 02 C6                	ld		a,(count15)
+1 01E8 : 38                      	inr		a
+1 01E9 : B1 02 C6                	st		a,(count15)
+1 01EC : 90 00 01                	ld		a,1
+1 01EF : 5E                      	xfr		a,z
+1 01F0 : 0A                      	ri
+1 01F1 : 71 01 E5                	jmp		irq15
+1 01F4 :                         
+1 01F4 :                         ; --- STRINGS ---
+1 01F4 :                         
+1 01F4 :                         str_hello:
+1 01F4 : 49 4E 54 45 52 52 55 50 	.ascii "INTERRUPT ACTIVITY PROBE V0.1.3"
+1 01FD : 54 20 41 43 54 49 56 49 ...
+1 0205 : 54 59 20 50 52 4F 42 45 ...
+1 020D : 20 56 30 2E 31 2E 33    ...
+1 0213 :                         str_crlf:
+1 0213 : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 0216 :                         	
+1 0216 :                         str_help:
+1 0216 : 0D 0A                   	.byte	0x0D,0x0A
+1 0218 : 50 52 45 53 53 20 41 4E 	.ascii "PRESS ANY KEY TO BEGIN THE TEST"
+1 0221 : 59 20 4B 45 59 20 54 4F ...
+1 0229 : 20 42 45 47 49 4E 20 54 ...
+1 0231 : 48 45 20 54 45 53 54    ...
+1 0237 : 0D 0A                   	.byte	0x0D,0x0A
+1 0239 : 44 55 52 49 4E 47 20 54 	.ascii "DURING TEST, PRESS THE KEY AGAIN TO END THE TEST AND PRINT REPORT"
+1 0242 : 45 53 54 2C 20 50 52 45 ...
+1 024A : 53 53 20 54 48 45 20 4B ...
+1 0252 : 45 59 20 41 47 41 49 4E ...
+1 025A : 20 54 4F 20 45 4E 44 20 ...
+1 0262 : 54 48 45 20 54 45 53 54 ...
+1 026A : 20 41 4E 44 20 50 52 49 ...
+1 0272 : 4E 54 20 52 45 50 4F 52 ...
+1 027A : 54                      ...
+1 027A : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 027D :                         	
+1 027D :                         str_begin:
+1 027D : 54 45 53 54 20 49 53 20 	.ascii "TEST IS RUNNING..."
+1 0286 : 52 55 4E 4E 49 4E 47 2E ...
+1 028E : 2E 2E                   ...
+1 028F : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 0292 :                         	
+1 0292 :                         str_done:
+1 0292 : 54 45 53 54 20 43 4F 4D 	.ascii "TEST COMPLETE"
+1 029B : 50 4C 45 54 45          ...
+1 029F : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 02A2 :                         	
+1 02A2 :                         str_level:
+1 02A2 : 4C 45 56 45 4C 20 23    	.ascii "LEVEL #"
+1 02A9 : 00                      	.byte	0x00
+1 02AA :                         
+1 02AA :                         ; --- VARIABLES ---
+1 02AA :                         
+1 02AA :                         count01:
+1 02AA : 00 00                   	.byte	0x00,0x00
+1 02AC :                         	
+1 02AC :                         count02:
+1 02AC : 00 00                   	.byte	0x00,0x00
+1 02AE :                         
+1 02AE :                         count03:
+1 02AE : 00 00                   	.byte	0x00,0x00
+1 02B0 :                         
+1 02B0 :                         count04:
+1 02B0 : 00 00                   	.byte	0x00,0x00
+1 02B2 :                         	
+1 02B2 :                         count05:
+1 02B2 : 00 00                   	.byte	0x00,0x00
+1 02B4 :                         	
+1 02B4 :                         count06:
+1 02B4 : 00 00                   	.byte	0x00,0x00
+1 02B6 :                         
+1 02B6 :                         count07:
+1 02B6 : 00 00                   	.byte	0x00,0x00
+1 02B8 :                         
+1 02B8 :                         count08:
+1 02B8 : 00 00                   	.byte	0x00,0x00
+1 02BA :                         	
+1 02BA :                         count09:
+1 02BA : 00 00                   	.byte	0x00,0x00
+1 02BC :                         	
+1 02BC :                         count10:
+1 02BC : 00 00                   	.byte	0x00,0x00
+1 02BE :                         
+1 02BE :                         count11:
+1 02BE : 00 00                   	.byte	0x00,0x00
+1 02C0 :                         
+1 02C0 :                         count12:
+1 02C0 : 00 00                   	.byte	0x00,0x00
+1 02C2 :                         	
+1 02C2 :                         count13:
+1 02C2 : 00 00                   	.byte	0x00,0x00
+1 02C4 :                         	
+1 02C4 :                         count14:
+1 02C4 : 00 00                   	.byte	0x00,0x00
+1 02C6 :                         
+1 02C6 :                         count15:
+1 02C6 : 00 00                   	.byte	0x00,0x00
