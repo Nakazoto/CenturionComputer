@@ -1,0 +1,35 @@
+Most of the libc code is portable. Some of it ends up slower than we would
+like on TMS99xx because there are fancy ways of handling word alignment that
+we don't do.
+
+The malloc/free support requires a subset of brk() and sbrk().
+
+sbrk(0) needs to return the address of the base of free memory
+brk(n) needs to set the base of free memory to n.
+
+Free memory grows upwards.
+
+A trivial implementation for the TI99/4A with the 0x2000-3FFF area having
+the stack at the top and malloc space growing up would be something like
+the following (which also implements non zero sbrk semantics correctly)
+
+static unsigned char *mptr = (unsigned char *)0x2000;
+
+void *sbrk(inptr_t n)
+{
+	unsigned char *p = mptr;
+	mptr += n;
+	return p;
+}
+
+int brk(void *p)
+{
+	mptr = p;
+	return 0;
+}
+
+A better implementation might check if it's getting close to the stack and
+return -1 (sbrk returns (void *)-1 on error).
+
+
+

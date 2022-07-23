@@ -1,0 +1,185 @@
+1 0000 :                         ; --- EQUATES ---
+1 0000 :                         
+1 0000 :                         sys_done	equ 0x0100
+1 0000 :                         tty_putc	equ 0x0103
+1 0000 :                         tty_putb	equ 0x0106
+1 0000 :                         tty_putw	equ 0x0109
+1 0000 :                         tty_puts	equ 0x010C
+1 0000 :                         tty_getc	equ 0x010F
+1 0000 :                         tty_gets	equ 0x0112
+1 0000 :                         fs_open		equ 0x0115
+1 0000 :                         fs_close	equ 0x0118
+1 0000 :                         fs_make		equ 0x011B
+1 0000 :                         fs_delete	equ 0x011E
+1 0000 :                         fs_list		equ 0x0121
+1 0000 :                         fs_read		equ 0x0124
+1 0000 :                         fs_write	equ 0x0127
+1 0000 :                         gen_htoi	equ 0x012A
+1 0000 :                         tty_next	equ 0x012D
+1 0000 :                         
+1 0000 :                         combuf		equ 0x01C0
+1 0000 :                         	
+1 0000 :                         ;	Program starts at 0x0200
+1 0000 :                         	
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         regedit:
+1 0000 : D0 00 A5                	ld		b,str_hello
+1 0003 : 79 01 0C                	jsr		tty_puts
+1 0006 :                         	
+1 0006 : D0 00 CB                	ld		b,str_unit
+1 0009 : 79 01 0C                	jsr		tty_puts
+1 000C : D0 01 51                	ld		b,unit_buffer
+1 000F : 80 02                   	ld		al,2
+1 0011 : 79 01 12                	jsr		tty_gets
+1 0014 :                         	
+1 0014 : D0 00 DD                	ld		b,str_sector
+1 0017 : 79 01 0C                	jsr		tty_puts
+1 001A : D0 01 4C                	ld		b,sec_buffer
+1 001D : 80 04                   	ld		al,4
+1 001F : 79 01 12                	jsr		tty_gets
+1 0022 :                         	
+1 0022 : D0 00 F3                	ld		b,str_cmd
+1 0025 : 79 01 0C                	jsr		tty_puts
+1 0028 : D0 01 54                	ld		b,cmd_buffer
+1 002B : 80 02                   	ld		al,2
+1 002D : 79 01 12                	jsr		tty_gets
+1 0030 :                         	
+1 0030 : D0 01 08                	ld		b,str_insr
+1 0033 : 79 01 0C                	jsr		tty_puts
+1 0036 :                         	
+1 0036 :                         exec:
+1 0036 : D1 01 51                	ld		b,(unit_buffer)
+1 0039 : 79 01 2A                	jsr		gen_htoi
+1 003C : A1 F1 40                	st		al,(0xF140)
+1 003F :                         	
+1 003F : D1 01 4C                	ld		b,(sec_buffer)
+1 0042 : 79 01 2A                	jsr		gen_htoi
+1 0045 : A1 F1 41                	st		al,(0xF141)
+1 0048 :                         	
+1 0048 : D1 01 4E                	ld		b,(sec_buffer+2)
+1 004B : 79 01 2A                	jsr		gen_htoi
+1 004E : A1 F1 42                	st		al,(0xF142)
+1 0051 :                         	
+1 0051 : D1 01 54                	ld		b,(cmd_buffer)
+1 0054 : 79 01 2A                	jsr		gen_htoi
+1 0057 : A1 F1 48                	st		al,(0xF148)
+1 005A :                         	
+1 005A :                         print:
+1 005A : D0 01 41                	ld		b,str_status
+1 005D : 79 01 0C                	jsr		tty_puts
+1 0060 :                         	
+1 0060 : D1 F1 44                	ld		b,(0xF144)
+1 0063 : 80 10                   	ld		al,16
+1 0065 : 45 10                   	xfr		al,ah
+1 0067 :                         	
+1 0067 :                         put_bin:
+1 0067 : 80 80                   	ld		al,0x80
+1 0069 : F5 A2                   	st		b,(-s)
+1 006B : 42 21                   	and		bh,al
+1 006D :                         	
+1 006D : 14 05                   	bz		put_bin_z
+1 006F :                         	
+1 006F : C0 31                   	ld		bl,'1'
+1 0071 : 71 00 76                	jmp		put_bin_c
+1 0074 :                         	
+1 0074 :                         put_bin_z:
+1 0074 : C0 30                   	ld		bl,'0'
+1 0076 :                         put_bin_c:
+1 0076 : 79 01 03                	jsr		tty_putc
+1 0079 : D5 A1                   	ld		b,(s+)
+1 007B :                         	
+1 007B : 35 20                   	slr		b
+1 007D : 21 00                   	dcr		ah
+1 007F : 15 E6                   	bnz		put_bin
+1 0081 :                         	
+1 0081 :                         	; Check for commands
+1 0081 : 79 01 2D                	jsr		tty_next
+1 0084 : 43 11                   	ori		al,al
+1 0086 :                         	
+1 0086 : 14 D2                   	bz		print
+1 0088 :                         	
+1 0088 : 79 01 0F                	jsr		tty_getc
+1 008B :                         	
+1 008B : C0 20                   	ld		bl,0x20
+1 008D : 49                      	sub		al,bl
+1 008E : 15 03                   	bnz		check_n
+1 0090 : 71 00 00                	jmp		regedit
+1 0093 :                         	
+1 0093 :                         check_n:
+1 0093 : C0 0D                   	ld		bl,0x0D
+1 0095 : 49                      	sub		al,bl
+1 0096 : 14 9E                   	bz		exec
+1 0098 :                         	
+1 0098 : D0 00 0A                	ld		b,0x0A
+1 009B : 49                      	sub		al,bl
+1 009C : 14 98                   	bz		exec
+1 009E :                         	
+1 009E : D0 00 45                	ld		b,'E'
+1 00A1 : 49                      	sub		al,bl
+1 00A2 : 15 B6                   	bnz		print
+1 00A4 :                         	
+1 00A4 : 09                      	rsr
+1 00A5 :                         
+1 00A5 :                         ; --- STRINGS ---
+1 00A5 :                         
+1 00A5 :                         str_hello:
+1 00A5 : 0C                      	.byte	0x0C
+1 00A6 : 48 41 57 4B 20 44 52 49 	.ascii "HAWK DRIVE MONITOR UTILITY V0.1.1"
+1 00AF : 56 45 20 4D 4F 4E 49 54 ...
+1 00B7 : 4F 52 20 55 54 49 4C 49 ...
+1 00BF : 54 59 20 56 30 2E 31 2E ...
+1 00C7 : 31                      ...
+1 00C7 : 00                      	.byte	0x00
+1 00C8 :                         str_crlf:
+1 00C8 : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 00CB :                         
+1 00CB :                         str_unit:
+1 00CB : 0D 0A                   	.byte	0x0D,0x0A
+1 00CD : 55 4E 49 54 20 52 45 47 	.ascii "UNIT REG (XX)? "
+1 00D6 : 20 28 58 58 29 3F 20    ...
+1 00DC : 00                      	.byte	0x00
+1 00DD :                         	
+1 00DD :                         str_sector:
+1 00DD : 0D 0A                   	.byte	0x0D,0x0A
+1 00DF : 53 45 43 54 4F 52 20 52 	.ascii "SECTOR REG (XXXX)? "
+1 00E8 : 45 47 20 28 58 58 58 58 ...
+1 00F0 : 29 3F 20                ...
+1 00F2 : 00                      	.byte	0x00
+1 00F3 :                         	
+1 00F3 :                         str_cmd:
+1 00F3 : 0D 0A                   	.byte	0x0D,0x0A
+1 00F5 : 43 4F 4D 4D 41 4E 44 20 	.ascii "COMMAND REG (XX)? "
+1 00FE : 52 45 47 20 28 58 58 29 ...
+1 0106 : 3F 20                   ...
+1 0107 : 00                      	.byte	0x00
+1 0108 :                         	
+1 0108 :                         str_insr:
+1 0108 : 0D 0A                   	.byte	0x0D,0x0A
+1 010A : 5B 53 50 41 43 45 5D 20 	.ascii "[SPACE] = EDIT REG, [ENTER] = RERUN LAST, [E] = EXIT"
+1 0113 : 3D 20 45 44 49 54 20 52 ...
+1 011B : 45 47 2C 20 5B 45 4E 54 ...
+1 0123 : 45 52 5D 20 3D 20 52 45 ...
+1 012B : 52 55 4E 20 4C 41 53 54 ...
+1 0133 : 2C 20 5B 45 5D 20 3D 20 ...
+1 013B : 45 58 49 54             ...
+1 013E : 0D 0A 00                	.byte	0x0D,0x0A,0x00
+1 0141 :                         	
+1 0141 :                         str_status:
+1 0141 : 0D                      	.byte	0x0D
+1 0142 : 53 54 41 54 55 53 20 3D 	.ascii "STATUS = "
+1 014B : 20                      ...
+1 014B : 00                      	.byte	0x00
+1 014C :                         
+1 014C :                         ; --- VARIABLES ---
+1 014C :                         
+1 014C :                         sec_buffer:
+1 014C : 30 30 30 30             	.ascii	"0000"
+1 0150 : 00                      	.byte	0x0 
+1 0151 :                         	
+1 0151 :                         unit_buffer:
+1 0151 : 30 30                   	.ascii	"00"
+1 0153 : 00                      	.byte	0x0 
+1 0154 :                         
+1 0154 :                         cmd_buffer:
+1 0154 : 30 30                   	.ascii	"00"
+1 0156 : 00                      	.byte	0x0 

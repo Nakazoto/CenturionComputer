@@ -1,0 +1,1040 @@
+#
+#	Branch noise
+#
+	jmp %1
+%1:
+=
+%1:
+
+	jmp %2
+%1:
+%2:
+=
+%1:
+%2:
+
+	jmp %3
+%1:
+%2:
+%3:
+=
+%1:
+%2:
+%3:
+
+	bra %1
+%1:
+=
+%1:
+
+	bra %2
+%1:
+%2:
+=
+%1:
+%2:
+
+	bra %3
+%1:
+%2:
+%3:
+=
+%1:
+%2:
+%3:
+
+	jnz %1
+	bra %2
+%1:
+=
+	jz %2
+%1:
+
+	jz %1
+	bra %2
+%1:
+=
+	jnz %2
+%1:
+
+#
+#	Function entry
+#
+_%1:
+	stx (-s)
+	xfr z,x
+	stx (-s)
+	xfr s,z
+=
+_%1:
+	jsr center0
+
+_%1:
+	jsr center0
+	add b,z
+=
+_%1:
+	jsr center_va
+
+_%1:
+	jsr center0
+	dcr s
+=
+_%1:
+	jsr center1
+
+_%1:
+	jsr center1
+	dcr s
+=
+_%1:
+	jsr center2
+
+_%1:
+	jsr center0
+	ldx %2
+	add x,s
+=
+_%1:
+	jsr center
+	.word %2
+
+#
+#	Function exit
+#
+	ldx 3
+	add x,s
+	jmp cexit
+=
+	jmp cexit3
+
+	ldx 4
+	add x,s
+	jmp cexit
+=
+	jmp cexit4
+
+	ldx 5
+	add x,s
+	jmp cexit
+=
+	jmp cexit5
+
+	ldx 6
+	add x,s
+	jmp cexit
+=
+	jmp cexit6
+
+	ldx %1
+	add x,s
+	jmp cexit
+=
+	ldx %1
+	jmp cexitn
+
+#
+#	Remove bool generation when flags will always be valid
+#
+	jsr booleq
+	jz %1
+=
+	jnz %1
+
+	jsr boolne
+	jnz %1
+=
+	jnz %1
+
+	jsr booleq
+	jnz %1
+=
+	jz %1
+
+	jsr boolne
+	jz %1
+=
+	jz %1
+
+	cla
+	xfr a,a
+	jnz %1
+=
+	cla
+
+	cla
+	xfr a,a
+	jz %1
+=
+	cla
+	bra %1
+
+	lda %1
+	xfr a,a
+=
+	lda %1
+
+	cla
+	jz %1
+=
+	cla
+	bra %1
+
+	cla
+	jnz %1
+=
+	cla
+
+	and b,a
+	xfr a,a
+=
+	and b,a
+
+	ori b,a
+	xfr a,a
+=
+	ori b,a
+
+	ore b,a
+	xfr a,a
+=
+	ore b,a
+
+	cla
+	cla
+=
+	cla
+
+	clrb ah
+	clrb ah
+=
+	clrb ah
+
+	sta %1
+	xfer a,a
+	jnz %2
+=
+	sta %1
+	jnz %2
+
+	sta %1
+	xfer a,a
+	jz %2
+=
+	sta %1
+	jz %2
+
+
+
+#
+#	Reloads - be careful of s+ etc.... Work across statement boundaries
+#
+	stab %1(z)
+	;statement
+	ldab %1(z)
+=
+	stab %1(z)
+
+	stab %1(x)
+	;statement
+	ldab %1(x)
+=
+	stab %1(x)
+
+	stab %1(s)
+	;statement
+	ldab %1(s)
+=
+	stab %1(s)
+
+	sta %1(z)
+	;statement
+	lda %1(z)
+=
+	sta %1(z)
+
+	sta %1(x)
+	;statement
+	lda %1(x)
+=
+	sta %1(x)
+
+	sta %1(s)
+	;statement
+	lda %1(s)
+=
+	sta %1(s)
+
+	stab %1(z)
+	ldab %1(z)
+=
+	stab %1(z)
+
+	stab %1(x)
+	ldab %1(x)
+=
+	stab %1(x)
+
+	stab %1(s)
+	ldab %1(s)
+=
+	stab %1(s)
+
+	sta %1(z)
+	lda %1(z)
+=
+	sta %1(z)
+
+	sta %1(x)
+	lda %1(x)
+=
+	sta %1(x)
+
+	sta %1(s)
+	lda %1(s)
+=
+	sta %1(s)
+
+	cla
+	sta %1
+	cla
+=
+	cla
+	sta %1
+
+	cla
+	stab %1
+	cla
+=
+	cla
+	stab %1
+
+
+#
+#	Clear up repeat clear high. This is safe as we might do ops on (a)
+# 	but we never clear the top of a pointer.
+#
+	clrb ah
+	ldab %1
+	clrb ah
+=
+	cla
+	ldab %1
+
+	cla
+	ldab %1
+	clrb ah
+=
+	cla
+	ldab %1
+
+#
+#	Clean up small predec/inc
+#
+	ldab %1
+	stab (tmp1)
+	dcrb al
+	stab %1
+	ldab (tmp1)
+=
+	ldab %1
+	dcrb al
+	stab %1
+	inrb al
+
+	lda %1
+	sta (tmp1)
+	dca
+	sta %1
+	lda (tmp1)
+=
+	lda %1
+	dcr a
+	sta %1
+	ina
+
+	ldab %1
+	stab (tmp1)
+	inrb al
+	stab %1
+	ldab (tmp1)
+=
+	ldab %1
+	inrb al
+	stab %1
+	dcrb al
+
+	lda %1
+	sta (tmp1)
+	inr a
+	sta %1
+	lda (tmp1)
+=
+	lda %1
+	ina
+	sta %1
+	dca
+
+#
+#	Static inc/dec
+#
+	lda 1
+	ldb (_%1)
+	add b,a
+	sta (_%1)
+=
+	lda (_%1)
+	ina
+	sta (_%1)
+
+	lda -1
+	ldb (_%1)
+	add b,a
+	sta (_%1)
+=
+	lda (_%1)
+	ina
+	sta (_%1)
+
+#
+#	Adding FFFF is dca
+#
+	lda %1
+	ld b, -1
+	add a,b
+=
+	lda %1
+	dca
+
+	ldbb -1
+	addb bl,al
+=
+	dcr al
+
+#
+#	Linearise some compares and logic
+#
+	lda %1
+	sta (-s)
+	lda %2
+	ldb (-s)
+	sab
+=
+	ldb %1
+	lda %2
+	sab
+
+	sta (-s)
+	cla
+	ldab %1
+	ldb (s+)
+	and b,a
+=
+	clr b
+	ldbb %1
+	and b,a
+
+	sta (-s)
+	cla
+	ldab %1
+	ldb (s+)
+	ori b,a
+=
+	clr b
+	ldbb %1
+	ori b,a
+
+	sta (-s)
+	cla
+	ldab %1
+	ldb (s+)
+	ore b,a
+=
+	clr b
+	ldbb %1
+	ore b,a
+
+	sta (-s)
+	lda %1
+	ldb (s+)
+	and b,a
+=
+	ldb %1
+	and b,a
+
+	sta (-s)
+	lda %1
+	ldb (s+)
+	ori b,a
+=
+	ldb %1
+	ori b,a
+
+	sta (-s)
+	lda %1
+	ldb (s+)
+	ore b,a
+=
+	ldb %1
+	ore b,a
+
+	lda %1
+	sta (-s)
+	lda %2
+	ldb (s+)
+	sub b,a
+=
+	ldb %1
+	lda %2
+	sub b,a
+
+	lda %1
+	sta (-s)
+	lda %2
+	ldb (s+)
+	sab
+=
+	ldb %1
+	lda %2
+	sab
+
+	cla
+	sta %1
+	;statement
+	cla
+=
+	cla
+	sta %1
+	;statement
+
+#
+#	Linearise some pointer ops
+#
+#	16bit
+	lda %1
+	sta (-s)
+	lda %2
+	ldx (s+)
+	sta 0(x)
+=
+	ldx %1
+	lda %2
+	sta 0(x)
+
+#	8bit
+	lda %1
+	sta (-s)
+	ldab %2
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	ldab %2
+	stab 0(x)
+
+#	16bit to 8bit
+	lda %1
+	sta (-s)
+	lda %2
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	lda %2
+	stab 0(x)
+
+#	16bit clear
+	lda %1
+	sta (-s)
+	cla
+	ldx (s+)
+	sta 0(x)
+=
+	ldx %1
+	cla
+	sta 0(x)
+
+#	8bit clear
+	lda %1
+	sta (-s)
+	clab
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	clab
+	stab 0(x)
+
+#	16bit clear to 8bit
+	lda %1
+	sta (-s)
+	cla
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	cla
+	stab 0(x)
+
+#	16bit to 1
+	lda %1
+	sta (-s)
+	cla
+	ina
+	ldx (s+)
+	sta 0(x)
+=
+	ldx %1
+	cla
+	ina
+	sta 0(x)
+
+#	8bit to 1
+	lda %1
+	sta (-s)
+	clab
+	inab
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	clab
+	inab
+	stab 0(x)
+
+#	16bit 1 to 8bit
+	lda %1
+	sta (-s)
+	cla
+	ina
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	cla
+	ina
+	stab 0(x)
+
+#	16bit to -1
+	lda %1
+	sta (-s)
+	cla
+	dca
+	ldx (s+)
+	sta 0(x)
+=
+	ldx %1
+	cla
+	dca
+	sta 0(x)
+
+#	8bit to -1
+	lda %1
+	sta (-s)
+	clab
+	dcab
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	clab
+	dcab
+	stab 0(x)
+
+#	16bit -1 to 8bit
+	lda %1
+	sta (-s)
+	cla
+	dca
+	ldx (s+)
+	stab 0(x)
+=
+	ldx %1
+	cla
+	dca
+	stab 0(x)
+
+#	16bit with add
+	lda %1
+	sta (-s)
+	lda %2
+	ldx (s+)
+	ldb %3
+	add b,x
+	sta 0(x)
+=
+	ldx %1
+	lda %2
+	ldb %3
+	add b,x
+	sta 0(x)
+
+#	8bit with add
+	lda %1
+	sta (-s)
+	ldab %2
+	ldx (s+)
+	ldb %3
+	add b,x
+	stab 0(x)
+=
+	ldx %1
+	ldab %2
+	ldb %3
+	add b,x
+	stab 0(x)
+
+#	16bit to 8bit add
+	lda %1
+	sta (-s)
+	lda %2
+	ldx (s+)
+	ldb %3
+	add b,x
+	stab 0(x)
+=
+	ldx %1
+	lda %2
+	ldb %3
+	add b,x
+	stab 0(x)
+
+#	16bit clear with add
+	lda %1
+	sta (-s)
+	cla
+	ldx (s+)
+	ldb %2
+	add b,x
+	sta 0(x)
+=
+	ldx %1
+	ldb %2
+	add b,x
+	cla
+	sta 0(x)
+
+#	8bit clear with add
+	lda %1
+	sta (-s)
+	clab
+	ldx (s+)
+	ldb %2
+	add b,x
+	stab 0(x)
+=
+	ldx %1
+	ldb %2
+	add b,x
+	clab
+	stab 0(x)
+
+#	16 to 8bit clear with add
+	lda %1
+	sta (-s)
+	cla
+	ldx (s+)
+	ldb %2
+	add b,x
+	stab 0(x)
+=
+	ldx %1
+	ldb %2
+	add b,x
+	cla
+	stab 0(x)
+
+#	X variants
+	ldx %1
+	stx (-s)
+	cla
+	ldab %2
+	ldb (s+)
+	add b,a
+	ldab 0(a)
+	clrb ah
+=
+	ldx %1
+	cla
+	ldab %2
+	add x,a
+	ldab 0(a)
+	clrb ah
+
+	ldx %1
+	stx (-s)
+	lda %2
+	ldb (s+)
+	add b,a
+	lda 0(a)
+=
+	ldx %1
+	lda %2
+	add x,a
+	lda 0(a)
+
+	ldx %1
+	stx (-s)
+	cla
+	ldab %2
+	ldb (s+)
+	add b,a
+	lda 0(a)
+=
+	ldx %1
+	cla
+	ldab %2
+	add x,a
+	ldab 0(a)
+	clrb ah
+
+	ldx %1
+	stx (-s)
+	lda %2
+	ldb (s+)
+	add b,a
+	ldab 0(a)
+	clrb ah
+=
+	ldx %1
+	lda %2
+	add x,a
+	lda 0(a)
+	clrb ah
+
+	ldx %1
+	stx (-s)
+	cla
+	ina
+	ldab %2
+	ldb (s+)
+	add b,a
+	lda 0(a)
+=
+	ldx %1
+	cla
+	ina
+	ldab %2
+	add x,a
+	ldab 0(a)
+	clrb ah
+
+	sta (-s)
+	ldx (s+)
+	ldb %1
+	add b,x
+	sta %2
+=
+	xax
+	ldb %1
+	add b,x
+	sta %2
+
+	sta (-s)
+	cla
+	ldx (s+)
+	ldb %1
+	add b,x
+	sta %2
+=
+	xax
+	cla
+	ldb %1
+	add b,x
+	sta %2
+
+	sta (-s)
+	cla
+	ina
+	ldx (s+)
+	ldb %1
+	add b,x
+	sta %2
+=
+	xax
+	cla
+	ina
+	ldb %1
+	add b,x
+	sta %2
+
+	sta (-s)
+	cla
+	dca
+	ldx (s+)
+	ldb %1
+	add b,x
+	sta %2
+=
+	xax
+	cla
+	dca
+	ldb %1
+	add b,x
+	sta %2
+
+#
+#	Cases we can elide the upper clear trivially
+#
+	clrb ah
+	ldbb %1
+	sabb
+	jsr bool%2
+=
+	ldbb %1
+	sabb
+	jsr bool%2
+
+#
+#	Remove save/load over statement boundary
+#
+	sta (_%1)
+	;statement
+	lda (_%1)
+=
+	sta (_%1)
+	;statement
+
+	sta %1(z)
+	;statement
+	lda %1(z)
+=
+	sta %1(z)
+	;statement
+
+	sta %1(x)
+	;statement
+	lda %1(x)
+=
+	sta %1(x)
+	;statement
+
+	sta %1(s)
+	;statement
+	lda %1(s)
+=
+	sta %1(s)
+	;statement
+
+#
+#	Dead conditionals
+#
+	cla
+	jz %1
+=
+	cla
+	bra %1
+
+#
+#	Function call parameter optimisation
+#
+	cla
+	sta (-s)
+	cla
+=
+	cla
+	sta (-s)
+
+#
+#	Constants
+#
+	lda 65535
+=
+	cla
+	dca
+
+	lda 1
+=
+	cla
+	ina
+
+	lda 0
+=
+	cla
+
+	ldb 0
+=
+	clr b
+
+#
+#	Pointer chasing assignment
+#
+	lda (_%1)
+	sta (-s)
+	lda %2
+	lda %3(a)
+	ldx (s+)
+	sta %4(x)
+=
+	ldx (_%1)
+	lda %2
+	lda %3(a)
+	sta %4(x)
+
+	lda %1(z)
+	sta (-s)
+	lda %2
+	lda %3(a)
+	ldx (s+)
+	sta %4(x)
+=
+	ldx %1(z)
+	lda %2
+	lda %3(a)
+	sta %4(x)
+
+	lda %1(s)
+	sta (-s)
+	lda %2
+	lda %3(a)
+	ldx (s+)
+	sta %4(x)
+=
+	ldx %1(s)
+	lda %2
+	lda %3(a)
+	sta %4(x)
+
+#
+#	Long store
+#
+	lda %1
+	sta (-s)
+	lda %2
+	xfr a,y
+	lda %3
+	ldx (s+)
+	sta 2(x)
+	xfr y,b
+	stb (x)
+=
+	ldx %1
+	lda %2
+	xfr a,y
+	lda %3
+	sta 2(x)
+	xfr y,b
+	stb (x)
+
+#
+#	--x and ++x quick case
+#
+	cla
+	dca
+	ldb %1
+	add b,a
+	sta %1
+=
+	lda %1
+	dca
+	sta %1
+
+	cla
+	ina
+	ldb %1
+	add b,a
+	sta %1
+=
+	lda %1
+	ina
+	sta %1

@@ -53,6 +53,23 @@ ldwrx6 -b -C 512 -o intprb.raw intprb.o
 dd if=intprb.raw bs=512 skip=1 of=bin/INTPRB.BIN
 rm intprb.raw intprb.o
 
+aswrx6 -l listing_hwkmon.txt hwkmon.asm
+ldwrx6 -b -C 512 -o hwkmon.raw hwkmon.o
+dd if=hwkmon.raw bs=512 skip=1 of=bin/HWKMON.BIN
+rm hwkmon.raw hwkmon.o
+
+aswrx6 -l listing_hwkrea.txt hwkrea.asm
+ldwrx6 -b -C 512 -o hwkrea.raw hwkrea.o
+dd if=hwkrea.raw bs=512 skip=1 of=bin/HWKREA.BIN
+rm hwkrea.raw hwkrea.o
+
+aswrx6 -l listing_utos.txt utos.asm
+ldwrx6 -b -C 512 -o utos.raw utos.o
+dd if=utos.raw bs=512 skip=1 of=bin/UTOS.BIN
+ldwrx6 -b -C 64768 -o utos.raw utos.o
+dd if=utos.raw bs=64768 skip=1 of=rom/UTOS.ROM
+rm utos.raw utos.o
+
 
 aswrx6 -l listing_bootstrap.txt bootstrap.asm
 rm bootstrap.o

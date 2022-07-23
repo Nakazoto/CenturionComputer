@@ -1,0 +1,258 @@
+1 0000 :                         ; --- TEXT ---
+1 0000 :                         
+1 0000 :                         start:
+1 0000 :                         	; Set up MUX0
+1 0000 : 80 C5                   	ld		al,0xC5
+1 0002 : A1 F2 00                	st		al,(0xF200)
+1 0005 :                         
+1 0005 :                         	; Set stack to 0x8000 if in ROM
+1 0005 : 90 00 00                	ld		a,start
+1 0008 : 17 0E                   	bp		prompt_p
+1 000A : 90 80 00                	ld		a,0x8000
+1 000D : 5F                      	xfr		a,s
+1 000E : D0 00 00                	ld		b,start
+1 0011 : F5 A2                   	st		b,(-s)
+1 0013 : 15 03                   	bnz		prompt_p
+1 0015 :                         	
+1 0015 :                         	; UTOS prompt
+1 0015 :                         prompt:
+1 0015 : 79 00 D9                	jsr		tty_crlf 
+1 0018 :                         prompt_p:
+1 0018 : C0 2F                   	ld		bl,'/'
+1 001A : 79 00 E0                	jsr		tty_putc
+1 001D : 79 00 EF                	jsr		tty_getc
+1 0020 : C0 4D                   	ld		bl,'M'
+1 0022 : 49                      	sub		al,bl
+1 0023 : 14 39                   	bz		modify
+1 0025 : C0 47                   	ld		bl,'G'
+1 0027 : 49                      	sub		al,bl
+1 0028 : 14 0C                   	bz		gosub
+1 002A : C0 42                   	ld		bl,'B'
+1 002C : 49                      	sub		al,bl
+1 002D : 14 2C                   	bz		boot
+1 002F : D0 00 52                	ld		b,'R'
+1 0032 : 49                      	sub		al,bl
+1 0033 : 15 E0                   	bnz		prompt
+1 0035 : 09                      	rsr
+1 0036 :                         	
+1 0036 :                         
+1 0036 :                         gosub:
+1 0036 :                         	; Get the address
+1 0036 : 32 60                   	clr		y
+1 0038 : 79 00 EF                	jsr		tty_getc
+1 003B :                         gosub_a:
+1 003B : 4D                      	xfr		al,bl
+1 003C : 79 00 BA                	jsr		gen_hton
+1 003F : 17 03                   	bp		gosub_pa
+1 0041 : 71 00 15                	jmp		prompt
+1 0044 :                         gosub_pa:
+1 0044 : 35 60                   	slr		y
+1 0046 : 35 60                   	slr		y
+1 0048 : 35 60                   	slr		y
+1 004A : 35 60                   	slr		y
+1 004C : 43 17                   	ori		al,yl
+1 004E : 79 00 EF                	jsr		tty_getc
+1 0051 : C0 0D                   	ld		bl,0x0D
+1 0053 : 49                      	sub		al,bl
+1 0054 : 15 E5                   	bnz		gosub_a
+1 0056 : 7D 60                   	jsr		(y)
+1 0058 : 71 00 15                	jmp		prompt
+1 005B :                         
+1 005B :                         boot:
+1 005B : 71 01 3D                	jmp		boot_t
+1 005E :                         
+1 005E :                         	
+1 005E :                         modify:
+1 005E :                         	; Get the address
+1 005E : 32 60                   	clr		y
+1 0060 : 79 00 EF                	jsr		tty_getc
+1 0063 :                         modify_a:
+1 0063 : 4D                      	xfr		al,bl
+1 0064 : 79 00 BA                	jsr		gen_hton
+1 0067 : 17 03                   	bp		modify_pa
+1 0069 : 71 00 15                	jmp		prompt
+1 006C :                         modify_pa:
+1 006C : 35 60                   	slr		y
+1 006E : 35 60                   	slr		y
+1 0070 : 35 60                   	slr		y
+1 0072 : 35 60                   	slr		y
+1 0074 : 43 17                   	ori		al,yl
+1 0076 : 79 00 EF                	jsr		tty_getc
+1 0079 : C0 20                   	ld		bl,' '
+1 007B : 49                      	sub		al,bl
+1 007C : 15 E5                   	bnz		modify_a
+1 007E :                         	
+1 007E :                         modify_l:
+1 007E : CB                      	ld		bl,(y)
+1 007F : 79 01 19                	jsr		tty_putb
+1 0082 :                         	
+1 0082 :                         	; Get the byte
+1 0082 : 22 90                   	clr		zl
+1 0084 : 79 00 EF                	jsr		tty_getc
+1 0087 : C0 20                   	ld		bl,' '
+1 0089 : 49                      	sub		al,bl
+1 008A : 14 29                   	bz		modify_n
+1 008C :                         modify_b:
+1 008C : 4D                      	xfr		al,bl
+1 008D : 79 00 BA                	jsr		gen_hton
+1 0090 : 17 03                   	bp		modify_pb
+1 0092 : 71 00 15                	jmp		prompt
+1 0095 :                         modify_pb:
+1 0095 : 25 90                   	slr		zl
+1 0097 : 25 90                   	slr		zl
+1 0099 : 25 90                   	slr		zl
+1 009B : 25 90                   	slr		zl
+1 009D : 43 19                   	ori		al,zl
+1 009F : 79 00 EF                	jsr		tty_getc
+1 00A2 : C0 20                   	ld		bl,' '
+1 00A4 : 49                      	sub		al,bl
+1 00A5 : 14 0B                   	bz		modify_nw
+1 00A7 : C0 0D                   	ld		bl,0x0D
+1 00A9 : 49                      	sub		al,bl
+1 00AA : 15 E0                   	bnz		modify_b
+1 00AC : 45 93                   	xfr		zl,bl
+1 00AE : EB                      	st		bl,(y)
+1 00AF : 71 00 15                	jmp		prompt
+1 00B2 :                         	
+1 00B2 :                         
+1 00B2 :                         modify_nw:
+1 00B2 : 45 93                   	xfr		zl,bl
+1 00B4 : EB                      	st		bl,(y)
+1 00B5 :                         modify_n:
+1 00B5 : 30 60                   	inr		y
+1 00B7 : 71 00 7E                	jmp		modify_l
+1 00BA :                         	
+1 00BA :                         	
+1 00BA :                         ; --- GENERAL OPERATIONS ---
+1 00BA :                         
+1 00BA :                         ; Turns a hex number in ASCII into a value
+1 00BA :                         ; AL = Returned value
+1 00BA :                         ; BL = Hex value
+1 00BA :                         ; Destroys: AL, BL
+1 00BA :                         gen_hton:
+1 00BA : 45 31                   	xfr		bl,al
+1 00BC : C0 30                   	ld		bl,'0'
+1 00BE : 49                      	sub		al,bl
+1 00BF : 17 03                   	bp		gen_hton_i
+1 00C1 :                         gen_hton_e:
+1 00C1 : 80 FF                   	ld		al,0xFF
+1 00C3 : 09                      	rsr
+1 00C4 :                         gen_hton_i:
+1 00C4 : 80 0A                   	ld		al,10
+1 00C6 : 41 31                   	sub		bl,al
+1 00C8 : 17 03                   	bp		gen_hton_a
+1 00CA : 45 31                   	xfr		bl,al
+1 00CC : 09                      	rsr
+1 00CD :                         gen_hton_a:
+1 00CD : 80 07                   	ld		al,7
+1 00CF : 41 31                   	sub		bl,al
+1 00D1 : C0 10                   	ld		bl,16
+1 00D3 : 49                      	sub		al,bl
+1 00D4 : 17 EB                   	bp 		gen_hton_e
+1 00D6 : 43 11                   	ori		al,al
+1 00D8 : 09                      	rsr
+1 00D9 :                         
+1 00D9 :                         ; --- TTY OPERATIONS ---
+1 00D9 :                         
+1 00D9 :                         
+1 00D9 :                         ; Does a CRLF operation
+1 00D9 :                         ; Destorys: Al, BL
+1 00D9 :                         tty_crlf:
+1 00D9 : C0 0A                   	ld		bl,0x0A
+1 00DB : 79 00 E0                	jsr		tty_putc
+1 00DE : C0 0D                   	ld		bl,0x0D
+1 00E0 :                         
+1 00E0 :                         ; Puts a character on the terminal
+1 00E0 :                         ; BL = ASCII to print
+1 00E0 :                         ; Destroys: AL, BL
+1 00E0 :                         tty_putc:
+1 00E0 : 81 F2 00                	ld		al,(0xF200)
+1 00E3 : 2C                      	srr		al
+1 00E4 : 2C                      	srr		al
+1 00E5 : 11 F9                   	bnl		tty_putc
+1 00E7 : 80 80                   	ld		al,0x80
+1 00E9 : 43 13                   	ori		al,bl
+1 00EB : E1 F2 01                	st		bl,(0xF201)
+1 00EE : 09                      	rsr
+1 00EF :                         
+1 00EF :                         ; Gets a character from the terminal
+1 00EF :                         ; AL = Returned ASCII character
+1 00EF :                         ; Destroys: A, BL
+1 00EF :                         tty_getc:
+1 00EF : 79 00 FB                	jsr		tty_getc_c
+1 00F2 : 45 10                   	xfr		al,ah
+1 00F4 : 4D                      	xfr		al,bl
+1 00F5 : 79 00 E0                	jsr		tty_putc
+1 00F8 : 45 01                   	xfr		ah,al
+1 00FA : 09                      	rsr
+1 00FB :                         tty_getc_c:
+1 00FB : 81 F2 00                	ld		al,(0xF200)
+1 00FE : 2C                      	srr		al
+1 00FF : 11 FA                   	bnl		tty_getc_c
+1 0101 : 81 F2 01                	ld		al,(0xF201)
+1 0104 : C0 7F                   	ld		bl,0x7F
+1 0106 : 42 31                   	and		bl,al
+1 0108 : C0 61                   	ld		bl,'a'
+1 010A : 49                      	sub		al,bl
+1 010B : 17 01                   	bp		tty_getc_ov
+1 010D : 09                      	rsr
+1 010E :                         tty_getc_ov:
+1 010E : C0 7B                   	ld		bl,'z'+1
+1 0110 : 49                      	sub		al,bl
+1 0111 : 16 01                   	bm		tty_getc_lu
+1 0113 : 09                      	rsr
+1 0114 :                         tty_getc_lu:
+1 0114 : C0 DF                   	ld		bl,0xDF
+1 0116 : 42 31                   	and		bl,al
+1 0118 : 09                      	rsr
+1 0119 :                         	
+1 0119 :                         ; Puts a byte in hex on the terminal
+1 0119 :                         ; BL = Byte to print
+1 0119 :                         ; Destroys: A, BL
+1 0119 :                         tty_putb:
+1 0119 : 45 30                   	xfr		bl,ah
+1 011B : 24 30                   	srr		bl
+1 011D : 24 30                   	srr		bl
+1 011F : 24 30                   	srr		bl
+1 0121 : 24 30                   	srr		bl
+1 0123 : 79 01 28                	jsr		tty_putb_nib
+1 0126 : 45 03                   	xfr		ah,bl
+1 0128 :                         tty_putb_nib:
+1 0128 : 80 0F                   	ld		al,0x0F
+1 012A : 4A                      	and		al,bl
+1 012B : 80 30                   	ld		al,'0'
+1 012D : 48                      	add		al,bl
+1 012E : 80 3A                   	ld		al,'9'+1
+1 0130 : 41 31                   	sub		bl,al
+1 0132 : 17 03                   	bp		tty_putb_alp
+1 0134 : 71 00 E0                	jmp		tty_putc
+1 0137 :                         tty_putb_alp:
+1 0137 : 80 07                   	ld		al,7
+1 0139 : 48                      	add		al,bl
+1 013A : 71 00 E0                	jmp		tty_putc
+1 013D :                         	
+1 013D :                         ; --- BOOTSTRAP ---
+1 013D :                         ; Putting this up here is hacky, but it works
+1 013D :                         
+1 013D :                         boot_t:
+1 013D :                         	; Set up MUX3
+1 013D : C0 F6                   	ld		bl,0xF6
+1 013F : E1 F2 06                	st		bl,(0xF206)
+1 0142 :                         	
+1 0142 :                         	; Clear MUX3
+1 0142 : 81 F2 07                	ld		al,(0xF207)
+1 0145 :                         	
+1 0145 :                         	; Send bootstrap 
+1 0145 : C0 01                   	ld		bl,01
+1 0147 : E1 F2 07                	st		bl,(0xF207)
+1 014A : D0 02 00                	ld		b,0x0200
+1 014D : 55 2A                   	xfr		b,s
+1 014F :                         boot_l:
+1 014F : 81 F2 06                	ld		al,(0xF206)
+1 0152 : 2C                      	srr		al
+1 0153 : 11 FA                   	bnl		boot_l
+1 0155 : 81 F2 07                	ld		al,(0xF207)
+1 0158 : A9                      	st		al,(b)
+1 0159 : 20 30                   	inr		bl
+1 015B : 15 F2                   	bnz		boot_l
+1 015D : 71 02 00                	jmp		0x0200
