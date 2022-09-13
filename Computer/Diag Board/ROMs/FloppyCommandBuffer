@@ -1,0 +1,194 @@
+; Floppy Command Buffer Test
+
+0x92ce:     90 01 80         LDAW #0180         ; Load literal address into byte of AW
+0x92d1:     50 80            ADD  ZW,  AW       ; Add word of two explicit registers (L + R stored in L)
+0x92d3:     7D 00            JMP  AW, 0         ; Jump to subroutine at index mode register (view supplemental material)
+0x92d5:     F8               SBWA               ; Store word from address in AW into implicit BW
+0x92d6:     00               HLT                ; Halts the CPU
+0x92d7:     7A 01 06         JSR  [0106]        ; Jump to subroutine at indirect address
+0x92da:     32 60            CLR  YW, 0         ; Clear byte of explicit register by 1 + const. (Odd reg. on MEM)
+0x92dc:     60 00 C8         LDXW #00C8         ; Load literal word into word XW
+0x92df:     55 60            XFR  YW,  AW       ; Copy word of one explicit register into other (R into L)
+0x92e1:     D0 01 1C         LDBW #011C         ; Load literal address into byte of BW
+0x92e4:     A5 21            STAL BW, 1         ; Store AL into index mode register (view supplemental material)
+0x92e6:     28               INAL               ; Increment byte of implicit AL register
+0x92e7:     28               INAL               ; Increment byte of implicit AL register
+0x92e8:     28               INAL               ; Increment byte of implicit AL register
+0x92e9:     3F               DCX                ; Decrement word of implicit X register
+0x92ea:     15 F8            BNZ  (PC-0x08)     ; Branch if not equal to zero to 0x8 behind PC (0x0016)
+0x92ec:     90 FF 37         LDAW #FF37         ; Load literal address into byte of AW
+0x92ef:     2F 02            ???                ; Special 2 byte instruction. See supplemental material.
+0x92f1:     90 01 1C         LDAW #011C         ; Load literal address into byte of AW
+0x92f4:     2F 00            ???                ; Special 2 byte instruction. See supplemental material.
+0x92f6:     2F 34            ???                ; Special 2 byte instruction. See supplemental material.
+0x92f8:     2F 06            ???                ; Special 2 byte instruction. See supplemental material.
+0x92fa:     80 43            LDAL #43A2         ; Load literal address into byte of AL
+0x92fc:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x92ff:     7A 01 18         JSR  [0118]        ; Jump to subroutine at indirect address
+0x9302:     60 00 E6         LDXW #00E6         ; Load literal word into word XW
+0x9305:     3A               CLAW               ; Clear word of implicit AW register
+0x9306:     D0 01 1C         LDBW #011C         ; Load literal address into byte of BW
+0x9309:     A5 21            STAL BW, 1         ; Store AL into index mode register (view supplemental material)
+0x930b:     3F               DCX                ; Decrement word of implicit X register
+0x930c:     15 FB            BNZ  (PC-0x05)     ; Branch if not equal to zero to 0x5 behind PC (0x003b)
+0x930e:     90 FF 37         LDAW #FF37         ; Load literal address into byte of AW
+0x9311:     2F 02            ???                ; Special 2 byte instruction. See supplemental material.
+0x9313:     90 01 1C         LDAW #011C         ; Load literal address into byte of AW
+0x9316:     2F 00            ???                ; Special 2 byte instruction. See supplemental material.
+0x9318:     2F 34            ???                ; Special 2 byte instruction. See supplemental material.
+0x931a:     2F 06            ???                ; Special 2 byte instruction. See supplemental material.
+0x931c:     80 44            LDAL #44A2         ; Load literal address into byte of AL
+0x931e:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x9321:     7A 01 18         JSR  [0118]        ; Jump to subroutine at indirect address
+0x9324:     60 00 C8         LDXW #00C8         ; Load literal word into word XW
+0x9327:     D0 01 1C         LDBW #011C         ; Load literal address into byte of BW
+0x932a:     55 60            XFR  YW,  AW       ; Copy word of one explicit register into other (R into L)
+0x932c:     45 10            XFR  AL,  AH       ; Copy byte of one explicit register into other (R into L)
+0x932e:     85 21            LDAL BW, 1         ; Load index mode register address into AL (view supplemental material)
+0x9330:     41 01            SUB  AH,  AL       ; Subtract bytes of two explicit registers (L - R stored in L)
+0x9332:     15 10            BNZ  (PC+0x10)     ; Branch if not equal to zero to 0x10 ahead PC (0x0076)
+0x9334:     20 00            INR  AH, 0         ; Increment byte of explicit register by 1 + const.
+0x9336:     20 00            INR  AH, 0         ; Increment byte of explicit register by 1 + const.
+0x9338:     20 00            INR  AH, 0         ; Increment byte of explicit register by 1 + const.
+0x933a:     3F               DCX                ; Decrement word of implicit X register
+0x933b:     15 F1            BNZ  (PC-0x0f)     ; Branch if not equal to zero to 0xf behind PC (0x0060)
+0x933d:     20 70            INR  YL, 0         ; Increment byte of explicit register by 1 + const.
+0x933f:     7A 01 04         JSR  [0104]        ; Jump to subroutine at indirect address
+0x9342:     02               SF                 ; Set Fault
+0x9343:     DA               LBWX               ; Load byte from address in XW into implicit BW
+0x9344:     7A 01 12         JSR  [0112]        ; Jump to subroutine at indirect address
+0x9347:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x9348:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x9349:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x934a:     A0 C3 CF         STAL C3CF          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x934d:     CD               LBLS               ; Load byte from address in S into implicit BL
+0x934e:     CD               LBLS               ; Load byte from address in S into implicit BL
+0x934f:     C1 CE C4         LDBL CEC4          ; Load direct address into byte of BL
+0x9352:     A0 C2 D5         STAL C2D5          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x9355:     C6               ???                ; Writes 0 to AH at interrupt level 1. See instructions B6 and 1F
+0x9356:     C6               ???                ; Writes 0 to AH at interrupt level 1. See instructions B6 and 1F
+0x9357:     C5 D2            LDAL, 2         ; Load index mode register address into BL (view supplemental material)
+0x9359:     A0 C5 D2         STAL C5D2          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x935c:     D2 CF D2         LDBW [CFD2]        ; Load indirect address into byte of BW
+0x935f:     A0 AA AA         STAL AAAA          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x9362:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x9363:     00               HLT                ; Halts the CPU
+0x9364:     A1 F1 0B         STAL F10B          ; Store AL into direct address
+0x9367:     A1 F1 0C         STAL F10C          ; Store AL into direct address
+0x936a:     72 01 0E         JMP  [010E]        ; Jump to indirect address
+0x936d:     90 01 80         LDAW #0180         ; Load literal address into byte of AW
+0x9370:     50 80            ADD  ZW,  AW       ; Add word of two explicit registers (L + R stored in L)
+0x9372:     7D 00            JMP  AW, 0         ; Jump to subroutine at index mode register (view supplemental material)
+0x9374:     F8               SBWA               ; Store word from address in AW into implicit BW
+0x9375:     08               CL                 ; Complement Link
+0x9376:     7A 01 06         JSR  [0106]        ; Jump to subroutine at indirect address
+0x9379:     32 60            CLR  YW, 0         ; Clear byte of explicit register by 1 + const. (Odd reg. on MEM)
+0x937b:     60 3F FF         LDXW #3FFF         ; Load literal word into word XW
+0x937e:     55 60            XFR  YW,  AW       ; Copy word of one explicit register into other (R into L)
+0x9380:     D0 01 1C         LDBW #011C         ; Load literal address into byte of BW
+0x9383:     A5 21            STAL BW, 1         ; Store AL into index mode register (view supplemental material)
+0x9385:     28               INAL               ; Increment byte of implicit AL register
+0x9386:     28               INAL               ; Increment byte of implicit AL register
+0x9387:     28               INAL               ; Increment byte of implicit AL register
+0x9388:     3F               DCX                ; Decrement word of implicit X register
+0x9389:     15 F8            BNZ  (PC-0x08)     ; Branch if not equal to zero to 0x8 behind PC (0x00b5)
+0x938b:     90 C0 00         LDAW #C000         ; Load literal address into byte of AW
+0x938e:     2F 02            ???                ; Special 2 byte instruction. See supplemental material.
+0x9390:     90 01 1C         LDAW #011C         ; Load literal address into byte of AW
+0x9393:     2F 00            ???                ; Special 2 byte instruction. See supplemental material.
+0x9395:     2F 34            ???                ; Special 2 byte instruction. See supplemental material.
+0x9397:     2F 06            ???                ; Special 2 byte instruction. See supplemental material.
+0x9399:     80 46            LDAL #46A2         ; Load literal address into byte of AL
+0x939b:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x939e:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93a1:     2A               CLAL               ; Clear byte of implicit AL register
+0x93a2:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93a5:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93a8:     2A               CLAL               ; Clear byte of implicit AL register
+0x93a9:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93ac:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93af:     80 3F            LDAL #3FA2         ; Load literal address into byte of AL
+0x93b1:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93b4:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93b7:     80 FF            LDAL #FFA2         ; Load literal address into byte of AL
+0x93b9:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93bc:     7A 01 18         JSR  [0118]        ; Jump to subroutine at indirect address
+0x93bf:     60 3F FF         LDXW #3FFF         ; Load literal word into word XW
+0x93c2:     3A               CLAW               ; Clear word of implicit AW register
+0x93c3:     D0 01 1C         LDBW #011C         ; Load literal address into byte of BW
+0x93c6:     A5 21            STAL BW, 1         ; Store AL into index mode register (view supplemental material)
+0x93c8:     3F               DCX                ; Decrement word of implicit X register
+0x93c9:     15 FB            BNZ  (PC-0x05)     ; Branch if not equal to zero to 0x5 behind PC (0x00f8)
+0x93cb:     90 C0 00         LDAW #C000         ; Load literal address into byte of AW
+0x93ce:     2F 02            ???                ; Special 2 byte instruction. See supplemental material.
+0x93d0:     90 01 1C         LDAW #011C         ; Load literal address into byte of AW
+0x93d3:     2F 00            ???                ; Special 2 byte instruction. See supplemental material.
+0x93d5:     2F 34            ???                ; Special 2 byte instruction. See supplemental material.
+0x93d7:     2F 06            ???                ; Special 2 byte instruction. See supplemental material.
+0x93d9:     80 47            LDAL #47A2         ; Load literal address into byte of AL
+0x93db:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93de:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93e1:     2A               CLAL               ; Clear byte of implicit AL register
+0x93e2:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93e5:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93e8:     2A               CLAL               ; Clear byte of implicit AL register
+0x93e9:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93ec:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93ef:     80 3F            LDAL #3FA2         ; Load literal address into byte of AL
+0x93f1:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93f4:     7A 01 0C         JSR  [010C]        ; Jump to subroutine at indirect address
+0x93f7:     80 FF            LDAL #FFA2         ; Load literal address into byte of AL
+0x93f9:     A2 01 14         STAL [0114]        ; Store AL into indirect address
+0x93fc:     7A 01 18         JSR  [0118]        ; Jump to subroutine at indirect address
+0x93ff:     B5 A2            STAW SW, 2         ; Store AW into index mode register (view supplemental material)
+0x9401:     60 3F FF         LDXW #3FFF         ; Load literal word into word XW
+0x9404:     D0 01 1C         LDBW #011C         ; Load literal address into byte of BW
+0x9407:     55 60            XFR  YW,  AW       ; Copy word of one explicit register into other (R into L)
+0x9409:     45 10            XFR  AL,  AH       ; Copy byte of one explicit register into other (R into L)
+0x940b:     85 21            LDAL BW, 1         ; Load index mode register address into AL (view supplemental material)
+0x940d:     BD               SAWS               ; Store word from address in S into implicit AW
+0x940e:     41 01            SUB  AH,  AL       ; Subtract bytes of two explicit registers (L - R stored in L)
+0x9410:     15 12            BNZ  (PC+0x12)     ; Branch if not equal to zero to 0x12 ahead PC (0x0156)
+0x9412:     20 00            INR  AH, 0         ; Increment byte of explicit register by 1 + const.
+0x9414:     20 00            INR  AH, 0         ; Increment byte of explicit register by 1 + const.
+0x9416:     20 00            INR  AH, 0         ; Increment byte of explicit register by 1 + const.
+0x9418:     3F               DCX                ; Decrement word of implicit X register
+0x9419:     15 F0            BNZ  (PC-0x10)     ; Branch if not equal to zero to 0x10 behind PC (0x013d)
+0x941b:     95 A1            LDAW SW, 1         ; Load index mode register address into AW (view supplemental material)
+0x941d:     20 70            INR  YL, 0         ; Increment byte of explicit register by 1 + const.
+0x941f:     7A 01 04         JSR  [0104]        ; Jump to subroutine at indirect address
+0x9422:     03               RF                 ; Reset Fault
+0x9423:     79 A1 F1         JSR  A1F1          ; Jump to subroutine at direct address
+0x9426:     0B               RIM                ; return(cont=1) from Interrupt Modified
+0x9427:     A1 F1 0C         STAL F10C          ; Store AL into direct address
+0x942a:     F5 A2            STBW SW, 2         ; Store BW into index mode register (view supplemental material)
+0x942c:     7A 01 12         JSR  [0112]        ; Jump to subroutine at indirect address
+0x942f:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x9430:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x9431:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x9432:     A0 C5 D2         STAL C5D2          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x9435:     D2 CF D2         LDBW [CFD2]        ; Load indirect address into byte of BW
+0x9438:     AC               SALZ               ; Store byte from address in ZW into implicit AL
+0x9439:     A0 C1 C4         STAL C1C4          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x943c:     C4 D2            LDBL [PC-0x2e]     ; Load indirect PC offset by N address into byte of BL
+0x943e:     BD               SAWS               ; Store word from address in S into implicit AW
+0x943f:     00               HLT                ; Halts the CPU
+0x9440:     95 A1            LDAW SW, 1         ; Load index mode register address into AW (view supplemental material)
+0x9442:     39               DCAW               ; Decrement word of implicit AW register
+0x9443:     7A 01 10         JSR  [0110]        ; Jump to subroutine at indirect address
+0x9446:     7A 01 12         JSR  [0112]        ; Jump to subroutine at indirect address
+0x9449:     A0 C5 D8         STAL C5D8          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x944c:     D0 BD 00         LDBW #BD00         ; Load literal address into byte of BW
+0x944f:     85 A1            LDAL SW, 1         ; Load index mode register address into AL (view supplemental material)
+0x9451:     7A 01 0A         JSR  [010A]        ; Jump to subroutine at indirect address
+0x9454:     7A 01 12         JSR  [0112]        ; Jump to subroutine at indirect address
+0x9457:     A0 C1 C3         STAL C1C3          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x945a:     D4 BD            LDBW [PC-0x43]     ; Load indirect PC offset by N address into word of BW
+0x945c:     00               HLT                ; Halts the CPU
+0x945d:     85 A1            LDAL SW, 1         ; Load index mode register address into AL (view supplemental material)
+0x945f:     7A 01 0A         JSR  [010A]        ; Jump to subroutine at indirect address
+0x9462:     7A 01 12         JSR  [0112]        ; Jump to subroutine at indirect address
+0x9465:     A0 AA AA         STAL AAAA          ; Store AL into PC address (PC)- <- X (Opposite 60)
+0x9468:     AA               SALX               ; Store byte from address in XW into implicit AL
+0x9469:     00               HLT                ; Halts the CPU
+0x946a:     72 01 0E         JMP  [010E]        ; Jump to indirect address
