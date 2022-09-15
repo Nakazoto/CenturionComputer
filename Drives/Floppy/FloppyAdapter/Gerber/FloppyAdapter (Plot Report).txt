@@ -1,0 +1,135 @@
+Plot Report
+-----------
+
+Report Written:     Sunday, September 11, 2022
+Design Path:        C:\Users\Nakaz\Desktop\FloppyAdapter\FloppyAdapter.pcb
+Design Title:       
+Created:            2022/09/11 9:48:27
+Last Saved:         2022/09/11 10:57:42
+Editing Time:       51 min
+Units:              mm (precision 1)
+
+
+Device Settings
+===============
+
+
+Gerber Settings
+===============
+
+    Leading zero suppression.
+    G01 assumed throughout.
+    Line termination <*> <CR> <LF>.
+    3.5 format absolute inches.
+    Format commands defined in Gerber file.
+    Aperture table defined in Gerber file.
+    Hardware arcs allowed.
+
+
+Drill Settings
+==============
+
+    Excellon Format 2
+    Format 3.5 absolute in inches.
+    Zero suppression Leading
+
+
+
+Plots Output
+============
+
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\FloppyAdapter\FloppyAdapter - Cut.gbr
+
+    Layers:
+    ------------------
+    Board Outlines
+
+    D-Code Shape  (thou)
+    -----------------------
+    D14    Round 5.00
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\FloppyAdapter\FloppyAdapter - Bottom Copper.gbr
+
+    Layers:
+    -----------------
+    Bottom Copper
+
+    D-Code Shape  (thou)
+    -----------------------
+    D29    Round 39.37
+    D80    Round 68.90
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\FloppyAdapter\FloppyAdapter - Gerber Drill Data - [Through Hole].gbr
+
+    Layers:
+    ------------------
+    [Through Hole]
+
+    D-Code Shape  (thou)
+    -----------------------
+    D120   Round 35.00
+
+NC Drill Output
+===============
+
+C:\Users\Nakaz\Desktop\FloppyAdapter\FloppyAdapter - NC Drill Data - [Through Hole].drl
+
+    Output:
+    ---------------------------
+    Plated Round Drill Holes
+    Plated Slots
+
+    Tool  Size           Count   ID
+    --------------------------------------
+    T001  0.03500 inches 218   D
+    --------------------------------------
+    Total                218
+    --------------------------------------
+
+C:\Users\Nakaz\Desktop\FloppyAdapter\FloppyAdapter - NC Drill Data - [Through Hole] (Unplated).drl
+
+    Output:
+    -----------------------------
+    Unplated Round Drill Holes
+    Unplated Slots
+
+    Tool  Size Count   ID
+    ----------------------------
+    ----------------------------
+    Total      0
+    ----------------------------
+
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\FloppyAdapter\FloppyAdapter - Drill Ident Drawing - [Through Hole].gbr
+
+    Layers:
+    ------------------
+    [Through Hole]
+
+
+Drill Ident Drawing
+===================
+
+    Drill Plated Size Shape ID
+    -----------------------------------
+    35    Y      100  Round D
+
+    D-Code Shape  (thou)
+    -----------------------
+    D13    Round 100.00
+    D14    Round 5.00
+
+End Of Report.
