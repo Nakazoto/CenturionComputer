@@ -1,0 +1,144 @@
+Plot Report
+-----------
+
+Report Written:     Saturday, September 17, 2022
+Design Path:        C:\Users\Nakaz\Desktop\Electronics Projects\CenturionComputer\Computer\FFC Board\ROM_Adapter_fat_v2.pcb
+Design Title:       
+Created:            2022/09/16 19:26:18
+Last Saved:         2022/09/17 10:52:54
+Editing Time:       76 min
+Units:              mm (precision 1)
+
+
+Device Settings
+===============
+
+
+Gerber Settings
+===============
+
+    Leading zero suppression.
+    G01 assumed throughout.
+    Line termination <*> <CR> <LF>.
+    3.5 format absolute inches.
+    Format commands defined in Gerber file.
+    Aperture table defined in Gerber file.
+    Hardware arcs allowed.
+
+
+Drill Settings
+==============
+
+    Excellon Format 2
+    Format 3.5 absolute in inches.
+    Zero suppression Leading
+
+
+
+Plots Output
+============
+
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\Electronics Projects\CenturionComputer\Computer\FFC Board\ROM_Adapter_fat_v2 - Cut.gbr
+
+    Layers:
+    ------------------
+    Board Outlines
+
+    D-Code Shape  (thou)
+    -----------------------
+    D14    Round 5.00
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\Electronics Projects\CenturionComputer\Computer\FFC Board\ROM_Adapter_fat_v2 - Bottom Copper.gbr
+
+    Layers:
+    -----------------
+    Bottom Copper
+
+    D-Code Shape  (thou)
+    ------------------------------------------
+    D10    Round 60.00
+    D29    Round 39.37
+    D79    Round 86.61
+    D80    Round 68.90
+    D85    Oval 60.00 X 110.00  Rotation 90
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\Electronics Projects\CenturionComputer\Computer\FFC Board\ROM_Adapter_fat_v2 - Gerber Drill Data - [Through Hole].gbr
+
+    Layers:
+    ------------------
+    [Through Hole]
+
+    D-Code Shape  (thou)
+    -----------------------
+    D120   Round 35.00
+    D122   Round 32.00
+    D130   Round 35.43
+
+NC Drill Output
+===============
+
+C:\Users\Nakaz\Desktop\Electronics Projects\CenturionComputer\Computer\FFC Board\ROM_Adapter_fat_v2 - NC Drill Data - [Through Hole].drl
+
+    Output:
+    ---------------------------
+    Plated Round Drill Holes
+    Plated Slots
+
+    Tool  Size           Count   ID
+    --------------------------------------
+    T001  0.03200 inches 14    F
+    T002  0.03500 inches 58    D
+    T003  0.03543 inches 2     H
+    --------------------------------------
+    Total                74
+    --------------------------------------
+
+C:\Users\Nakaz\Desktop\Electronics Projects\CenturionComputer\Computer\FFC Board\ROM_Adapter_fat_v2 - NC Drill Data - [Through Hole] (Unplated).drl
+
+    Output:
+    -----------------------------
+    Unplated Round Drill Holes
+    Unplated Slots
+
+    Tool  Size Count   ID
+    ----------------------------
+    ----------------------------
+    Total      0
+    ----------------------------
+
+
+Gerber Output
+=============
+
+C:\Users\Nakaz\Desktop\Electronics Projects\CenturionComputer\Computer\FFC Board\ROM_Adapter_fat_v2 - Drill Ident Drawing - [Through Hole].gbr
+
+    Layers:
+    ------------------
+    [Through Hole]
+
+
+Drill Ident Drawing
+===================
+
+    Drill Plated Size Shape ID
+    -----------------------------------
+    35    Y      100  Round D
+    32    Y      100  Round F
+    35    Y      100  Round H
+
+    D-Code Shape  (thou)
+    -----------------------
+    D13    Round 100.00
+    D14    Round 5.00
+
+End Of Report.
