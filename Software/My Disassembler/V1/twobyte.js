@@ -72,13 +72,13 @@ function twobyte() {
 		return(cont=1);
 	}
 	if (splitData[i] == "1E") {
-		result.value += " " + splitData[i+1] + "            BTM?";
-		i = i + 1; branch1(); result.value += "; Branch on TTY Mark to 0x"; branch2();
+		result.value += " " + splitData[i+1] + "            BIE";
+		i = i + 1; branch1(); result.value += "; Branch on interrupts enabled to 0x"; branch2();
 		return(cont=1);
 	}				
 	if (splitData[i] == "1F") {
 		result.value += " " + splitData[i+1] + "            BEP?";
-		i = i + 1; branch1(); result.value += "; Branch on even parity to zero to 0x"; branch2();
+		i = i + 1; branch1(); result.value += "; Branch on Even Parity (CPU6 is different. See instructions B6 and C6)";
 		return(cont=1);
 	}
 	
@@ -315,14 +315,22 @@ function twobyte() {
 		return(cont=1);
 	}
 	
-	// Is 0x80 really a 2-byte?
+	// Is 0x80 through 0x84 really a 2-byte?
 	if (splitData[i] == "80") {
 		result.value += " " + splitData[i+1] + "            LDAL";
 		i = i + 1; address1a(); result.value += "; Load literal address into byte of AL" + "\r\n";
 		return(cont=1);
 	}	
-	
-	
+	if (splitData[i] == "81") {
+		result.value += " " + splitData[i+1] + "            LDAL";
+		i = i + 1; address2(); result.value += "; Load indirect address into byte of AL" + "\r\n";
+		return(cont=1);
+	}
+	if (splitData[i] == "82") {
+		result.value += " " + splitData[i+1] + "            LDAL";
+		i = i + 1; address3(); result.value += "; Load indirect address into byte of AL" + "\r\n";
+		return(cont=1);
+	}
 	if (splitData[i] == "83") {
 		result.value += " " + splitData[i+1] + "            LDAL";
 		i = i + 1; branch1(); result.value += "; Load direct PC offset by N address into byte of AL" + "\r\n";
@@ -333,6 +341,8 @@ function twobyte() {
 		i = i + 1; branch1a(); result.value += "; Load indirect PC offset by N address into byte of AL" + "\r\n";
 		return(cont=1);
 	}
+	// Is 0x80 through 0x84 really a 2-byte?
+	
 	if (splitData[i] == "93") {
 		result.value += " " + splitData[i+1] + "            LDAW";
 		i = i + 1; branch1(); result.value += "; Load direct PC offset by N address into word of AW" + "\r\n";

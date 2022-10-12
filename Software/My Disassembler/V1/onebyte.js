@@ -48,22 +48,22 @@ function onebyte(){
 	}
 	if (splitData[i] == "09") {
 		result.value += "               RSR                ";
-		result.value += "; return(cont=1) from Subroutine" + "\r\n";
+		result.value += "; Return from Subroutine" + "\r\n";
 		return(cont=1);
 	}
 	if (splitData[i] == "0A") {
 		result.value += "               RI                 ";
-		result.value += "; return(cont=1) from Interrupt" + "\r\n";
+		result.value += "; Return from Interrupt" + "\r\n";
 		return(cont=1);
 	}
 	if (splitData[i] == "0B") {
 		result.value += "               RIM                ";
-		result.value += "; return(cont=1) from Interrupt Modified" + "\r\n";
+		result.value += "; Return from Interrupt Modified (illegal on CPU6?)" + "\r\n";
 		return(cont=1);
 	}
 	if (splitData[i] == "0C") {
 		result.value += "               ELO                ";
-		result.value += "; Enable Link Out" + "\r\n";
+		result.value += "; Enable Link Out (CPU6 will flash ABT light)" + "\r\n";
 		return(cont=1);
 	}
 	if (splitData[i] == "0D") {
@@ -78,7 +78,7 @@ function onebyte(){
 	}
 	if (splitData[i] == "0F") {
 		result.value += "               RSYS               ";
-		result.value += "; return(cont=1) from JSYS using stack" + "\r\n";
+		result.value += "; Return from JSYS using stack" + "\r\n";
 		return(cont=1);
 	}
 	

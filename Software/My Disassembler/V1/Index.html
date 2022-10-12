@@ -1,9 +1,9 @@
 <html>
 <head>
-	<script type="text/javascript" src="ins_00_3f.js"></script>
-	<script type="text/javascript" src="ins_40_7f.js"></script>
-	<script type="text/javascript" src="ins_80_Bf.js"></script>
-	<script type="text/javascript" src="ins_C0_ff.js"></script>
+	<script type="text/javascript" src="onebyte.js"></script>
+	<script type="text/javascript" src="twobyte.js"></script>
+	<script type="text/javascript" src="threebyte.js"></script>
+	<script type="text/javascript" src="special.js"></script>
 	<script type="text/javascript" src="brarg.js"></script>
 	<script type="text/javascript" src="asciichk.js"></script>
 
@@ -57,13 +57,13 @@
 				checkForString();
 				if (cont == 1) {cont = 0; continue;}
 				
-				ins_00_3F();
+				onebyte();
 				if (cont == 1) {cont = 0; continue;}
-				ins_40_7F();
+				twobyte();
 				if (cont == 1) {cont = 0; continue;}
-				ins_80_BF();
+				threebyte();
 				if (cont == 1) {cont = 0; continue;}
-				ins_C0_FF();
+				special();
 				if (cont == 1) {cont = 0; continue;}
 				
 				

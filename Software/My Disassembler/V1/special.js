@@ -99,22 +99,79 @@ function special(){
 		result.value += "               ; Special 2 byte instruction. See supplemental material." + "\r\n";
 		return(cont=1);
 	}
+	if (splitData[i] == "47") {
+		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
+		result.value += "               ; Special 2 byte instruction. See supplemental material." + "\r\n";
+		return(cont=1);
+	}
+	
+	if (splitData[i] == "56") {
+		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
+		result.value += "               ; Set high bit in internal status register." + "\r\n";
+		return(cont=1);
+	}
+	if (splitData[i] == "57") {
+		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
+		result.value += "               ; Clear high bit in internal status register." + "\r\n";
+		return(cont=1);
+	}
 	
 	if (splitData[i] == "66") {
 		i = i + 1; result.value += " " + splitData[i] + "            JSYS";
-		result.value += "               ; System call. See supplemental material." + "\r\n";
+		i = i + 1; address1a(); result.value += "            ; System call. See supplemental material." + "\r\n";
 		return(cont=1);
 	}
-	if (splitData[i] == "77") {
+	if (splitData[i] == "67") {
 		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
-		result.value += "               ; Multiply or Divide? Using an odd register for either operand will operate on memory." + "\r\n";
+		result.value += "               ; Special 2 byte instruction. See supplemental material." + "\r\n";
+		return(cont=1);
+	}
+	
+	if (splitData[i] == "6E") {
+		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         JMP ";
+		i = i + 1; address2(); result.value += "; Load CCR with byte at address" + "\r\n";
+		return(cont=1);
+	}
+	if (splitData[i] == "6F") {
+		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         JMP ";
+		i = i + 1; address2(); result.value += "; Store CCR to address" + "\r\n";
+		return(cont=1);
+	}
+	
+	if (splitData[i] == "76") {
+		result.value += "               ???                ";
+		result.value += "; Enable Parity Checking" + "\r\n";
+		return(cont=1);
+	}
+	
+	if (splitData[i] == "77") {
+		i = i + 1; result.value += " " + splitData[i] + "            MUL ";
+		result.value += "               ; Multiply. Using an odd register for either operand will operate on memory." + "\r\n";
 		return(cont=1);
 	}
 	if (splitData[i] == "78") {
-		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
-		result.value += "               ; Multiply or Divide? Using an odd register for either operand will operate on memory." + "\r\n";
+		i = i + 1; result.value += " " + splitData[i] + "            DIV ";
+		result.value += "               ; Divide. Using an odd register for either operand will operate on memory." + "\r\n";
 		return(cont=1);
 	}
+	
+	if (splitData[i] == "7E") {
+		result.value += " " + splitData[i+1] + "            PUSH";
+		i = i + 1; branch1(); result.value += "; Load direct PC offset by N address into byte of AL" + "\r\n";
+		return(cont=1);
+	}
+	
+	if (splitData[i] == "86") {
+		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
+		result.value += "               ; Disable Parity Checking" + "\r\n";
+		return(cont=1);
+	}
+	if (splitData[i] == "87") {
+		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
+		result.value += "               ; Illegal?" + "\r\n";
+		return(cont=1);
+	}
+	
 	if (splitData[i] == "D6") {
 		i = i + 1; result.value += " " + splitData[i] + "            ??? ";
 		result.value += "               ; Swap high/low bytes in 16 bit value. Register in LOW nibble. (?)" + "\r\n";
@@ -133,6 +190,11 @@ function special(){
 	
 	
 	//Special 3-byte instructions
+	if (splitData[i] == "78") {
+		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         DIV";
+		result.value += "               ; Divide (Odd register for either operand will operate on memory)" + "\r\n"
+		return(cont=1);
+	}
 	if (splitData[i] == "7E") {
 		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         PUSH";
 		result.value += "               ; Push multiple 8-bit registers to stack" + "\r\n"

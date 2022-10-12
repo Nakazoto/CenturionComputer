@@ -82,11 +82,6 @@ function threebyte() {
 		return(cont=1);
 	}
 	
-	if (splitData[i] == "78") {
-		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         JSR ";
-		i = i + 1; address1(); result.value += "; Jump to subroutine at literal address (not possible?)" + "\r\n";
-		return(cont=1);
-	}
 	if (splitData[i] == "79") {
 		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         JSR ";
 		i = i + 1; address2(); result.value += "; Jump to subroutine at direct address" + "\r\n";
@@ -109,14 +104,8 @@ function threebyte() {
 		return(cont=1);
 	}
 	
-	// Is 0x80 really a 2-byte?
-/* 	if (splitData[i] == "80") {
-		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         LDAL";
-		i = i + 1; address1a(); result.value += "; Load literal address into byte of AL" + "\r\n";
-		return(cont=1);
-	} */
 	
-	if (splitData[i] == "81") {
+/*  	if (splitData[i] == "81") {
 		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         LDAL";
 		i = i + 1; address2(); result.value += "; Load direct address into byte of AL" + "\r\n";
 		return(cont=1);
@@ -125,7 +114,9 @@ function threebyte() {
 		result.value += " " + splitData[i+1] + " " + splitData[i+2] + "         LDAL";
 		i = i + 1; address3(); result.value += "; Load indirect address into byte of AL" + "\r\n";
 		return(cont=1);
-	}
+	} */
+	
+	
 	if (splitData[i] == "85") {
 		var judge = splitData[i+1].charAt(1);
 		if (parseInt(judge, 16) > 7) {
