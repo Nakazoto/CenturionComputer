@@ -1,0 +1,51 @@
+<html>
+<head>
+	<p><strong>Stripper</strong></p>
+	<p><strong>Copy Hex Data Here</strong>
+    <p><textarea id="data" name="" rows="16" cols="110"></textarea></p>
+	<p><input id="strip" type="button" style="width:100px" value="Strip" />
+	<p><strong>Stripped</strong>
+	<p><textarea id="result" name="" rows="16" cols="110"></textarea></p>
+</head>
+	
+<body>	
+	<!--Window title-->
+	<title>StripMSB</title>
+	
+	<!--This is where Javascript stuff goes-->
+	<script type="text/javascript" charset="utf-8">
+		//Global variables
+		var splitData = [];
+		var inte = 0;
+		
+        //Read File into Binary string
+        var readFile = function() {
+			var bin = document.getElementById("data").value;
+			splitData = bin.split(" ");	
+        };
+		
+		var disassembleFile = function() {
+			result.value = "";
+			for (let i = 0; i < splitData.length; i++) {
+				
+				inte = parseInt(splitData[i], 16);
+				if (inte > 128) {inte = inte - 128};
+				if (inte < 10) {result.value += "0"};
+				result.value += inte.toString(16);
+				result.value += " ";
+				
+			};	
+		};
+        
+        //Main loop
+        var mainloop = function() {
+            strip.onclick = function() {
+                readFile();
+                disassembleFile();
+            };
+        }; 
+        setInterval(mainloop, 100);
+		
+	</script>
+</body>
+</html>
