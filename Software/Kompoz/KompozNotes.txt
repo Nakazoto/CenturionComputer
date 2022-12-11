@@ -1,0 +1,102 @@
+KOMPOZ Notes
+
+Commands
+A = Illegal Parameter
+B = Illegal Parameter
+C = ???
+D = ???
+E = End of File
+F = Find
+G = Illegal Parameter
+H = Illegal Parameter
+I = ???
+J = SYS number?
+K = Write new text
+L = Illegal Parameter
+M = Illegal Parameter
+N = ???
+O = Output
+P = Print current line
+Q = Quit KOMPOZ
+R = Does nothing?
+S = Substitute
+T = Top
+U = Refresh program?
+V = Illegal Parameter
+W = Does nothing?
+X = Save the currently opened file
+Y = Illegal Parameter
+Z = Does nothing?
+
+
+C: ???
+	When at main prompt, it just gives another prompt
+	Typing a number or letters printed parts of the file
+	Up to a certain point, where it just said "EOF on Input"	
+
+E: End of File
+	When at main prompt, it asks "End of File? (Y or N)"
+	No clue what this means, potentially cursor position related?
+
+F: Find
+	When at main prompt, it asks "Find? (Y or N)"
+	Hit enter then it gives a second prompt
+	That's as far as I've gotten
+	
+I: ???
+	When at main prompt, it gives a second prompt
+	No matter what I type there, it says "Equality not Found"
+	No clue what this means
+
+J: SYS number?
+	When at main prompt, it asks "'SYS' Number?"
+	Enter the right number then it asks "Subfile"
+	Enter the wrong input and it aborts
+	That's as far as I've gotten
+
+K: Write New Text
+	Type the last line of the edit, hit enter
+	Then type everything that comes before last line
+	Type last line of edit again, hit enter
+	Editing an existing file adds the edit before the existing text
+	It does not overwrite
+
+N: ???
+	Typing anything says "EOF on Input"
+	This could be a result of previous operations?
+
+O: Output
+	When at main prompt it asks the following
+	"Continuous forms?" (Answer Y or N)
+	"Inserts?" (Answer Y or N)
+	"Enter copies" (Answer with a number)
+	"Enter starting page" (Answer with a number)
+	"Console display?"  (Answer Y or N)
+	"Wait?"  (Answer Y or N)
+	"Align forms, type CR"  (Answer Y or N)
+	It then prints out the currently opened file and scrolls past
+	This might be for printing on an external printer?
+	
+P: Print current line
+	When at main prompt, it gives a second prompt
+	Typing a number or letters printed parts of the file
+	Up to a certain point, where it just said "EOF on Input"
+	
+S: Substitute
+	When at main prompt, it gives a second prompt
+	Type a word in this prompt, hit enter
+	Gives a third prompt to type a word in
+	Somehow you can finish the substitution setup
+	It then asks "Wait?"  (Answer Y or N)
+	It then says "Substitutions = 0" (or number of substitutions)
+	I haven't been able to get this to work right yet
+	
+T: Top
+	When at main prompt, it asks "Top? (Y or N)"
+	No clue what this means, potentially cursor position related?
+
+U: Refresh program?
+	When at main prompt, it says "IN=SYS000, OUT=SYS001"
+	This is what it says when the program first opens
+	So maybe this refreshes back to standard prompt?
+	
