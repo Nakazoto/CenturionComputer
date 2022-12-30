@@ -1,0 +1,154 @@
+;
+; Centurion EDitor by ren14500. Public domain.
+;
+; Note: limitations are 9999 lines and 75 characters per line.
+TITLE 'CED'
+SYSTEM ZCED(MAIN,EXP=D,LL=80)  ; 80 col display w/numbers - only 75 actual text.
+FILE CRT:SYSIPT,CLASS=0,SEQ    ; CRT for user interaction.
+FILE INFILE:SYS000,CLASS=1,SEQ ; Input file.
+FILE TMPFILE:SYS001,CLASS=1,SEQ; Temporary file.
+FILE PRT:SYS002,CLASS=1,SEQ    ; Print file.
+STRING CURRLINE(75),CMD(1)     ; Strings to read lines and the command.
+INTEGER CURR,START,FINISH      ; Current line, start line, finish line.
+SET RDFILE:0                   ; Which file to read from.
+SET MAXLINE:9999               ; Maximum lines supported.
+FORMAT FULLLINE:C75            ; A full line is 75 characters.
+FORMAT CMDINPUT:C1             ; Command input is 1 character.
+FORMAT INTINPUT:N4             ; Integer input up to 4 characters.
+FORMAT PRINTLINE:N4,X1,C75     ; Display 4 character line number, space, text.
+ENTRYPOINT CRT,INFILE,TMPFILE,PRT ; Files are used by external commands.
+ENTRY
+OPEN IO(CRT,INFILE,TMPFILE)    ; Open CRT, in, and tmp for input and output.
+OPEN OUTPUT(PRT)               ; Open the print file for output.
+WRITE(CRT,FULLLINE)'CED 1.1'   ; Splash screen.
+; Main loop start.
+TOP:
+  ; Start at line one of the file, prompt for the next command.
+  CURR=1
+  REWIND INFILE,TMPFILE
+  WRITEN(CRT,FULLLINE)'COMMAND>'
+  READ(CRT,CMDINPUT)CMD
+  ; Quit.
+  IFS(CMD.EQ.'Q')GO TO DONE
+  ; Print a section of the file.
+  IFS(CMD.EQ.'P')DO
+    CALL GETSF                      ; Get the start/finish range.
+    LOOP WHILE (CURR.LE.FINISH)     ; Loop until finish lines read.
+      IF(RDFILE.EQ.0)READ(INFILE,FULLLINE)CURRLINE ; Read the next line from in
+      ELSE READ(TMPFILE,FULLLINE)CURRLINE          ; or tmp file.
+      IF(STATUS.NE.0)CURR=FINISH    ; On error, assume we hit the end.
+      ELSE DO
+        IF(CURR.GE.START)WRITE(PRT,PRINTLINE)CURR,CURRLINE ; Print if >= start.
+      END DO
+      INCR CURR                     ; Another line read.
+    END LOOP
+  END DO
+  ; Change a line.
+  IFS(CMD.EQ.'C')DO
+    CALL GETL                       ; Get the line to change.
+    CALL COPYTOSTART                ; Copy lines up to the line to change.
+    IF(RDFILE.EQ.0)READ(INFILE,FULLLINE)CURRLINE ; Ignore the line to change
+    ELSE READ(TMPFILE,FULLLINE)CURRLINE          ; from in or tmp file.
+    WRITE(CRT,FULLLINE)'NEWLINE TO END'
+    READ(CRT,FULLLINE)CURRLINE      ; Get the replacement line.
+    IF(RDFILE.EQ.0)WRITE(TMPFILE,FULLLINE)CURRLINE ; Write it to the tmp or
+    ELSE WRITE(INFILE,FULLLINE)CURRLINE            ; in file.
+    START=MAXLINE\CALL COPYTOSTART  ; Copy the rest of the file.
+    CALL SWAPFILES                  ; Swap files.
+  END DO
+  ; Delete lines.
+  IFS(CMD.EQ.'D')DO
+    CALL GETSF                      ; Get the line to change.
+    CALL COPYTOSTART                ; Copy lines up to the line to change.
+    LOOP WHILE(CURR.LE.FINISH)      ; Skip lines to delete.
+      IF(RDFILE.EQ.0)READ(INFILE,FULLLINE)CURRLINE ; Read the line from the in
+      ELSE READ(TMPFILE,FULLLINE)CURRLINE          ; or tmp file.
+      IF(STATUS.NE.0)CURR=FINISH    ; On error, assume we hit the end.
+      INCR CURR                     ; Another line read.
+    END LOOP
+    START=MAXLINE\CALL COPYTOSTART  ; Copy the rest of the file.
+    CALL SWAPFILES                  ; Swap files.
+  END DO
+  ; Append lines to the file.
+  IFS(CMD.EQ.'A')DO
+    START=MAXLINE\CALL COPYTOSTART  ; Copy the file.
+    START=CURR+RDFILE               ; Add the line number to the file choice.
+    IF(START.EQ.1)RDFILE=1          ; If in file empty, pretend read from tmp.
+    CALL INSERTTODOT                ; Insert lines.
+    CALL SWAPFILES                  ; Swap files.
+  END DO
+  ; Insert lines before a line.
+  IFS(CMD.EQ.'I')DO
+    CALL GETL                       ; Get the line to insert before.
+    CALL COPYTOSTART                ; Copy lines up to that.
+    CALL INSERTTODOT                ; Insert lines.
+    START=MAXLINE\CALL COPYTOSTART  ; Copy the rest of the file.
+    CALL SWAPFILES                  ; Swap files.
+  END DO
+GO TO TOP                           ; Loop for the next command.
+; Cleanup.
+DONE:
+; If reading from the tmp file, copy it to the actual file.
+IF(RDFILE.NE.0)DO
+  WRITEN(CRT,FULLLINE)'COPYING CHANGES...'
+  START=MAXLINE\CALL COPYTOSTART ; Copy the file.
+  ENDFILE INFILE                 ; End the file.
+END DO
+; Close files. Exit the program with condition code 0 for success.
+CLOSE INFILE,TMPFILE,PRT
+WRITE(CRT,FULLLINE)'CED DONE'
+CLOSE CRT
+STOP 0
+; Query for a line in START.
+SUBROUTINE GETL
+  WRITEN(CRT,FULLLINE)'LINE>'
+  READ(CRT,INTINPUT)START
+RETURN
+; Query for START/FINISH.
+SUBROUTINE GETSF
+  WRITEN(CRT,FULLLINE)'START>'
+  READ(CRT,INTINPUT)START
+  WRITEN(CRT,FULLLINE)'FINISH>'
+  READ(CRT,INTINPUT)FINISH
+RETURN
+; Insert text until '.'.
+SUBROUTINE INSERTTODOT
+  WRITE(CRT,FULLLINE)'. BY ITSELF TO END'
+  ITDLOOP:
+    READ(CRT,FULLLINE)CURRLINE                       ; Get the line to insert.
+    IFS(CURRLINE.NE.'.')DO                           ; If not '.' by itself,
+      IF(RDFILE.EQ.0)WRITE(TMPFILE,FULLLINE)CURRLINE ; write it to tmp or
+      ELSE WRITE(INFILE,FULLLINE)CURRLINE            ; in file.
+      GO TO ITDLOOP                                  ; Get the next line.
+    END DO
+RETURN
+; Copy up to, but not including, START, or EOF.
+SUBROUTINE COPYTOSTART
+  LOOP WHILE(CURR.LT.START)                          ; Keep going until start.
+    IF(RDFILE.EQ.0)READ(INFILE,FULLLINE)CURRLINE     ; Read a line from in
+    ELSE READ(TMPFILE,FULLLINE)CURRLINE              ; or tmp file.
+    IF(STATUS.EQ.0)DO                                ; If successful,
+      IF(RDFILE.EQ.0)WRITE(TMPFILE,FULLLINE)CURRLINE ; write to tmp or
+      ELSE WRITE(INFILE,FULLLINE)CURRLINE            ; in file.
+    END DO
+    ELSE DO
+      START=CURR                                     ; On EOF or error, assume
+      DECR CURR                                      ; done.
+    END DO
+    INCR CURR                                        ; Next line.
+  END LOOP
+RETURN
+; Swap files.
+SUBROUTINE SWAPFILES
+  IF(RDFILE.EQ.0)DO  ; If reading from the in file,
+    ENDFILE TMPFILE  ; end the tmp file and
+    RDFILE=1         ; set the tmp file as input.
+  END DO
+  ELSE DO            ; If reading from the tmp file,
+    ENDFILE INFILE   ; end the in file and
+    RDFILE=0         ; set the in file as input.
+  END DO
+RETURN
+; End of source.
+END
+

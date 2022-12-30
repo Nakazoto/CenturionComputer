@@ -1,0 +1,52 @@
+TITLE 'PROJECT EULER IN CPL ON A CENTURION'
+SYSTEM ZPE01 (MAIN,EXP=D,LL=80)					; Main=Not Subroutine, EXP=CPU5/6 Compatability (no comp), LL=Line Length
+FILE CRT:SYSIPT,CLASS=0,SEQ						; File control block, maps to CRT class and sequential use
+;
+FORMAT FLIN:C80									; Set a format for printing: 80 characters (full line)
+FORMAT FANS:N9									; Set a format for printing: 9 numbers (up to 999,999,999)
+SET CNT:0										; Set and declare a variable
+SET OPA:0										; CNT=Count, OPA=Outer Planets Alliance
+SET ANS:0										; ANS= ANSWER, PRO=Progress
+SET PRO:0
+STRING WAT(1)									; Declare a string of 1 character in length
+;
+ENTRYPOINT CRT									; Defines symbols that need to be used by other libs.
+ENTRY											; Inidcates the start of actual code
+OPEN IO CRT										; Open CRT file declared up top for I/O
+;
+WRITE(CRT,FLIN)EJECT							; Eject the page (clear the screen)
+WRITE(CRT,FLIN)'PROBLEM 1: MULTIPLES OF 3 OR 5'
+WRITE(CRT,FLIN)'IF WE LIST ALL THE NATURAL NUMBERS BELOW 10 THAT ARE MULTIPLES OF 3 OR 5,'
+WRITE(CRT,FLIN)'WE GET 3, 5, 6 AND 9. THE SUM OF THESE MULTIPLES IS 23.'
+WRITE(CRT,FLIN)'FIND THE SUM OF ALL THE MULTIPLES OF 3 OR 5 BELOW 1000.'
+WRITE(CRT,FLIN)''
+;
+LOOP WHILE (CNT.LE.999)							; Main program loop. Loops while CNT is less than 1000
+  OPA=MOD(CNT,3)								; OPA is set to the remainder of CNT/3
+  IF(OPA.EQ.0)DO								; If that remainder is 0, then add 3 to running total
+    ANS=ANS+CNT
+  END DO										; Must have END DO here, even if we're doing ELSE DO next
+  ELSE DO										; We use an ELSE so we don't double up additions for 3 AND 5
+    OPA=MOD(CNT,5)
+    IF(OPA.EQ.0)ANS=ANS+CNT
+  END DO
+;
+  OPA=MOD(CNT,10)								; Every 10 numbers we want to update the status display
+  IF(OPA.EQ.0)DO
+    IF(PRO.EQ.0)'WAT'="'|'"						; String assignments are weird
+    IF(PRO.EQ.1)'WAT'="'/'"						; Variable from variable: 'STR1'='STR2'
+    IF(PRO.EQ.2)'WAT'="'-'"						; Variable from literal: 'STR1'="'literal'"
+    IF(PRO.EQ.3)'WAT'="'\'"						; Variable from mixed: 'STR1'="'literal'+STR2"
+    CURS(CRT,1,WAT)								; Moves the cursor back one position, prints the string
+    IF(PRO.LE.2)INCR PRO						; Increment the progress counter
+    ELSE PRO=0									; Reset the progress counter when too high
+  END DO
+  INCR CNT										; Increment main counter
+END LOOP
+;
+WRITE(CRT,FLIN)''
+WRITEN(CRT,FLIN)'THE ANSWER IS:'				; Write to the scren without hitting a newline
+WRITE(CRT,FANS)ANS
+CLOSE CRT										; Closes that CRT file
+STOP 0											; Return control to OS with completion code 0
+END

@@ -1,0 +1,304 @@
+WARNING
+WARNING This process will modify the fixed and removable platters.
+WARNING It appears that it could all be cleaned up back to original state.
+WARNING But it may be tedious at best and difficult at worst. I included
+WARNING instructions at the end for what I think will clean things up.
+WARNING
+WARNING I strongly recommend doing all of this in the emulator first to get
+WARNING comfortable before ever trying on the real machine.
+WARNING
+
+BACKGROUND/OBSERVATIONS
+-----------------------
+- Note: some conjecture, some personal opinion - take with a grain of salt.
+- GL = Centurion General Ledger
+- RPL3 contains a package in the GLLIBR library (directory). This package
+  contains the source code, executables, JCL scripts, and even an installer
+  script (BLDGL).
+- Based on comments in CPL, it was developed at least as early as 1975. The CPL
+  uses EXP=B, which correlates with that timeline as that would use pre-CPU6
+  instructions only. Comments also show modifications done at least as late as
+  1980. Comments indicate at least several people worked on it over that time
+  span.
+- It is pretty amazing to me that there is an installer. This has the look and
+  feel of shrink-wrapped software, which I think would have been extremely rare
+  on minis almost ever. The installer probably wasn't quite easy enough for an
+  end-user client to handle, but the most junior field engineer would do it
+  easily - no need for programmer-level skills.
+- This looks like it was probably developed by Centurion, not their dealer
+  network, which I understand did a lot of custom development for clients. Ken
+  or Eric could probably tell you a lot more as I'm pretty sure this was a major
+  software package at least during Ken's time there.
+- The package's installation procedure strongly suggests to me it was intended
+  to be installed on the fixed system drive and store data on the removable
+  drive(s). The installation procedure as well as the application suite itself
+  require a number of executables from the "S" library to be present in order to
+  function. My instructions will follow this suggestion.
+- The overall design of the GL suite is a set of quite powerful JCL scripts and
+  a number of small executables to perform specific functions within the suite.
+  This is very Unix-like in design - instead of one massive monolithic
+  application that does "general ledger" in its entirety (a typical Windows
+  design, by contrast), it's small applications that do specific parts of it,
+  all glued together with scripts. In fact, the GL suite has optional parts, and
+  gracefully handles those not being present (I'll show that in the procedure
+  below).
+
+SETUP
+-----
+- I used RPL2 as the fixed platter and RPL3 as the removable platter. This
+  should match your configuration of having the system on the fixed.
+- Boot:
+- Press R/F
+- Press Run/Stop
+D=H1
+NAME=@OSN
+DISK=1
+CODE=0
+S=1
+- Return, then date and time.
+.SETA DD=1
+- Install the COPY JCL script I posted in Discord a week or so ago. The
+  installation won't work from RPL3 as-is as I suspect this is just a backup
+  disk, not the original media. The COPY script I wrote is perfect for this
+  because it can copy from one drive to another and within libraries. It must
+  be present on the system disk so it can be invoked as "COPY" in my
+  instructions below.
+
+INSTALLATION
+------------
+- Before running the installer script (BLDGL - my guess is "build GL"), an "S"
+  library needs to be present on the installer media and it must at least
+  contain the "XCOPUT" executable.
+.NEW S ON 0 'L' 1T
+COPY XCOPUT 1 XCOPUT 0
+- Enter "S" for the INPUT and OUTPUT library names and "E" for the file type.
+- Before running GL itself, a number of temporary files must be created, just
+  like P.CPL requires some to compile CPL programs. They aren't needed by the
+  installer itself, but we'll go ahead and create them now. Note that there
+  may be even more required depending on the parts of GL used, but I know these
+  are required to do even the most basic operations. Also, just like with P.CPL
+  and numerous other applications, the names of the temporary files all map to
+  the console number, so when there is a '0' at the end of the name, it applies
+  to console 0 - if you wanted to do things from other consoles you'd need
+  additional files.
+.NEW SORT10 ON 1 'B' 1T
+.NEW SORT20 ON 1 'B' 1T
+.NEW SORT30 ON 1 'B' 1T
+.NEW SORT40 ON 1 'B' 1T
+.NEW @SCRC0 ON 1 'C' 1T
+.NEW @SCRB0 ON 1 'B' 1T
+- Switch to the removable platter and run the installer, telling it to install
+  from 0 (removable) to 1 (fixed):
+.SETA DD=0
+GLLIBR.BLDGL 0 1
+- Press return to acknowledge that "S" may require updating. This seems to just
+  be informational. I don't think it actually makes any changes to "S", which
+  is good.
+- The installer will now run, copying files from the removable to fixed. There
+  are 32 JCL scripts copied, followed by 52 executables which are the modules
+  of the GL suite. There is one more copy performed as it appears they copy the
+  main menu script twice - once to GL.GLMENU and once to GLMENU so you can
+  invoke it either way.
+- Switching back to the fixed platter, you can verify the installation:
+.SETA DD=1
+.DIR 1
+- You should see, in addition to what was there before, a GL library and the
+  GLMENU script.
+.DIR GL. 1
+- You should see the 32 scripts and 52 executables. The main executables have
+  names like XGL500. Each number seems to correspond to some functionality
+  module. Some numbers are missing, and I'm guessing those are optional parts
+  that aren't present in this installation.
+
+RUNNING
+-------
+- The GL suite is a user-friendly (for that time) menu-driven application.
+  Start the suite, passing the key number and disk number. The key number will
+  define the naming of the file set, so you can have completely separate
+  different file sets. The disk number of course defines which disk to put
+  the file set on. The file set consists of a number of files that are named
+  like GL<key><letter>. There are multiple files that serve different
+  purposes for each file set. We'll define set 0 on disk 0 (the removable
+  platter):
+GLMENU 0 0
+- It is going to prompt you for the key number and disk number again. Sometimes
+  it doesn't once the file set is created - I haven't really figured out when
+  and why it does or doesn't. This is also interesting because it's not the
+  JCL script asking, nor is it even one of the GL executables. It's a standard
+  executable S.XOPT. This program is bizarre as it simply asks a couple
+  questions, which JCL could easily do itself. Additionally, it asks different
+  questions in different runs, which I'm not sure how it knows what to ask.
+  Looking at the JCL, it appears to be tied to "UPSI" which I have seen in a
+  number of scripts but don't really understand. In general in CPL, there is
+  no way to pass "arguments" to a program - just set up files for it - but this
+  appears to be some way around that. In any case, enter 0 again for the key
+  number and disk number.
+- You are now at the main menu. This is still entirely in JCL! It seems like
+  any functionality that didn't have to be CPL (like file I/O) they just did
+  in JCL, which is pretty neat and flexible. It's a lot faster to develop in
+  JCL than CPL since there is no compilation required.
+- Enter 1 to create the file set. It will prompt you for some basic info. This
+   will call GL.INIT, another JCL script, which will call some executables in
+  the S library (S.XEJECT and S.X?RINT) and finally an executable from the GL
+  suite: GL.XGL514. The way this happens in the JCL is pretty interesting - it
+  forms the name of the sub-script to call dynamically based on your menu
+  choices, then calls it generically. JCL is really impressive in capabilities
+  for that time period I think. I entered:
+10
+N
+N
+- You will now come back to the main menu. Enter 2 to go to the master file
+  service menu, then 1 to set up some accounts. I got excited when I saw the
+  word "CHART" but no, it doesn't create charts.
+- This will prompt you for a bunch of info as well to set up the ledger. I
+  entered:
+REN
+1
+N
+1
+0
+0
+1283
+12
+Y
+0
+N
+1
+1
+1
+MY BALANCE SHEET
+MY INCOME STATEMENT
+HEADER ONE
+HEADER TWO
+MY DISCLAIMER
+SUB
+- You will now see a summary of what you entered and a new menu to edit, etc.
+  Choose 4 to add an account.
+- It will ask for account number. Enter 1 then Y for new account. Enter an
+  account description and then it will ask for account type. Enter the letter
+  I. There are limitations of what it will accept. I tried a number of different
+  letters and some work and some don't, but only I seems to work for the steps
+  later. I know nothing about accounting so there's probably a good reason for
+  different account types doing different things that I don't know anything
+  about. It will then ask for some more info. I entered:
+Y
+A
+0
+N
+0
+- You will now see a summary of what you entered. Type N to indicate no changes.
+- It will then prompt for another account number. Hit return to exit. It will
+  then say it's sorting the information, then will return you to the main menu.
+  Once again, this sorting is not done by a GL executable - it requires X.DSORT
+  to exist. And this is why the 4 SORT[124]0 temporary files had to be created
+  during setup.
+- Enter 3 then 1 to start entering transactions. Note on the sub-menu the option
+  for paper tape entry!
+- It will now prompt for a journal info. I entered:
+1
+1283
+1234
+- Now it shows the balance sheet (my terminology may be wrong) and asks for the
+  major account number. Enter 1 since that's the only account we set up. It will
+  Show you the name of the account and current balance. If you enter an invalid
+  account number (including one of the wrong type) it will show an error
+  instead.
+- It will prompt you for some more info. I entered:
+100
+122783
+1000
+- Now it will show the transaction and ask for a description which you can
+  enter. You will notice now that all the amounts you entered are in pennies,
+  not dollars, so 1234 was $12.34 and 1000 was $10. I entered TRANSACTION ONE.
+- It then goes back to asking for account number. I entered another transaction
+  by entering:
+1
+101
+122683
+120
+TRANSACTION TWO
+- Back at the account number prompt I hit return without entering a number to
+  leave the entry loop. Because I didn't balance the books it asks if I want to
+  close and I entered Y.
+- At the journal number prompt I again hit return without entering a number to
+  leave this outer loop. It asks to run an audit and I chose Y.
+- It will now prompt you (again via S.XOPT somehow) for the print device option.
+  This appears to mean which printer number. Running in the emulator I entered 0
+  so I could see the result in the output window. On the real machine without
+  the printer available you can just hit return instead of entering a printer
+  number and then it prints to the CRT. This appears to be true for any time the
+  print device is requested. Sometimes it asks to also print to the CRT.
+- It then asks a bunch of questions. I entered:
+N
+2
+DECEMBER 27, 1983
+1283
+N
+- The printer output then displays the transactions entered. It then asks about
+  posting details. I entered Y, then 0 for the print option then 0 again at the
+  next prompt. It doesn't print anything but takes you back to the processing
+  cycle menu. Enter 9 to return to the main menu.
+- Enter 6 at the main menu to see it gracefully handle a module that is not
+  included in this installation. Pretty friendly. Hit return to get back to the
+  main menu.
+- Enter 4 for reports then 1 for the chart of accounts. Enter the print device,
+  report date, 0, and hit return to print the account list.
+- Back at the reports menu enter 3 for the ledger. Enter the print device, then:
+2
+DECEMBER 27, 1983
+Y
+N
+1283
+- The printout will show the balance for the account we set up.
+- Back at the reports menu enter 4 for financial statements. Enter the print
+  device, then:
+N
+DECEMBER 27, 1983
+DECEMBER 27, 1983
+2
+0
+0
+0
+Y
+N
+- Back at the reports menu enter 99 to return to the main menu, then 99 again
+  to exit GL.
+
+CONCLUSION
+----------
+- There is clearly much more you can do with this than what I described. Since
+  I don't know accounting I felt pretty lost and was happy I could get it to do
+  anything recognizable at all.
+- I poked around some other menu options with varying success. I only included
+  stuff that clearly worked and was visually interesting.
+- Overall it's pretty interesting (from a software perspective - accounting
+  still seems pretty uninteresting to me). It's a pretty massive package for the
+  time period, and I really like the design with JCL and CPL parts.
+- The JCL scripts are going to be great for expanding our JCL knowledge as they
+  are doing more advanced things than the scripts in S. and P. we have used thus
+  far.
+- The CPL source code is great to have as additional reference material for
+  really using CPL as it was intended and they probably really stressed it to
+  the limits.
+- Having the source code to go with the executables is also valuable for
+  research since if you see the program do something interesting you can look
+  at the code to see how they did it.
+- The CPL code would also be useful if anyone really wanted to fully understand
+  the GL suite. I assume there was a hefty amount of written documentation for
+  end users to describe things like what the different account types mean, and
+  general usage, a lot of which I had to figure out from trial-and-error or
+  studying the JCL. But with the scripts and code, we could probably reverse-
+  engineer documentation. I have no intention of doing so because this suite
+  is of no use or interest to me other than the code and scripts themselves.
+
+CLEANUP
+-------
+- To restore the fixed platter I believe you just need to remove GLMENU, the
+  contents of the GL library, and the GL library itself.
+- To restore the removable platter I believe you just need to remove S.XCOPUT
+  and the S library itself, as well as any data files created (GL0A, GL0E,
+  GL0J, etc. for key=0; change the number based on the key). There also was a
+  PR0D file created so I remove that as well.
+- Removing the data files lets you start fresh with a new file set using the
+  same key number. I did this to remove the data files:
+S.DEL 0 GL0A GL0E GL0J GL0D PR0D END
