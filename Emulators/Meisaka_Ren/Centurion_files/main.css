@@ -1,0 +1,105 @@
+
+body {
+	background: #404146;
+	color: #eeeeee;
+	font-family: sans-serif;
+}
+textarea {
+	background: #202224;
+	color: #eeeeee;
+	font-family: monospace;
+	font-size: 18px;
+}
+.regs {
+	font-family: monospace;
+	font-size: 18px;
+}
+.regs span {
+	padding-right: 8px;
+}
+.fixed {
+	white-space: pre-wrap;
+}
+.vidtext {
+	font-family: monospace;
+	font-size: 12px;
+	color: #eeeeee;
+}
+.pstr {
+	color: #eeaa33;
+}
+.zstr {
+	color: #ee4411;
+}
+.cmm {
+	color: #23ca23;
+}
+.sym {
+	color: #ffee44;
+	margin-left: 1em;
+	padding-left: 2em;
+	padding-right: 2em;
+	padding-top: 2px;
+	border-left: 2px solid #77e;
+	border-top: 2px solid #77e;
+}
+.line {
+	display: flex;
+}
+.line > span {
+	min-width: max-content;
+}
+.line > div:nth-child(2) {
+	margin-left: 20px;
+}
+.conv-sel {
+	border: 2px solid #77e;
+	padding: 2px 16px 2px 10px;
+	font-size: 20px;
+}
+input.conv-sel {
+	background: #aaaaaa;
+}
+input.conv-sel:focus {
+	border-color: #7af;
+	box-shadow: 0px 0px 3px 1px #eeeeee;
+}
+.conv-sel input[type=radio] {
+	margin-top: 6px;
+	width: 18px;
+	height: 18px;
+}
+.conv-sel input[type=checkbox] {
+	margin-top: 6px;
+	width: 18px;
+	height: 18px;
+}
+button {
+	font-size: 20px;
+	padding: 4px 14px 4px 14px;
+	border: solid 2px #469fdb;
+	background: #046e88;
+}
+button:hover {
+	border: solid 2px #74b7dd;
+	background: #008fa8;
+}
+button:hover:active {
+	border: solid 2px #a6d5f0;
+	background: #6ce3f8;
+}
+button.active {
+	background: #ece388;
+	border-color: #f4c455;
+}
+.popwin {
+	position: absolute;
+	display: flex;
+	border: solid 2px #666666;
+	background: #404146;
+	box-shadow: 3px 3px 3px 3px #000;
+	margin: 10px 10px 10px 10px;
+}
+.filter {
+	filter: blur(1.7px);
+}
