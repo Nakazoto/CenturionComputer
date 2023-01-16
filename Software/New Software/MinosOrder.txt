@@ -1,0 +1,23 @@
+.NEW COPY 1 'A' 1S
+.NEW CED 1 'A' 1S
+.NEW ZCED 1 'A' 1S
+.NEW BLDMINOS 1 'A' 1S
+.NEW @SCRE0 1 'E' 1T (if needed)
+
+Open each file and paste contents
+
+P.CPL CED 1 CRT0 X
+S.NCOPN COPY 1 COPY 1 (input: none, output: S)
+S.COPY CED 1 CED 1 (input: none, output: S)
+S.COPY XCED 1 CED 1 (input: none, output: S)
+
+.NOGUARD 2
+S.NEWDSK (on floppy which should be 2)
+
+BLDMINOS
+
+.DEL ZCED 1
+.DEL XCED 1
+.DEL CED 1
+.DEL COPY 1
+.DEL BLDMINOS 1
