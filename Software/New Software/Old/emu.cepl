@@ -1,0 +1,399 @@
+; UE14500 Emulator by ren14500. Public domain.
+TITLE 'EMU'
+SYSTEM ZEMU(MAIN,EXP=D,LL=80)
+FILE CRT:SYSIPT,CLASS=1,SEQ
+FORMAT FULLLINE:C78
+FORMAT STATUSFMT:C25
+; The currently-selected control.
+SET CNTRL:1
+; The state of each control.
+TABLE CNTRLSTATES(6)
+; Instruction register.
+SET IR:0
+; Input/output enable registers.
+SET IEN:0,OEN:0
+; Result/carry registers.
+SET RR:0,CR:0
+; Skip register.
+SET SR:0
+; Instruction names table.
+TABLE INSTRS(4,64)
+; Coordinates.
+INTEGER COL,TMPCOL,TMPLINE
+; Logic values.
+INTEGER INSTR,CSKIP,CDATA
+; Temporaries.
+INTEGER CHTMP,VSTMP
+; Tab.
+SET TABSTR:-1996488704
+; Two.
+SET TWO:2
+; VFD on/off.
+DEFINE VFDON:'@',VFDOFF:'V'
+; Input control on/off.
+DEFINE IN0ON:'*',IN0OFF:'0',IN1ON:'!',IN1OFF:'1'
+; Pointer on/off.
+DEFINE POINTERON:'^',POINTEROFF:'-'
+; Clock characters.
+DEFINE CLKC:'C',CLKL:'L',CLKK:'K'
+; Record to get a keystroke from the console.
+RECORD CMDREC(1)
+  STRING CMD(1)
+ENDREC
+; Start program.
+ENTRYPOINT CRT
+ENTRY
+OPEN IO(CRT)
+; Initialize control states.
+CNTRLSTATES(1)=0\CNTRLSTATES(2)=0\CNTRLSTATES(3)=0
+CNTRLSTATES(4)=0\CNTRLSTATES(5)=0\CNTRLSTATES(6)=0
+; Load the instruction names table.
+'INSTRS'="'NOP0'"\TBLPUT INSTRS(1)
+'INSTRS'="'LD'"\TBLPUT INSTRS(2)
+'INSTRS'="'ADD'"\TBLPUT INSTRS(3)
+'INSTRS'="'SUB'"\TBLPUT INSTRS(4)
+'INSTRS'="'ONE'"\TBLPUT INSTRS(5)
+'INSTRS'="'NAND'"\TBLPUT INSTRS(6)
+'INSTRS'="'OR'"\TBLPUT INSTRS(7)
+'INSTRS'="'XOR'"\TBLPUT INSTRS(8)
+'INSTRS'="'STO'"\TBLPUT INSTRS(9)
+'INSTRS'="'STOC'"\TBLPUT INSTRS(10)
+'INSTRS'="'IEN'"\TBLPUT INSTRS(11)
+'INSTRS'="'OEN'"\TBLPUT INSTRS(12)
+'INSTRS'="'JMP'"\TBLPUT INSTRS(13)
+'INSTRS'="'RTN'"\TBLPUT INSTRS(14)
+'INSTRS'="'SKZ'"\TBLPUT INSTRS(15)
+'INSTRS'="'NOPF'"\TBLPUT INSTRS(16)
+; Draw the computer.
+WRITE(CRT,FULLLINE)-
+'     START|. .|                     UE14500'
+WRITE(CRT,FULLLINE)-
+'SKP--IR--IRB-INST-DEC-DECB  .: TUBE, V: VFD OFF, *: VFD ON'
+WRITE(CRT,FULLLINE)-
+'|.|......|..| V |....|....| INST: INSTRUCTION REGISTER VFDS'
+WRITE(CRT,FULLLINE)-
+'|.|......|..| V |....|....| IV: IEN VFD'
+WRITE(CRT,FULLLINE)-
+'|.|......|..| V |....|....| CRB: CARRY REGISTER BUFFER VFD'
+WRITE(CRT,FULLLINE)-
+'|.|......|..| V |....|....| RR: RESULTS REGISTER VFD'
+WRITE(CRT,FULLLINE)-
+'+-IENC--IEDT--IV--XOR-GLU1+ LV: LOGIC UNIT VFD'
+WRITE(CRT,FULLLINE)-
+'|  .. |  .. | V  |.. |    | OSBS: OEN/SKIP VFDS'
+WRITEN(CRT,FULLLINE)-
+'|  .. |--IENDFF--|.. |....| W: WRITE VFD'
+WRITE(CRT,FULLLINE)'          +---------STATUS----------+'
+WRITEN(CRT,FULLLINE)-
+'|     |  ......  |   |    | 0: FLAG 0 VFD'
+WRITE(CRT,FULLLINE)'         |NOP0                     |'
+WRITEN(CRT,FULLLINE)-
+'+-CLKC---ADDER-G2-CARR-CRB+ J: JUMP FLAG VFD'
+WRITE(CRT,FULLLINE)'      +-------------------------+'
+WRITE(CRT,FULLLINE)-
+'|  ..   |.... |. | .... |V| R: RETURN FLAG VFD'
+WRITE(CRT,FULLLINE)-
+'|  ..   |.... |. | .... |.| F: FLAG F VFD'
+WRITE(CRT,FULLLINE)-
+'+--LV---|     |. |------|.|'
+WRITE(CRT,FULLLINE)-
+'|   V   |LOGIC|. |-RR-|R|V| +---REMOTE----+ D: DATA, R: RESULT REGISTER'
+WRITE(CRT,FULLLINE)-
+'+--RC---|.... |  |....|R|.| |D R W 0 J R F| W: WRITE, 0: FLAG 0, J: JUMP'
+WRITE(CRT,FULLLINE)-
+'|  ..   |.... |  |....|B|.| |V V V V V V V| R: RETURN, F: FLAG F'
+WRITE(CRT,FULLLINE)-
+'+C2-S--SKIP--WRITE-OB-OVFD+ |V V V V   V V| IIII: INSTRUCTION'
+WRITE(CRT,FULLLINE)-
+'|..|.|......|......|.|W| V| |I I I I   D C| D: DATA EXT. INPUT, C: CLOCK'
+WRITE(CRT,FULLLINE)-
+'|..|.|-OSBS-| .... |.|0| V| |3 2 1 0      |'
+WRITE(CRT,FULLLINE)-
+'+C1-O|..V..V|M|....|.|J| V| | INST    D  C| Q TO QUIT.'
+WRITEN(CRT,FULLLINE)-
+'|..|.|OENDFF|-FLGF-|.|R| V| |1 1 1 1  1  L|'
+WRITE(CRT,FULLLINE)' CLOCK TOGGLES HI/LO SEPARATELY.'
+WRITEN(CRT,FULLLINE)-
+'|..|.|......| .... | |F| V| |* * * *  *  K|'
+WRITE(CRT,FULLLINE)' SPACE TO TOGGLE.'
+WRITEN(CRT,FULLLINE)-
+'            | .... |        +-------------+ TAB/H/L MOVE CURSOR.'
+; Start at I3.
+CALL DRAWPOINTERON
+; Main loop.
+TOP:
+  READB(CRT,CMDREC)
+  CALL DRAWPOINTERON
+  IFS(CMD.EQ.'Q')GO TO DONE
+  IFS(CMD.EQ.'H')CALL MOVELEFT
+  IFS(CMD.EQ.'L')CALL MOVERIGHT
+  IFS(CMD.EQ.TABSTR)CALL MOVERIGHT
+  IFS(CMD.EQ.' ')CALL TOGGLE
+GO TO TOP
+; Cleanup.
+DONE:
+CURP(CRT,79,24)
+WRITE(CRT,FULLLINE)''
+CLOSE CRT
+STOP 0
+; Set INSTR to the instruction for the current control state.
+SUBROUTINE GETINSTR
+  IF(CNTRLSTATES(4).EQ.0)INSTR=0
+  ELSE INSTR=1
+  IF(CNTRLSTATES(3).NE.0)INSTR=INSTR+2
+  IF(CNTRLSTATES(2).NE.0)INSTR=INSTR+4
+  IF(CNTRLSTATES(1).NE.0)INSTR=INSTR+8
+RETURN
+; Draw the pointer on at the current control location.
+SUBROUTINE DRAWPOINTERON
+  CALL GETCTRLLOC
+  CURP(CRT,COL,24)\CURS(CRT,1,POINTERON)
+RETURN
+; Draw the pointer off at the current control location.
+SUBROUTINE DRAWPOINTEROFF
+  CALL GETCTRLLOC
+  CURP(CRT,COL,24)\CURS(CRT,1,POINTEROFF)
+RETURN
+; Move left.
+SUBROUTINE MOVELEFT
+  CALL DRAWPOINTEROFF
+  IF(CNTRL.EQ.1)CNTRL=6
+  ELSE DECR CNTRL
+  CALL DRAWPOINTERON
+RETURN
+; Move right.
+SUBROUTINE MOVERIGHT
+  CALL DRAWPOINTEROFF
+  IF(CNTRL.EQ.6)CNTRL=1
+  ELSE INCR CNTRL
+  CALL DRAWPOINTERON
+RETURN
+; Toggle.
+SUBROUTINE TOGGLE
+  IF(CNTRL.EQ.6)CALL TOGGLECLOCK
+  IF(CNTRL.EQ.5)CALL TOGGLEDATA
+  IF(CNTRL.LE.4)CALL TOGGLECONTROL
+  CALL GETCTRLLOC
+  CURP(CRT,COL,24)
+RETURN
+; Toggle the clock.
+SUBROUTINE TOGGLECLOCK
+  CALL GETCTRLLOC
+  IF(CNTRLSTATES(6).EQ.0)DO
+    CURP(CRT,COL,23)\CURS(CRT,1,IN0ON)
+    CURP(CRT,COL,22)\CURS(CRT,1,IN0ON)
+    CURP(CRT,COL,21)\CURS(CRT,1,IN0ON)
+    CURP(CRT,COL,18)\CURS(CRT,1,VFDON)
+    CNTRLSTATES(6)=1
+    CALL CLOCKHIGH
+  END DO
+  ELSE DO
+    CURP(CRT,COL,23)\CURS(CRT,1,CLKK)
+    CURP(CRT,COL,22)\CURS(CRT,1,CLKL)
+    CURP(CRT,COL,21)\CURS(CRT,1,CLKC)
+    CURP(CRT,COL,18)\CURS(CRT,1,VFDOFF)
+    CNTRLSTATES(6)=0
+    CALL CLOCKLOW
+  END DO
+RETURN
+; Toggle the data.
+SUBROUTINE TOGGLEDATA
+  CALL GETCTRLLOC
+  IF(CNTRLSTATES(5).EQ.0)DO
+    CURP(CRT,COL,23)\CURS(CRT,1,IN0OFF)
+    CURP(CRT,COL,22)\CURS(CRT,1,IN1ON)
+    CURSOR(CRT,17,COL)\CURS(CRT,1,VFDON)
+    CURP(CRT,30,17)\CURS(CRT,1,VFDON)
+    CNTRLSTATES(5)=1
+  END DO
+  ELSE DO
+    CURP(CRT,COL,23)\CURS(CRT,1,IN0ON)
+    CURP(CRT,COL,22)\CURS(CRT,1,IN1OFF)
+    CURSOR(CRT,17,COL)\CURS(CRT,1,VFDOFF)
+    CURP(CRT,30,17)\CURS(CRT,1,VFDOFF)
+    CNTRLSTATES(5)=0
+  END DO
+RETURN
+; Toggle a control.
+SUBROUTINE TOGGLECONTROL
+  CALL GETCTRLLOC
+  IF(CNTRLSTATES(CNTRL).EQ.0)DO
+    CURP(CRT,COL,23)\CURS(CRT,1,IN0OFF)
+    CURP(CRT,COL,22)\CURS(CRT,1,IN1ON)
+    CURP(CRT,COL,18)\CURS(CRT,1,VFDON)
+    CNTRLSTATES(CNTRL)=1
+  END DO
+  ELSE DO
+    CURP(CRT,COL,23)\CURS(CRT,1,IN0ON)
+    CURP(CRT,COL,22)\CURS(CRT,1,IN1OFF)
+    CURP(CRT,COL,18)\CURS(CRT,1,VFDOFF)
+    CNTRLSTATES(CNTRL)=0
+  END DO
+  CALL GETINSTR
+  INCR INSTR
+  TBLGET INSTRS(INSTR)
+  CURP(CRT,52,10)\CURB(CRT,25)\WRITEN(CRT,STATUSFMT)INSTRS
+RETURN
+; Set COL to the column for the current control location.
+SUBROUTINE GETCTRLLOC
+  IF(CNTRL.LE.4)COL=CNTRL*2+28
+  ELSE COL=CNTRL-5*3+39
+RETURN
+; Handle clock going high.
+SUBROUTINE CLOCKHIGH
+  ; Turn skip off it was on.
+  CSKIP=SR
+  IF(CSKIP)SR=0
+  CALL VFDSET(12,21,0)
+  ; Load the instruction in the instruction register. If the skip flag
+  ; is set, the instruction lines are all pulled high.
+  IF(CSKIP)IR=15
+  ELSE DO
+    CALL GETINSTR
+    IR=INSTR
+  END DO
+  CHTMP=MOD(INSTR,2)\CALL VFDSET(15,3,CHTMP)\INSTR=INSTR/2
+  CHTMP=MOD(INSTR,2)\CALL VFDSET(15,4,CHTMP)\INSTR=INSTR/2
+  CHTMP=MOD(INSTR,2)\CALL VFDSET(15,5,CHTMP)\INSTR=INSTR/2
+  CALL VFDSET(15,6,INSTR)
+  ; Turn off FLG0, JUMP, RETURN, FLGF in case they were on.
+  CALL VFDSET(26,20,0)\CALL VFDSET(36,17,0) ; FLG0 & remote
+  CALL VFDSET(26,21,0)\CALL VFDSET(38,17,0) ; JUMP & remote
+  CALL VFDSET(26,22,0)\CALL VFDSET(40,17,0) ; RETURN & remote
+  CALL VFDSET(26,23,0)\CALL VFDSET(42,17,0) ; FLGF & remote
+  ; Turn off the logic VFD in case this is not a logic instruction.
+  CALL VFDSET(5,15,0)                       ; LV
+  ; Determine the data. If IEN is off, the data is zero; otherwise it is
+  ; the data bus line. However, if the instruction is IEN, the data bus
+  ; is read regardless.
+  IF(IR.EQ.10)CDATA=CNTRLSTATES(5)
+  ELSE DO
+    IF(IEN)CDATA=CNTRLSTATES(5)
+    ELSE CDATA=0
+  END DO
+  ; FLG0 high.
+  IF(IR.EQ.0)DO
+    CALL VFDSET(26,20,1)\CALL VFDSET(36,17,1)   ; FLG0 & remote
+  END DO
+  ; LD: Result register set to data.
+  IF(IR.EQ.1)DO
+    RR=CDATA
+    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+  END DO
+  ; ADD: Result register set to data plus result register plus carry.
+  ; Carry register set appropriately.
+  IF(IR.EQ.2)DO
+    RR=RR+CDATA
+    RR=RR+CR
+    CR=RR/TWO
+    RR=@REM
+    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+    CALL VFDSET(26,12,CR)                       ; CR
+  END DO
+  ; SUB: Result register set to complement of data plus result register
+  ; plus carry. Carry register set appropriately.
+  IF(IR.EQ.3)DO
+    IF(CDATA.EQ.0)INCR RR ; RR += CDATA ^ 1
+    RR=RR+CR
+    CR=RR/TWO
+    RR=@REM
+    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+    CALL VFDSET(26,12,CR)                       ; CR
+  END DO
+  ; ONE: Result register set to one. Carry register cleared.
+  IF(IR.EQ.4)DO
+    RR=1
+    CR=0
+    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+    CALL VFDSET(26,12,CR)                       ; CR
+  END DO
+  ; NAND: Result register set to complement of result register and data.
+  IF(IR.EQ.5)DO
+    CDATA=(CDATA+RR)/2 ; CDATA = RR & CDATA
+    IF(CDATA.EQ.0)RR=1 ; RR = CDATA ^ 1
+    ELSE RR=0          ;
+    CALL VFDSET(5,15,RR)                        ; LV
+    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+  END DO
+  ; OR: Result register set to result register or data.
+  IF(IR.EQ.6)DO
+    IF(CDATA)RR=1 ; RR = RR | CDATA
+    CALL VFDSET(5,15,RR)                        ; LV
+    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+  END DO
+  ; XOR: Result register set to result register or data.
+  IF(IR.EQ.7)DO
+    RR=MOD(RR+CDATA,2)
+    CALL VFDSET(5,15,RR)                        ; LV
+    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+  END DO
+  ; STO: Data bus set to result register. Write high if OEN.
+  IF(IR.EQ.8)DO
+    CALL VFDSET(30,17,RR)                       ; Remote DATA
+    IF(OEN)DO
+      CALL VFDSET(26,19,1)\CALL VFDSET(34,17,1) ; WRITE & remote
+    END DO
+  END DO
+  ; STOC: Data bus set to complement of result register. Write high if OEN.
+  IF(IR.EQ.9)DO
+    CDATA=MOD(RR+1,2) ; CDATA = RR ^ 1
+    CALL VFDSET(30,17,CDATA)                    ; Remote DATA
+    IF(OEN)DO
+      CALL VFDSET(26,19,1)\CALL VFDSET(34,17,1) ; WRITE & remote
+    END DO
+  END DO
+  ; IEN: Input enable register set to data.
+  IF(IR.EQ.10)DO
+    IEN=CDATA
+    CALL VFDSET(15,8,IEN)                       ; IV
+  END DO
+  ; OEN: Output enable register set to data.
+  IF(IR.EQ.11)DO
+    OEN=CDATA
+    CALL VFDSET(9,21,OEN)                       ; OEN
+  END DO
+  ; JMP: JUMP high.
+  IF(IR.EQ.12)DO
+    CALL VFDSET(26,21,1)\CALL VFDSET(38,17,1)   ; JUMP & remote
+  END DO
+  ; RTN: RETURN high. Skip next instruction.
+  IF(IR.EQ.13)DO
+    CALL VFDSET(26,22,1)\CALL VFDSET(40,17,1)   ; RETURN & remote
+    SR=1
+    CALL VFDSET(12,21,1)                        ; SKIP
+  END DO
+  ; SKZ: Skip register set to one if result register is zero.
+  IF(IR.EQ.14)DO
+    IF(RR.EQ.0)DO
+      SR=1
+      CALL VFDSET(12,21,1)                      ; SKIP
+    END DO
+  END DO
+  ; NOPF: FLGF high unless this was NOPF due to skip.
+  IF(IR.EQ.15)DO
+    IF(CSKIP.EQ.0)DO
+      CALL VFDSET(26,23,1)\CALL VFDSET(42,17,1) ; FLGF & remote
+    END DO
+  END DO
+RETURN
+; Handle clock going low.
+SUBROUTINE CLOCKLOW
+  IF(IR.EQ.8)DO
+    CALL VFDSET(26,19,0)\CALL VFDSET(34,17,0)   ; WRITE & remote
+  END DO
+  IF(IR.EQ.9)DO
+    CALL VFDSET(26,19,0)\CALL VFDSET(34,17,0)   ; WRITE & remote
+  END DO
+RETURN
+; Turn a VFD at COL, LINE off if VAL=0 else on.
+SUBROUTINE VFDSET ; (COL,LINE,VAL)
+  RETRIEVE(NUMBER,TMPCOL)
+  RETRIEVE(NUMBER,TMPLINE)
+  RETRIEVE(NUMBER,VSTMP)
+  CURP(CRT,TMPCOL,TMPLINE)
+  IF(VSTMP)CURS(CRT,1,VFDON)
+  ELSE CURS(CRT,1,VFDOFF)
+RETURN
+; End of source.
+END
+

@@ -278,7 +278,6 @@ SUBROUTINE CLOCKHIGH
   ; LD: Result register set to data.
   IF(IR.EQ.1)DO
     RR=CDATA
-    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
   END DO
   ; ADD: Result register set to data plus result register plus carry.
   ; Carry register set appropriately.
@@ -287,8 +286,6 @@ SUBROUTINE CLOCKHIGH
     RR=RR+CR
     CR=RR/TWO
     RR=@REM
-    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
-    CALL VFDSET(26,12,CR)                       ; CR
   END DO
   ; SUB: Result register set to complement of data plus result register
   ; plus carry. Carry register set appropriately.
@@ -297,15 +294,11 @@ SUBROUTINE CLOCKHIGH
     RR=RR+CR
     CR=RR/TWO
     RR=@REM
-    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
-    CALL VFDSET(26,12,CR)                       ; CR
   END DO
   ; ONE: Result register set to one. Carry register cleared.
   IF(IR.EQ.4)DO
     RR=1
     CR=0
-    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
-    CALL VFDSET(26,12,CR)                       ; CR
   END DO
   ; NAND: Result register set to complement of result register and data.
   IF(IR.EQ.5)DO
@@ -313,19 +306,16 @@ SUBROUTINE CLOCKHIGH
     IF(CDATA.EQ.0)RR=1 ; RR = CDATA ^ 1
     ELSE RR=0          ;
     CALL VFDSET(5,15,RR)                        ; LV
-    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
   END DO
   ; OR: Result register set to result register or data.
   IF(IR.EQ.6)DO
     IF(CDATA)RR=1 ; RR = RR | CDATA
     CALL VFDSET(5,15,RR)                        ; LV
-    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
   END DO
   ; XOR: Result register set to result register or data.
   IF(IR.EQ.7)DO
     RR=MOD(RR+CDATA,2)
     CALL VFDSET(5,15,RR)                        ; LV
-    CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
   END DO
   ; STO: Data bus set to result register. Write high if OEN.
   IF(IR.EQ.8)DO
@@ -378,12 +368,9 @@ SUBROUTINE CLOCKHIGH
 RETURN
 ; Handle clock going low.
 SUBROUTINE CLOCKLOW
-  IF(IR.EQ.8)DO
-    CALL VFDSET(26,19,0)\CALL VFDSET(34,17,0)   ; WRITE & remote
-  END DO
-  IF(IR.EQ.9)DO
-    CALL VFDSET(26,19,0)\CALL VFDSET(34,17,0)   ; WRITE & remote
-  END DO
+  CALL VFDSET(26,15,RR)\CALL VFDSET(32,17,RR) ; RR & remote
+  CALL VFDSET(26,12,CR)                       ; CR
+  CALL VFDSET(26,19,0)\CALL VFDSET(34,17,0)   ; WRITE & remote
 RETURN
 ; Turn a VFD at COL, LINE off if VAL=0 else on.
 SUBROUTINE VFDSET ; (COL,LINE,VAL)
