@@ -70,7 +70,7 @@ INSTALLATION
   library needs to be present on the installer media and it must at least
   contain the "XCOPUT" executable.
 .NEW S ON 0 'L' 1T
-COPY XCOPUT 1 XCOPUT 0
+S.COPY XCOPUT 1 XCOPUT 0
 - Enter "S" for the INPUT and OUTPUT library names and "E" for the file type.
 - Before running GL itself, a number of temporary files must be created, just
   like P.CPL requires some to compile CPL programs. They aren't needed by the
