@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project source="2.7.1" version="1.0">
+This file is intended to be loaded by Logisim (http://www.cburch.com/logisim/).
+<lib desc="#Wiring" name="0">
+    <tool name="Splitter">
+      <a name="facing" val="west"/>
+      <a name="incoming" val="8"/>
+      <a name="bit1" val="0"/>
+      <a name="bit2" val="0"/>
+      <a name="bit3" val="0"/>
+      <a name="bit4" val="1"/>
+      <a name="bit5" val="1"/>
+      <a name="bit6" val="1"/>
+      <a name="bit7" val="1"/>
+    </tool>
+    <tool name="Pin">
+      <a name="facing" val="south"/>
+    </tool>
+  </lib>
+  <lib desc="#Gates" name="1"/>
+  <lib desc="#Plexers" name="2"/>
+  <lib desc="#Arithmetic" name="3"/>
+  <lib desc="#Memory" name="4">
+    <tool name="ROM">
+      <a name="contents">addr/data: 8 8
+0
+</a>
+    </tool>
+  </lib>
+  <lib desc="#I/O" name="5"/>
+  <lib desc="#Base" name="6">
+    <tool name="Text Tool">
+      <a name="text" val=""/>
+      <a name="font" val="SansSerif plain 12"/>
+      <a name="halign" val="center"/>
+      <a name="valign" val="base"/>
+    </tool>
+  </lib>
+  <main name="main"/>
+  <options>
+    <a name="gateUndefined" val="ignore"/>
+    <a name="simlimit" val="1000"/>
+    <a name="simrand" val="0"/>
+  </options>
+  <mappings>
+    <tool lib="6" map="Button2" name="Menu Tool"/>
+    <tool lib="6" map="Button3" name="Menu Tool"/>
+    <tool lib="6" map="Ctrl Button1" name="Menu Tool"/>
+  </mappings>
+  <toolbar>
+    <tool lib="6" name="Poke Tool"/>
+    <tool lib="6" name="Edit Tool"/>
+    <tool lib="6" name="Text Tool">
+      <a name="text" val=""/>
+      <a name="font" val="SansSerif plain 12"/>
+      <a name="halign" val="center"/>
+      <a name="valign" val="base"/>
+    </tool>
+    <sep/>
+    <tool lib="0" name="Pin">
+      <a name="tristate" val="false"/>
+    </tool>
+    <tool lib="0" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="labelloc" val="east"/>
+    </tool>
+    <tool lib="1" name="NOT Gate"/>
+    <tool lib="1" name="AND Gate"/>
+    <tool lib="1" name="OR Gate"/>
+  </toolbar>
+  <circuit name="main">
+    <a name="circuit" val="main"/>
+    <a name="clabel" val=""/>
+    <a name="clabelup" val="east"/>
+    <a name="clabelfont" val="SansSerif plain 12"/>
+    <wire from="(260,350)" to="(320,350)"/>
+    <wire from="(150,390)" to="(210,390)"/>
+    <wire from="(150,330)" to="(210,330)"/>
+    <wire from="(260,330)" to="(260,350)"/>
+    <wire from="(170,410)" to="(210,410)"/>
+    <wire from="(170,350)" to="(210,350)"/>
+    <wire from="(360,120)" to="(450,120)"/>
+    <wire from="(360,200)" to="(450,200)"/>
+    <wire from="(360,360)" to="(450,360)"/>
+    <wire from="(360,240)" to="(450,240)"/>
+    <wire from="(360,400)" to="(450,400)"/>
+    <wire from="(360,160)" to="(450,160)"/>
+    <wire from="(300,110)" to="(320,110)"/>
+    <wire from="(300,150)" to="(320,150)"/>
+    <wire from="(300,190)" to="(320,190)"/>
+    <wire from="(300,230)" to="(320,230)"/>
+    <wire from="(160,130)" to="(310,130)"/>
+    <wire from="(310,130)" to="(310,170)"/>
+    <wire from="(310,170)" to="(310,210)"/>
+    <wire from="(310,210)" to="(310,250)"/>
+    <wire from="(310,370)" to="(310,410)"/>
+    <wire from="(310,250)" to="(320,250)"/>
+    <wire from="(310,410)" to="(320,410)"/>
+    <wire from="(310,130)" to="(320,130)"/>
+    <wire from="(310,170)" to="(320,170)"/>
+    <wire from="(310,210)" to="(320,210)"/>
+    <wire from="(310,370)" to="(320,370)"/>
+    <wire from="(250,330)" to="(260,330)"/>
+    <wire from="(310,250)" to="(310,370)"/>
+    <wire from="(250,390)" to="(320,390)"/>
+    <comp lib="1" loc="(360,240)" name="NAND Gate">
+      <a name="size" val="30"/>
+      <a name="inputs" val="2"/>
+    </comp>
+    <comp lib="1" loc="(360,360)" name="NAND Gate">
+      <a name="size" val="30"/>
+      <a name="inputs" val="2"/>
+    </comp>
+    <comp lib="1" loc="(360,200)" name="NAND Gate">
+      <a name="size" val="30"/>
+      <a name="inputs" val="2"/>
+    </comp>
+    <comp lib="1" loc="(360,120)" name="NAND Gate">
+      <a name="size" val="30"/>
+      <a name="inputs" val="2"/>
+    </comp>
+    <comp lib="1" loc="(360,160)" name="NAND Gate">
+      <a name="size" val="30"/>
+      <a name="inputs" val="2"/>
+    </comp>
+    <comp lib="0" loc="(300,110)" name="Constant"/>
+    <comp lib="4" loc="(250,390)" name="D Flip-Flop"/>
+    <comp lib="0" loc="(160,130)" name="Pin">
+      <a name="tristate" val="false"/>
+      <a name="label" val="F20F_RQ"/>
+    </comp>
+    <comp lib="1" loc="(480,160)" name="NOT Gate"/>
+    <comp lib="6" loc="(154,74)" name="Text">
+      <a name="text" val="F20F = 1111 0 00/01 0/1"/>
+    </comp>
+    <comp lib="0" loc="(480,320)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D2_MUX#"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+    <comp lib="0" loc="(480,200)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D5_Card#"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+    <comp lib="4" loc="(250,330)" name="D Flip-Flop"/>
+    <comp lib="1" loc="(480,400)" name="NOT Gate"/>
+    <comp lib="0" loc="(150,390)" name="Pin">
+      <a name="tristate" val="false"/>
+      <a name="label" val="R/T_CLK"/>
+    </comp>
+    <comp lib="0" loc="(170,350)" name="Pin">
+      <a name="tristate" val="false"/>
+      <a name="label" val="Port_SEL"/>
+    </comp>
+    <comp lib="0" loc="(300,150)" name="Constant"/>
+    <comp lib="0" loc="(480,240)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D4_Card#"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+    <comp lib="0" loc="(480,120)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D7_Card#"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+    <comp lib="1" loc="(480,120)" name="NOT Gate"/>
+    <comp lib="6" loc="(230,57)" name="Text">
+      <a name="text" val="F20F = Card No. (4-bits), 0, MUX# (2-bits), R/T (1-bit)"/>
+    </comp>
+    <comp lib="0" loc="(300,190)" name="Constant"/>
+    <comp lib="0" loc="(150,330)" name="Pin">
+      <a name="tristate" val="false"/>
+      <a name="label" val="Port_CLK"/>
+    </comp>
+    <comp lib="1" loc="(480,200)" name="NOT Gate"/>
+    <comp lib="1" loc="(480,240)" name="NOT Gate"/>
+    <comp lib="0" loc="(170,410)" name="Pin">
+      <a name="tristate" val="false"/>
+      <a name="label" val="R/T_SEL"/>
+    </comp>
+    <comp lib="1" loc="(360,400)" name="NAND Gate">
+      <a name="size" val="30"/>
+      <a name="inputs" val="2"/>
+    </comp>
+    <comp lib="0" loc="(480,280)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D3_Unasserted"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+    <comp lib="0" loc="(300,230)" name="Constant"/>
+    <comp lib="6" loc="(384,303)" name="Text">
+      <a name="text" val="Open Collector NANDs"/>
+    </comp>
+    <comp lib="0" loc="(480,360)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D1_MUX#"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+    <comp lib="0" loc="(480,160)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D6_Card#"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+    <comp lib="1" loc="(480,360)" name="NOT Gate"/>
+    <comp lib="0" loc="(480,400)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="label" val="D0_Rx/Tx"/>
+      <a name="labelloc" val="east"/>
+    </comp>
+  </circuit>
+</project>

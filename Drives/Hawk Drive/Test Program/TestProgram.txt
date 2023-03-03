@@ -1,0 +1,39 @@
+; Cylinder 00
+MF140 01	; Select drive 0, platter 1 (fixed)
+MF148 03	; Perform RTZ
+MF141 00 00	; Set cylinder to 000, head to 0 (upper), sector to 0
+MF143 02	; Set up write bitmask
+MF148 05	; 
+MF148 06	; 
+MF144 		; Hit space twice (should see 00 30 = ready and on cylinder)
+MF148 00	; Read command
+MF144		; Hit space twice (00 30 = good) 
+MF148 02	; Seek to sector address
+MF148 00	; Read command
+MF144		; Hit space twice (00 30 = good)
+; If good
+MF148 03	; Perform RTZ
+MF141 00 01	; Set cylinder to 000, head to 0 (upper), sector to 1
+MF148 00	; Read command
+MF144		; Hit space twice (Should fail with 10 30) 
+
+MF148 03	; Perform RTZ
+MF141 00 10	; Set cylinder to 000, head to 1 (lower), sector to 0
+MF143 02	; Set up write bitmask
+MF148 05	; 
+MF148 06	; 
+MF144 		; Hit space twice (should see 00 30 = ready and on cylinder)
+MF148 00	; Read command
+MF144		; Hit space twice (00 30 = good) 
+MF148 02	; Seek to sector address
+MF148 00	; Read command
+MF144		; Hit space twice (00 30 = good)
+; If good
+MF148 03	; Perform RTZ
+MF141 00 11	; Set cylinder to 000, head to 0 (upper), sector to 1
+MF148 00	; Read command
+MF144		; Hit space twice (Should fail with 10 30) 
+
+; 10 30 = Format error
+; 20 30 = Sector address error
+; 40 30 = CRC error

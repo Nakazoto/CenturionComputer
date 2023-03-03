@@ -1,0 +1,42 @@
+MUX ORDER OF OPERATIONS
+
+Read:
+MUX receives a byte
+	Byte received by MUX and stored in buffer
+	MUX performs interupt request
+		MUX checks if INT_IN = off AND CPL < 6
+		MUX hits Interrupt Request INTRQ
+		OS sends back Interrupt Acknowledge INT_ACK
+		MUX sets Interrupt Level INR{0~3} to lvl. 6
+		OS changes to CPL = 6
+		OS asserts MMIO 0xF20F read for info on what's going on
+		(Reading 0xF20F clears the interrupt condition [INTRQ,INR{0~3}])
+	OS asserts RDIN requesting byte (0xF2F1 for tape)
+	MUX asserts Address Pre-empt APRE
+	MUX asserts Data Bus with new byte
+	MUX asserts Data Ready DRDY
+	OS grabs byte off of data bus
+	MUX turns DRDY and APRE off when OS turns RDIN off
+
+Write:
+OS wants to send a byte
+	WTIN is asserted by OS requesting send op (0xF2F1)
+	MUX asserts Address Pre-empt APRE
+	MUX grabs byte on Data Bus copies it to buffer
+	MUX starts shifting buffer out
+	MUX asserts Data Ready DRDY
+	OS turns WTIN off
+	MUX turns Data Ready DRDY off
+MUX finishes shifting byte out
+	MUX performs interupt request
+		MUX checks if INT_IN = off AND CPL < 6
+		MUX hits Interrupt Request INTRQ
+		OS sends back Interrupt Acknowledge INT_ACK
+		MUX sets Interrupt Level INR{0~3} to lvl. 6
+		OS changes to CPL = 6
+		OS asserts MMIO 0xF20F read for info on what's going on
+		(Reading 0xF20F clears the interrupt condition [INTRQ,INR{0~3}])
+	
+	
+	
+

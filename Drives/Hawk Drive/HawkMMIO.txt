@@ -1,0 +1,54 @@
+F148 -> Hawk Command Register
+		00: Read
+		01: Write
+		02: Seek
+		03: RTZ 
+		04: Verify read
+		05: Format command step 1
+		06: Format command step 2 
+
+F144/F145 -> Hawk Status Register
+	F144: Read Status 	
+		0000 0000 = All good
+				
+		0001 0000 = Format error
+		0010 0000 = Sector address error
+		0100 0000 = CRC error
+		1000 0000 = Timeout error
+	
+	F145: Drive Status
+		0000 0001 = Seek complete from drive 1
+		0000 0010 = Seek complete from drive 2
+		0000 0100 = Seek complete from drive 3
+		0000 1000 = Seek complete from drive 4
+		
+		0001 0000 = Drive ready
+		0010 0000 = On cylinder
+		0100 0000 = Write Enable on?
+		1000 0000 = Write Protect on		
+
+F143 -> Write bit mask 
+		0000 0001 = Drive 0, Platter 0
+		0000 0010 = Drive 0, Platter 1
+		0000 0100 = Drive 1, Platter 0
+		0000 1000 = Drive 1, Platter 1
+		
+		0001 0000 = Drive 2, Platter 0 
+		0010 0000 = Drive 2, Platter 1 
+		0100 0000 = Drive 3, Platter 0 
+		1000 0000 = Drive 3, Platter 1 
+		
+F141/F142 -> Sector address register
+		00CC CCCC CCCH SSSS
+		0000 1110 010.0 0101 = Cylinder 0x72, Head 0, Sector 0x5 
+		0011 0010 000.1 1010 = Cylinder 0x190, Head 1, Sector 0xA
+
+F140 -> Unit select register (will read with "F" in high byte)
+		0000 0000 = Drive 0, Platter 0
+		0000 0001 = Drive 0, Platter 1
+		0000 0011 = Drive 1, Platter 0
+		0000 0100 = Drive 1, Platter 1
+		0000 0101 = Drive 2, Platter 0
+		0000 0110 = Drive 2, Platter 1
+		0000 0111 = Drive 3, Platter 0
+		0000 1000 = Drive 3, Platter 1

@@ -1,0 +1,63 @@
+PROG  BEGIN    X'0100'
+TOP   LDAB=    X'01'		
+      STAB/    X'F140'      ; Store 01 in F140 -> Select D0/P1 (fixed)
+      LDAB=    X'03'
+      STAB/    X'F148'      ; Store 03 in F148 -> Perform RTZ
+      XFR=     X'0100',Y    ; Set max delay count to DC into Y reg.
+      JSR/     DELY
+      XFR=     X'3200',Z    ; Set max cylinder count into Z reg.
+      CLR      X            ; Set current cylinder count to 0000 in X reg.
+LOOP  STX/     X'F141'      ; Store cylinder count in sector address reg.
+      LDAB=    X'02'
+      STAB/    X'F148'      ; Seek to cylinder sector address
+      XFR=     X'0010',Y    ; Set max delay count to DC into Y reg.
+      JSR/     DELY
+      STAB/    X'F143'      ; Store 02 in F143 -> Setup up format write bitmask
+      DLY
+      LDAB=    X'06'
+      STAB/    X'F148'      ; Store 05 in F148 -> Format write step 1
+      DLY
+      LDAB=    X'05'
+      STAB/    X'F148'      ; Store 06 in F148 -> Format write step 2
+      XFR=     X'0010',Y    ; Set max delay count to DC into Y reg.
+      JSR/     DELY
+      LDAB=    X'00'
+      STAB/    X'F148'      ; Store 00 in F148 -> Read command
+      XFR=     X'0010',Y    ; Set max delay count to DC into Y reg.
+      JSR/     DELY
+      LDAB/    X'F144'      ; Store Hawk Status Register 144 into A
+      BNZ      ERR
+      LDAB=    X'AE'        ; Load "." into A
+      STAB/    X'F201'      ; Store A into F201 -> MUX port 1
+      JMP      INCR
+ERR   LDBB=    X'10'
+      ANDB     AL,BL        ; BL = AL & BL	
+      BZ       ER1
+      LDAB=    X'C6'        ; Load "F" into A
+      STAB/    X'F201'      ; Store A into F201 -> MUX port 1
+      JMP      INCR
+ER1   LDBB=    X'20'
+      ANDB     AL,BL        ; BL = AL & BL		
+      BZ       ER2
+      LDAB=    X'D3'        ; Load "S" into A
+      STAB/    X'F201'      ; Store A into F201 -> MUX port 1
+      JMP      INCR
+ER2   LDBB=    X'40'
+      ANDB     AL,BL        ; BL = AL & BL		
+      BZ       ER3
+      LDAB=    X'C3'        ; Load "C" into A
+      STAB/    X'F201'      ; Store A into F201 -> MUX port 1
+      JMP      INCR	
+ER3   LDAB=    X'D4'        ; Load "T" into A
+      STAB/    X'F201'      ; Store A into F201 -> MUX port 1
+INCR  XFR      X,Y          ; Transfer counter into Y
+      SUB      Z,Y          ; Subtracts Z-Y -> 0x190 - Counter
+      BNZ      INC2  
+      JMP/     TOP          ; If Zero, restart whole program
+INC2  INR      X            ; Increment counter
+      DLY                   ; 4.55ms delay
+      JMP/     LOOP         ; Loop
+DELY  DLY
+      DCR Y
+      BNZ DELY
+      RSR
