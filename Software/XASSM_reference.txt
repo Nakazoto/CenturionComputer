@@ -1,0 +1,262 @@
+CPU6 XASSM reference
+
+pseudo opcodes
+label EQU exp        - equate label with expression (only one per label)
+label SET exp        - reassignable expression to label
+      ORG exp        - move origin pointer
+      DB  val        - byte literal
+      DW  val        - word literal
+      DC  str        - character string literal (ASCII + hi bit, no terminator)
+      DS  size       - data segment, reserves size bytes
+      BEGIN val      - PseudoOp
+      END            - end of file
+      ENT label[,label...] - define linkage entry points
+      EXT label[,label...] - import external entry points
+      PRINT ( ON | OFF | OFF,COM ) - listing control
+      TITLE str      - listing title
+      EJECT          - issue form feed to listing device
+
+Word Registers:
+A  B  X  Y  Z  S  C  P
+Byte Registers:
+AU BU XU YU ZU SU CU PU
+AL BL XL YL ZL SL CL PL
+
+Errors:
+A - Bad Address:
+	Out of range (i.e. relative address more than +127 -128 away)
+	Address overflow (i.e. 2 byte value used in 1 byte parameter)
+S - Bad Syntax
+O - Bad Opcode or opcode does not support mode
+U - Undefined symbol or Invalid parameter to opcode
+
+Literal and addresses may be expressions
+expressions support:
+add: +
+subtract: -
+groups: (n+m)
+literals:
+ dec: 12345
+ char: C'W'
+ hex: X'AF' X'ABCD'
+ bin: B'01010101'
+ current origin: *
+
+Byte Access: OPCB...
+Op4 modes:
+literal:  OPC= litval
+direct:   OPC/ addr16
+Indirect: OPC$ addr16
+rel:      OPC  addrnear
+relind:   OPC* addrnear
+Indexmodes: "OPC" ("+" | "-") SP ["*"] WordReg ["-" | "+"] ["," Offset]
+0 reg:       JSR+ X      ;7d40    OR  JSR- X      ;7d40
+1 ^postincr  JSR+ X+     ;7d41    OR  JSR- X+     ;7d41
+2 ^predecr   JSR+ X-     ;7d42    OR  JSR- X-     ;7d42
+4 IndReg     JSR+ *X     ;7d44    OR  JSR- *X     ;7d44
+5 ^postincr  JSR+ *X+    ;7d45    OR  JSR- *X+    ;7d45
+6 ^predecr   JSR+ *X-    ;7d46    OR  JSR- *X-    ;7d46
+8 RegOfs     JSR+ X,LB   ;7d485e  OR  JSR- X,LB   ;7d485e
+9 ^postincr  JSR+ X+,LB  ;7d495e  OR  JSR- X+,LB  ;7d495e
+A ^predecr   JSR+ X-,LB  ;7d4a5e  OR  JSR- X-,LB  ;7d4a5e
+C IndRegOfs  JSR+ *X,LB  ;7d4c5e  OR  JSR- *X,LB  ;7d4c5e
+D ^postincr  JSR+ *X+,LB ;7d4d5e  OR  JSR- *X+,LB ;7d4d5e
+E ^predecr   JSR+ *X-,LB ;7d4e5e  OR  JSR- *X-,LB ;7d4e5e
+
+Op7 (bignum) modes:
+OPC litreg,litreg
+literal:  =lit
+addressed: /label(bigsize)  i.e  /MYNUM(4)
+
+Internal Handlers:
+DW L_0E09 - 0 inherent
+DW L_0E53 - 1 reg,val
+DW L_0E8E - 2 reg,reg
+DW L_0F3F - 3 rel
+DW L_0F52 - 4 Lit,Dir,Indir,Rel,RelInd,Index,(r)
+DW L_100D - 5 DMA
+DW L_1082 - 6 CAD,DEC,INC,IAD,RTR,RTL,SHR,SHL
+DW L_10CD - 7 A,C,CTB,CFB,D,DRM,M,S,ZAD,ZSU
+DW L_1139 - 8 ANC,FIL,FLM,MVF,MVV,ORC
+DW L_1223 - 9 CPE,CPV,CVX,LSR,STM,SSM
+DW L_123E - a SVC,XRC
+DW L_1257 - b POP,STK,SCN
+DW L_1284 - c LST,SST
+DW L_1292 - d LAR,SAR
+DW L_12BF - e LIO,SIO
+
+A Op7   - add big
+ANC Op8
+AAB inh
+AND inh
+ADD inh
+/
+BZ  rel
+BNZ rel
+BL  rel
+BNL rel
+BM  rel
+BP  rel
+BGZ rel
+BLE rel
+BS1 rel
+BS2 rel
+BS3 rel
+BS4 rel
+BF  rel
+BNF rel
+BI  rel - branch on interrupt enabled?
+BCK rel - branch on clock interrupt enabled?
+/
+C   Op7  compare_big
+CTB Op7  big cvt_to_binary?
+CFB Op7  cvt_from_binary?
+CPF Op8
+CPV Op8
+CVX Op8
+CLA inh     - +Byte,??
+CLR reg,val - +Byte,??
+CL  inh
+CAD Op6 clear addr?
+/
+D   Op7     - 60 7 4 divide big?
+DRM Op7     - 70 7 4 divide remainder big?
+DIV reg,reg - 78 2 0 divide?
+DCX inh     - 3F 0 8
+DCA inh     - 39 0 A +Byte
+DCR reg,val - 31 1 A +Byte
+DEC Op6     - 31 6 8 decrement memory
+DLY inh     - 0E 0 0 delay loop
+DI  inh     - 05 0 0 
+DMA Op5... 2F DMA prefix:
+ DMA SAD reg  - set address from reg
+ DMA RAD reg  - read address to reg
+ DMA SCT reg  - set count from reg
+ DMA RCT reg  - read count from reg
+ DMA SDV n    - set mode (constant)
+ DMA RDV reg  - read mode to reg
+ DMA EAB      - enable DMA
+ DMA DAB      - disable DMA
+ DMA SMN breg - set status from register
+ DMA RMN breg - read status to register
+DCK inh       - C6
+DAO inh       - 57
+DPE inh       - 86
+/
+EI  inh - 04 00
+ECK inh - B6 00 - enable clock interrupt?
+EAO inh - 56 00
+EPE inh - 76 00
+/
+FIL Op8 - 90
+FLM Op9 - 40
+/
+HLT inh
+/
+JMP Op4
+JSR Op4
+/
+LIO OpE - F6 E 0
+LST OpC - 6E C 0
+LAR OpD - E6 D 0
+LDM Op9 - 00 9 0
+LSM Op9 - 20 9 0
+LDA Op4 - 90 4 6 - +Byte
+LDB Op4 - D0 4 6 - +Byte
+LDX Op4 - 60 4 4 - ??
+/
+M   Op7 - 50 7 4 - ?? multiply_big
+MVF Op8 - 40 8 4 - ??
+MVV Op8 - 20 8 0 - 
+MVL inh - F7 0 0 - 
+MUL Op2 - 77 2 0 - 16bit multiply?
+/
+NAB inh - 5A 0 2 - +Byte
+NOP inh - hardware no operation
+/
+ORC Op8     - 60 8 4 - big_or
+ORI reg,reg - 53 2 2 - +Byte
+ORE reg,reg - 54 2 2 - +Byte
+/
+POP OpB - 7F B0 - 
+PCX inh - 0D 00 - 
+/
+RSR inh     - 09 0 0 - 
+RSV inh     - 0F 0 0 - 
+RL  inh     - 07 0 0 - 
+RI  inh     - 0A 0 0 - 
+RRR reg,val - 36 1 A - +Byte,??
+RLR reg,val - 37 1 A - +Byte,??
+RTR Op6     - 36 6 8 - rot_right_memory?
+RTL Op6     - 37 6 8 - rot_left_memory?
+RF  inh     - 03 0 0 - 
+/
+SIO OpE     - F6 E 4 - 
+S   Op7     - 10 7 4 - big_subtract?
+SVC OpA     - 66 A 0 - supervisor_call
+STK OpB     - 7E B 0 - push
+SST OpC     - 6F C 0 - 
+SAR OpD     - D7 D 0 - 
+STM Op9     - 10 9 0 - 
+SSM Op9     - 30 9 0 - 
+STR reg,reg - D6 2 0 - 
+STA Op4     - B0 4 6 - +Byte
+STB Op4     - F0 4 6 - +Byte
+SAB inh     - 59 0 2 - +Byte
+STX Op4     - 68 4 4 -
+SUB reg,reg - 51 2 2 - +Byte
+SLA inh     - 3D 0 A - +Byte
+SRA inh     - 3C 0 A - +Byte
+SRR reg,val - 34 1 A - +Byte
+SLR reg,val - 35 1 A - +Byte
+SHR Op6     - 34 6 8 - shift_right_memory?
+SHL Op6     - 35 6 8 - shift_left_memory?
+SL  inh     - 06 0 0 - 
+SF  inh     - 02 0 0 - 
+SEP inh     - A6 0 0 - set_even_parity?
+SOP inh     - 96 0 0 - set_odd_parity?
+SYN inh     - 0C 0 0 - 
+SCN Op8     - 30 8 0 - 
+/
+XRC Op8     - 70 84 - big xor?
+XAX inh     - 5B 02 - +Byte
+XAY inh     - 5C 02 - +Byte
+XAZ inh     - 5E 02 - +Byte
+XAB inh     - 5D 02 - +Byte
+XAS inh     - 5F 02 - +Byte
+XFR reg,reg - 55 22 - +Byte
+/
+ZAD Op7 - 30 74 - big add?
+ZSU Op7 - 40 74 - big sub?
+/
+; 2 byte -> 1 byte instruction replacements
+INR  A     --> INA
+INRB AL    --> INAB
+DCR  A     --> DCA
+DCRB AL    --> DCAB
+CLR  A     --> CLA
+CLRB AL    --> CLAB
+IVR  A     --> IVA
+IVRB AL    --> IVAB
+SRR  A     --> SRA
+SRRB AL    --> SRAB
+SLR  A     --> SLA
+SLRB AL    --> SLAB
+INR  X     --> INX
+DCR  X     --> DCX
+ADD  B ,A  --> AAB
+ADDB BL,AL --> AABB
+SUB  B ,A  --> SAB
+SUBB BL,AL --> SABB
+AND  B ,A  --> NAB
+ANDB BL,AL --> NABB
+XFR  X ,A  --> XAX
+XFRB XL,AL --> XAXB
+XFR  Y ,A  --> XAY
+XFRB YL,AL --> XAYB
+XFR  B ,A  --> XAB
+XFRB BL,AL --> XABB
+XFR  Z ,A  --> XAZ
+XFRB ZL,AL --> XAZB
+XFR  S ,A  --> XAS
+XFRB SL,AL --> XASB
