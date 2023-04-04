@@ -1,0 +1,114 @@
+Suffixes are a major key to using Centurion assembly. Each assembly statement
+consists of:
+
+- A base mnemonic (e.g., LDA to load from memory to the A register).
+- A size suffix for instructions that modify the value of a register. No suffix
+  means to perform the operation on the entire register. The suffix 'B' means
+  to use the low-order byte of the register: AL, BL, XL, YL, ZL, SL, CL, PL.
+  The high-order byte of the register (AU, BU, XU, YU, ZU, SU, CU, PU) is
+  unaffected.
+- An addressing mode suffix for instructions that access memory. The suffixes
+  are:
+  '=': literal. The byte or word argument to the instruction is used as the
+       value.
+  '/': direct. The word argument to the instruction is used as the address in
+       memory to get the value from.
+  '$': indirect. The word argument to the instruction is used as the address
+       of an word in memory which is used as the address to get the value from.
+  ' ': relative. The argument to the instruction is taken as a displacement
+       from PC, or if it is a label, the displacement is calculated. The
+       displacement must be in the range [-128,127] and is relative to the
+       start of the next instruction. The displaced address is used as the
+       address in memory to get the value from.
+  '*': relative indirect. The argument to the instruction is taken as a
+       displacement from PC, or if it is a label, the displacement is
+       calculated. The displacement must be in the range [-128,127] and is
+       relative to the start of the next instruction. The displaced address is
+       used as the address of a word in memory which is used as the address to
+       get the value from.
+  '+':
+  '-': indexed addressing. Either suffix works. There are 12 sub-modes of this
+       mode, controlled by suffixing the argument to the instruction:
+       '': use the register as an address.
+       '+': use the register as an address, then increment the register by 1
+            (if 'B' suffix on the mnemonic) or 2 (if no 'B' suffix).
+       '-': decrement the register by 1 (if 'B' suffix on the mnemonic) or 2
+            (if no 'B' suffix), then use the register as an address.
+       TODO: 3 modes for indirect - syntax currently unknown.
+       ',nnn': use the register plus the displacement nnn as an address.
+       '+,nnn': use the register plus the displacement nnn as an address, then
+                increment the register by 1 (if 'B' suffix on the mnemonic) or
+                2 (if no 'B' suffix).
+       '-,nnn': decrement the register by 1 (if 'B' suffix on the mnemonic) or
+                2 (if no 'B' suffix), then use the register plus the
+                displacement nnn as an address.
+       TODO: 3 modes for indirect displaced - syntax currently unknown.
+  The indexed addressing suffixes are also used for implicit indexing, which is
+  just a shorter way to encode some operations that don't require post-increment
+  or pre-decrement. When the low nibble of a memory opcode is 8-F, it is
+  implicit indexing and allows for a single-byte encoding instead of a two-byte
+  encoding to accomplish the same thing.
+
+Examples:
+
+LDA= X'1234'  ; Loads A with 0x1234.
+LDAB= X'12'   ; Loads AL with 0x12.
+LDAB/ X'F201' ; Loads AL with the byte at address 0xF201.
+LDA/ LABEL    ; Loads A with the word at the address of LABEL.
+LDA$ LABEL    ; Gets word at LABEL, loads A with word at that address.
+LDA+ X        ; Loads A with the word at the address found in X.
+LDA+ X+       ; Loads A with word at the address found in X, then adds 2 to X.
+LDA- X-       ; Subtracts 2 from X, loads word at X into A.
+LDA+ X,2      ; Loads A with the word at the address 2 + X.
+
+There are exceptions to the above rules, noted below.
+
+The Bignum (0x46) instructions (A, S, C, ZAD, ZSU, M, D, DRM, CTB, CFB) do
+not use suffixes on the mnemonic. This is because these instructions require
+two memory operands, which may use different addressing modes. Each operand
+is prefixed, not suffixed, with the appropriate addressing mode suffix
+above. However, not all addressing modes are supported for Bignum; only the
+'=' (literal), '/' (direct), and '-' (indexed - can't use '+') are supported.
+Displaced indexed is also supported, but the syntax has not been verified yet.
+
+The Bignum instructions require additional suffixing to specify the size of the
+number (unless the operand is a literal). This is done by suffixing the operand
+with a parenthesized size. In the case of CTB and CFB, the suffix on the string
+argument is the base for conversion instead of the size. These opcodes require
+preloading AL with the string length. CFB also requires preloading the
+destination string with a format.
+
+Examples:
+
+ZAD =10,/NUM(4) ; Copies the literal value 10 to the 4-byte bignum at NUM.
+ZAD /NUM1(4),/NUM2(8) ; Copies the 4-byte NUM1 to the 8-byte NUM2.
+A -X(4),-Y(6)         ; Add 4-byte at address in X to 6-byte at address in Y.
+
+The Memory Block (0x47/0x67) instructions (CVX, CPV, MVV, SCN, MVF, ANC, ORC,
+XRC, CPF, FIL) do not use addressing mode suffixes on the mnemonic. This is
+because these instructions require two memory operands, which may use different
+addressing modes. Each operand is prefixed, not suffixed, with the appropriate
+addressing mode suffix above. However, not all addressing modes are supported
+for Memory Block; only the '=' (literal), '/' (direct), and '-' (indexed -
+can't use '+') are supported. Displaced indexed is also supported, but the
+syntax has not been verified yet.
+
+The Memory Block instructions do have one possible suffix on the mnemonic: 'R'.
+This suffix is used for the 0x67 version of the instructions and requires the
+A register to be loaded with the terminator and length bytes instead of encoding
+them with the opcode. This allows for more flexibility.
+
+The Memory Block instructions require additional prefixing to specify the length
+and terminator (depending on the instruction). This is done by prefixing the
+operands with a parenthesized list of one or two integers to indicate the length
+and terminator.
+
+Examples:
+
+MVF (8)/STR1,/STR2 ; Copy the 8-byte STR1 to STR2.
+MVV (8,0)/STR1,/STR2 ; Copy up to 8 bytes from STR1 to STR2, stop if 0 byte.
+MVFR /STR1,/STR2 ; Copy AL bytes from STR1 to STR2.
+MVVR /STR1,/STR2 ; Copy up to AL bytes from STR1 to STR2, stop if AU byte seen.
+CPV (7,0)-X,/STR2 ; Compare null-terminated strings up to 7 bytes at address in
+                  ; X and at STR2.
+
