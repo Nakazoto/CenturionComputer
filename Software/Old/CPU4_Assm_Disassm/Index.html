@@ -1,0 +1,91 @@
+<html>
+<head>
+	<script type="text/javascript" src="onebyte.js"></script>
+	<script type="text/javascript" src="twobyte.js"></script>
+	<script type="text/javascript" src="threebyte.js"></script>
+	<script type="text/javascript" src="special.js"></script>
+	<script type="text/javascript" src="brarg.js"></script>
+	<script type="text/javascript" src="asciichk.js"></script>
+
+	<p><strong>Disassembler</strong></p>
+	<p><strong>Entry Point</strong></p>
+	<label for="entry">0x</label>
+	<input type="text" id="entry" name="entry" value="0000"><br><br>
+	<p><strong>Copy Hex Data Here</strong>
+    <p><textarea id="data" name="" rows="12" cols="130"></textarea></p>
+	<p><input id="diassemble" type="button" style="width:100px" value="Disassemble" />
+	<p><strong>Disassembled</strong>
+	<p><textarea id="result" name="" rows="12" cols="130"></textarea></p>
+</head>
+	
+<body>	
+	<!--Window title-->
+	<title>Disassembler</title>
+	
+	<!--This is where Javascript stuff goes-->
+	<script type="text/javascript" charset="utf-8">
+		//Global variables
+		var splitData = [];
+		var i = 0;
+		var cont = 0;
+		var wtsl = 0;
+		
+        //Read text box into binary string
+        var readFile = function() {
+			var bin = document.getElementById("data").value;
+			splitData = bin.split(" ");	
+			splitData.push("00");
+        };
+		
+		//FindWriteString happens in between here
+		
+		var disassembleFile = function() {
+			result.value = "";
+			for (i = 0; i < splitData.length; i++) {
+				
+				//Print Address with Entry Point (Tab is 5 spaces)
+				result.value += "0x";
+				var entryPoint = document.getElementById("entry").value;
+				var disAddr = parseInt(entryPoint, 16) + i;
+				result.value += disAddr.toString(16).padStart(4, '0');
+				
+				// Do disassembly stuff from here
+				result.value += ":     ";
+				result.value += splitData[i];
+				
+				//Check for String/ASCII data
+				checkForString();
+				if (cont == 1) {cont = 0; continue;}
+				
+				onebyte();
+				if (cont == 1) {cont = 0; continue;}
+				twobyte();
+				if (cont == 1) {cont = 0; continue;}
+				threebyte();
+				if (cont == 1) {cont = 0; continue;}
+				special();
+				if (cont == 1) {cont = 0; continue;}
+				
+				
+				
+				//Print new line for ones you haven't done yet
+				result.value += "\r\n";
+			};
+		};
+		
+
+		
+		
+        //Main loop
+        var mainloop = function() {
+            diassemble.onclick = function() {
+                readFile();
+				findWriteString();
+                disassembleFile();
+            };
+        }; 
+        setInterval(mainloop, 100);
+		
+	</script>
+</body>
+</html>
