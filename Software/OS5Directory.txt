@@ -1,0 +1,573 @@
+13:00:15 .DIR 0
+DISK  0-SYSTEM
+NAME   TYP BDA  SIZE STA   DATE
+@SDIR0  D  0014    2  T  01/17/84
+@JXLIB  D  0030    7  T  10/21/80
+@TXLIB  D  00A0    1  T  04/14/80
+@PDLIB  D  00B0    1  T  07/23/81
+@SCR0   A  00C0    1  T  05/12/82
+DDU     B  3290    1  P  01/07/81
+DINT    B  3280    1  P  08/22/78
+CON     A  00D0    1  T  07/13/76
+CON1    A  00E0    1  T  11/11/76
+COP     A  00F0    1  T  08/10/76
+COPN    A  0100    1  T  08/10/76
+CRT     A  0110    1  T  06/25/76
+DEL     A  0120    1  T  06/25/76
+DUMP    A  0130    1  T  09/02/77
+EXPAND  A  0140    1  T  09/13/76
+SC6Q20  B  0150    4  T  07/20/81
+SORT20  B  0190    4  T          
+SORT30  B  01D0    7  T          
+SORT40  B  0240    5  T          
+@OSN    B  0290    4  T  07/20/81
+@SCRC0  C  02D0    5  T          
+SORT10  B  0320    2  T          
+@SCRB0  B  0340    1  T          
+@LST0   A  0350    1  T          
+LST     A  0360    1  T  06/25/76
+MPRTF   A  0370    1  T  09/07/76
+NCOP    A  0380    1  T  08/10/76
+NCOPN   A  0390    1  T  08/10/76
+PKCOPY  A  03A0    1  T  09/02/76
+PRTDIR  A  03B0    1  T  09/22/76
+PRTF    A  03C0    1  T  09/07/76
+PSCAN   A  03D0    1  T  09/02/77
+QCK     A  03E0    1  T  03/20/78
+SINIT   A  03F0    1  T  08/27/77
+SPLMT   A  0400    1  T  08/27/77
+SPOOL   A  0410    1  T  08/27/77
+@DSIO0  B  3270    1  P  04/28/75
+@DSRTM  B  3260    1  P  07/13/77
+DSORT   B  3250    1  P  01/26/77
+S       D  3110   20  P  01/08/81
+X?RINT  B  0420    1  T  01/08/80
+X?WTAG  B  0430    1  T          
+XAINIT  B  0440    1  T          
+XAISRT  B  0450    1  T  07/28/77
+XASIZE  B  0460    1  T          
+XCOP@0  B  0470    1  T  04/04/79
+XCOPUT  B  0480    1  T  04/04/79
+XCRTVU  B  0490    1  T          
+XDCOPY  B  04A0    1  T          
+XEJECT  B  04B0    1  T  08/23/76
+XGROW   B  04C0    1  T          
+XLIST   B  04D0    1  T  10/07/76
+XPCOPY  B  04E0    1  T  11/04/76
+XPRTF   B  04F0    1  T  09/07/76
+XRECV   B  0500    1  T          
+XRINT   B  0510    1  T  01/09/80
+XSCAN   B  0520    1  T  11/09/77
+XSINIT  B  0530    1  T  09/23/76
+XSIZE   B  0540    1  T          
+XSMCB   B  0550    1  T  10/04/76
+XSPLCT  B  0560    1  T  10/07/76
+XSPLMT  B  0570    1  T  06/06/80
+XSPOOL  B  0580    1  T  01/08/81
+XTRACT  B  0590    2  T  08/04/78
+XVCOPY  B  05B0    1  T  08/10/78
+XVMSG   B  05C0    1  T  11/19/76
+XVRINT  B  05D0    1  T  10/10/77
+XWTAG   B  05E0    1  T          
+ASM     A  05F0    1  T          
+ASMC    A  0600    1  T  06/15/76
+CPL     A  0610    1  T  03/01/79
+CRTP    A  0620    1  T  08/19/76
+DIRMV   A  0630    1  T  09/02/77
+FMOV    A  0640    1  T  06/25/76
+PDIR    A  0650    1  T  07/27/76
+SASM    A  0660    1  T          
+SASMC   A  0670    1  T          
+TXT     A  0680    1  T  09/02/77
+TXTP    A  0690    1  T  07/02/76
+TXTZ    A  06A0    1  T  11/19/76
+APLIB   B  06B0    4  T  06/07/79
+HICORE  B  06F0    1  T  05/07/74
+OSLIB   B  0700    2  T  06/06/80
+OSNLB4  B  0720   10  T  07/20/81
+OSNLB5  B  07C0   10  T  07/20/81
+OSSLIB  A  0860    3  T  10/02/78
+XASPRP  B  0890    1  T  06/17/76
+XASS@0  B  08A0    1  T  03/23/77
+XASS@1  B  08B0    1  T  04/21/77
+XASSM   B  08C0    2  T  04/21/77
+XCCOM   B  08E0    2  T  09/29/80
+XDIRMV  B  0900    1  T  12/28/76
+XCLPRP  B  0910    1  T  06/24/76
+XFILMV  B  0920    1  T  10/13/77
+XHEAD   B  0930    1  T  08/24/76
+XLINK   B  0940    1  T  07/22/81
+XOSFDM  B  0950    1  T  06/13/77
+XPDIR   B  0960    2  T  10/31/78
+XSDMP   B  0980    1  T  10/23/78
+XSLOOK  B  0990    1  T  10/23/78
+XTEXT   B  09A0    1  T  06/08/79
+GLMENU  A  09B0    2  T  08/01/80
+GL      D  09D0   67  T  03/12/81
+PRMENU  A  0EB0    1  T  11/08/82
+X       D  0EC0    5  T  09/22/78
+DPMENU  A  0F10    1  T  07/24/78
+DP      D  3070   10  P  01/26/81
+MOVSPE  A  0F20    1  T  10/09/80
+SP      D  3030    4  P  03/12/81
+SPMENU  A  0F30    1  T  03/12/81
+XVSIZE  B  0F40    1  T  01/07/80
+CAL82   A  0F50    5  T  08/05/81
+?       D  0FA0   14  T  04/16/80
+GIRL82  A  1080    4  T  08/05/81
+KING    A  10C0    1  T  12/06/77
+XKING   B  10D0    2  T  12/05/77
+KINGF   C  10F0    1  T          
+RXMAS   A  1100    5  T  12/20/76
+XKLIST  B  1150    1  T  05/28/80
+PR      D  1680   12  T  01/02/85
+@SCR1   A  1160    4  T  04/28/82
+@SCRC1  C  11A0    1  T          
+@LST1   A  11B0    4  T  04/28/82
+START   A  11F0    1  T  02/01/82
+MOVSMP  A  1200    1  T  05/29/81
+XMAINT  B  1210    3  T  06/24/81
+XREPRT  B  1240    2  T  04/15/81
+XPOST   B  1260    2  T  05/21/81
+XCLEAR  B  1280    1  T  04/15/81
+XXTRCT  B  1290    2  T  05/21/81
+XDSPLY  B  12B0    2  T  05/29/81
+XMMSUB  B  12D0    3  T  06/24/81
+SORT11  B  1300    2  T          
+SORT21  B  1320    1  T          
+SORT31  B  1330    1  T          
+SORT41  B  1340    1  T          
+@SCRB1  B  1350    1  T  04/28/82
+XOLPST  B  1360    2  T  03/05/82
+XDDIRP  B  1380    1  T  02/02/82
+DIRDES  C  1390    2  T          
+DIRLST  B  13B0    1  T          
+DDPA9   A  13C0    1  T          
+DICLIB  A  13D0    1  T  12/12/81
+ASMART  A  13E0    3  T  06/23/81
+SZZS62  B  1410    5  T  07/20/81
+CB101E  C  1460    5  T          
+OLDDMD  B  14B0    1  T  03/31/82
+XOLMDV  B  14C0    1  T  03/03/82
+XDDCNV  B  14D0    1  T  04/02/82
+SERROR  C  14E0    1  T          
+PCSM10  C  14F0    1  T          
+GL100A  C  1500    4  T          
+GL100E  C  1540    3  T          
+GL100D  B  1570    1  T          
+GL100J  B  1580    1  T          
+GL100L  A  1590    1  T          
+PR100A  A  15A0    1  T          
+PR100B  A  15B0    1  T          
+PR100D  C  15C0    1  T          
+FG      D  15D0   11  T  12/21/82
+ 400 TRACKS USED  410 AVAILABLE
+13:03:11 PDIR @JXLIB 0
+13:03:11 .SETA UPSI=1
+13:03:11 .USE @JXLIB ON 0 SYS0
+13:03:11 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= @JXLIB ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  0030   0   0    3    0    T  10/22/80
+@OJX00  E  0033   0   0    9    0    T  10/21/80
+@OJX01  E  003C   0   0    5    0    T  09/29/80
+@OJX02  E  0041   0   0    2    0    T  09/29/80
+@OJX03  E  0043   0   0    4    0    T  10/21/80
+@OJX04  E  0047   0   0    4    0    T  10/21/80
+@OJX05  E  004B   0   0    2    0    T  09/29/80
+@OJX06  E  004D   0   0    5    0    T  09/29/80
+@OJX07  E  0052   0   0    3    0    T  09/29/80
+@OJX08  E  0055   0   0    4    0    T  09/29/80
+@OJX09  E  0059   0   0    2    0    T  09/29/80
+@OJX10  E  005B   0   0    2    0    T  09/29/80
+@OJX11  E  005D   0   0    4    0    T  09/29/80
+@OJX12  E  0061   0   0    1    0    T  09/29/80
+@OJX13  E  0062   0   0    5    0    T  09/29/80
+@OJX14  E  0067   0   0    3    0    T  09/29/80
+@OJX15  E  006A   0   0    2    0    T  09/29/80
+@OJX16  E  006C   0   0    1    0    T  09/29/80
+@OJX17  E  006D   0   0    2    0    T  09/29/80
+@OJX18  E  006F   0   0    2    0    T  09/29/80
+@OJX19  E  0071   0   0    1    0    T  09/29/80
+@OJX20  E  0072   0   0    3    0    T  09/29/80
+@OJX21  E  0075   0   0    2    0    T  09/29/80
+@OJX22  E  0077   0   0    5    0    T  09/29/80
+@OJX23  E  007C   0   0    4    0    T  09/29/80
+@OJX24  E  0080   0   0    5    0    T  10/21/80
+@OJX25  E  0085   0   0   15    0    T  09/29/80
+@OJX26  E  0094   0   0    2  353    T  09/29/80
+  40643 BYTES USED,    3597 AVAILABLE
+END
+END PDIR
+13:03:38 .END
+13:03:38 CON1
+13:03:38 .SETA CC=0
+13:03:38 .SETA UPSI=0
+13:03:39 .END
+13:03:39 .LOG
+13:03:39 .USE CRT0 SYSRDR
+13:03:54 PDIR @TXLIB
+13:03:54 .SETA UPSI=1
+13:03:54 .USE @TXLIB ON 0 SYS0
+13:03:55 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= @TXLIB ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  00A0   0   0    2    0    T  04/14/80
+@TX000  E  00A2   0   0    1    0    T  07/21/77
+@TX001  E  00A3   0   0    1    0    T  07/25/77
+@TX002  E  00A4   0   0    1    0    T  09/20/77
+@TX003  E  00A5   0   0    1    0    T  09/20/77
+@TX004  E  00A6   0   0    1    0    T  09/28/77
+@TX005  E  00A7   0   0    1    0    T  10/03/77
+@TX006  E  00A8   0   0    1    0    T  01/17/77
+@TX007  E  00A9   0   0    1    0    T  01/17/77
+@TX008  E  00AA   0   0    1    0    T  01/17/77
+@TX009  E  00AB   0   0    1    0    T  06/15/78
+@TX010  E  00AC   0   0    1    0    T  09/28/77
+@TX011  E  00AD   0   0    1    0    T  09/26/79
+@TX012  E  00AE   0   0    1    0    T  09/30/77
+@TX013  E  00AF   0   0    0  126    T  09/30/77
+   6051 BYTES USED,     269 AVAILABLE
+END
+END PDIR
+13:04:00 .END
+13:04:01 CON1
+13:04:01 .SETA CC=0
+13:04:01 .SETA UPSI=0
+13:04:01 .END
+13:04:01 .LOG
+13:04:01 .USE CRT0 SYSRDR
+13:04:12 PDIR @PDLIB
+13:04:12 .SETA UPSI=1
+13:04:12 .USE @PDLIB ON 0 SYS0
+13:04:12 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= @PDLIB ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  00B0   0   0    3    0    T  04/09/80
+@PD000  E  00B3   0   0    1    0    T  12/02/77
+@PD001  E  00B4   0   0    1    0    T  12/02/77
+@PD002  E  00B5   0   0    1    0    T  09/11/78
+@PD003  E  00B6   0   0    1    0    T  10/31/78
+@PD004  E  00B7   0   0    1    0    T  10/20/78
+@PD005  E  00B8   0   0    1    0    T  04/09/80
+@PD006  E  00B9   0   0    0  243    T  06/03/80
+   3798 BYTES USED,    2522 AVAILABLE
+END
+END PDIR
+13:04:18 .END
+13:04:18 CON1
+13:04:18 .SETA CC=0
+13:04:18 .SETA UPSI=0
+13:04:18 .END
+13:04:18 .LOG
+13:04:19 .USE CRT0 SYSRDR
+13:04:30 PDIR S
+13:04:30 .SETA UPSI=1
+13:04:30 .USE S ON 0 SYS0
+13:04:30 .RUN XPDIR
+PDIR - MOD AE
+R
+CONTROL STATEMENT ERROR
+DIR
+DIRECTORY NAME= S      ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  3110   0   0    4   11    T  11/24/80
+CON     A  3114  11   0    0   81    T  04/06/77
+COP     A  3114  92   0    0  178    T  04/19/77
+COPN    A  3114 270   0    0  277    T  04/19/77
+DEL     A  3115 152   0    0  103    T  04/25/77
+DIRMV   A  3115 255   0    0  318    T  09/02/77
+DUMP    A  3116 178   0    3    8    T  09/02/77
+LOADER  A  3119 186   0    1  327    T  05/11/79
+MVOL    A  311B 118   0    1  247    T  09/02/77
+NEWDSK  A  311C 365   0    1   85    T  06/27/77
+NCOP    A  311E  55   0    0  175    T  04/19/77
+NCOPN   A  311E 230   0    0  265    T  04/19/77
+PDIR    A  311F 100   0    0   59    T  06/27/77
+PKCOPY  A  311F 159   0    0   72    T  04/06/77
+PSCAN   A  311F 231   0    0  268    T  09/02/77
+QCK     A  3120 104   0    0  394    T  03/20/78
+SINIT   A  3121 103   0    0  326    T  08/27/77
+SPLMT   A  3122  34   0    0  328    T  08/27/77
+SPOOL   A  3122 362   0    0  210    T  08/27/77
+START   A  3123 177   0    2  312    T  08/27/77
+TXT     A  3126  94   0    1   16    T  09/02/77
+WFLU    A  3127 110   0    0  104    T  06/28/77
+WHLU    A  3127 214   0    0  181    T  06/28/77
+@DSIO0  E  3128   0   0    1    0    T  04/28/75
+   9875 BYTES USED,  116525 AVAILABLE
+END
+END PDIR
+13:05:14 .END
+13:05:14 CON1
+13:05:14 .SETA CC=0
+13:05:14 .SETA UPSI=0
+13:05:14 .END
+13:05:14 .LOG
+13:05:14 .USE CRT0 SYSRDR
+13:05:20 PDIR GL
+13:05:20 .SETA UPSI=1
+13:05:20 .USE GL ON 0 SYS0
+13:05:20 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= GL     ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  09D0   0   0    4   11    T  05/18/81
+INIT    A  09D4  11   0    5  254    T  06/11/79
+MAST    A  09D9 265   0    2  281    T  08/10/79
+BRN     A  09DC 151   0    2  204    T  07/03/79
+REPO    A  09DE 355   0    1   27    T  06/19/79
+HD      A  09DF 382   0    0  350    T  06/29/79
+HREP    A  09E0 337   0    1   45    T  06/19/79
+MOVDAT  A  09E1 382   0   10  327    T  04/09/80
+NEWDAT  A  09EC 314   0    7  235    T  07/27/79
+DELDAT  A  09F4 154   0    3  314    T  08/06/79
+NEW     A  09F8  73   0    5   34    T  06/18/79
+BUDG    A  09FD 107   0    9  221    T  03/12/81
+SRNK    A  0A06 328   0    4    3    T  10/18/79
+SUB     A  0A0A 331   0    5  207    T  06/16/79
+LOOK    A  0A10 143   0    1  160    T  06/19/79
+ACC1    A  0A11 303   0    3  172    T  06/13/79
+SUBG    A  0A15  80   0    2  315    T  06/19/79
+PACK    A  0A18   0   0    1  123    T  07/10/80
+BCOM    A  0A19 123   0    1   52    T  06/12/79
+TRAN    A  0A1A 175   0    4   91    T  07/19/78
+TTRAN   A  0A1E 266   0    4   94    T  10/05/78
+AUDT    A  0A22 360   0    8  167    T  02/26/80
+LEDGE   A  0A2B 132   0    1    8    T  05/16/79
+FINS    A  0A2C 140   0    2  291    T  05/24/79
+PRIOR   A  0A2F  36   0    0  282    T  07/18/78
+FCOM    A  0A2F 318   0    2  124    T  04/30/80
+FINC    A  0A32  47   0    2  345    T  11/28/79
+TRIAL   A  0A34 392   0    0  350    T  07/07/78
+COVER   A  0A35 347   0    1  276    T  06/16/80
+GLEAN   A  0A37 228   0    1   62    T  07/07/79
+CLEAN   A  0A38 290   0    2  105    T  06/11/79
+XGL500  E  0A3B   0   1   12    0    T  01/23/80
+XGL501  E  0A57   0   2    1    0    T  06/06/80
+XGL502  E  0A78   0   0   13    0    T  08/02/79
+XGL503  E  0A85   0   1    3    0    T  08/02/79
+XGL504  E  0A98   0   0    5    0    T  09/24/79
+XGL505  E  0A9D   0   1    8    0    T  01/17/80
+XGL506  E  0AB5   0   0   15    0    T  10/05/79
+XGL507  E  0AC4   0   1    0    0    T  04/15/80
+XGL508  E  0AD4   0   2    0    0    T  08/02/79
+XGL509  E  0AF4   0   0   14    0    T  08/02/79
+XGL510  E  0B02   0   0    6    0    T  08/02/79
+XGL511  E  0B08   0   0    7    0    T  08/02/79
+XGL512  E  0B0F   0   0    4    0    T  08/02/79
+XGL514  E  0B13   0   1   13    0    T  11/28/79
+XGL530  E  0B30   0   0   15    0    T  04/09/80
+XGL531  E  0B3F   0   1   14    0    T  06/19/80
+XGL532  E  0B5D   0   1    9    0    T  04/15/80
+XGL534  E  0B76   0   0    9    0    T  11/21/79
+XGL535  E  0B7F   0   1   14    0    T  09/24/80
+XGL536  E  0B9D   0   1    2    0    T  06/27/80
+XGL537  E  0BAF   0   1    2    0    T  05/21/80
+XGL538  E  0BC1   0   0    8    0    T  01/14/80
+XGL540  E  0BC9   0   0   14    0    T  08/02/79
+XGL541  E  0BD7   0   1   12    0    T  02/06/80
+XGL543  E  0BF3   0   0    8    0    T  08/09/79
+XGL544  E  0BFB   0   0    9    0    T  08/30/79
+XGL545  E  0C04   0   1    0    0    T  09/11/79
+XGL546  E  0C14   0   2    0    0    T  05/21/80
+XGL547  E  0C34   0   0   15    0    T  08/06/79
+XGL548  E  0C43   0   1    4    0    T  01/23/80
+XGL549  E  0C57   0   2    0    0    T  05/21/80
+XGL550  E  0C77   0   1   14    0    T  03/11/81
+XGL551  E  0C95   0   1   11    0    T  02/10/81
+XGL552  E  0CB0   0   1   11    0    T  03/11/81
+XGL553  E  0CCB   0   1    9    0    T  07/15/80
+XGL554  E  0CE4   0   1   12    0    T  02/10/81
+XGL560  E  0D00   0   0   13    0    T  08/02/79
+XGL565  E  0D0D   0   0    6    0    T  07/24/78
+XGL570  E  0D13   0   1    4    0    T  08/02/79
+XGL575  E  0D27   0   1    0    0    T  07/10/80
+XGL580  E  0D37   0   1   10    0    T  03/11/81
+XGL581  E  0D51   0   1    8    0    T  07/27/79
+XGL585  E  0D69   0   1    4    0    T  06/24/80
+XGL588  E  0D7D   0   0    9    0    T  11/28/79
+XGL589  E  0D86   0   0    5    0    T  11/28/79
+XGL590  E  0D8B   0   1   14    0    T  06/26/80
+XGL591  E  0DA9   0   1    7    0    T  06/24/80
+XGL595  E  0DC0   0   1   11    0    T  11/30/79
+XGL596  E  0DDB   0   1    6    0    T  11/30/79
+X?BLOO  E  0DF1   0   0    2    0    T          
+XPTAP   E  0DF3   0   0    2    0    T  10/22/76
+XPRD00  E  0DF5   0   0    0  299    T  11/23/76
+ 419394 BYTES USED,    4046 AVAILABLE
+END
+END PDIR
+13:05:32 .END
+13:05:32 CON1
+13:05:33 .SETA CC=0
+13:05:33 .SETA UPSI=0
+13:05:33 .END
+13:05:33 .LOG
+13:05:33 .USE CRT0 SYSRDR
+13:05:37 PDIR X
+13:05:38 .SETA UPSI=1
+13:05:38 .USE X ON 0 SYS0
+13:05:38 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= X      ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  0EC0   0   0    1   11    T  09/22/78
+SPACE   A  0EC1  11   0    0   35    T  09/22/78
+SMORT   A  0EC1  46   0    0  302    T  09/22/78
+IMORT   A  0EC1 348   0    1   47    T  09/22/78
+XSPA00  E  0EC3   0   1    8    0    T  07/31/78
+XSMORT  E  0EDB   0   1    4    0    T          
+XIMORT  E  0EEF   0   1    7  313    T  06/01/78
+  27963 BYTES USED,    3637 AVAILABLE
+END
+END PDIR
+13:05:44 .END
+13:05:44 CON1
+13:05:44 .SETA CC=0
+13:05:44 .SETA UPSI=0
+13:05:44 .END
+13:05:44 .LOG
+13:05:44 .USE CRT0 SYSRDR
+13:05:50 PDIR DP
+13:05:51 .SETA UPSI=1
+13:05:51 .USE DP ON 0 SYS0
+13:05:51 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= DP     ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+      0 BYTES USED,   63200 AVAILABLE
+END
+END PDIR
+13:05:56 .END
+13:05:56 CON1
+13:05:56 .SETA CC=0
+13:05:56 .SETA UPSI=0
+13:05:56 .END
+13:05:56 .LOG
+13:05:57 .USE CRT0 SYSRDR
+13:06:03 PDIR ?
+13:06:03 .SETA UPSI=1
+13:06:04 .USE ? ON 0 SYS0
+13:06:04 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= ?      ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  0FA0   0   0   10    0    T  01/21/80
+?FTST   E  0FAA   0   1    0    0    T  04/16/80
+?MOST   E  0FBA   0   0   14    0    T  03/02/79
+XEJECT  E  0FC8   0   0    1    0    T  08/23/76
+TOS     E  0FC9   0   0    4    0    T          
+?DSKT   E  0FCD   0   3    6    0    T  04/16/80
+XCTEST  E  1003   0   0    4    0    T  11/16/79
+XPTEST  E  1007   0   0    4  325    T  11/16/79
+Z?DAC   A  100B 325   2    9   70    T  01/21/80
+XASSM   E  1035   0   1    4    0    T  01/31/78
+XASS@0  E  1049   0   0    2    0    T  01/31/78
+VLIB    E  104B   0   1    8    0    T  08/21/78
+XLINK   E  1063   0   0   11  128    T  01/31/78
+TEST    A  106E 128   0    3  267    T  01/21/80
+?DAC    E  1072   0   0    7    0    T  01/21/80
+XCPRUT  E  1079   0   0    6  351    T  01/21/80
+  88436 BYTES USED,      44 AVAILABLE
+END
+END PDIR
+13:06:10 .END
+13:06:10 CON1
+13:06:11 .SETA CC=0
+13:06:11 .SETA UPSI=0
+13:06:11 .END
+13:06:11 .LOG
+13:06:11 .USE CRT0 SYSRDR
+13:06:17 PDIR PR
+13:06:17 .SETA UPSI=1
+13:06:17 .USE PR ON 0 SYS0
+13:06:18 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= PR     ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  1680   0   0    2   11    T  01/03/85
+MAST    A  1682  11   0    2  251    T  04/19/83
+EARN    A  1684 262   0    2  286    T  10/14/77
+COMP    A  1687 153   0    3  289    T  10/14/77
+TAX     A  168B  47   0    1  137    T  10/14/77
+F941    A  168C 184   0    1   98    T  10/14/77
+QTR     A  168D 282   0    1  160    T  10/14/77
+W2      A  168F  47   0    1  209    T  10/28/80
+INIT    A  1690 256   0    0  308    T  10/14/77
+BACK    A  1691 169   0    1  226    T  04/08/77
+XPR600  E  1693   0   1   12    0    T  04/12/83
+XPR605  E  16AF   0   1    7    0    T  11/01/84
+XPR609  E  16C6   0   0    5    0    T  04/21/83
+XPR610  E  16CB   0   1    6    0    T  11/01/84
+XPR650  E  16E1   0   0   15    0    T  11/01/84
+XPR655  E  16F0   0   1    1    0    T  11/01/84
+XPR660  E  1701   0   1    6    0    T  11/01/84
+XPR682  E  1717   0   1   13    6    T  01/02/85
+  71106 BYTES USED,    4734 AVAILABLE
+END
+END PDIR
+13:06:24 .END
+13:06:24 CON1
+13:06:24 .SETA CC=0
+13:06:24 .SETA UPSI=0
+13:06:24 .END
+13:06:24 .LOG
+13:06:24 .USE CRT0 SYSRDR
+13:06:38 PDIR FG
+13:06:38 .SETA UPSI=1
+13:06:38 .USE FG ON 0 SYS0
+13:06:39 .RUN XPDIR
+PDIR - MOD AE
+DIR
+DIRECTORY NAME= FG     ON DISK 00
+           **ADDR**  ****SIZE****
+NAME   TYP BDA  BBP  TRK SEC BYTE   STA   DATE
+@PDIR0  D  15D0   0   0    2   11    T  01/03/85
+MAST    A  15D2  11   0    2  251    T  04/19/83
+EARN    A  15D4 262   0    2  286    T  10/14/77
+COMP    A  15D7 153   0    3  289    T  10/14/77
+TAX     A  15DB  47   0    1  137    T  10/14/77
+F941    A  15DC 184   0    1   98    T  10/14/77
+QTR     A  15DD 282   0    1  160    T  10/14/77
+W2      A  15DF  47   0    1  209    T  10/28/80
+INIT    A  15E0 256   0    0  308    T  10/14/77
+BACK    A  15E1 169   0    1  226    T  04/08/77
+XPR600  E  15E3   0   1   12    0    T  04/12/83
+XPR605  E  15FF   0   1    7    0    T  11/01/84
+XPR609  E  1616   0   0    5    0    T  04/21/83
+XPR610  E  161B   0   1    6    0    T  11/01/84
+XPR650  E  1631   0   0   15    0    T  11/01/84
+XPR655  E  1640   0   1    1    0    T  11/01/84
+XPR660  E  1651   0   1    6    0    T  11/01/84
+XPR682  E  1667   0   1   13    6    T  01/02/85
+  71106 BYTES USED, -  1586 AVAILABLE
+END
+END PDIR
+13:06:45 .END
+13:06:45 CON1
+13:06:45 .SETA CC=0
+13:06:45 .SETA UPSI=0
+13:06:45 .END
+13:06:45 .LOG
+13:06:45 .USE CRT0 SYSRDR
