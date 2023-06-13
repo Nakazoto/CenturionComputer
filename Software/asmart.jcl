@@ -1,0 +1,702 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                      centurion computer corporation
+/                       asmart application generator
+/==============================================================================
+/          key: #0     disk: #1     printer: #2     application: #3
+/==============================================================================
+/                  1 - create/edit data dictionary / screen map
+/                  2 - create ascii file from existing ascii file
+/                  3 - create/edit report map
+/                  4 - create/edit posting map
+/                  5 - create/edit clearing map
+/                  6 - display data dictionary
+/                  7 - display screen map
+/                  8 - display report map
+/                  9 - master/transaction file services
+/                 10 - master file posting
+/                 11 - master file clearing   95 - change key
+/                 12 - print reports          96 - change disk
+/                 13 - generate jcl           97 - change printer
+/                                             98 - change application
+/                                             99 - end smart
+/==============================================================================
+/    enter function
+
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.setc 7 eq ' '
+.skip 1 if 99 ne #9
+s.con
+.skip to chg4 if 98 eq #9
+.skip to chg3 if 97 eq #9
+.skip to chg2 if 96 eq #9
+.skip to chg1 if 95 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 14 le #9
+.skip to opt#9
+.skipr 0
+=chg1
+/  enter key
+.enter 0
+=chg2
+/  enter disk
+.enter 1
+=chg3
+
+/  enter printer or 'crt'
+
+.enter 2
+=chg4
+
+/  enter application prefix
+
+.enter 3
+.skipr 0
+=opt1
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3sa#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3sa#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3sa#9
+/
+/  enter dictionary name (xxsmyy) of alternate file 1
+.enter 5
+.skip to go1 if #5 = ' '
+.seta upsi=1
+.use #5 on #1 sys1
+/
+/  enter dictionary name (xxsmyy) of alternate file 2
+.enter 6
+.skip to go1 if #6 = ' '
+.seta upsi=2
+.use #6 on #1 sys2
+/
+/  enter dictionary name (xxsmyy) of alternate file 3
+.enter 7
+.skip to go1 if #7 = ' '
+.seta upsi=3
+.use #7 on #1 sys3
+=go1
+.skip to edit1 if 66 ne #c
+.seta cc=0
+.use #8 on #1 sys0
+.run  xsamap
+.run s.xeject
+=edit1
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter screen map no.
+.enter 9
+.fspec #3sm#9 on #1 4=size
+.skip 1 if 0 ne #4
+.new #3sm#9 #1 'c' 1
+.setc 4 = #3sm#9
+.use #4 on #1 sys0 pass
+.use #8 on #1 sys4
+.use  serror on #d sys5
+.skip 3 if crt ne #2
+.use crt#v sys10
+.setc 9 = crt#v
+.skip 2
+.use prt#2 sys10
+.setc 9 = prt#2
+.skip to go1#u
+=go13
+.use #7 on #1 sys3
+=go12
+.use #6 on #1 sys2
+=go11
+.use #5 on #1 sys1
+=go10
+.run  xasmap
+.use #9 sys10
+.run  xdictn
+.end
+.skipr 0
+=opt2
+/
+/  enter map type (sa, ra, pa, ca)
+.enter 9
+.skip to go2 if sa eq #9
+.skip to go2 if ra eq #9
+.skip to go2 if pa eq #9
+.skip to go2 if ca eq #9
+.skipr to opt2
+=go2
+/
+/  enter existing ascii file no.
+.enter 8
+/
+/  enter new ascii file no.
+.enter 7
+.fspec #3#9#7 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3#9#7 #1 'a' 1
+.skip to go2a
+/
+/  #3#9#7 already exists on disk #1 ... okay to delete ? (y/n)
+.enter 6
+.skip 1 if y eq #6
+.skipr 0
+=go2a
+.use #3#9#8 on #1 sys0
+.use #3#9#7 on #1 sys1
+.run s.xcoput
+.end
+.skipr 0
+=opt3
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3ra#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3ra#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3ra#9
+=opt33
+/
+/  enter primary file dictionary no.
+.enter 9
+.fspec #3sm#9 on #1 4=size
+.skip 3 if 0 ne #4
+/  #3sm#9 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+.setc 4 eq #3sm#9
+/
+/  enter dictionary name (xxsmyy) of alternate file 1
+.enter 5
+.skip to go3 if #5 = ' '
+.seta upsi=1
+.use #5 on #1 sys1 shar
+/
+/  enter dictionary name (xxsmyy) of alternate file 2
+.enter 6
+.skip to go3 if #6 = ' '
+.seta upsi=2
+.use #6 on #1 sys2 shar
+/
+/  enter dictionary name (xxsmyy) of alternate file 3
+.enter 7
+.skip to go3 if #7 = ' '
+.seta upsi=3
+.use #7 on #1 sys3 shar
+=go3
+.skip to opt88 if 8 eq #8
+.skip to edit3 if 66 ne #c
+.seta cc=0
+.use #4 on #1 sys0 shar
+.use #8 on #1 sys4
+.run  xramap
+.run s.xeject
+=edit3
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter report map no.
+.enter 9
+.use #4 on #1 sys0 shar pass
+.seta cc=#u
+.fspec #3rm#9 on #1 upsi=use
+.skip 1 if 0 ne #u
+.new #3rm#9 #1 'c' 1
+.setc 9=#3rm#9
+.use #9 on #1 sys4 pass
+.fspec @scrc#i on #s upsi=use
+.skip 1 if 0 eq #u
+.del @scrc#i #s
+.new @scrc#i #s 'c' 1
+.use @scrc#i on #s sys5
+.seta upsi=#c
+.seta cc=0
+.use #8 on #1 sys6
+.use  serror on #d sys7
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.skip to go3#u
+=go33
+.use #7 on #1 sys3 shar pass
+=go32
+.use #6 on #1 sys2 shar pass
+=go31
+.use #5 on #1 sys1 shar pass
+=go30
+.run  xarmap
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.setc 6 eq #9
+.run  xrmdsp
+.end
+.skipr 0
+=opt4
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3pa#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3pa#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3pa#9
+/
+/  enter transaction file dictionary no.
+.enter 9
+.setc 5 = #3sm#9
+.fspec #5 on #1 4=size
+.skip 3 if 0 ne #4
+/  #5 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+/
+/  enter master file dictionary no.
+.enter 9
+.setc 6 = #3sm#9
+.fspec #6 on #1 4=size
+.skip 3 if 0 ne #4
+/  #6 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+.skip to edit4 if 66 ne #c
+.seta cc=0
+.use #5 on #1 sys0
+.use #6 on #1 sys1
+.use #8 on #1 sys2
+.run  xpamap
+.run s.xeject
+=edit4
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter posting map no.
+.enter 9
+.fspec #3pm#9 on #1 4=size
+.skip 1 if 0 ne #4
+.new #3pm#9 #1 'c' 1
+.use #5 on #1 sys0
+.use #6 on #1 sys1
+.setc 7=#3pm#9
+.use #7 on #1 sys2
+.use #8 on #1 sys3
+.use  serror on #d sys4
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run  xapmap
+.end
+.skipr 0
+=opt5
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3ca#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3ca#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3ca#9
+/
+/  enter master file dictionary no.
+.enter 9
+.setc 6 = #3sm#9
+.fspec #6 on #1 4=size
+.skip 3 if 0 ne #4
+/  #6 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+.skip to edit5 if 66 ne #c
+.seta cc=0
+.use #6 on #1 sys1
+.use #8 on #1 sys2
+.run  xcamap
+.run s.xeject
+=edit5
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter clearing map no.
+.enter 9
+.fspec #3cm#9 on #1 4=size
+.skip 1 if 0 ne #4
+.new #3cm#9 #1 'c' 1
+.use #6 on #1 sys1
+.setc 7=#3cm#9
+.use #7 on #1 sys2
+.use #8 on #1 sys3
+.use  serror on #d sys4
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run  xacmap
+.end
+.skipr 0
+=opt9
+.seta 8=0
+
+/
+/  enter file letter (a - z):
+.enter 6
+/
+/  enter map number:
+.enter 5
+.fspec #3#0#6 on #1 4=size
+.skip to go7 if 0 ne #4
+
+/
+/  file #3#0#6 not found on disk #1
+/  do you wish to create a new file ? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr 0
+.use #3sm#5 on #1 sys0 shar
+.run  xinitl
+.end
+.skip to go7a if 0 eq #c
+/
+/  file #3#0#6 cannot be initialized - condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+=go7a
+.skip 2 if 0 ne #u
+.new #3#0#6 on #1 'c' #9
+.skip to go7
+.new #3#0#6 on #1 'c' #9
+.use #3#0#6 on #1 sys0
+.seta 9=#u
+.seta upsi=0
+.run s.xvrint
+recsiz=#8
+keylen=#9
+paddng=10
+/*
+=go7
+/
+/  enter name of alternate file 1
+.enter 4
+.skip to go8 if #4 = ' '
+.use #4 on #1 sys2 shar
+/
+/  enter name of alternate file 2
+.enter 4
+.skip to go8 if #4 = ' '
+.use #4 on #1 sys3 shar
+/
+/  enter name of alternate file 3
+.enter 4
+.skip to go8 if #4 = ' '
+.use #4 on #1 sys4 shar
+=go8
+.skip to go10 if 999 eq #8
+.setc 4=#3#0#6
+.use #4 on #1 sys0 shar
+.use #3sm#5 on #1 sys1 shar
+.setc 8 eq #i
+/  subordinate file processing ? (y/n)
+.enter 9
+.skip to subord if y eq #9
+/  multi-page screen processing ? (y/n)
+.enter 9
+.skip to multi if y eq #9
+/  hard-copy screen display ? (y/n)
+.enter 9
+.skip to hard if y eq #9
+.run  xmaint
+.end
+.skip to xtr
+=subord
+/
+/  enter subordinate file map name (xxsmyy)
+.enter 5
+.use #5 on #1 sys6 shar
+/
+/  enter name of subordinate file
+.enter 5
+.use #5 on #1 sys11 shar
+.setc 7 = subord
+.run  xmmsub
+.end
+.setc 7=''
+.skip to xtr
+=hard
+/  display entire file ? (y/n)
+.enter 9
+.skip to go if y ne #9
+/
+/  enter list file letter (n/l if no list file)
+.enter 5
+.skip 1 if #5 = ' '
+.use #3#0#5 on #1 sys5
+/
+/  how many screen images per page ?
+.enter upsi
+/
+/  do you wish to print field numbers ? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.setc 8=nonum
+.use dummy for sysipt
+=go
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run  xdsply
+.end
+.use crt#v for sysipt
+.setc 8=''
+.seta upsi=0
+.skipr 0
+=multi
+.run  xmmsub
+.end
+=xtr
+.skip 1 if 200 eq #u
+.skipr 0
+.seta cc=0
+
+/
+/  records have been added to or deleted from #4
+/  standby for creation of new list file
+/
+/  enter list file letter (a - z):
+.enter 6
+.fspec #3#0#6 on #1 8=size
+.skip 1 if 0 ne #8
+.new #3#0#6 #1 'b' 1
+.use #3sm#5 on #1 sys0
+.use #4 on #1 sys1 shar
+.use #3#0#6 on #1 sys2
+.use #4 on #1 sys3 shar
+.seta upsi=1
+.run  xxtrct
+.end
+.skip 1 if 0 eq #c
+/  xxtrct abend condition #c infix position #u
+/  newline to return to menu
+.pause
+.seta upsi=0
+.skipr 0
+=opt11
+/
+/  enter clearing map number:
+.enter 5
+/
+/  enter master file letter (a - z):
+.enter 7
+/
+/  enter list file letter (a - z):
+.enter 8
+.use #3cm#5 on #1 sys0
+.use #3#0#8 on #1 sys1
+.use #3#0#7 on #1 sys2
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run  xclear
+.end
+.skipr 0
+=opt7
+
+/
+/  enter map number:
+
+.enter 5
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.use #3sm#5 on #1 sys0
+.run  xscren
+.end
+.skip 1 if crt ne #2
+.pause
+.skipr 0
+=opt6
+
+/
+/  enter dictionary number:
+
+.enter 5
+.setc 6 eq dd
+.fspec #3dd#5 on #1 4=size
+.skip to go4 if 0 ne #4
+.setc 6 eq sm
+.fspec #3sm#5 on #1 4=size
+.skip to go4 if 0 ne #4
+
+/  neither #3dd#5 nor #3sm#5 found on disk #1
+/
+/  newline to return to menu
+
+.pause
+.skipr 0
+=go4
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.setc 4 = #3#6#5
+.use #4 on #1 sys0
+.run  xdictn
+.end
+.skip 1 if crt ne #2
+.pause
+.skipr 0
+=opt8
+/
+/  enter report no.
+.enter 9
+.use #3rm#9 on #1 sys4 shar
+.setc 8 = 8
+.skipr to opt33
+=opt88
+.use #4 on #1 sys0 shar
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run xrmdsp
+.end
+.skip 1 if crt ne #2
+.pause
+.skipr 0
+=opt10
+
+/
+/  enter posting map number :
+
+.enter 5
+
+/
+/  enter transaction file letter (a - z):
+
+.enter 6
+
+/
+/  enter master file letter (a - z):
+
+.enter 7
+.use #3pm#5 on #1 sys0
+.use #3#0#6 on #1 sys1
+.use #3#0#7 on #1 sys2
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run  xpost
+.end
+.skipr 0
+=opt12
+
+/
+/  enter report map number:
+
+.enter 5
+
+/
+/  enter master file letter (a - z):
+
+.enter 6
+
+/
+/  enter list file letter (a - z)
+
+.enter 7
+.skip 1 if #7 = ' '
+.use #3#0#7 on #1 sys5
+.seta 8=999
+.skipr to go7
+=go10
+.use #3rm#5 on #1 sys0
+.use #3#0#6 on #1 sys1 shar
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run  xreprt
+.end
+.skip 1 if crt ne #2
+.pause
+.skipr 0
+=err4
+
+/
+/  neither #3dd#5 nor #3sm#5 found on disk #1
+/
+/  newline to return to menu
+
+.pause
+.skipr 0
+=opt13
+.setc 5 eq #3menu
+=opt11a
+.fspec #5 on #1 4=size
+.skip to go11b if 0 eq #4
+/
+/  #5 already exists on disk #1
+/  do you wish to delete ? (y/n)
+.enter 9
+.skip to go11a if y eq #9
+=opt11b
+/
+/  enter full name of jcl stream (newline to return to menu)
+.enter 5
+.skip 1 if #5 = ' '
+.skipr to opt11a
+.skipr 0
+=go11a
+.del #5 #1
+=go11b
+/  #5 is the jcl name
+/  okay to go ? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr to opt11b
+.new #5 on #1 'a' 1
+.use #5 on #1 sys0
+.fspec @scrc#i on #d 4=size
+.skip 1 if 0 eq #4
+.del @scrc#i #d
+.new @scrc#i #d 'c' 1
+.use @scrc#i on #d sys1
+.run  xgjcl
+.end
+/
+/  do you wish to call the menu ? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr 0
+#5 on #1
