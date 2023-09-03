@@ -1,0 +1,1288 @@
+s.lst zrv980 1 crt3
+S.LST ZRV980 1 CRT3
+.JOB ZRV980
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
+LIST - 6.00
+title ' zrv580 (period earnings report) '
+;
+system
+;
+define m00:'rv580 (period earnings report) 01/03/91'
+;
+;notes:
+;     04-13-76...prototype work began by copying zp660...klf
+;     09-13-76...corrected error in accumulating qtd excess fica wages...klf
+;     10-16-76...new pr660 began by copying zr581...klf
+;     10-28-76...initial release (zpr660)...klf
+;     11-17-76...corrected calc of 941 line 10 for total wages & tips;
+;                revised for easier interpretation of tips/taxable tips...klf
+;     11-18-76...corrected error on no tips current qtr...klf
+;     01-31-77...prototype zrp580 began by copying zpr660...klf
+;     02-25-77...initial release (zrp580)...klf
+;     03-08-77...mod to add single state module...klf
+;     03-21-77...corrected "getfut"...klf
+;     08-14-78...revised for new line numbers on 941 worksheet;
+;                revised to flag empl with excess fica dedns;
+;                corrected convenience meals calculation...klf
+;     08-16-79...re-compiled with new aplib...jwb
+;     11-29-79...modified to calculate the fica wages when fica exempt
+;                employees are changed to exempt in midquarter or midyear...dle
+;     01-10-80...mod for vsi type master file, marked dle's changes, updated
+;                emprec for eic and fica wage fields...ok
+;     02-12-80...changed all program names from "rp" to "rv" to reflect change
+;                to vsi type master file, updated msthdr for 1980...ok
+;     04-08-80...mod for advance earned income credit payments, lskip subr...ok
+;
+;     08-20-82...corrected convenience meals (2) non taxed..pbn454..jh
+;     04-05-83...correct 941 worksheet pbln#677...jh
+;     11-23-83...updated for fica....pbl 766...jh
+;     02-13-84...modified for 13.7% fica rate;externalized bltrun...
+;                pln0854...pmr
+;     10-31-84...reversed changes to make fica percentages ( for
+;                employee and employer) the equivalent...dle (pl#1006)
+;      2/20/85...don't print 0 grossing employees (b0220)...rufe
+;   1/11/89...adding other & meals to gross if it contains taxable benefits..ns
+;   01/03/91...adding 1991 medicare social security % ...clvii
+;==============================================================================
+;                     p r o g r a m   l i n k a g e
+;==============================================================================
+;
+entrypoint crt
+;
+external aget,agkey,ankey,cget,chr,clrec,f90,gdate,getkey,gupsi,hicore,ioerr
+external lfeed,msg,newkey,nget,pupsi,sget,stat,xchar,ynget,hldr,frer,getr,putr
+external getk,newk,bltrun;pln0854...added bltrun
+;
+;
+;==============================================================================
+;                                f i l e s
+;==============================================================================
+;
+file crt:    sysipt
+;
+file prt:    syslst, class=1, seq
+;
+file master: sys0, class=2, ind, recsiz=435, key=mstkey
+;
+file tagfil: sys1, class=2, seq, filtyp=b, lsr=4, buffer=400,buf1
+     buffer  buf1  (400)
+;
+file taxfil: sys2, class=2, random, recsiz=395, key=taxkey
+     set taxkey: 0
+;
+file scrfil: sys3, class=2, random, recsiz=395, key=scrkey
+     set scrkey: 0
+;
+;==============================================================================
+;                              r e c o r d s
+;==============================================================================
+;
+copy msthdr
+;
+copy emprec
+;
+record taxhdr (200)
+   set    taxnul: 0
+   define a01ref: '   '          ; tax area reference code
+   define a02ref: '   '
+   define a03ref: '   '
+   define a04ref: '   '
+   define a05ref: '   '
+   define a06ref: '   '
+   define a07ref: '   '
+   define a08ref: '   '
+   define a09ref: '   '
+   define a10ref: '   '
+   define a11ref: '   '
+   define a12ref: '   '
+   define a13ref: '   '
+   define a14ref: '   '
+   define a15ref: '   '
+;
+   define a01nam: '        '     ; tax area name
+   define a02nam: '        '
+   define a03nam: '        '
+   define a04nam: '        '
+   define a05nam: '        '
+   define a06nam: '        '
+   define a07nam: '        '
+   define a08nam: '        '
+   define a09nam: '        '
+   define a10nam: '        '
+   define a11nam: '        '
+   define a12nam: '        '
+   define a13nam: '        '
+   define a14nam: '        '
+   define a15nam: '        '
+endrec
+;
+record tagrec (8)
+   set tag:    0
+   set mstkey: 0
+endrec
+;
+record scrrec (210)
+   set mltpop: 0
+   set option: 0
+   set a01flg: 0
+   set a02flg: 0
+   set a03flg: 0
+   set a04flg: 0
+   set a05flg: 0
+   set a06flg: 0
+   set a07flg: 0
+   set a08flg: 0
+   set a09flg: 0
+   set a10flg: 0
+   set a11flg: 0
+   set a12flg: 0
+   set a13flg: 0
+   set a14flg: 0
+   set a15flg: 0
+   set a01fut: 0
+   set a02fut: 0
+   set a03fut: 0
+   set a04fut: 0
+   set a05fut: 0
+   set a06fut: 0
+   set a07fut: 0
+   set a08fut: 0
+   set a09fut: 0
+   set a10fut: 0
+   set a11fut: 0
+   set a12fut: 0
+   set a13fut: 0
+   set a14fut: 0
+   set a15fut: 0
+   direct
+a01mop dw 0
+a02mop dw 0
+a03mop dw 0
+a04mop dw 0
+a05mop dw 0
+a06mop dw 0
+a07mop dw 0
+a08mop dw 0
+a09mop dw 0
+a10mop dw 0
+a11mop dw 0
+a12mop dw 0
+a13mop dw 0
+a14mop dw 0
+a15mop dw 0
+a01top dw 0
+a02top dw 0
+a03top dw 0
+a04top dw 0
+a05top dw 0
+a06top dw 0
+a07top dw 0
+a08top dw 0
+a09top dw 0
+a10top dw 0
+a11top dw 0
+a12top dw 0
+a13top dw 0
+a14top dw 0
+a15top dw 0
+   cpl
+endrec
+;
+;==============================================================================
+;                                l o g i c
+;==============================================================================
+   ;
+entry
+   ;
+   open input (tagfil)
+   open io (master, scrfil, crt)
+   open output prt
+   ;
+   readb (tagfil, tagrec)
+   go to (q0800, ioerr) on status
+   if (tag .ne. 0) go to q0800
+   ;
+a0010:
+   ;
+   call hldr (master)
+   if (status .ne. 0) go to a0010
+   ;
+   call getr (master, msthdr)
+   call stat (1)
+   ;
+   'passok' = 'n'
+   ;
+   call putr (master, msthdr)
+   call stat (1)
+   ;
+   call frer (master)
+   ;
+   ifstring (usepas .eq. n) go to a0050
+   if (paswrd .eq. 0) go to a0050
+   ;
+   call msg (m001)
+   read (crt, f10) sumnum
+   ;
+   if (sumnum .eq. paswrd) go to a0050
+   ;
+   call msg (m002)
+   ;
+a0020:
+   ;
+   call msg (m003)
+   curp (crt, 1, 23)
+   go to a0020
+   ;
+a0050:
+   ;
+   call gupsi (taxopt);               with or without state tax support
+   if (taxopt .eq. 0) go to a0060;    skip without
+   open io taxfil
+   ;
+   call getkey (taxfil, zero);        verify tax file established
+   go to (q0700, ioerr) on status
+   ;
+   readb (taxfil, taxhdr)
+   call stat (1)
+   ;
+a0060:
+   ;
+   call bltrun (firm)
+   call header (firm, f99)
+   ;
+   call header (headmg, f98)
+   ;
+a0100:
+   ;
+   call clrec (scrrec)
+   ;
+   direct
+   lda/ mtop
+   sta/ mltpop+2
+   cpl
+   ;
+a0101:
+   ;
+   call msg (eject)
+   call msg (m00);                    salutation
+   call msg (null)
+   write (crt, f01) m101, firm
+   write (crt, f01) m102, faddr
+   write (crt, f01) m103, fcity
+   ;
+   call lfeed (crt, 3)
+   ;
+   call msg (m01);                    display run option list
+   write (crt, f02) m02
+   write (crt, f02) m03
+   write (crt, f02) m09
+   ;
+a0110:
+   ;
+   read (crt, f10) option
+   call absval (option)
+   if (option .eq. 0) go to a0101;    0 = re-write screen
+   if (option .eq. 9) go to q0900;    9 = end program
+   ;
+   go to (a0190, a0150, a0150) on option
+   ;
+a0115:
+   ;
+   call msg (m10);                    else invalid option
+   go to a0110
+   ;
+a0150:
+   ;
+   if (taxopt .eq. 0) go to a0160
+   ;
+   curp (crt, 1, 15)
+   ;
+   'msgbuf' = 'm11 + m12 + yn'
+   call ynget (msgbuf)
+   direct
+   ldb/ status+2
+   cla
+   sta/ prtall
+   stb/ prtall+2
+   cpl
+   ;
+   call getfut (a01ref, a01nam, a01flg, a01fut, a01mop, a01top)
+   call getfut (a02ref, a02nam, a02flg, a02fut, a02mop, a02top)
+   call getfut (a03ref, a03nam, a03flg, a03fut, a03mop, a03top)
+   call getfut (a04ref, a04nam, a04flg, a04fut, a04mop, a04top)
+   call getfut (a05ref, a05nam, a05flg, a05fut, a05mop, a05top)
+   call getfut (a06ref, a06nam, a06flg, a06fut, a06mop, a06top)
+   call getfut (a07ref, a07nam, a07flg, a07fut, a07mop, a07top)
+   call getfut (a08ref, a08nam, a08flg, a08fut, a08mop, a08top)
+   call getfut (a09ref, a09nam, a09flg, a09fut, a09mop, a09top)
+   call getfut (a10ref, a10nam, a10flg, a10fut, a10mop, a10top)
+   call getfut (a11ref, a11nam, a11flg, a11fut, a11mop, a11top)
+   call getfut (a12ref, a12nam, a12flg, a12fut, a12mop, a12top)
+   call getfut (a13ref, a13nam, a13flg, a13fut, a13mop, a13top)
+   call getfut (a14ref, a14nam, a14flg, a14fut, a14mop, a14top)
+   call getfut (a15ref, a15nam, a15flg, a15fut, a15mop, a15top)
+   ;
+   go to a0180
+   ;
+a0160:
+   ;
+   curp (crt, 1, 15)
+   ;
+   'msgbuf' = 'm13 + m15';            input conditions for single-state
+   call cget (msgbuf, f05, a01fut)
+   call absval (a01fut)
+   if (a01fut .gt. 0) go to a0165
+   a01fut = i8nine
+   ;
+a0165:
+   ;
+   if (mltpop .eq. 0) go to a0180;    skip no single-state meals/tips
+   ;
+   'msgbuf' = 'm16 + m22';            else query taxable meals?
+   call ynget (msgbuf)
+   direct
+   lda/ status+2
+   sta/ a01mop
+   cpl
+   ;
+   'msgbuf' = 'm17 + m22';            query taxable tips
+   call ynget (msgbuf)
+   direct
+   lda/ status+2
+   sta/ a01top
+   cpl
+   ;
+   call clrlin (17)
+   call clrlin (16)
+   ;
+a0180:
+   ;
+   call clrlin (15)
+   curp (crt, 1, 14)
+   ;
+a0190:
+   prtauto=0
+   call ynget(m60);  do other, meals & shortfall contian benefits
+   if(status.eq.0)go to a0200
+   prtauto=1
+ 
+a0200:
+   ;
+   call msg (null)
+   ;
+   call ynget (m19);                  c/r & go
+   if (status .eq. 0) go to a0100;    loop again if not ready
+   ;
+   if (option .eq. 2) go to l0100;    skip if non-feds only
+   ;
+   ldate (current);                   get report date
+   sdate (string, datebf)
+   ;
+   ldate (grin, lpdat);               get date of last checks issued
+   sdate (string, pedbuf)
+   ;
+   call edit (sswage, wagbuf, mask01)
+   'notebf' = 'm214 + wagbuf'
+call edit(medwage,wagbuf2,mask01)
+'notebf2'='m214a + wagbuf2'
+   ;
+   ;mxfitx = ficmax * ficfac + i50r0k / i0r1m
+;  mxfitx replaced by ficamax hard coded for 1991 = 5123.30...clvii
+   ;
+   call check3;                       write first page header
+   ;
+b0100:
+   ;
+   readb (tagfil, tagrec)
+   go to (b0250, ioerr) on status
+   ;
+   call getr (master, emprec)
+   call stat (1)
+   ;
+   direct
+   ldb/ w2s
+   cla
+   sta/ sumnum
+   stb/ sumnum+2
+   cpl
+   ;
+   if (sumnum .eq. 9) go to b0100;    contract labor not to be printed
+   ;
+   if (eclass .eq. 0) go to b0110;    count active empls
+   ;
+   incr numemp
+   ;
+b0110:
+   ;
+   qgross = gross - pgross;           calc quarter to date totals
+   qgmed = yfwage - pfwage  ; calc qtd medical fica gross
+   ;  calculated at b0216  qfmed = fica - pfica     ;  calc qtd medical fica tax
+   qmeals = meals - pmeals
+   qtips  = tips  - ptips
+   qpl2nt = ypl2nt - ppl2nt
+   qfica  = fica  - pfica
+   qfwt   = fwt   - pfwt
+   qfwage = yfwage - pfwage          ; 01-10-80...mod for new fields
+   qeic   = yeic   - peic
+   qtwags = tipfica-qtipfic      ;pbln#584..jh
+   ;
+ 
+if(prtauto.eq.0)go to b0120
+   qgross=qgross+qmeals+other - pother
+   qgmed=qfwage+qmeals+other - pother   ; 1991...clvii
+   gross=gross+meals+other;  ytd includes benefits (shortfall already added)
+   qfwage=qfwage+qmeals+other - pother
+   yfwage=yfwage+meals+other;  ytd includes benefits (shortfall already added)
+ 
+b0120:
+   comp = wage = gross;       calc total wages
+  mwage = fwage = yfwage ; added mwage 1991 ...clv ii
+  mfica=fica ;  ytd fica withheld
+   call equate (pwage, pgross)
+   qcomp = qwage = qgross     ; 01-10-80...removed qfwage from this line...ok
+   ;
+   if (mltpop .eq. 0) go to b0130;    skip to not total meals
+   if (mltpop .eq. 2) go to b0127;    skip if "convenience" meals pbn454...jh
+   ;
+   call acum (wage,meals, qwage,qmeals, 0); else add meals to reported totals
+   ;
+b0125:
+   ;
+   call acum (comp,meals, qcomp,qmeals, fwage,meals, qfwage,qmeals, 0)
+   ;                                  meals always compensation and fica-taxable
+   go to b0130
+   ;
+b0127:
+   call acum (comp,meals, qcomp,qmeals, 0)    ;pbn454.....jh
+   ;
+b0130:
+   ;
+   call acum (comp,ypl2nt, qcomp,qpl2nt, 0); plus-to-net is compensation
+  if(pwage.le.medwage) goto b0135  ; see if we exceeded 125,000.00...clvii
+  call equate(qgmed,0) ; maxed out on medical fica ..set to zero.....clvii
+b0135:
+   if (pwage .le. sswage) go to b0140; skip if max fica not previously reached
+   ;                                  max fica reached in previous quarter
+   call equate (qfwage, 0);           no quarter (fica) taxable wages
+ 
+   go to b0145
+ 
+b0140:
+   ;
+if(mwage.le.medwage)goto b0142   ; not maxed out on ytd medical fica...clvii
+sumnum=mwage-medwage
+qfmed=qgmed-sumnum           ; get excess taxable wages
+call equate(mwage,medwage)   ; maxed out at 125000.00
+b0142:
+   if (wage .le. sswage) go to b0150; skip if fica max wages not reached
+   sumnum = wage - sswage;            calculate qtr excess wages
+   qfwage = qwage - sumnum;           quarter taxable = quarter - qtr excess
+   ;
+b0145:
+   ;
+   call equate (fwage, sswage);       ytd taxable is max fica taxable
+   ;
+b0150:
+   ;
+   call equate (qftips, qtips);       presuppose qtr tips all taxable
+   call equate (ftips, tips);         presuppose ytd tips all taxable
+   ;
+   if (tips .eq. 0) go to b0200;      skip if no tips
+   ;
+   sumnum = pwage + ptips;            reached fica max including tips?
+   if (sumnum .lt. ficmax) go to b0180; skip if no max at epq
+   call equate (qftips, 0);           max epq - this qtr tips non-taxable
+   if (wage .lt. ficmax) go to b0175; check for ytd taxable tips
+   call equate (ftips, 0);            no tax tips if wages maxed at epq
+   go to b0200
+   ;
+b0175:
+   ;
+   sumnum = wage + tips - ficmax;     calculate excess (non-taxable)
+   ftips = tips - sumnum;             taxable tips = tips - excess
+   go to b0200
+   ;
+b0180:
+   ;
+   sumnum = wage + tips;              check taxable tips if ytd fica max
+   if (sumnum .lt. ficmax) go to b0200; no max - all tips are taxable
+   if (wage .lt. ficmax) go to b0185; skip if tips split fica max
+   call clr (qftips, ftips, 0)
+   go to b0200
+   ;
+b0185:
+   ;
+   sumnum = wage + tips - ficmax;     calculate excess (non-taxable) tips
+   ftips = tips - sumnum;             taxable tips = tips - excess
+   qftips = qtips - sumnum;           quarter taxable = quarter - excess
+   if (qftips .ge. 0) go to b0200;    check excess doesn't exceed quarter
+   call equate (qftips, 0)
+   ;
+b0200:
+   ;
+   call getecd;                       check for fica exempt employees
+   if (ecat .lt. 8) go to b0205
+   qfwage = (qfica * i0r1m)/ficfac - qftips ; 11-29-79...dle
+   fwage = (fica * i0r1m)/ficfac - ftips ;
+   ;
+b0205:
+   ;
+   call acum (tgross,gross,  tqgros,qgross, tmeals,meals,  tqmeal,qmeals, 0)
+   call acum (ttips,tips,    tqtips,qtips,  tftips,ftips,  tqftip,qftips, 0)
+   call acum (twage,wage,    tqwage,qwage,  tfwage,fwage,  tqfwag,qfwage, 0)
+   call acum (tfwt,fwt,      tqfwt,qfwt,    tqcomp,qcomp,  tcomp,comp,    0)
+   call acum (tfica,fica,    tqfica,qfica,  tqp2nt,qpl2nt, tpl2nt,ypl2nt, 0)
+   call acum (tqeic,qeic,   ttwags,tipfica,   tqtwags,qtwags, 0)
+   call acum (tgmed,qgmed,  tfmed,qfmed, 0)
+call acum (tmwage,mwage,  tmfica,mfica,  0)
+   ;
+   if (eclass .eq. 0) go to b0210
+   'char' = 'null'
+   go to b0215
+   ;
+b0210:
+   ;
+   'char' = 'star'
+   ;
+b0215:
+   ;
+   if (ecat .lt. 8) go to b0216
+   ;;; if (fica .ne. 0) go to b0217    11-29-79...removed...dle
+   ;
+b0216:
+ 
+   sumnum=qfica;   includes medicare & ss
+   qfica=qfwage*ssfac +i50r0k/i0r1m
+  qfmed=sumnum-qfica;
+  sumnum=fica
+  fica=fwage*ssfac+i50r0k/i0r1m
+  mfica=sumnum-fica
+   ;
+   ;
+ 
+   ;
+   'errstr' = 'null'
+   if (sumnum .le. ficamax) go to b0220 ; was mxfitx but now hard coded to 5,123.30 in ficamax
+   ;
+b0217:
+   ;
+   'errstr' = 'ficerr'
+   incr numfer
+   if (numfer .gt. 1) go to b0218
+   call msg (m003)
+   call msg (ficerr)
+   ;
+b0218:
+   ;
+   write (crt, f13) empl, null, name
+   ;
+b0220:
+   ;
+   if(gross.le.0)go to b0100;         don't print zero employee
+   call check (5);                    check room on page for 5 lines
+   ;
+   write (prt, f13)empl,char,name,q,qgross,qmeals,qwage,qpl2nt,qcomp,qfwage,-
+       qtwags,qtips,qftips,qfica,qfwt
+write(prt,f13a)qgmed,qfmed ; added 1991...clvii
+   write (prt, f14)errstr,y,gross,meals,wage,ypl2nt,comp,fwage,tipfica,tips,-
+       ftips,fica,fwt
+write(prt,f13a)mwage,mfica ; ytd max medical wages and fica ...clvii
+   call lskip
+   go to b0100;                       repeat until end of master
+   ;
+b0250:
+   ;
+   call check (8);                    check room on page for 8 lines
+   ;
+   call lskip
+   write (prt, f15) totmsg,qtdmsg,tqmeal,tqp2nt,tqfwag,tqtips,tqfica
+   write (prt, f16)            tqgros,tqwage,tqcomp,tqtwags,tqftip,tqfwt
+write(prt,f15a)tgmed,tfmed
+   call lskip
+   write (prt, f15) totmsg,ytdmsg,tmeals,tpl2nt,tfwage,ttips,tfica
+   write (prt, f16)            tgross,twage,tcomp,ttwags,tftips,tfwt
+write(prt,f15a)tmwage,tmfica ; 1991 medicare fica
+   ;
+;==============================================================================
+;                           write out 941 line figures
+;==============================================================================
+   ;
+   call subhdr                         ;write new page header
+   ;
+   call lskip
+   call lskip
+   write (prt, f03) m300
+   if (numfer .ne. 0) go to q0600      ;no worksheet if fica excess errors
+   call lskip
+   call lskip
+   ;
+   write (prt, f20) m301, numemp       ;number of active employees
+   call lskip
+   ;
+   page = tqcomp + tqtips
+   write (prt, f21) m302, page         ;total quarter wages & tips
+   call lskip
+   ;
+   write (prt, f21) m303, tqfwt        ;total quarter fwt withheld
+   call lskip
+   ;
+   write (prt, f21) m304, zero         ;adjustment for previous quarters
+   call lskip
+   ;
+   write (prt, f21) m305, tqfwt        ;total of income tax withheld
+   call lskip
+   ;
+   sumnum = ssfac * 2  ; replaced ficfac w/ ssfac 1991...clv ii
+   page = tqfwag * sumnum + i50r0k / i0r1m
+   tipnum = tqtwags * ssfac +i50r0k / i0r1m;pbln#677...pln0854...pln1006
+   write (prt,f22) m306a,tqfwag,m306b,sumnum,pcnt,page;calculate fica payment
+   call lskip
+   ;
+; added 1991 for medicare fica percent ..clvii
+sumnum=medfac * 2 ; 1.45 times 2 for 2.9 employer contribution
+page=tmfica * sumnum + i50r0k / i0r1m
+write(prt,f22)m306c,tmfica,m306b,sumnum,pcnt,page ; calc med fica payment
+call lskip
+sumnum= tqtwags * (medfac * 2) + i50r0k / i0r1m ; 2.9 of tips..clvii
+tipnum= tipnum + sumnum ;  12.4 ss and 2.9 med = 15.3 of tips
+;
+   sumnum = tqftip * ficfac + i50r0k / i0r1m
+   write (prt,f22) m307a,tqftip,m306b,ficfac,pcnt,sumnum;calculate fica for tips
+   call lskip
+   write (prt,f22) m314,tqtwags,m306b,ficfac,pcnt,tipnum;pl#677;pl#584;pl#1006...dle
+   ;write (prt,f22) m307b,tqtwags,m306b,empficfac,pcnt,tipnum;pl0854;pl1006
+   call lskip
+   ;
+   page = page + sumnum + tipnum
+   write (prt, f21) m308, page         ;total fica payment due
+   call lskip
+   ;
+   write (prt, f21) m309, zero         ;adjustments for previous quarters
+   call lskip
+   ;
+   write (prt, f21) m310, page         ;adjusted total of fica taxes
+   call lskip
+   ;
+   page = page + tqfwt
+   write (prt, f21) m311, page         ;total taxes
+   call lskip
+   ;
+   write (prt, f21) m312, tqeic        ;total eic payments made
+   call lskip
+   ;
+   sumnum = page - tqeic
+   write (prt, f21) m313, sumnum       ;net taxes due
+   if (option .eq. 1) go to q0900      ;that's all folks
+   ;
+;==============================================================================
+;                  n o n - f e d e r a l   l i n k a g e
+;==============================================================================
+   ;
+l0100:
+   ;
+   option=option*10+prtauto;     pass to @7 & 8
+   writeb (scrfil, scrrec)
+   call stat (1)
+   ;
+   close prt
+   ;
+   if (taxopt .eq. 0) go to l0200;    skip for single-state overlay
+   ;
+   load (xrv5@7, 0, 0);               load and go with multi-state
+   go to q0100;                       error exit if module not found
+   ;
+l0200:
+   ;
+   load (xrv5@8, 0, 0);               load and go with single state
+   ;
+;==============================================================================
+;                  p r o g r a m   t e r m i n a t i o n
+;==============================================================================
+   ;
+q0100:
+   ;
+   call msg (m9100);                  no non-federal module
+   go to q0910
+   ;
+q0600:
+   ;
+   call lskip
+   write (prt, f09) noprepa, numfer, noprepb
+   call msg (m9600)
+   stop 100
+   ;
+q0700:
+   ;
+   call msg (m9700);                  tax file not set up
+   go to q0910
+   ;
+q0800:
+   ;
+   call msg (m9800);                  bad master
+   go to q0910
+   ;
+q0900:
+   ;
+   call msg (eject)
+   call msg (m9900)
+   ;
+q0910:
+   ;
+   close crt, prt, master
+   stop 0
+   ;
+;==============================================================================
+;                          s u b r o u t i n e s
+;==============================================================================
+;
+;=========================
+subroutine absval
+;=========================
+;
+;       assure that a four-byte integer is positive
+;
+;       calling sequence:
+;
+;       call absval (integer)
+;
+direct
+@p1 set *+11
+@p2 set *+31
+@p3 set *+26
+@p4 set *+33
+ lda- x+ get integer parameter
+ sta @p1 setup
+ sta @p2 *
+ sta @p3 *
+cpl
+if (@p1 .ge. 0) go to @p4;            skip if positive
+@p2 = 0 - @p3;                        negate if negative
+return
+;
+;=========================
+subroutine acum
+;=========================
+;
+direct
+ lda- x+
+ bnz *+3
+ rsr
+ sta ac1+8
+ sta ac1+13
+ lda- x+
+ sta ac1+3
+cpl
+;
+ac1:
+zero = zero + zero
+go to acum
+;
+;=========================
+;subroutine bltrun                      pl0854...changed to external
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+;direct
+; lda- x+ get string address
+; xay
+; cla clear string char count
+; sta= *-* save it for later
+;@p1 set *-2
+;@p2 set *
+; ina increment char count
+; ldbb- y+ check for terminator
+; bnz @p2 loop if not terminator
+; ldbb- y- back up past terminator
+; dca adjust char count
+;@p3 set *
+; sta @p1 save char count
+; ldbb- y- get suspect char
+; ldab= c' ' check for trailing blank
+; sabb
+; bnz *+9 skip exit if non-blank
+; cla else move term
+; stab- y
+; lda @p1 check char count
+; dca
+; bnz @p3 loop if more to check
+;@p4 set *
+;cpl
+;return
+;
+;=========================
+subroutine check
+;=========================
+;
+direct
+ lda- x+ get count of lines to be printed
+ sta check1+3
+ sta/ check4+3
+   cpl
+;
+check1:
+   lines = zero + lines;                 add requested count to current
+   if (lines .le. 62) go to checkx;        exit if room on page
+   'msgbuf' = 'm211';                    note for meals/tax explanation
+   go to (check2) on mltpop
+   'msgbuf' = 'msgbuf + m212'
+;
+check2:
+   'msgbuf' = 'msgbuf + m213'
+   write (prt, f07) termsg, qequ, qtdmsg, msgbuf;put code keys at bottom of page
+   write (prt, f08) null,   yequ, ytdmsg, notebf
+write(prt,f08)null,null,null,notebf2 ; 1991...clvii
+;
+check3:
+   call subhdr;                          write main page header
+   write (prt, f06) m201, m202, m203, m204
+   write (prt, f06) null, m206, m207, m208
+   call lskip
+;
+check4:
+   lines = zero + 9;                     add requested count to next page
+;
+checkx:
+   return
+;
+;=========================
+subroutine clr           ;            clear a group of 4-byte integers
+;=========================
+;
+direct
+ cla
+clr01 equ *
+ ldb- x+ get integer address
+ bz clrex 0 is end
+ sta- b+ clear word
+ sta- b clear word
+ jmp clr01 get next
+clrex equ *
+   cpl
+   return
+;
+;=========================
+subroutine clrlin
+;=========================
+;
+direct
+ lda- x+ get line number
+ sta clrl1+7
+   cpl
+;
+clrl1:
+   curp (crt, 1, zero)
+   curb (crt, 60)
+   return
+;
+;=========================
+subroutine equate
+;=========================
+;
+;       to equate two four-byte integers (for reduced memory requirements)
+;
+;       calling sequence:
+;
+;       call equate (this, that)
+;
+direct
+@p1 set *+11
+@p2 set *+16
+ lda- x+ get target integer
+ sta @p2
+ lda- x+ get source integer
+ sta @p1
+   cpl
+   @p2 = @p1
+   return
+;
+;=========================
+subroutine getecd        ;            convert empl class code into
+;=========================            ecode (0-14) & ecat (0,1,8,9)
+;
+   call equate (ecat, 0)
+   call equate (sumnum, eclass)
+gete1:
+   if (sumnum .lt. 100) go to getex
+   decr sumnum, 100
+   incr ecat
+   go to gete1
+;
+getex:
+   return
+;
+;=========================
+subroutine getfut
+;=========================
+;
+direct
+ lda- x+ get area ref code
+ sta getf0+3
+ sta getf0+8
+ lda- x+ get area name
+ sta getf1+7
+ sta getf2+19
+ lda- x+ get area flag
+ sta getf2+8
+ lda- x+ get area futa integer
+ sta getf2+30
+ sta getf2+35
+ sta getf3+3
+ sta/ getf3+18
+ lda- x+ get area meals/reporting option flag
+ sta/ getf5+9
+ lda- x+ get tips reporting option
+ sta/ getf6+9
+   cpl
+;
+getf0:
+   call bltrun (a01ref)
+   ifstring (a01ref .eq. null) go to getfex
+   go to (getf2) on prtall
+   call clrlin (15)
+;
+getf1:
+   'msgbuf' = 'm11 + a01nam + yn'
+   call ynget (msgbuf)
+   if (status .eq. 0) go to getfex
+;
+getf2:
+   a01flg = 1
+   'msgbuf' = 'm13 + m14 + a01nam'
+   call cget (msgbuf, f05, a01fut)
+   call absval (a01fut)
+;
+getf3:
+   if (a01fut .ne. 0) go to getf4
+   a01fut = i8nine
+;
+getf4:
+   if (mltpop .eq. 0) go to getf7
+   'msgbuf' = 'm16 + m22'
+;
+getf5:
+   call ynget (msgbuf)
+direct
+ ldb/ status+2
+ stb/ a01mop
+   cpl
+;
+   'msgbuf' = 'm17 + m22'
+;
+getf6:
+   call ynget (msgbuf)
+direct
+ lda/ status+2
+ sta/ a01top
+   cpl
+;
+   call clrlin (18)
+   call clrlin (17)
+;
+getf7:
+   call clrlin (16)
+;
+getfex:
+   return
+;
+;=========================
+subroutine header
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string as a report header with date and page.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call header (string, fmtx); set the format
+;       write (prt, fmtx) date,string,pagemg,pageno;   write the centered string
+;
+;   where: format fmtx:x100,c100,c100,c100,n100;   values x,c,n are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb= 1 test for odd string length
+ nab
+ bnz *+3 skip if odd length
+ dca
+ ina
+ sta= *-* save even char count
+@p2 set *-2
+ ldb= 96 get header width
+ sub b,a subtract string width
+ sra divide remainder by 2
+ ldb- x+ get address of format statement
+ inr b
+ xfr b,y
+ ldb= 10 set leading space count in 'x' spec
+ stb- y+
+ inr y incr index to first 'c' spec
+ ldb= 8 get width of first 'c' spec (date message)
+ aab add half-header width
+ stb- y+ set count in first 'c' spec
+ inr y incr index to second 'c' spec
+ ldb @p2 get actual string count
+ aab add half-header length
+ stb- y+ set count in second 'c' spec
+ inr y incr index to third 'c' spec (page message)
+ ldb= 4 force char count for page
+ stb- y+
+ inr y incr index to 'n' spec (page number)
+ stb- y+ force count for page number
+   cpl
+   return
+;
+;=========================
+subroutine lskip
+;=========================
+;
+   call lfeed (prt, 1)
+   return
+;
+;=========================
+subroutine subhdr
+;=========================
+;
+   write (prt, f90) eject;               and write new page head
+   page = page + 1
+   call lskip
+   call lskip
+   write (prt, f99) datebf, firm, pagemg, page
+   write (prt, f98) null, headmg
+   write (prt, f97) m21, pedbuf
+   call lskip
+;
+   return
+;
+;==============================================================================
+;            f o r m a t s ,  m e s s a g e s ,  &  s t o r a g e
+;==============================================================================
+;
+define n:'n', q:'q', y:'y'
+;
+define ficerr:'*****   excess fica   *****'
+define headmg:'federal earnings report'
+define noprepa:'cannot be prepared due to'
+define noprepb:'fica error(s)'
+define pagemg:'page'
+define pcnt:'%'
+define qequ:'q = '
+define qtdmsg:'quarter-to-date'
+define star:'*'
+define termsg:'* = terminated'
+define totmsg:'totals '
+define xrv5@7:'xrv5@7';               non-federal overlay module name
+define xrv5@8:'xrv5@8';               single-state overlay module name
+define yequ:'y = '
+define yn:' (y/n)'
+define ytdmsg:'year-to-date'
+;
+define m001:'enter password'
+define m002:'***   unauthorized access attempt   ***'
+define m003:'';                       m003 contains a "control-g" bell char
+;
+define m01:'enter option:  1  federal earnings report'
+define m02:'2  non-federal earnings report'
+define m03:'3  federal and non-federal reports'
+define m09:'9  end program'
+define m10:'invalid - enter option'
+;
+define m11:'do you wish to print '
+define m12:'all non-federal areas?'
+define m13:'enter maximum taxable '
+define m14:'wage for '
+define m15:'state wage'
+define m16:'are meals'
+define m17:'are tips'
+define m19:'ready to print?  (y/n)'
+;
+define m21:'including checks paid '
+define m22:' to be reported as taxable income? (y/n)'
+;
+define m60:'do other, meals & shortfall contain benefits'
+define m101:'firm    :'
+define m102:'address :'
+define m103:'cit sta :'
+;
+define m201:'e m p l o y e e'
+define m202:'      gross   meals    total  plu'
+define m203:'s to     total  fica grs  tips as'
+define m204:'    total    fica  ss tax     fwt'
+define m206:'                       wages  net'
+define m207:'          comp  medc grs    wages'
+define m208:'     tips    tips  medtax'
+;
+define m211:'note: meals are '
+define m212:'not '
+define m213:'reported as taxable income'
+define m214:'maximum fica-taxable wage is '
+define m214a:'medicare    -taxable wage is '
+;
+define m300:'   941 worksheet'
+define m301:   ' 1.  number of active employees'
+define m302:   ' 2.  total wages and tips subject to withholding, plus other -
+compensation'
+define m303:   ' 3.  total income tax withheld from wages, tips, annuities, -
+gambling,etc.'
+define m304:   ' 4.  adjustment of withheld income tax for preceeding quarters -
+of calendar year'
+define m305:   ' 5.  adjusted total of income tax withheld'
+define m306a:  '6a.  taxable fica wages paid'
+define m306b:  ' multiplied by'
+define m306c: '6b.  taxable medicare paid'
+define m307a:  '7a.  taxable tips reported'
+;define m307b:  '7b.  tips deemed to be wages';pl0854;pl1006
+define m308:   ' 8.  total fica taxes   (line 6 plus line 7a plus line 7b)'
+define m309:   ' 9.  adjustment of fica taxes'
+define m310:   '10.  adjusted total of fica taxes'
+define m311:   '11.  total taxes        (line 5  plus  line 10)'
+define m312:   '12.  advance earned income credit (eic) payments'
+define m313:   '13.  net taxes          (line 11 minus line 12)'
+define m314:  '7b.  tips deemed to be wages'          ;...pl0854;pl1006
+;
+define m9100:'***   non-federal report module not found'
+define m9600:'fica error(s) - please examine printout'
+define m9700:'***   invalid tax file'
+define m9800:'***   invalid master file'
+define m9900:'end of program'
+;
+define mask01:' $###,###.##'
+;
+format f01:c10, c30
+format f02: x15, c60
+format f03: x56, c30
+format f05: n10.2
+format f06: c33
+format f07: x6, c27, c4, c26, c50
+format f08: x6, c27, c4, c32, c50
+format f09: x44, c26, n-4, c20
+format f10: n10
+format f13:n6,c2,c25,c1,n10.2,n8.2,n9.2,n9.2,n10.2,n10.2,n9.2,n9.2,-
+n8.2 n8.2 n8.2
+format f13a:x80 n10.2 x26 n8.2 ; new 1991 for qtd medgross and qtd medfica..clvii
+format f14:c33,c1,n10.2,n8.2,n9.2,n9.2,n10.2,n10.2,n9.2,n9.2,n8.2,n8.2,n8.2
+format f15: x8,c7,c15,n22.2,n18.2,n20.2,n18.2,n16.2
+format f15a: x70 n20.2 x18 n16.2
+format f16: n44.2,n17.2,n19.2,n19.2,n17.2,n16.2
+;
+format f20: x10, c80, n12
+format f21: x10, c80, n15.2
+format f22: x10, c39, n12.2, c14, n8.3, c1, n21.2
+;
+format f97: x51, c22, c8
+format f98: x100, c100, c100, c100, n100
+format f99: x100, c100, c100, c100, n100
+;
+;
+;                  quarter - to - date
+;
+set qgross: 0                          ;gross pay
+set qgmed: 0  ; medical social security gross pay
+set qmeals: 0                          ;meals
+set qwage:  0                          ;wages received
+set qpl2nt: 0                          ;plus to net
+set qcomp:  0                          ;total compensation
+set qfwage: 0                          ;(fica) taxable wages received
+set qfmed: 0                          ; ficaa taxable at 1.45% of 125000.
+set qtips:  0                          ;tips reported
+set qftips: 0                          ;(fica) taxable tips reported
+set qfica:  0                          ;fica withheld
+set qfwt:   0                          ;fwt withheld
+set qeic:   0                          ;advance eic payments
+set qtwags: 0                          ;tips deemed as wages..pbln#584
+;
+;                  end - previous - quarter
+;
+set pwage:  0                          ;wages received
+;
+;                  year - to - date
+;
+set wage:   0                          ;wages received
+set mwage: 0   ; wages recieved (ytd) not to exceed 125000.
+set mfica: 0   ; fica for medical not to exceed 4085.10 ...clvii
+set comp:   0                          ;total compensation
+set fwage:  0                          ;(fica) taxable wages received
+set ftips:  0                          ;(fica) taxable tips
+;
+;                  run totals  -  quarter - to - date
+;
+set tqgros: 0                          ;gross pay
+set tgmed: 0       ; total gross medical pay
+set tqmeal: 0                          ;meals
+set tqwage: 0                          ;wages received
+set tqfwag: 0                          ;(fica) taxable wages received
+set tfmed:0                    ; fica taxable wages at 1.45% up to 125000.
+set tqtips: 0                          ;tips
+set tqftip: 0                          ;(fica) taxable tips
+set tqfwt:  0                          ;fwt
+set tqfica: 0                          ;fica
+set tqp2nt: 0                          ;plus to net
+set tqcomp: 0                          ;total compensation
+set tqeic:  0                          ;total eic payments
+set tqtwags: 0                         ;tips deemed to be wages...pbln584
+set tmwage:0 ; 1991
+set tmfica:0 ; 1991
+;
+;                  run totals  -  year - to - date
+;
+set tgross: 0                          ;gross pay
+set tmeals: 0                          ;meals
+set twage:  0                          ;wages received
+set tfwage: 0                          ;(fica) taxable wages received
+set ttips:  0                          ;tips
+set tftips: 0                          ;(fica) taxable tips
+set tfwt:   0                          ;fwt
+set tfica:  0                          ;fica
+set tpl2nt: 0                          ;plus to net
+set tcomp:  0                          ;total compensation
+set ttwags: 0                          ;tips deemed to be wages..pbln#584...jh
+;
+set ecat:   0
+;
+;added 1991 for new fica rates ...
+set ssfac:6200, medfac:1450, ficamax:512330, ssmed:408510 ;
+set sswage:53400 00, medwage:125 000 00 ; ss&med up to 53400.00
+;
+set lines:  0                          ;line count
+set mxfitx: 0                          ;program calculated max fica dedn
+set numemp: 0                          ;non-terminated employees
+set numfer: 0                          ;excess fica dedn count
+set page:   0
+set prtall: 0
+set sumnum: 0                          ;garden variety work integer
+set taxopt: 0                          ;tax option flag set from upsi
+set tipnum: 0                       ;work integer for tips deemed as wages..#677
+;set empficfac: 7000                ;employer's fica rate...pl0854;pl1006
+;set totficfac: 13700               ;total employer's and employee's rate
+;                                         ...pl0854;pl1006
+set i50r0k: 50000
+set i0r1m:  100000
+set i8nine: 99999999
+set prtauto: 0
+;
+string char   (1)
+string datebf (8)
+string errstr (28)
+string msgbuf (50)
+string notebf (41)
+string notebf2 (41)
+string null   (0)
+string pedbuf (8)
+string wagbuf (11)
+string wagbuf2 (11)
+;
+end
+END LIST
+.USE CRT3 FOR SYSRDR

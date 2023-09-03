@@ -1,0 +1,477 @@
+s.crt zog 1 crt3
+S.CRT ZOG 1 CRT3
+/   ENTER LIBRARY OR "NEWLINE" FOR NONE /
+.USE ZOG ON 1 FOR SYS0 SHAR
+JX13-FILE NOT FOUND
+JOB CANCELLED
+JOB STREAM BYPASSED
+.END
+.USE CRT3 FOR SYSRDR
+s.lst zog 1 crt3
+S.LST ZOG 1 CRT3
+.JOB ZOG
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(achr  )
+record achr(1)
+string char(1)
+endrec
+ 
+(gd1   )
+record gd1(10)
+set ggl1:1 000 000 000
+set ?sub1:0
+endrec
+;
+ 
+(gd2   )
+record gd2(10)
+set ggl2:1 000 000 000
+set ?sub2:0
+endrec
+;
+ 
+(gd3   )
+record gd3(10)
+set ggl3:1 000 000 000
+set ?sub3:0
+endrec
+;
+ 
+(gd4   )
+record gd4(10)
+set ggl4:1 000 000 000
+set ?sub4:0
+endrec
+;
+(gd5   )
+record gd5(10)
+set ggl5:1 000 000 000
+set ?sub5:0
+endrec
+;
+(gd6   )
+record gd6(10)
+set ggl6:1 000 000 000
+set ?sub6:0
+endrec
+;
+ 
+(new2re)
+record new2rec(12)
+set tamt2:0
+set tdate2:0
+set otamt2:0
+endrec
+;
+ 
+(newb  )
+record newb(66)
+set nggl:0,?nff:0,nvv:0
+string ndesc(30)
+set ?ncmo:0,?ncbal:0,nusef:0
+endrec
+;
+ 
+(newrec)
+record newrec(12)
+set tamt:0
+set tdate:0
+set otamt:0
+endrec
+;
+ 
+(og2sav)
+record og2savrec(40)
+set debit2:0,credit2:0,glamt2:0,bonus2:0,?id2:0
+set relx2:0
+set gldpflg2:0
+set savco2:0
+endrec
+;
+ 
+(oga9re)
+record oga9rec(131)
+set ?nf:0,nv:0
+string ndesc(30)
+set ?nos:0,?nmo:0,?non2:0,?non3:0,?non4:0,?non5:0,?non6:0,?non7:0
+set ?non8:0,?non9:0,?nona:0,?nonb:0,?nonc:0,?nbal:0,?npbal:0
+endrec
+;
+(ogagre)
+record ogagrec(50)
+set ?pro1:0,vv1:0
+string gdescx(30)
+endrec
+;
+;
+ 
+(ogahea)
+record ogahead(133)
+set    ogamon:0;  current month
+set    ogayend:0;  first year end
+;
+set   yrend2:0;  was 2nd yr end - now if security on balance (3/13/81)
+set    ye2co:0;  1st co. in second year end-no longer used as of 12/20/78
+set    post:0;   3 = keep all
+set    bsea:0;   balance sheet ending
+set    plact:0;  current earnings
+set    ret:0;    retained earnings
+set    hh:0;     number of digits in co., neg in parentheses
+set    mnum:0;   number of months into current year 1
+set    mnum2:0;  number of months into current year 2 -no lnoger used as of 12/20/78
+string coment(50);  disclaimer on financial statement
+set security:0
+set prtcom:0;   0 if print disclaimer on all financial, 1 if surpress comment on schedule
+set ac1:0,ac2:0,ac3:0,ac4:0,ac5:0,ac6:0,ac7:0;   accounts where no details will print on g/l
+endrec
+;
+ 
+(ogarec)
+record ogarec(133)
+set    ?ff:0;   usef,f1,f2  f1=blank or print $ sign, f2=overlining
+set    vv:0;    type,sheduled, column,total level
+string gname(30); account name
+set    ?pos:0;   current non posted details
+set    ?cmo:0;    current posted amounts
+set    ?mon2:0;  last ?month
+set    ?mon3:0
+set    ?mon4:0
+set    ?mon5:0
+set    ?mon6:0
+set    ?mon7:0
+set    ?mon8:0
+set    ?mon9:0
+set    ?mona:0
+set    ?monb:0
+set    ?monc:0
+set    ?cbal:0;   current posted balance
+set  ?pbal:0;   previous to 15 months of display
+endrec
+ 
+(ogbrec)
+record ogbrec(8)
+set lid:0
+set reloga:0
+endrec
+;
+;
+ 
+(ogc2he)
+record ogc2head(12)
+set acct4:0
+set acct5:0
+set acct6:0
+endrec
+;
+ 
+(ogc2re)
+record ogc2rec(12)
+set ?budgie:0
+set ?actual:0
+endrec
+;
+ 
+(ogc3he)
+record ogc3head(12)
+set acct7:0
+set acct8:0
+set acct9:0
+endrec
+;
+ 
+(ogc3re)
+record ogc3rec(12)
+set ?b3:0,?a3:0
+endrec
+;
+(ogc4he)
+record ogc4head(12)
+set acct10:0
+set acct11:0
+set acct12:0
+endrec
+;
+(ogc4re)
+record ogc4rec(12)
+set ?b4:0,?a4:0
+endrec
+;
+(ogc5re)
+record ogc5rec(12)
+set ?b5:0,?a5:0
+endrec
+;
+(ogc6re)
+record ogc6rec(12)
+set ?b6:0,?a6:0
+endrec
+;
+(ogc7re)
+record ogc7rec(12)
+set ?b7:0,?a7:0
+endrec
+;
+(ogc8re)
+record ogc8rec(12)
+set ?b8:0,?a8:0
+endrec
+;
+(ogc9re)
+record ogc9rec(12)
+set ?b2:0,?a2:0
+endrec
+;
+ 
+(ogchea)
+record ogchead(12)
+set acct1:0
+set acct2:0
+set acct3:0
+endrec
+;
+(ogcpnt)
+record ogcpnt(4)
+set cpoint:0
+endrec
+ 
+ 
+ 
+(ogchng)
+record ogchngrec(40)
+set cid:0
+string cdte(1),chngfld(30)
+endrec
+;
+ 
+(ogdrec)
+record ogdrec(25)
+set relogc:0
+string arg(20)
+endrec
+;
+;
+ 
+(ogf2re)
+record ogf2rec(125)
+set sum2:0;       0=no summary 1=to sub 2=to lse 3=to pros
+set ?pt1:0,?pt2:0,?pt3:0,?pt4:0,?pt5:0,?pt6:0,?pt7:0,?pt8:0,?pt9:0,?pt10:0
+set ?pt11:0,?pt12:0,?pt13:0,?pt14:0,?pt15:0,?pt16:0,?pt17:0,?pt18:0,?pt19:0,?pt20:0
+endrec
+;
+ 
+(ogfhea)
+record ogfhead(10)
+set lincacct:0
+endrec
+;
+ 
+(ogfrec)
+record ogfrec(125)
+set sum:0;       0=no summary 1=to sub 2=lse 3=to pros.
+set ?p1:0,?p2:0,?p3:0,?p4:0,?p5:0,?p6:0,?p7:0,?p8:0,?p9:0,?p10:0
+set ?p11:0,?p12:0,?p13:0,?p14:0,?p15:0,?p16:0,?p17:0,?p18:0,?p19:0,?p20:0
+endrec
+;
+ 
+(ogg2re)
+record ogg2rec(24)
+string lstate(20)
+endrec
+;
+ 
+(ogg3re)
+record ogg3rec(4)
+set pntr2:0
+endrec
+;
+(ogg4re)
+record ogg4rec(4)
+set pntr:0
+endrec
+;
+(oggmre)
+record oggmrec(79)
+set ggl:0,?gid:0,jrn:3
+string gdesc(30)
+set gvou:0,gvdte:0,gamt:0
+endrec
+;
+;
+(oggrec)
+record oggrec(25)
+set gl:0,?id:0,?camt:0,?yamt:0
+endrec
+;
+ 
+(oghhre)
+record oghhrec(12)
+set units:0
+string dec(0)
+define hname:'days   '
+endrec
+;
+ 
+(oghrec)
+record oghrec(4)
+set number:0
+endrec
+;
+ 
+(ogirec)
+record ogirec(30)
+string idesc(30)
+endrec
+;
+ 
+(ogj2re)
+record ogj2rec(50)
+set npntr:0
+set acct1:0,acct2:0,acct3:0,acct4:0,acct5:0,acct6:0,acct7:0,acct8:0,acct9:0,acct10:0
+string cont(1)
+endrec
+;
+ 
+(ogjrec)
+record ogjrec(50)
+set npntr:0,j1:0,j2:0,j3:0,j4:0,j5:0,j6:0,j7:0,j8:0,j9:0,j10:0
+string cont(1)
+endrec
+;
+ 
+(ogkrec)
+record ogkrec(6)
+set ?amount:0
+endrec
+;
+ 
+(oglrec)
+record oglrec(10)
+set listacct:0,relogk:0
+endrec
+;
+ 
+(ogmrec)
+record ogmrec(79)
+set ogmgl:0,?ogmgid:0,ogmjrn:0
+string ogmdesc(30)
+set ogmvou:0
+set ogmdate:0
+set ogmamt:0
+set ogmjdte:0
+endrec
+ 
+(ogmnre)
+record ogmnewrec(79)
+set nogmgl:0,?nogmgid:0,nogmjrn:0
+string nogmdesc(30)
+set nogmvou:0
+set nogmdate:0
+set nogmamt:0
+set nogmjdte:0
+endrec
+ 
+;
+ 
+(ogqrec)
+record ogqrec(64)
+set ogqgl:0
+set ?ogqgid:0
+set ogqjrn:0
+string ogqdesc(30)
+set ogqvou:0
+set ogqdate:0
+set ogqamt:0
+set ogqjdte:0
+endrec
+;
+ 
+(ogrrec)
+record ogrrec(64)
+set wgl:0
+set ?wid:0
+set wjrn:0
+string wdesc(30)
+set wvou:0
+set wvdte:0
+set ?wamt:0
+set wdist:0
+endrec
+;
+(ogsrec)
+record ogsrec(64)
+set nggl:0,?nid:0,njrn:0
+string ndesc(30)
+set nvou:0,nvdte:0,?namt:0,ndist:0
+endrec
+ 
+ 
+(ogsavr)
+record ogsavrec(40)
+ set debit:0
+ set credit:0
+ set glamt:0;       transaction amount
+ set bonus:0
+ set ?id:0
+ set relx:0;      relkey for depreciation master (oua)
+ set gldpflg:0
+ set savco:0
+endrec
+;
+ 
+(passco)
+record passcont(308)
+integer a1,a2,a3,a4,a5
+string na1(30),na2(30),na3(30),na4(30),na5(30)
+integer p1,p2,p3,p4,p5,nco
+string sum(1),aopt(1),popt(1),rdate(30)
+integer ?p1,?p2,?p3,?p4,?p5
+string spopt(1)
+integer leasing,spstate
+string sttopt(1)
+string mssname(30)
+endrec
+;
+ 
+(pldet )
+record pldet(76);   profit/loss detail  from audit
+set pogmgl:0
+set ?pogmgid:0
+set pogmjrn:0
+string pogmdesc(30)
+set pogmvou:0
+set pgdte:0
+set plamt:0
+set xcdate:0
+endrec
+;
+ 
+(pro2he)
+record pro2head(12)
+string supdte(1)
+set supnum:0
+set ?supamt:0
+endrec
+;
+ 
+(prohea)
+record prohead(12)
+string spudte(1),afedte(1),compdte(1)
+set ?afeamt:0
+endrec
+;
+ 
+(wrec  )
+ 
+record wrec(65)
+set wid:0;  account
+set fx:0;  type
+string wdesc(30);  account name
+set opt:0
+set ?camt:0
+set ?bamt:0
+set ?wamt:0
+endrec
+ 
+END LIST
+.USE CRT3 FOR SYSRDR

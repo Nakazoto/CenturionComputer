@@ -1,0 +1,1241 @@
+s.lst zob2 1 crt3
+S.LST ZOB2 1 CRT3
+.JOB ZOB2
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(cfilre)
+record cfilrec(29)
+set ?ovend:0;    vendee number and invoive number
+set ?odid:0;     property
+set odacct:0;    co/maj/min
+set ?ovou:0;     voucher/seq
+set rel:0;       address of record in oj0q or in ob0o (inp)
+string otype(1)
+string odist(1)
+endrec
+ 
+(disb  )
+record disb(24)
+string ldname(20)
+string ddflg(1)
+endrec
+ 
+ 
+(ifilre)
+record ifilrec(4)
+set bilamt:0
+endrec
+;
+(ifil2r)
+record ifilrec(8);   oi910
+set partnum:0
+set rel2x:0
+endrec
+ 
+ 
+(invrec)
+record invrec(12)
+set invamt:0
+set invdte:0
+set paymt:0
+endrec
+;
+ 
+(lbill )
+record lbill(55)
+set l1:0,l2:0,l3:0,l4:0,l5:0,l6:0,l7:0,l8:0
+set l9:0,l10:0,l11:0,l12:0,l13:0;              lease billings
+endrec
+(lserec)
+record lserec(30)
+string lsename(30)
+endrec
+(next  )
+record next(79);   obdrecord this is the next record in the distribution chain
+set ?fppro:0
+set fpven:0
+set fpwi1:0
+set fpwi2:0
+set fpwi3:0
+set fpwi4:0
+set fpwi5:0
+set fpwi6:0
+set fpwi7:0
+set fpwi8:0
+set fpwi9:0
+set fpntr:0
+set fbpntr:0
+endrec     ;        next vendee (this is so that you can insert of delete a vendee within the group
+;
+ 
+(obahea)
+ 
+record obahead(55)
+string bildes(30);   billing desc for invoice
+set  a1:0;    if = 0, use production bbl & mcf in cost report, if = 1 use sales bbl & mcf
+set a2:0;     if = 1 use lease pointer for billings, if = 0 use prospects (1 means there arent any prospects)
+set a3:0;  temp suspense amount
+set a4:0; oiptra date
+set a5:0;   oicost : gas factor 10.xxxxxxx
+set a6:0;      income split current date (mmyy)
+endrec
+ 
+;
+(obamai)
+record obamain(55)
+string mmname(30)
+set mmcnt:0,mmdistat:0,mmact:0,mmbcp:0,mmptb:0,mmpti:0
+endrec
+ 
+(obapro)
+record obapro(30)
+string prosname(30)
+endrec
+ 
+;
+ 
+(obarec)
+record obarec(55)
+string mname(30)
+set mcnt:0,mdistat:0,mact:0, mbcp:0, ptb:0,pti:0
+endrec
+ 
+ 
+(obbbre)
+record obbbrec(55);    list for alpha sort
+set ?obbid:0,reloba:0,cnty:0
+string name(30)
+set ?ll:0
+endrec
+ 
+(obbrec)
+record obbrec(16)
+set ?obbid:0
+set reloba:0
+set ?ll:0
+endrec
+ 
+ 
+ 
+(obchng)
+ 
+record obcrec(40)
+set ?cid:0
+string cdte(1);  word date
+string chngfld(32)
+endrec
+ 
+ 
+ 
+(obdmdr)
+record obdmdrec(10)
+set ?lse:0
+set code:0
+endrec
+ 
+(obdrec)
+ 
+record obdrec(79)
+set    ?ppro:0;          prospect
+set    pven:0;          vendee number
+set    pwi1:0;          working interest dist one
+set    pwi2:0;                                two
+set    pwi3:0;
+set    pwi4:0;
+set    pwi5:0;
+set    pwi6:0;
+set    pwi7:0
+set    pwi8:0;
+set    pwi9:0;
+set   pntr:0;           pointer to next vendee for this prospect
+set  bpntr:0;            backward pointer points to previous vendee
+endrec
+ 
+ 
+(oberec)
+ 
+record oberec(40)
+string lcnty(20)
+string cdflg(1); if cdflg=d it is deleted
+endrec
+ 
+ 
+(obfrec)
+record obfrec(10)
+set cntnum:0
+set relobe:0
+endrec
+ 
+ 
+(obg2re)
+ 
+record obg2rec(40)
+string sname(20);  state/district names
+endrec
+(obgrec)
+ 
+record obgrec(40)
+string lstate(20)
+string sdflg(1);  if sdflg=d it is deleted
+endrec
+ 
+ 
+(obhrec)
+record obhrec(8)
+set lsta:0;    state & district #
+set relobg:0
+endrec
+ 
+ 
+(obirec)
+ 
+record obirec(49);  billable extra comments on other desc. for stage of well development
+string ocdesc(48);  5 abrev., 15 comment for invoice, extra comment for dist. sheets.;
+endrec;           if this is the second line of desc 40 is for comment
+;
+set  ?okey:0; this is the index for ofil
+;
+;
+ 
+ 
+ 
+(obkrec)
+ 
+record obkrec(53)
+set ?obkid:0
+set obkcnt:0
+set obksta:0
+set obkdist:0
+string obkname(30)
+set relobak:0;   this will be relative key for master
+endrec
+ 
+ 
+(obm2re)
+record obm2rec(76)
+set ?nid:0;      new to be posted file pro/lse/wel
+set reco:20
+set ndist:0;     distribution
+set nvou:0;      new voucher
+set nvdte:0
+set ngl:0;       maj/min
+set nseq:0;      seq. num.
+set ntot:0;      item amount
+set nap:0;       accounts payable vendor number
+string ndesc(30);description
+endrec
+ 
+;
+ 
+(obmrec)
+ 
+record obmrec(76)
+set ?bid:0,obmrecnum:0,bdist:0,bvou:0,bvdte:0,bgl:0,bseq:0,btot:0,bap:0
+string bdesc(30)
+endrec
+ 
+;
+ 
+(oborec)
+record oborec(16)
+set obovend:0
+set obodpc:0
+set oboamt:0;  vendee amount
+set oborelb:0;    address in oboq (renamed oboz at this point)
+endrec
+ 
+ 
+ 
+ 
+(obq2re)
+record obq2rec(76)
+set ?nid:0;      new to be posted file pro/lse/wel
+set reco:20
+set ndist:0;     distribution
+set nvou:0;      new voucher
+set nvdte:0
+set ngl:0;       maj/min
+set nseq:0;      seq. num.
+set ntot:0;      item amount
+set nap:0;       accounts payable vendor
+string ndesc(30);description
+endrec
+(obqrec)
+ 
+record obqrec(77)
+set ?bid:0
+set brec:0
+set bdist:0
+set bvou:0
+set bvdte:0
+set bgl:0
+set bseq:0
+set btot:0
+set bap:0
+string bdesc(30)
+endrec
+ 
+ 
+(obsrec)
+record obsrec(96);   statement detail
+set obscode:0
+set obspart:0;  partner #
+set obsref:0;   invoice/voucher #
+set ?obsid:0;   property #
+string obsdesc(30);   normally the property name (desc printed on statement)
+set obsamt:0;   invoice/payment amount
+string obsname(30);  normally partner name
+set obswor:0;  interest
+set obsdate:0;  invoice/paymetn date
+set obsco:0;    company number
+endrec
+ 
+ 
+(obstre)
+record obstrec(96)
+set c2:0
+set lve2:0
+set wtr2:0
+set ?wid2:0
+string date(30)
+set pamt2:0
+string ititle(30)
+set wtw2:0
+set xxdate:0
+set xco:0
+endrec
+;
+ 
+(oburec)
+ 
+record oburec(96)
+set pcode:0;    if this is a -1 then it is late charge amount
+set dpart:0,wtref:0,?wid:0
+string wname(30)
+set pyamt:0
+string wtname(30)
+set wtwor:0,wdate:0,tco:0
+endrec
+;
+ 
+(obvrec)
+ 
+record obvrec(16)
+set obvpart:0;   same as partner
+set obvdate:0;      same as date
+set obvinv:0;    if invnum=0 then this=0, otherwise this=1
+set obvamt:0;    same as amount
+endrec
+;
+ 
+ 
+ 
+(ofprec)
+ 
+record ofprec(40);    reserves
+set ?ofpid:0;  property
+set ofpqty:0;  quantity
+set ofpdate:0;  production date
+set ?add:0;  additions
+set ?retire:0;  retirements
+endrec
+ 
+(oiahea)
+record oiahead(30)
+set df1:10195,df2:010422,df3:010649,df4:10924
+set dsever:0,dgsever:0
+endrec
+;
+ 
+(oiarec)
+ 
+record oiarec(30)
+set base:0
+set sever:0
+set tier:0
+set nwi:0;    w.i. percent for figuring lse p&l gross to w.i. partners
+set rgroup:0;   report group number
+set fmonyr:0;   first month of the year
+set gsever:0
+string frstpur(1);   1 if 1st purchaser on this prop, else blank
+endrec
+ 
+(oiaare)
+ 
+record oiaarec(130);    gas allocation (baruch)
+set flow1:0;  last 5 days of prev month
+set flow2:0;  current month flow
+set btu1:0,btu2:0;  btu
+set priceset:0;  =xyz where z=1,2,or 3 of priceing sets, y=1,2,3 of market charge & x=0/1 where 1 syas calculate on z & price 1
+;    compression is infront of x
+set cmmbtu1:0,cmmbtu2:0;  calculated btu
+set aloc1:0,aloc2:0;   allocation by computer of last 5 days & current
+set grval1:0,grval2:0;   price * well gross value
+set mmbtu1:0,mmbtu2:0;   less market charge (mmbtu)
+set cvol1:0,cvol2:0;   compressed volumn
+set cval1:0,cval2:0;  compression charge
+set perc:0;  less state & perc & type of expense
+set expvol:0;  percent x (alc1+aloc2)- amt of volumn that is exempt
+set expval:0;  percent * (price1+price2) - vlaue of the exempt
+set valbt:0;  value before taxes (price-mktch-comch:expval)
+set ptax:0; state taxes (valbt * tax% from oimast)
+set welnet:0;  expval+valbt-ptax
+set dist:0;  ind mkt, other mkt, ptax, dist
+set btu11:0,btu22:0
+set alt1:0,alt2:0
+set net1:0,indmkt:0;  indian marketing factor for the group
+set welnet1:0
+endrec
+ 
+(oiaa2r)
+record oiaa2rec(130);    group name & other info
+string grname(30)
+set tprc21:0,tprc22:0
+set comp21:0,comp22:0
+set comp31:0,comp32:0
+; perc & dist are the only things entered in master service
+set total12:0,total22:0,total13:0,total23:0
+set totbtu12:0,totbtu22:0,totbtu13:0,totbtu23:0
+set tprc13:0,tprc23:0,tprc14:0,tprc24:0
+set total14:0,total24:0,totbtu14:0,totbtu24:0
+set price41:0 , price42:0
+endrec
+ 
+(oiaa3r)
+record oiaa3rec(130)
+set month1:0,month2:0
+set price1:0,price2:0
+set price21:0,price22:0
+set price31:0,price32:0
+set mktch1:0,mktch2:0;  marketing charge
+set mktch21:0,mktch22:0
+set mktch31:0,mktch32:0
+set comp1:0,comp2:0
+set comch1:0,comch2:0;  compression chrg
+set comch21:0,comch22:0
+set comch31:0,comch32:0
+set total1:0,total2:0
+set ctot1:0,ctot2:0
+set totbtu1:0,totbtu2:0;  used for rounding
+set tprc1:0,tprc2:0;   unsed for rounding
+set cbtu1:0,cbtu2:0
+endrec
+ 
+(oiaa4r)
+record oiaa4rec(130)
+set ctot12:0,ctot22:0,ctot13:0,ctot23:0
+set cbtu12:0,cbtu22:0,cbtu13:0,cbtu23:0
+set ctot14:0,ctot24:0,cbtu14:0,cbtu24:0
+set tprcall1:0,tprcall2:0;   if all flow was prices set 1 it would = this amount
+ 
+endrec
+ 
+(oiccre)
+ 
+record oiccrec(21)
+set reloiaa:0
+string oiccarg(16);  gr+?lid
+endrec
+ 
+ 
+ 
+(oibrec)
+ 
+record oibrec(10)
+set ?oibid:0
+set reloia:0
+endrec
+ 
+;
+ 
+(oichng)
+record oichngrec(50)
+set ?cid:0
+string cdte(1)
+string chnfld(40)
+endrec
+ 
+(oidrec)
+ 
+record oidrec(98)
+set ?plse:0
+set iven:0
+set ipntr:0
+set ibpntr:0
+set p1a:0
+set p1b:0
+set p2a:0
+set p2b:0
+set p3a:0
+set p3b:0
+set p4a:0
+set p4b:0
+set p5a:0
+set p5b:0
+set p6a:0
+set p6b:0
+set p7a:0
+set p7b:0
+set p8a:0
+set p8b:0
+set p9a:0
+set p9b:0
+set suscd:0
+set wptcol:0
+endrec
+(oidpre)
+ 
+record oidprev(98)
+set ?prlse:0
+set ppven:0
+set ppntr:0
+set pbpntr:0
+set pp1a:0
+set pp1b:0
+set pp2a:0
+set pp2b:0
+set pp3a:0
+set pp3b:0
+set pp4a:0
+set pp4b:0
+set pp5a:0
+set pp5b:0
+set pp6a:0
+set pp6b:0
+set pp7a:0
+set pp7b:0
+set pp8a:0
+set pp8b:0
+set pp9a:0
+set pp9b:0
+set psuscd:0
+set pwptcol:0
+endrec
+(oidnre)
+ 
+record oidnrec(98)
+set ?nplse:0
+set nven:0
+set npntr:0
+set nbpntr:0
+set np1a:0
+set np1b:0
+set np2a:0
+set np2b:0
+set np3a:0
+set np3b:0
+set np4a:0
+set np4b:0
+set np5a:0
+set np5b:0
+set np6a:0
+set np6b:0
+set np7a:0
+set np7b:0
+set np8a:0
+set np8b:0
+set np9a:0
+set np9b:0
+set nsuscd:0
+set nwptcol:0
+endrec
+ 
+(oidmd )
+record oidmd(165)
+set paycd:0;  0=all properties except spec., 1=only specif. properties
+set ?a1:0,?a2:0,?a3:0,?a4:0,?a5:0,?a6:0,?a7:0,?a8:0,?a9:0,?a10:0
+set ?a11:0,?a12:0,?a13:0,?a14:0,?a15:0,?a16:0,?a17:0,?a18:0,?a19:0,?a20:0
+set coyymm:0,pdgyymm:0,oyymm:0,datepay:0;  pdate oil/gas/other; & flag on what the date mains
+endrec
+(oidmd1)
+record oidmd1(165)
+set pay1:0;  0=all properties except spec., 1=only specif. properties
+set ?aa1:0,?aa2:0,?aa3:0,?aa4:0,?aa5:0,?aa6:0,?aa7:0,?aa8:0,?aa9:0,?aa10:0
+set ?aa11:0,?aa12:0,?aa13:0,?aa14:0,?aa15:0,?aa16:0,?aa17:0,?aa18:0,?aa19:0,?aa20:0
+set co:0,paid:0
+endrec
+(oidmd2)
+record oidmd2(165)
+set pay2:0;  0=all properties except spec., 1=only specif. properties
+set ?b1:0,?b2:0,?b3:0,?b4:0,?b5:0,?b6:0,?b7:0,?b8:0,?b9:0,?b10:0
+set ?b11:0,?b12:0,?b13:0,?b14:0,?b15:0,?b16:0,?b17:0,?b18:0,?b19:0,?b20:0
+endrec
+(oidmd3)
+record oidmd3(165)
+set pay3:0;  0=all properties except spec., 1=only specif. properties
+set ?c1:0,?c2:0,?c3:0,?c4:0,?c5:0,?c6:0,?c7:0,?c8:0,?c9:0,?c10:0
+set ?c11:0,?c12:0,?c13:0,?c14:0,?c15:0,?c16:0,?c17:0,?c18:0,?c19:0,?c20:0
+endrec
+ 
+ 
+(oidmd4)
+record oidmd4(165)
+set pay4:0;  0=all properties except spec., 1=only specif. properties
+set ?d1:0,?d2:0,?d3:0,?d4:0,?d5:0,?d6:0,?d7:0,?d8:0,?d9:0,?d10:0
+set ?d11:0,?d12:0,?d13:0,?d14:0,?d15:0,?d16:0,?d17:0,?d18:0,?d19:0,?d20:0
+endrec
+ 
+ 
+(oiirec)
+ 
+record oiirec(79)
+set ?oiid:0
+string oiidesc(69)
+endrec
+ 
+(oijrec)
+ 
+record oijrec(6)
+set ?oijfield:0;   argument for seeking records in oba
+endrec
+ 
+(oij2re)
+ 
+record oij2rec(6)
+string oijog(3);   specify type - oil/gas etc.
+endrec
+ 
+(oijjre)
+ 
+record oijjrec(16)
+string oijjplse(15)
+endrec
+ 
+ 
+(oikrec)
+record oikrec(36)
+string oiktag(15);  15 digit ascii arg for oij
+set reloij:0
+set ?oikfield:0;   this is  copied into the list file sometimes also
+endrec
+ 
+(oilrec)
+ 
+record oilrec(31)
+string purnam(30)
+endrec
+ 
+ 
+(oigrec)
+ 
+record oigrec(350);   oig & op-a are the same record layout
+set ?qty:0; mcf sold (gas)
+set tax:0; prod. tax on gas
+set misc:0
+set   ?net:0;net gas sales (money amount)
+set   nwpt:0;net w.i. wpt
+set wpt:0;
+set  ?yqty:0; ytd  mcf (gas)/ oil bbl
+set  ytax:0
+set ymisc:0
+set  ?ynet:0
+set  ynwpt:0
+set  ywpt:0
+set mqty:0,mqty2:0,mqty3:0,mqty4:0,mqty5:0,mqty6:0,mqty7:0,mqty8:0,mqty9:0,mqty10:0,mqty11:0,mqty12:0
+set mtax:0,mtax2:0,mtax3:0,mtax4:0,mtax5:0,mtax6:0,mtax7:0,mtax8:0,mtax9:0,mtax10:0,mtax11:0,mtax12:0
+set mmisc:0,mmisc2:0,mmisc3:0,mmisc4:0,mmisc5:0,mmisc6:0,mmisc7:0,mmisc8:0,mmisc9:0,mmisc10:0,mmisc11:0,mmisc12:0
+set mnet:0,mnet2:0,mnet3:0,mnet4:0,mnet5:0,mnet6:0,mnet7:0,mnet8:0,mnet9:0,mnet10:0,mnet11:0,mnet12:0
+set mnwpt:0,mnwpt2:0,mnwpt3:0,mnwpt4:0,mnwpt5:0,mnwpt6:0,mnwpt7:0,mnwpt8:0,mnwpt9:0,mnwpt10:0,mnwpt11:0,mnwpt12:0
+set mwpt:0,mwpt2:0,mwpt3:0,mwpt4:0,mwpt5:0,mwpt6:0,mwpt7:0,mwpt8:0,mwpt9:0,mwpt10:0,mwpt11:0,mwpt12:0
+setclrmon:0;   month that this record will be cleared,sever tax*100+month ptax=.123456 or 12.3456%
+endrec
+ 
+(oig1re)
+ 
+record oig1rec(10)
+set ?iid:0
+endrec
+ 
+(oignre)
+ 
+record oignrec(350);   oig & op-a are the same record layout
+set ?nqty:0; mcf sold (gas)
+set ntax:0; prod. tax on gas
+set nmisc:0
+set   ?nnet:0;net gas sales (money amount)
+set   nnwpt:0;net w.i. wpt
+set niwpt:0;
+set  ?nyqty:0; ytd  mcf (gas)/ oil bbl
+set  nytax:0
+set nymisc:0
+set  ?nynet:0
+set  nynwpt:0
+set  nywpt:0
+;    rest of the record is not used but recsiz has to be there because we write it back
+set nmqty:0,nmqty2:0,nmqty3:0,nmqty4:0,nmqty5:0,nmqty6:0,nmqty7:0,nmqty8:0,nmqty9:0,nmqty10:0,nmqty11:0,nmqty12:0
+set nmtax:0,nmtax2:0,nmtax3:0,nmtax4:0,nmtax5:0,nmtax6:0,nmtax7:0,nmtax8:0,nmtax9:0,nmtax10:0,nmtax11:0,nmtax12:0
+set nmmisc:0,nmmisc2:0,nmmisc3:0,nmmisc4:0,nmmisc5:0,nmmisc6:0,nmmisc7:0,nmmisc8:0,nmmisc9:0,nmmisc10:0,nmmisc11:0,nmmisc12:0
+set nmnet:0,nmnet2:0,nmnet3:0,nmnet4:0,nmnet5:0,nmnet6:0,nmnet7:0,nmnet8:0,nmnet9:0,nmnet10:0,nmnet11:0,nmnet12:0
+set nmnwpt:0,nmnwpt2:0,nmnwpt3:0,nmnwpt4:0,nmnwpt5:0,nmnwpt6:0,nmnwpt7:0,nmnwpt8:0,nmnwpt9:0,nmnwpt10:0,nmnwpt11:0,nmnwpt12:0
+set nmwpt:0,nmwpt2:0,nmwpt3:0,nmwpt4:0,nmwpt5:0,nmwpt6:0,nmwpt7:0,nmwpt8:0,nmwpt9:0,nmwpt10:0,nmwpt11:0,nmwpt12:0
+endrec
+ 
+(oigtot)
+record oigtotal(350)
+ 
+set ?tqty:0; mcf sold (gas)
+set ttax:0; prod. tax on gas
+set tmisc:0
+set   ?tnet:0;net gas sales (money amount)
+set   tnwpt:0;net w.i. wpt
+set twpt:0;
+set  ?tyqty:0; ytd  mcf (gas)/ oil bbl
+set  tytax:0
+set tymisc:0
+set  ?tynet:0
+set  tynwpt:0
+set  tywpt:0
+set tmqty:0,tmq2:0,tmq3:0,tmq4:0,tmq5:0,tmq6:0,tmq7:0,tmq8:0,tmq9:0,tmq10:0,tmq11:0,tmq12:0
+set tmtax:0,tmt2:0,tmt3:0,tmt4:0,tmt5:0,tmt6:0,tmt7:0,tmt8:0,tmt9:0,tmt10:0,tmt11:0,tmt12:0
+set tmmisc:0,tmm2:0,tmm3:0,tmm4:0,tmm5:0,tmm6:0,tmm7:0,tmm8:0,tmm9:0,tmm10:0,tmm11:0,tmm12:0
+set tmnet:0,tmn2:0,tmn3:0,tmn4:0,tmn5:0,tmn6:0,tmn7:0,tmn8:0,tmn9:0,tmn10:0,tmn11:0,tmn12:0
+set tmnwpt:0,tmnw2:0,tmnw3:0,tmnw4:0,tmnw5:0,tmnw6:0,tmnw7:0,tmnw8:0,tmnw9:0,tmnw10:0,tmnw11:0,tmnw12:0
+set tmwpt:0,tmw2:0,tmw3:0,tmw4:0,tmw5:0,tmw6:0,tmw7:0,tmw8:0,tmw9:0,tmw10:0,tmw11:0,tmw12:0
+set flg:0
+endrec
+ 
+(heads )
+ 
+record oighead(350)
+define dmon:' 1';   month inwhich ytd should be cleared (default)
+define type:'                                                ';og then 48 more  char
+define codwpt:'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'; yn on wpt
+set firstmon:0,lastmon:0
+set oigcur:0;   current processing month
+define depl:'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy';  should be on depletion report (48)
+set ?variable:0,oigck:0
+endrec
+ 
+ 
+ 
+ 
+record oighead1(100);   qty description oil=bbl,gas=mcf
+string chrqty(100)
+endrec
+record oighead2(100)
+string chrqty2(100)
+endrec
+record oighead3(350);  only using 49 bytes
+define dplace:'000000000000000000000000000000000000000000000000'; # of dec places
+set congas0:0,con1:0,con2:0,con3:0,con4:0,con5:0,con6:0,con7:0,con8:0,con9:0
+set congas10:0,con11:0,con12:0,con13:0,con14:0,con15:0,con16:0,con17:0,con18:0,con19:0
+set con2gas0:0,con21:0,con22:0,con23:0,con24:0,con25:0,con26:0,con27:0,con28:0,con29:0
+set con3gas0:0,con31:0,con32:0,con33:0,con34:0,con35:0,con36:0,con37:0,con38:0,con39:0
+set con4gas0:0,con41:0,con42:0,con43:0,con44:0,con45:0,con46:0,con47:0,con48:0
+endrec
+record oighead4(100);  expanded description - 5 headers of this
+string expdesc1(100)
+endrec
+ 
+record oighead5(100); 10-19 expanded desc
+string expdesc2(100)
+endrec
+ 
+record oighead6(100); 20-29; expanded desc (enteries begin with oil=0
+string expdesc3(100)
+endrec
+ 
+record oighead7(100); 39-30; expanded desc
+string expdesc4(100)
+endrec
+ 
+record oighead8(100); 40-49; expanded desc (10 char each)
+string expdesc5(100)
+endrec
+;
+;
+ 
+(oih5re)
+ 
+record oih5rec(40)
+set h5vend:0,?h5id:0,h5ckno:0,h5net:0,h5wpt:0,h5sco:0
+string h5cdte(1);  check date (word)
+string h5pdte(1);   production date (word)
+string h5type(1), h5prod(1);  type of income/ product type
+string h5flg(1)
+endrec
+(oihrec)
+record oihrec(25)
+set hvend:0,hck:0,hamt:0,hco:0
+string hdte(1),hflg(1)
+set hwpt:0;  4/25/83 added
+endrec
+ 
+ 
+(oimmre)
+record oimmrec(98);    special for shields
+set oimmvend:0,?oimmid:0,oimmdist:0,oimmperc:0
+set dvou:0,dvdte:0,dacct:0,dbbl:0,dnetv:0,dptax:0,dmis:0,dvenet:0
+string ddesc(6)
+set dtier:0,descode:0,wptven:0;   dtier is really pros in oimmrec
+string purch(15)
+string oimmtype(1)
+set oimmnettax:0
+endrec
+ 
+(oimrec)
+record oimrec(79)
+set ?iid:0,idist:0,ivou:0,ivdte:0,igl:0,ibar:0
+set itax:0,igro:0,imis:0,inet:0
+string igas(1),icode(1),idesc(6)
+set desn:0,gwp:0
+set itier:0,idesnum:0,iwpt:0,iwpttflg:0
+string posflg(1)
+endrec
+ 
+(oim22r)
+record oim22rec(79)
+set ?i2iid:0,i2dist:0,i2vou:0,i2vdte:0,i2gl:0,i2bar:0
+set i2tax:0,i2gro:0,i2mis:0,i2net:0
+string i2gas(1),i2code(1),i2desc(6)
+set i2desn:0,igwp:0
+set i2tier:0,i2desnum:0,i2wpt:0,i2wpttflg:0
+string i2posflg(1)
+endrec
+;
+ 
+(oio2re)
+ 
+record oio2rec(4)
+set iamt:0
+endrec
+;
+ 
+(oiorec)
+ 
+record oiorec(25)
+set ivend:0,?lid:0,iamt:0,lvou:0,ivdte:0
+endrec
+ 
+(oiq2re)
+record oiq2rec (97)
+set dv:0,?d:0,dd:0,dvr:0,dvo:0,dvd:0,dac:0,dbb:0,dch:0,dia:0,dm:0,dvam:0
+string ddes(6)
+set d2t:0,d2desn:0
+set dwv:0,dwp:0,dwpt:0,dwptf:0
+set dp:0
+string ty(1)
+set og:0
+string dpos(1)
+set lck:0
+endrec
+ 
+ 
+;
+;
+ 
+(oiqrec)
+record oiqrec(97)
+set dpart:0;    partner #
+set ?did:0;     p/l/w
+set ddist:0;    0-9=wi,11-19=roy,21-29=orr,31-39=orr that is ind for wpt
+set recnu:0;    rectype or (wpt)100% barrels for the transaction
+set dvou:0;     voucher #
+set dvdte:0;    voucher date
+set dacct:0;    co/maj/min, probably lid, rid, lsp, or rsp
+set dbbl:0;      of bbls
+set dnetv:0;    value of all oil on check before taxes
+set dptax:0;    all production taxes this transaction
+set dmis:0;     all misc. expenses this transaction
+set dvenet:0;   net to partner
+string ddesc(6);  character mm  yy production date
+set dtier:0;      entered tier number
+set descode:0;    description code #
+set wptven:0;     wpt amt to partner
+set wptrat:0;     rate at which wpt was actually w/h
+set wptamt:0;     total amt of wpt w/h
+set dcode:0;       wpt col (either one or two, selected earlier)
+           ;       1-4 (rates), 12 (ind on roy and wi), 11-71 (exemptions)
+set  dperc:0;      partner's share in property (wi or roy, as appropriate)
+string oiqtype(1);    o or g
+set dgros:0;       total net value after taxes
+string dposflg(1)
+set oiqck:0;    cknumber - added to record in oi231
+endrec
+ 
+;
+(oiu2re)
+ 
+record oiu2rec(70)
+set ?pidn:0
+set mon1n:0,mon2n:0,mon3n:0,mon4n:0,mon5n:0,mon6n:0,mon7n:0,mon8n:0,mon9n:0,mon10n:0,mon11n:0,mon12n:0
+set ?ytdn:0,?itdn:0
+endrec
+(oiurec)
+ 
+record oiurec(70)
+set ?pid:0
+set mon1:0,mon2:0,mon3:0,mon4:0,mon5:0,mon6:0,mon7:0,mon8:0,mon9:0,mon10:0,mon11:0,mon12:0
+set ?ytd:0,?itd:0
+endrec
+ 
+ 
+(oivrec)
+record oivrec(30)
+string larg(19)
+set reloiu:0
+endrec
+ 
+(oiv2re)
+ 
+record oiv2rec(4)
+set arg:0
+endrec
+ 
+ 
+ 
+(oiwrec)
+ 
+record oiwrec(12)
+set xpros:0,lse:0,sub:0
+endrec
+ 
+(oiwwre)
+ 
+record oiwwrec(66)
+set  oiwwpart:0,?oiwwprop:0
+set oiwwint:0
+set oiwwmonth:0,oiwwbbl:0,oiwwlsenet:0,oiwwsevtax:0,oiwwbase:0,oiwwinfl:0,oiwwtaxrate:0,oiwwptrate:0
+string oiwwtype(2),oiwwtier(5)
+set oiwwptwh:0
+endrec
+(oisrec)
+ 
+record oisrec(30)
+string oisdesc(30)
+endrec
+(oitrec)
+record oitrec(8);  list file for ois
+set oitcode:0
+set relois:0
+endrec
+ 
+ 
+ 
+(okchd )
+record okchd(200)
+set acct1:0,acct2:0,acct3:0,acct4:0,acct5:0,acct6:0,acct7:0,acct8:0,acct9:0
+set acct10:0,acct11:0,acct12:0,acct13:0,acct14:0,acct15:0,acct16:0,acct17:0
+set acct18:0,acct19:0,acct20:0,acct21:0,acct22:0,acct23:0,acct24:0,acct25:0
+set acct26:0,acct27:0,acct28:0,acct29:0,acct30:0
+string cap(30)
+endrec
+;
+ 
+(okcrec)
+ 
+record okcrec(200)
+set amto:0,bbl:0,misco:0,ptaxo:0,wpto:0
+set amtg:0,mcf:0,miscg:0,ptaxg:0,wptg:0
+set amt1:0,amt2:0,amt3:0,amt4:0,amt5:0,amt6:0,amt7:0,amt8:0,amt9:0,amt10:0
+set amt11:0,amt12:0,amt13:0,amt14:0,amt15:0,amt16:0,amt17:0,amt18:0,amt19:0
+set amt20:0,amt21:0,amt22:0,amt23:0,amt24:0,amt25:0,amt26:0,amt27:0,amt28:0
+set amt29:0,amt30:0
+set toil:0,tbbl:0,tgas:0,tmcf:0,tperc:0
+set amtoth:0,bbloth:0,miscoth:0,ptaxoth:0,wptoth:0
+endrec
+;
+ 
+(opbrec)
+ 
+record opbrec(10)
+set ?opbid:0
+set relopa:0
+endrec
+ 
+(oparec)
+record oparec(350)
+set ?qty:0,tax:0,misc:0,?net:0,nwpt:0,wpt:0;   itd
+set ?yqty:0,ytax:0,ymisc:0,?ynet:0,ynwpt:0,ywpt:0; ytd
+set mqty:0,mqty2:0,mqty3:0,mqty4:0,mqty5:0,mqty6:0,mqty7:0,mqty8:0,mqty9:0,mqty10:0,mqty11:0,mqty12:0
+set mtax:0,mtax2:0,mtax3:0,mtax4:0,mtax5:0,mtax6:0,mtax7:0,mtax8:0,mtax9:0,mtax10:0,mtax11:0,mtax12:0
+set mmisc:0,mmisc2:0,mmisc3:0,mmisc4:0,mmisc5:0,mmisc6:0,mmisc7:0,mmisc8:0,mmisc9:0,mmisc10:0,mmisc11:0,mmisc12:0
+set mnet:0,mnet2:0,mnet3:0,mnet4:0,mnet5:0,mnet6:0,mnet7:0,mnet8:0,mnet9:0,mnet10:0,mnet11:0,mnet12:0
+set mnwpt:0,mnwpt2:0,mnwpt3:0,mnwpt4:0,mnwpt5:0,mnwpt6:0,mnwpt7:0,mnwpt8:0,mnwpt9:0,mnwpt10:0,mnwpt11:0,mnwpt12:0
+set mwpt:0,mwpt2:0,mwpt3:0,mwpt4:0,mwpt5:0,mwpt6:0,mwpt7:0,mwpt8:0,mwpt9:0,mwpt10:0,mwpt11:0,mwpt12:0
+set opflg:0
+endrec
+ 
+ 
+(opcrec)
+record opcrec(160)
+set ?opcid:0,opcstaflg:0
+set opcvm1:0,opcvm2:0,opcvm3:0,opcvm4:0,opcvm5:0,opcvm6:0,opcvm7:0,opcvm8:0,opcvm9:0,opcvma:0,opcvmb:0,opcvmc:0
+set opcsm1:0,opcsm2:0,opcsm3:0,opcsm4:0,opcsm5:0,opcsm6:0,opcsm7:0,opcsm8:0,opcsm9:0,opcsma:0,opcsmb:0,opcsmc:0
+set ?opcyvol:0,?opcysvol:0,?opcvol:0,?opcsvol:0
+string opcdays(24)
+ 
+endrec
+ 
+ 
+(opchea)
+record opchead(133)
+set opcmonth:0
+string opcwdesc(5),opcw1(5),opcw2(5),opcw3(5),opcw4(5),opcw5(5)
+string opcw6(5),opcw7(5),opcw8(5),opcw9(5),opcw10(5),opcw11(5)
+string opcw12(5),opcw13(5),opcw14(5),opcw15(5),opcw16(5),opcw17(5)
+string opcw18(5),opcw19(5)
+endrec
+ 
+(opdrec)
+ 
+record opdrec(21)
+string opdarg(16)
+set relopc:0
+endrec
+ 
+(opd1re)
+ 
+record opd1rec(56)
+string arg1(16)
+set relx:0,mstat:0
+string mname1(30)
+endrec
+ 
+(opeere)
+record opeerec(350);   op580 (well service sheets)- alias black book
+set ?opeeid:0,anum:0
+string lessor(30),rrcid(20),kbgl(20),crudep(20),gasp(20),trans(20)
+string survey(30),survey2(30),frac(20),frac2(20),acid(30)
+direct
+spud dw 0  spud date
+comp dw 0  completion date
+cdte dw 0  last change date
+gsale dw 0  initial gas sale
+cpl
+set point1:0,point2:0,point3:0,point4:0,point5:0,point6:0,point7:0
+endrec
+;
+(opgrec)
+record opgrec(50);   usedin op581 first
+set ?opgid:0,opgseq:0,opgfpntr:0
+string opgdesc(32)
+endrec
+ 
+;
+(operec)
+record operec(80);   used first in op550
+set opebm1:0,opebm2:0,opebm3:0,opebm4:0,opebm5:0,opebm6:0
+set opebm7:0,opebm8:0,opebm9:0,opebma:0,opebmb:0,opebmc:0
+set ?operes:0;  reserves
+set ?opebegres:0; beg. reserves
+endrec
+ 
+(oplhea)
+record oplhead(350)
+string desc1(40),desc2(40),desc3(40),desc4(40),desc5(40),desc6(40),desc7(40)
+endrec
+;
+;
+(opdmdr)
+record opdmdrec(80)
+string coment(80)
+endrec
+ 
+ 
+ 
+ 
+(opjrec)
+record opjrec(10)
+set ?opjid:0, opjpart:0
+endrec
+ 
+ 
+(opmrec)
+record opmrec(50)
+set ?opmid:0,opmsales:0,opmprod:0
+string opmdate(1);  2 byte word date
+set opmnumday:0
+string opmcoment(30)
+endrec
+ 
+ 
+(opscre)
+record opscrec(395);    used for totals in op repo programs (eg op511)
+set ?xpl:0,opscflg:0,xv1:0
+string xv2(43)
+set xsv1:0
+string xsv2(43)
+set ?xyvol:0,?xysvol:0,?xvol:0,?xsvol:0
+set svol1:0,svol2:0,svol3:0,svol4:0,svol5:0,svol6:0,svol7:0
+string xsvol8(19)
+set sdol1:0
+string xsdol2(43)
+set ave1:0
+string ave2(43)
+set ?ssyvol:0,?ssydol:0,?ssvol:0,?ssdol:0
+endrec
+(opsc2r)
+record opsc2rec(395);    used for totals in op repo programs (eg op511)
+set ?xpl2:0,opscflg2:0,xv12:0
+string xv22(43)
+set xsv12:0
+string xsv22(43)
+set ?xyvol2:0,?xysvol2:0,?xvol2:0,?xsvol2:0
+set svol12:0,svol22:0,svol32:0,svol42:0,svol52:0,svol62:0,svol72:0
+string xsvol82(19)
+set sdol12:0
+string xsdol22(43)
+set ave12:0
+string ave22(43)
+set ?ssyvol2:0,?ssydol2:0,?ssvol2:0,?ssdol2:0
+endrec
+(opsc3r)
+record opsc3rec(395);    used for totals in op repo programs (eg op511)
+set ?xpl3:0,opscflg3:0,xv13:0
+string xv23(43)
+set xsv13:0
+string xsv23(43)
+set ?xyvol3:0,?xysvol3:0,?xvol3:0,?xsvol3:0
+set svol13:0,svol23:0,svol33:0,svol43:0,svol53:0,svol63:0,svol73:0
+string xsvol83(19)
+set sdol13:0
+string xsdol23(43)
+set ave13:0
+string ave23(43)
+set ?ssyvol3:0,?ssydol3:0,?ssvol3:0,?ssdol3:0
+endrec
+ 
+(opsc4r)
+record opsc4rec(395);    used for totals in op repo programs (eg op511)
+set ?xpl4:0,opscflg4:0,xv14:0
+string xv24(43)
+set xsv14:0
+string xsv24(43)
+set ?xyvol4:0,?xysvol4:0,?xvol4:0,?xsvol4:0
+set svol14:0,svol24:0,svol34:0,svol44:0,svol54:0,svol64:0,svol74:0
+string xsvol84(19)
+set sdol14:0
+string xsdol24(43)
+set ave14:0
+string ave24(43)
+set ?ssyvol4:0,?ssydol4:0,?ssvol4:0,?ssdol4:0
+endrec
+ 
+ 
+(opprec)
+record opprec(30)
+string key(6)
+set fyymm:0,last:0; last=mmyy
+set yrdsk:0
+string coment(10)
+endrec
+ 
+(oppr2 )
+record oppr2(30);  used in op5@@
+string k2(6)
+set f2yymm:0,l2:0
+endrec
+ 
+ 
+ 
+(part  )
+record part(45)
+set partner:0,gpco:0,col:0
+endrec
+;
+;
+ 
+(pass2 )
+record pass2(98)
+set stdate:0;   print details prior to date requested
+endrec
+;
+;
+(passin)
+ 
+record passinfo(98)
+string sttitle(10);  statement title
+set co:0
+string rdate(20)
+set only:0,rpart:0,ropt:0,bpart:0,coseq:0,cogrp:0
+define age:'y',cyr:'y'
+set only2:0,only3:0,only4:0,only5:0,only6:0,only7:0,only8:0,only9:0
+endrec
+;
+ 
+(pbill )
+record pbill(55)
+set p1:0,p2:0,p3:0,p4:0,p5:0;  prospect billings
+set l14:0,l15:0,w14:0,w15:0;   leftovers
+set l16:0,l17:0,l18:0,l19:0;    full record now
+endrec
+ 
+(prev  )
+record prev(79);    obdrecord previous partner record in the chain
+set ?prpro:0
+set ppven:0
+set ppwi1:0
+set ppwi2:0
+set ppwi3:0
+set ppwi4:0
+set ppwi5:0
+set ppwi6:0
+set ppwi7:0
+set ppwi8:0
+set ppwi9:0
+set ppntr:0
+set pbpntr:0
+endrec          ;   previous vendee (this is so that you can insert a new vendee into sequence
+ 
+(scr205)
+record scr205(30);   used in oi205 etc
+set ?scrid:0, scri:0
+set scrmnet:0,?scrnet:0
+string scrd1(10)
+endrec
+ 
+(scr242)
+record scr242(28);  totals record
+set ?lse:0
+define ltype:' ';  total record - exp has e
+set lptax:0,ldmis:0,lwpt:0,lexp:0,lnet:0
+endrec
+ 
+(scr224)
+record scr2242(28);   used in oi242
+set ?eid:0; property #
+define etype:'e'
+set dpart2:0,dvdte2:0,dvenet2:0,discode2:0
+endrec
+ 
+;
+(scr910)
+record scrcrec(34)
+set partner:0,newpartner:0,count:0,opercent:0,gpercent:0,epercent:0,ppercent:0,partflg:0
+;  partflg=0 divide existing perect, 1=using division order amount
+endrec
+ 
+(scrc2r)
+record scrc2rec(30);   oi910
+string scrarg(25)
+endrec
+ 
+(tempre)
+ 
+record temprec(400)
+set newone1:0,newone2:0,newone3:0;  etc this goes on for 100 per record
+endrec
+ 
+ 
+(tpnt  )
+record tpnt(20)
+set tpoint:0
+set prog2:0,prog3:0,pointrestart:0
+endrec
+;
+(wbill )
+ 
+record wbill(55)
+set w1:0,w2:0,w3:0,w4:0,w5:0,w6:0,w7:0,w8:0
+set w9:0,w10:0,w11:0,w12:0,w13:0
+endrec
+;
+ 
+(wellre)
+record wellrec(30)
+string wellname(30)
+endrec
+;
+END LIST
+.USE CRT3 FOR SYSRDR

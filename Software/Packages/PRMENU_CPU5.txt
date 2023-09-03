@@ -1,0 +1,124 @@
+.nolog
+.notime
+.use crt#v for syslst
+.setc 2 eq crt
+.skip to menu if prmenu eq #4
+.seta upsi=3
+.run s.xopt
+.setc 4 eq prmenu
+=menu
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  centurion payroll accumulation package
+*
+*******************************************************************************
+*                  key number = #0              disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  establish data files
+*                  2  master file service/print
+*                  3  data entry from pre-paid checks
+*                  4  post data from pre-paid checks
+*                 11  print quarterly earnings report
+*                 12  print form 941
+*                 13  print form 941-a
+*                 14  print forms w-2/1099
+*                 97  change key number / disk number for file set
+*                 99  terminate
+.nolog
+.enter 9
+.skip to err1 if 0 ge #9
+.skip 2 if 97 ne #9
+.setc 4=''
+prmenu
+.skip 2 if 99 ne #9
+.setc 4=''
+s.con
+.skip to go if 4 ge #9
+.skip to err1 if 14 lt #9
+.skip to err1 if 11 gt #9
+=go
+.skip to go if 1 ne #9
+.fspec pr.init on #d 8=size
+.skip to notfnd if 0 eq #8
+.fspec pr#0a on #1 8=size
+.skip to err2 if 0 ne #8
+.seta 2 eq 1
+pr.init
+=go
+.fspec pr#0a on #1 8=size
+.skip to err3 if 0 eq #8
+.seta upsi=2
+.run s.xopt
+.skip to go if 2 ne #9
+.fspec pr.mast on #d 8=size
+.skip to notfnd if 0 eq #8
+pr.mast
+=go
+.skip to go if 3 ne #9
+.fspec pr.earn on #d 8=size
+.skip to notfnd if 0 eq #8
+pr.earn
+=go
+.skip to go if 4 ne #9
+.fspec pr.comp on #d 8=size
+.skip to notfnd if 0 eq #8
+pr.comp
+=go
+.skip to go if 11 ne #9
+.fspec pr.qtr  on #d 8=size
+.skip to notfnd if 0 eq #8
+pr.qtr
+=go
+.skip to go if 12 ne #9
+.fspec pr.f941 on #d 8=size
+.skip to notfnd if 0 eq #8
+pr.f941
+=go
+.skip to go if 13 ne #9
+.fspec pr.tax  on #d 8=size
+.skip to notfnd if 0 eq #8
+pr.tax
+=go
+.skip to err1 if 14 ne #9
+.fspec pr.w2   on #d 8=size
+.skip to notfnd if 0 eq #8
+pr.w2
+=err1
+.log
+*   invalid option selected_
+.nolog
+.skip to errx
+=err2
+.log
+*   improper request - file set already exists_
+.nolog
+.skip to errx
+=err3
+.log
+*   improper request - file set does not exist on specified disk_
+.nolog
+.skip to errx
+=notfnd
+.log
+*   this module is not installed_
+.nolog
+=errx
+.log
+*   enter newline to recall menu
+.nolog
+.pause
+prmenu
+=eoj
+.end
+.setc 4 =''
+s.con
+*   created 03-24-77...klf
+*   revised 03-30-77...klf
+*   revised 04-08-77 for private..klf
+*   revised 10-13-77 for option validation...klf
+*   revised 09-12-80 for single w2/1099 program option...jg
+*   revised 11-08-82 to remove display of option 15 from menu...pmr

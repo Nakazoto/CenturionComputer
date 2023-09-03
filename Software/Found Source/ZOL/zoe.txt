@@ -1,0 +1,311 @@
+s.lst zoe 1 crt3
+S.LST ZOE 1 CRT3
+.JOB ZOE
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+;
+;
+(ofhsta)
+record ofhstat(20)
+set ?rid:0,lstate:0,rel0:0
+endrec
+;
+;
+;
+;
+(ofhrec)
+record ofhrec(24)
+set ?rid:0,ofhstat:0,ofhfield:0,rel0:0
+endrec
+;
+;
+(ofh2re)
+record ofh2rec(18)
+set ?arc:0,st:0,fld:0,rel0:0
+endrec
+;
+;
+;
+(oemrec)
+record oemrec(79)
+string eitem(8);        item id number
+set ?eid:0;             pros/lse/well
+set u1:0;               number of joints
+set u2:0;               number of feetunits (% is figured on this)
+set price:0;            cost of the item
+string edesc(30);       description
+set evou:0;             voucher number
+set edte:0;             voucher date
+set eco:0
+string edes2(9);        added 8/30/84
+endrec
+;
+;
+(oearec)
+record oearec(395)
+string edesc1(30);      name of item
+string eyard (30)
+string eother(30)
+string esize(14);       size
+string ewt(14);         weight
+string egrade(14);      grade
+string erange(14);      range
+string ethrd(14);       thread
+string etype(14)
+string erack(14);       location in warehouse if not at well
+endrec
+;
+;
+(oebrec)
+record oebrec(13)
+string kitem(8);      alpha key
+set rel0:0
+endrec
+;
+;
+(nrec0 )
+record nrec0(13)
+set nnext:0
+endrec
+;
+;
+(oeqrec)
+record oeqrec(79)
+string eitem(8);       item id number
+set ?eid:0;            pros/lse/well
+set u1:0;              number of joints
+set u2:0;              number of feetunits
+set price:0;           cost of item
+string edesc(30);      description
+set evou:0;            voucher number
+set edte:0;            voucher date
+set eco:0;             company
+string edes2(10)
+endrec
+;
+;
+;
+;
+;   of records
+;
+(ofarec)
+record ofarec(130)
+set ofseq:0;     sequence number for records of each state/type
+set ofoper:0;    0=operated, 1=outside operated, 2=partnership operated, 3=partnership non-operated
+set ofstate:0;   state*100+0=operated leases
+;                state*100+1 to 4 total records for operated (totals argument  =1 0000 00000 sta ty)
+;                state * 100 +5=non-operated
+;                state*100+6 to 10 total records for non operated
+;                state*100+11 to 16 totals all properties (except partnerships)
+;                state*100+17 to 22 partnership
+;                state*100+25 to 30 partnership totals
+;                state*100+ 50-99 other totals
+set lhequip:0;   lease hold & equipment (1 month) (field 1)
+set devel:0;     idc costs (field2)
+set loe:0;       loe costs (field3)
+set abnorm:0;    abnormal expenses deducted from loe in lofting cost calculation
+set mtdmcf:0;    8/8 mcf sales this month (field4)
+set hmtdmcf:0;   hamon m-t-d mcf (field5)
+set hgasinc:0;   hamon gas income (field7)
+;   field6 is field5 / field7
+set ?hitdmcf:0;  8/8 mcf i-t-d (field8)
+;   bbls
+set mtdbbl:0;    8/8 bbl sales this month (field9)
+set hmtdbbl:0;   hamon m-t-d bbl (field10)
+;   calculated fig is next (price per bbl (hmtdbbl/hoilinc) (field11) no longer as of 11/1/82
+set hoilinc:0;   hamon oil income - m-t-d (field12)
+set ?hitdbbl:0;  8/8 bbl i-t-d (field13)
+set mtdnet:0;    hamons gas income+oil income - loe - idc - lh & equip
+set ytdnet:0;    totals of mtdnet
+set ?itdgros:0;  income bbl+income gas totals for lease
+set ?itdnet:0;   hamons net - inception to date
+set mtdwpt:0;    w.i. wpt
+set ytdwpt:0;    w.i. ytd wpt
+set ?itdwpt:0;   w.i. inception to date wpt
+string uname(20);unit name - if a unit instead of a property
+set field6:0,field11:0;   were calculated until 11/1/82
+endrec
+;
+;
+(ofa2re)
+record ofa2rec(130)
+set ofseq:0
+set ofoper:0
+set ofstate:0
+set lhequip:0
+set devel:0
+set loe:0
+set abnorm:0
+set mtdmcf:0
+set hmtdmcf:0
+set hgasinc:0
+set ?hitdmcf:0
+set mtdbbl:0
+set hmtdbbl:0
+set hoilinc:0
+set ?hitdbbl:0
+set mtdn:0
+set ytdn:0
+set ?itdgros:0
+set ?itdn:0
+set mtdw:0
+set ytdw:0
+set ?itdw:0
+string uname(20)
+set field6:0,field11:0
+endrec
+;
+;
+(ofayr )
+record ofayr(130);  arg=1 0000 00000 0yr 15;  current totals for yr indicated
+set cjan:0;  current year mcf
+set cfeb:0;  current year feb.
+set cmar:0;  current year mar.
+set capr:0,cmay:0,cjun:0,cjul:0,caug:0,csep:0,coct:0,cnov:0,cdec:0
+set bjan:0;  bbl current year january
+set bfeb:0,bmar:0,bapr:0,bmay:0,bjun:0,bjul:0,baug:0,bsep:0,boct:0,bnov:0,bdec:0
+endrec
+;
+;
+(ofahd )
+record ofahd(130)
+set mcffact:0
+set curmon:0;  current month
+endrec
+;
+;
+(ofbrec)
+record ofbrec(10)
+set ?lid:0,relofa:0
+endrec
+;
+;
+(ofb2re)
+record ofb2rec(24)
+set ?arg:0,relofa:0
+set lofseq:0,lofoper:0,lofstate:0
+endrec
+;
+;
+;
+(ofayr2)
+record ofayr2(130)
+set cjan2:0;  current year mcf
+set cfeb2:0;  current year feb.
+set cmar2:0;  current year mar.
+set capr2:0,cmay2:0,cjun2:0,cjul2:0,caug2:0,csep2:0,coct2:0,cnov2:0,cdec2:0
+set bjan2:0;  bbl current year january
+set bfeb2:0,bmar2:0,bapr2:0,bmay2:0,bjun2:0,bjul2:0,baug2:0,bsep2:0,boct2:0,bnov2:0,bdec2:0
+endrec
+;
+;
+(ofcrec)
+record ofcrec(150);  temporary file - state file
+set ?t101:0,?t102:0,?t103:0,?t104:0,?t105:0,?t106:0,?t107:0,?t108:0,?t109:0
+set ?t110:0,?t112:0,?t113:0,?t114:0,?t115:0,?t116:0,?t117:0,?t118:0
+set ?t119:0,?t120:0,?t121:0;  ?t111 isnt here, its calculated
+set state:-1,proc:0
+endrec;  ofcrec is gotten too with type,stateseq# (statnum is the actual state number)
+;
+;
+(ofc2re)
+record ofc2rec(150);  temporary file - state file
+set ?t201:0,?t202:0,?t203:0,?t204:0,?t205:0;   6 isnt here its calc?t206:0
+set ?t207:0,?t208:0,?t209:0,?t210:0,?t212:0;   t211 isnt here its calculated
+set ?t213:0,?t214:0,?t215:0,?t216:0,?t217:0,?t218:0,?t219:0,?t220:0,?t221:0
+set state2:0;  second level of totals
+endrec;  ofcrec is gotten too with type,statseq# (statnum is the actual state number)
+;
+;
+(ofctot)
+record ofctot(150);  temporary file - state file
+set ?s101:0,?s102:0,?s103:0,?s104:0,?s105:0;   ?s106 isnt here its calc?s106:0
+set ?s107:0,?s108:0,?s109:0,?s110:0,?s112:0;   ?s111 isnt here its calculated
+set ?s113:0,?s114:0,?s115:0,?s116:0,?s117:0,?s118:0,?s119:0,?s120:0,?s121:0
+set xstate:0
+endrec;  ofcrec is gotten too with type,stateseq# (statnum is the actual state#)
+;
+;
+(ofdrec)
+record ofdrec(4)
+set seq:0
+endrec
+;
+;
+(ofurec)
+record ofurec(130)
+set ofsequ:0;        sequence number for records of each state/type
+set ofoperu:0;       0=operated, 1=outside operated, 2=partnership operated, 3=partnership non-operated
+set ofstateu:0;      state=operated leases
+set lhequipu:0;      lease hold & equipment (1 month) (field 1)
+set develu:0;        idc costs (field2)
+set loeu:0;          loe costs (field3)
+set abnormu:0;       abnormal expenses deducted from loe in lifting cost calc
+set mtdmcfu:0;       8/8 mcf sales this month (field 4)
+set hmtdmcfu:0;      hamon m-t-d mcf (field 5)
+set hgasincu:0;      hamon gas income (field 7)
+;  field 6 is field5 / field7
+set ?hitdmcfu:0;     8/8 mcf i-t-d (field 8)
+;  bbls
+set mtdbblu:0;       8/8 bbl sales this monyh (field 9)
+set hmtdbblu:0;     hamon m-t-d bbl (field 10)
+;  calculated fig is next (price per bbl (hmtdbbl/hoilinc) (field 11) )
+set hoilincu:0;      hamon oil income - m - t - d (field 12)
+set ?hitdbblu:0;     8/8 bbl i-t-d (field 13)
+set mtdnu:0;         hamons gas income+oil income -loe -idc - lh&equip
+set ytdnu:0;         totals of mtdn (totals of mtdn)
+set ?itdgrosu:0;     income bbl+income gas totals for lease (inception to date (hamon only))
+set ?itdnu:0;        hamons n - inception to date
+set mtdwu:0;         w.i. w
+set ytdwu:0;         w.i. ytd w
+set ?itdwu:0;        w.i. inception to date w
+string unameu(20);   unit name - if a unit instead of a property
+set field6u:0,field11u:0;   these are calculated as we go
+endrec
+;
+;
+(ofgrec)
+record ofgrec(100)
+set state:0;      state code - this gets pulled from oba but since we sort on it we want it here too
+string stname(3); 3 char name
+set resclass:0;   reserve class
+set terpres:0;    presure (memo only)
+set recfa:0;      recovery factor 50 = 50% recovery (memo only)
+set psifac:0;     psi factor
+string gecd(3);   geologist code
+set jlhint:0;     j.l. user dec. interest (users interest)
+set wiint:0;       interest for christie's report (fed. gov't needs it)
+set owncl:0;       owner class
+set ?cumsales:0;   total sales to date (thru last year)
+set ?reserves:0;   total reserves as of end of last year
+set cursales:0
+set nu1:0,nu2:0,nu3:0;   was status code, purchase date & 1st production date
+set ?adds:0,?retirements:0,field:0
+string stflag(1);  * or blank (is this a split lease? (y=*, n=blank) )
+endrec
+;
+;
+(oferec)
+record oferec(25)
+string fname(25);  field name
+endrec
+;
+;
+(ofprec)
+record ofprec(40)
+set ?rid:0;        property number + product code
+set qty:0;         sales quantity
+set date:0;        production date
+set ?add:0;        total additions
+set ?retire:0;     total retirements
+endrec
+;
+;
+(ofhrec)
+record ofhrec(24)
+set ?rid:0,ofhstat:0,ofhfield:0,rel0:0
+endrec
+;
+;
+END LIST
+.USE CRT3 FOR SYSRDR

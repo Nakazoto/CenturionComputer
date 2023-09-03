@@ -1,0 +1,539 @@
+s.lst zoo 1 crt3
+S.LST ZOO 1 CRT3
+.JOB ZOO
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(ouarec)
+record ouarec(165)
+string udesc(30)
+set pdate:0;   purchase date
+set ?begbal:0;   purchase value
+set ?dval:0;    depreciation from prior years
+set dytd:0;   depreciation y-t-d
+set dsalv:0;   salvage amount (includes itc)
+set dbon:0;    bonus taken
+set dtype:0;  1=straight line, 2=declining balance, 3=units, 11=acrs
+set decline:0;  if declining - 100,125,150,200 etc
+set dlife:0;  depreciable life
+set numunit:0;      current units for u of p only (not used elsewhere)
+set dbonpc:0;    bonus % - percent of current purchases taken in first year
+set dsalvpc:0;   salvage percentage (-1 defaults to header)
+set ?debit:0;   debit account number
+set ?credit:0;  credit account number
+set ?adds:0;   current period purchases
+set ?reds:0;  current ytd reductions
+set ?notusd:0 ;  used for monthly macrs ytd basis ...clv ii
+set ?retire:0;  retired
+set gldeflg:0;   g/l depreciation flg
+set dpd:0;       depreciation periods past
+set ditc:0;      inv. tax credit--0=8%, 1=10%, 1-=use header
+set dbsw:0;      macrs/db switch to straightline 0=no 1=yes..clv ii.10/2/87
+set ?savcst:0;  macrs/db cost at time of switch to s/l ...clv ii ..10/2/87
+set savlf:0   ;  macrs/db life at time of switch to s/l ...clv ii ..10/2/87
+set midqtr:0 ; macrs 1st yr convention 1-6 for macrs ..0 if not acrs
+set rdper:0 ; # of times per yr of depr...1=1 time, 12=12 times ...clv ii
+set ?savreds:0 ; saves reductions for monthly acrs/macrs ...cvl ii
+; 159 recs used
+endrec
+;
+(ouahea)
+record ouahead(165)
+set salvpc:0;    salvage percent - override in file
+set dsum:0;   0=no summarizing, 1=summary to lease/sub, 2=summary to lease, 3=summary to prospect
+set dper:0
+set omaj1:0,omaj2:0,omaj3:0,omaj4:0,omaj5:0,omaj6:0
+set omin:0
+set dcon:0;   date of last conversion
+set hdtype:0,hdlife:0,hdbon:0,hd1dr:0,hd1cr:0,hd2dr:0,hd2cr:0
+set hd3dr:0,hd3cr:0,hd4dr:0,hd4cr:0, hd5dr:0,hd5cr:0,hd6dr:0,hd6cr:0
+set itc:0;       default itc--0=8%, 1=10%
+string defitem(8);   item # for default if omin=6
+set glsum:0;         0=no sum, 1=each acct/prop, 2=zero prop, sum each acct
+set hdbsw:0 ; macrs/db switch to straighline..0=no 1=yes..clv ii.10/2/87
+set mnflg:0 ; flag to say you depred macrs monthly..scream at them ...clv ii
+            ; if switched to 1 can only be changed by hex dump...clv ii
+endrec
+;
+(oua2re)
+record oua2rec(165)
+string udesc(30)
+set pdate:0;   purchase date
+set ?begbal:0;   beginning balance
+set ?dval:0;    depreciation from prior years
+set dytd:0;   depreciation y-t-d
+set dsalv:0;   salvage amount (includes itc)
+set dbon:0;    bonus taken
+set dtype:0;  1=straight line, 2=declining balance, 3=units, 11=acrs
+set life:0;        original life in units of prod
+set reserves:0;            current estimated reserves
+set numunit:0;   current units of production
+set dbonpc:0;    bonus % - percent of current purchases taken in first year
+set dsalvpc:0;   salvage percentage (-1 defaults to header)
+set ?debit:0;   debit account number
+set ?credit:0;  credit account number
+set ?adds:0;   current ytd purchases
+set ?reds:0;  current ytd reductions
+set ?notusd:0;   formerly reductions agains prior yr
+set ?retire:0;  retirements--must be updated manually
+set gldeflg:0;   g/l depreciation flg
+set dpd:0;       depreciation periods past
+set ditc:0;      inv. tax credit--0=8%, 1=10%, 1-=use header
+set dbsw:0 ; switch to s/l flag...clv ii
+set ?savcst:0 ; save remaining cost on s/l switched items...clv ii
+set savlf:0   ; save remaining life on s/l switched items ...clv ii
+set midqtr:0  ; convention flag for macrs '0 if not macrs'...clv ii
+set rdper:0 ; # of times per yr of depr...1=1 time, 12=12 times ...clv ii
+set savreds:0 ; saves reductions for monthly acrs/macrs ...clvii
+; 159 recs used
+endrec
+;
+(oubrec)
+record oubrec(35);      list file for oua
+ string arg(28)
+ set reloua:0
+endrec
+;
+(ouchea)
+record ouchead(40)
+ set gcon:0;         gas to oil factor (4 decimals)
+ set source:0;       1=income, 2=g/l, 3=prodn, 4=reserve, 5=manual
+ set oilacct:0;      for update from ogr
+ set gasacct:0;      likewise
+endrec
+;
+(oucrec)
+record oucrec(40)
+ set ?mprop:0;      metaproperty (prop to which this is summarized)
+ set mbbl:0;        current month oil
+ set ybbl:0;        ytd oil
+ set mmcf:0;        monthly gas
+ set ymcf:0;        ytd gas
+ set prod:0;        product code 1=oil, 2=gas
+ set pu:0;          units of production posted
+ set grno:0;        group # for reports
+endrec
+;
+(ouctot)
+record ouctot(40)
+ set ?tprop:0
+ set totpu:0
+ set totgr:0;     master group #
+endrec
+;
+(oudrec)
+record oudrec(20)
+ set ?prop:0
+ set relouc:0
+ set ?lmprop:0
+ set lgroup:0
+endrec
+;
+(oughea)
+record oughea(50)
+set tgasfac:0;   standard gas factor to convert mcf to bbl
+set tperc:0
+set toilfac:0;   oil conversion factor to convert bbl to mcf
+endrec
+ 
+;
+(ougold)
+record ougold(80)
+set ?odid:0,ogross:0,oprdepl:0,oougbbl:0,oougmcf:0,oreserves:0
+set odepr:0,odryhole:0; depreciation amt is all that is changed here
+set oloeamt:0,oidcamt:0,ogasfac:0,ocostdepl:0,olhold:0,operc:0;
+set ooth:0
+set ogaamt:0,ogaperc:0;    g&a amount distribution & percent of distr.
+set oyrendlh:0;    total prior years  lease hold (12/20/89)
+endrec
+ 
+(ougrec)
+;   new layout as of 8/18/87
+;   new arg - 19  12=prop, 5=partner, 00=w.i., 01=royalty
+record ougrec(100)
+set ?did:0,gross:0,prdepl:0,ougbbl:0,ougmcf:0,reserves:0
+set depr:0,dryhole:0
+set loeamt:0,idcamt:0,gasfac:0,costdepl:0,lhold:0,perc:0,oth:0
+set gaamt:0,gaperc:0;   g&a amount distribution & percent of distr.
+set ougptax:0,ougmisc:0,ougwpt:0,ougdr:0,ougwkov:0,ougadtax:0
+set yrendlh:0;  added 12/19/89 prior year lse hold
+endrec
+;
+(ouhrec)
+record ouhrec(24)
+string arg(19)
+set reloug:0
+endrec
+;
+;
+;
+(ouihea)
+record ouihead(6)
+ set gcon:0;         gas to oil factor (4 decimals)
+ string source(1);       1=grs rev, 2=loe, 3=units of production, 4=to be announced
+endrec
+;
+(ouxrec)
+  set subflg:0
+  set rco:0
+  set fisyr:0
+  set prtflg:0
+  set monflg:0
+  set annflg:0
+  set partacrs:0
+  set acrsyr:0
+  set lastrun:0
+  set ytdflg:0
+  set yrflg:1
+  set btm:0
+  string client(45)
+  string rdate(30)
+  string time(8)
+  string today(8)
+  define trial:'trial run'
+  set casum:0
+;
+(ouirec)
+record ouirec(6)
+ set ?mprop:0;      metaproperty (prop to which this is summarized)
+endrec
+;
+;
+;;;  ok records
+(okshea)
+record okshead(15)
+define pck:'y',plse:'y'
+endrec
+;
+;
+(oksrec)
+record oksrec(20)
+set kpart:0,kpartshp:0,kamt:0,ktcom:0
+endrec
+;
+;
+(oks2re)
+record oks2rec(50)
+set lpartner:-1,lpartnership:-1,total:0,tcom:0
+set net:0,tmis:0,tptax:0,twpt:0,exp:0,advance:0,othexp:0,pckbal:0
+endrec
+;
+(okssre)
+record okssrec(50)
+set partner:0,partnership:0,tot:0,com:0,amt:0
+endrec
+ 
+;
+(obak1r)
+record obak1rec(30)
+string name1(30)
+endrec
+;
+;
+(obak2r)
+record obak2rec(30)
+string name2(30)
+endrec
+;
+;
+(obak3r)
+record obak3rec(30)
+string name3(30)
+endrec
+;
+;
+(okarec)
+record okarec(50)
+set ?prop1:0,?prop2:0,?prop3:0
+string distr1(32)
+endrec
+;
+;
+(okkrec)
+record okkrec(100)
+set ?capyr:0,balance:0,?contrib:0,?draw:0,adjust:0,?capital:0,?inc:0
+set ?incexp:0,?exp:0,ckbal:0,afecap:0,afeexp:0,afeloe:0
+endrec
+;
+;
+(okakre)
+record okakrec(50)
+set okaco:0,nonconpart:0
+string oth(1)
+set lcknum:0
+endrec
+;
+;
+(okeold)
+record okeold(100)
+set ?ocapyr:0,obalance:0,?ocontrib:0,?odraw:0,oadjust:0,?ocapital:0,?oinc:0
+set ?oincexp:0,?oexp:0,ockbal:0,oafecap:0,oafeexp:0,oafeloe:0
+endrec
+ 
+(okerec)
+record okerec(100)
+set ?okecapyr:0,okebal:0,?okecont:0,?okedraw:0,okeadjust:0,?okecap:0,?okeinc:0; cont is contributions
+set ?okeincexp:0,?okeexp:0,okeckbal:0,okeafecap:0,okeafeexp:0,okeafeloe:0
+endrec
+;
+;
+(okc2re)
+record okc2rec(200)
+set amto:0,bbl:0,misco:0,ptaxo:0,wpto:0,amtg:0,mcf:0,miscg:0,ptaxg:0,wptg:0
+set amt1:0,amt2:0,amt3:0,amt4:0,amt5:0,amt6:0,amt7:0,amt8:0,amt9:0,amt10:0
+set amt11:0,amt12:0,amt13:0,amt14:0,amt15:0,amt16:0,amt17:0,amt18:0,amt19:0
+set amt20:0,amt21:0,amt22:0,amt23:0,amt24:0,amt25:0,amt26:0,amt27:0,amt28:0
+set amt29:0,amt30:0
+set toil:0,tbbl:0,tgas:0,tmcf:0,tperc:0,amtoth:0,bbloth:0,miscoth:0,ptaxoth:0,wptoth:0
+endrec
+;
+;
+(okgrec)
+record okgrec(200)
+set amto:0,bbl:0,misco:0,ptaxo:0,wpto:0,amtg:0,mcf:0,miscg:0,ptaxg:0,wptg:0
+set amt1:0,amt2:0,amt3:0,amt4:0,amt5:0,amt6:0,amt7:0,amt8:0,amt9:0,amt10:0
+set amt11:0,amt12:0,amt13:0,amt14:0,amt15:0,amt16:0,amt17:0,amt18:0,amt19:0
+set amt20:0,amt21:0,amt22:0,amt23:0,amt24:0,amt25:0,amt26:0,amt27:0,amt28:0
+set amt29:0,amt30:0
+set noncon:0,amtoth:0,bbloth:0,miscoth:0,ptaxoth:0,wptoth:0
+endrec
+;
+;
+(okirec)
+record okirec(50)
+set okico:0,nonconpart:0
+string oth(1)
+endrec
+;
+;
+(okbrec)
+record okbrec(5)
+set partner:0,reloka:0
+endrec
+;
+;
+(okdrec)
+record okdrec(23)
+string okdarg(18)
+set relokc:0
+endrec
+;
+;
+(okfrec)
+record okfrec(10)
+set ?okfarg:0,reloke:0
+endrec
+;
+;
+(okhrec)
+record okhrec(27)
+string okharg(22)
+set relokg:0
+endrec
+;
+;
+(okjrec)
+record okjrec(25)
+string okjarg(20)
+set reloki:0
+endrec
+;
+;
+(okqrec)
+record okqrec(50)
+set partnership:0,part:0,?pro:0,perc:0,i:0,amt:0,pamt:0,?propo:0,com:0
+endrec
+;
+;
+(okmrec)
+record okmrec(40)
+set mpartnership:0,?mprop:0,mamt:0
+string mdesc(25)
+endrec
+;
+;
+(okgkre)
+record okgkrec(200)
+set pamto:0,pbbl:0,pmisco:0,pptaxo:0,pwpto:0,pamtg:0,gmcf:0,gmiscg:0,gptaxg:0,gwptg:0
+set pamt1:0,apmt2:0,pamt3:0,pamt4:0,pamt5:0,pamt6:0,pamt7:0,pamt8:0,pamt9:0
+set pamt10:0,pamt11:0,pamt12:0,pamt13:0,pamt14:0,pamt15:0,pamt16:0,pamt17:0
+set pamt18:0,pamt19:0,pamt20:0,pamt21:0,pamt22:0,pamt23:0,pamt24:0,pamt25:0
+set pamt26:0,pamt27:0,pamt28:0,pamt29:0,pamt30:0
+set noncon:0
+endrec
+;
+;
+(okq2re)
+record okq2rec(50)
+set partnership:0,partner:0,?prop:0,perc:0,i:0,amt:0,pamt:0,?propo:0
+set com:0
+endrec
+;
+;
+(okmpnt)
+record okmpnt(4)
+set mpoint:0
+endrec
+;
+;
+(okspnt)
+record okspnt(18)
+set spoint:0
+set spoint1:0
+set spoint2:0
+set neg:0
+endrec
+;
+;
+(owahea)
+record owahead(900)
+define head1:'----- oil producer -----      '
+define head2:'weekly drilling report        '
+define fldnam1:'          '
+define fldnam2:'prospect  '
+define fldnam3:'lease     '
+define fldnam4:'well      '
+define fldnam5:'location  '
+define fldnam6:'          '
+define fldnam7:'          '
+define fldnam8:'name      '
+define fldnam9:'ad1       '
+define fldnam10:'ad2       '
+define fldnam11:'ad3       '
+define fldnam12:'          '
+define fldnam13:'          '
+define fldnam14:'dril contr'
+define fldnam15:'          '
+define fldnam16:'operator  '
+define fldnam17:'          '
+define fldnam18:'          '
+define fldnam19:'          '
+define fldnam20:'elevation '
+define fldnam21:'          '
+define fldnam22:'          '
+define fldnam23:'          '
+define fldnam24:'acct #    '
+define fldnam25:'          '
+define fldnam26:'casing    '
+define fldnam27:'          '
+define fldnam28:'          '
+define fldnam29:'          '
+define fldnam30:'          '
+define fldnam31:'          '
+define fldnam32:'          '
+set subflg:0,repdate:0,transdate:0
+; subflg 0=lse/sub is whole lease #, 1=lse is whole lse # (sub=0)
+;   repdate grin updated in owdril
+;   transdate (integer) last trans entered date
+define fldexp:'  xxxx   xxxx                   ';
+string chardate(30)
+set co:0,length:0
+; length 0 detail lines 3+ are 84 char, 1=all desc lines are 44
+string owahfil(392)
+endrec
+ 
+;
+;
+;
+;
+ 
+(owarec)
+ 
+record owarec(900)
+set ?prop:0,dist:0,depth:0,days:0,lentry:0,updat:0,vencd:0,mwpntr:0
+;      days that should be printed on each well report for this pro
+;      updat= last date that depth was updated
+;      lentry=last day that an entry was made
+;
+;      vencd=0 use property distribution, 1=specific gro of partners
+;      2=specific group plus the distribution, 10-n=special canned
+;      wpntr points to the first record of the extra mailing people
+string desc1(31)
+string desc2(31)
+string desc3(31)
+string desc4(31)
+string desc5(31)
+string desc6(31)
+string desc7(31)
+string desc8(31)
+string desc9(31)
+string desc10(31)
+string desc11(31)
+string desc12(31)
+string desc13(31)
+string desc14(31)
+string desc15(31)
+string desc16(31)
+string desc17(31)
+string desc18(31)
+string desc19(31)
+string desc20(31)
+string desc21(31)
+string desc22(31)
+string desc23(31)
+string desc24(31)
+string desc25(31)
+string desc26(31)
+endrec
+;
+;
+(owbrec)
+ 
+record owbrec(10)
+set ?arg:0,relowa:0
+endrec
+;
+;
+ 
+(owcrec)
+ 
+ 
+(owdrec)
+ 
+record owdrec(30)
+set ?wplw:0,wven:0,wfrwd:0,wback:0
+endrec
+;
+;
+ 
+(owerec)
+ 
+record owerec(4)
+set fwpntr:0
+endrec
+;
+;
+ 
+(owfrec)
+ 
+record owfrec(1)
+define copt:'1'
+endrec
+;
+;
+ 
+(owgrec)
+ 
+record owgrec(20)
+string arg(19)
+endrec
+;
+;
+ 
+(owmrec)
+ 
+record owmrec(80)
+set ?id:0,ddte:0,seq:0,feet:0,ndepth:0
+string coment(45)
+set cday:0
+endrec
+;
+;
+(owm3re)
+record owm3rec(80)
+set ?did2:0,ddte2:0,seq2:0,feet2:0,ndepth2:0
+string com2(45)
+endrec
+;
+;
+END LIST
+.USE CRT3 FOR SYSRDR

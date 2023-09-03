@@ -1,0 +1,556 @@
+s.lst zoa270 1 crt3
+S.LST ZOA270 1 CRT3
+.JOB ZOA270
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
+LIST - 6.00
+title: 'oa270 (oa1099) (vendor 1099 writer)'
+system (exp=d)
+;
+define m01:'oa270 (vendor 1099 writer) 12/17/90'
+define xoa270:'          ', oj1099:'oj1099'
+;
+;notes:
+;     12/04/80..conv from oj231..ns
+;      4/8/81...add ?ss
+;    12/11/82...adding option to use history file instead of master file...ns
+;    12/06/83...new format - making is versitile..ns
+;   2/5/83...changed fn10 format to include decmil places..ns
+;   2/28/84...was going to make it allow specific - but it was already there - no change..ns
+;    10/15/84...changing oaa & omg to ind & recsiz change..ns
+;   10/23/84.removing direct code..ns
+;   10/25/84...changed math to make it compatible with c lang..ns
+;   10/26/84...adding equates for rnd files that change sizes in c lang. & buffered..ns
+;    12/20/84...adding multiple ways of printing the name & address..ns
+;   2/10/85...changed f1099 to allow for f1099 =4 & 5 as do not print 1099..ns
+;   2/12/85...took out question to clear  balances.  added msg to be sure to clear them in oamast..ns
+;  03/06/85...adding restart(2-25-85-3-1),comb.land & ap
+;   3/13/85...changed some comment lines..ns
+;  04/02/85...adding help screens...lll
+;   5/16/85...copy statements
+;   7/22/85...cleanup..ns
+;  08/21/85...fixing title and jcl's...lll
+;  11/26/85...more cleaning..ns
+;  12/16/85...changed 1099 print format...clv ii
+;    1/9/86...checking for voided checks in history file (hflg=2 is void)..ns
+;  1/15/86...added getk to readb for p.c. ...clv ii
+;  3/26/86...took out (omgrec) after  1  do not print line 1..sl
+;   10/28/86...new format for 1986 tax year...ns (minimal changes f08,f08a,f08b w/in 1 byte of the same as last year)
+; 12/16/86...wasnt checking for void on 1st detail...clv ii
+;   7/16/87...adding f1099 options 6 & 7...ns
+;   8/26/88..making leading id# 0's print..ns
+;   12/17/90 ...format changes for 1990 1099misc...clvii
+ 
+ 
+ 
+ 
+copy oaarec sys8
+copy oabrec sys8
+copy oaurec sys8
+copy pnt
+copy olaare sys10
+copy omgrec
+file oaa:sys0,class=2,ind,recsiz=225,key=reloaa
+file oab:sys1,class =2,seq,lsr=4,filtyp=b,buffered;  =400,buf1
+file oma:sys2,class=2,seq,filtyp=a
+file omg:sys3,class=2,ind,recsiz=45,key=rel3
+file oau:sys4,class=2,rnd,recsiz=40,key=rel4,buffered;  =400,buf2
+file olaa:sys5,class=2,ind,recsiz=200,key=rel5
+set rel5:0
+;
+set rel4:0
+set rel3:0
+;
+;
+file prt:syslst,class=1,seq
+file crt:sysipt
+;
+external ynget,lfeed,msg,stat,getk,ioerr,cget,?edit,getit,getitn
+;
+entrypoint crt
+;
+entry
+open io(crt,oaa,olaa),  input(oab,oma,omg,oau),  output prt
+read(oma,f06)client,add,mail,csz
+read(oma,f07)ftax
+ldate(current)
+sdate(string,date)
+;
+call msg(eject)
+call msg(m01)
+;
+call msg(null)
+call getitn(m04,fn2,co,80);  c0 number 1- to end
+if(co.eq.-1)go to q0900
+a002:
+call msg('enter option for partner name & address lines')
+call msg('             (note: if 4th line is not filled in, lines 1,2,3 will print)')
+write(crt,fopt)'1  do not print line 1'
+write(crt,fopt)'2  do not print line 2'
+write(crt,fopt)'3  do not print line 3'
+write(crt,fopt)'4  do not print line 4'
+write(crt,fopt)'5  print all lines but line 1 will be in the shaded area'
+write(crt,fopt)'6  print all lines but line 2 will be in the shaded area'
+write(crt,fopt)'7  print all lines but line 3 will be in the shaded area'
+write(crt,fopt)'8  print all lines but line 4 will be in the shaded area'
+write(crt,fopt)'   (shaded fields will not be read by irs optical scanners)'
+write(crt,fopt)'9  wish to make the choice on each partner'
+call getitn(null,fn1,namopt,10)
+if(namopt.eq.0)go to a002
+cogrp=co/6+1
+coseq=co-((cogrp-1)*6)
+cogrp=cogrp*hthou
+;
+if(co.eq.0)go to a20
+num=(hmil+co)*10
+call getomg
+ifs(omgname.eq.null)go to a05
+'client'='omgname'
+a05:
+incr num
+call getomg
+ifs(omgname.eq.null)go to a06
+'add'='omgname'
+ 
+a06:
+num=num+1
+call getomg
+ifs(omgname.eq.null)go to a07
+'mail'='omgname'
+ 
+a07:
+num=num+1
+call getomg
+ifs(omgname.eq.null)go to a08
+'csz'='omgname'
+ 
+a08:
+ 
+    call getit(m08,f09,ftax,211060); federal id#
+ 
+a20:
+;
+;  call ynget(m03);  do you want to 0 ytd accounts payable ; 2/15/85
+;if(status.eq.0)go to a30
+;
+;'opt'='yes'
+;
+rpart=0
+call ynget('is this a restart?(y/n)')
+if(status.eq.0)goto a30
+call getitn('enter restart number',fn5,rpart,311060)
+a30:
+call getitn(m08a,fn10,min,411060);  min. amount to be printed
+linno=22;  all are the same on 1984 forms
+line1=4;    print on 5th line
+go to a35
+call getitn(m03a,fn2,linno,511060 );   number of lines on 1099 (21 - 23)
+line1=3
+if(linno.lt.21)go to a30
+if(linno.lt.23)goto a35
+if(linno.ne.99)goto a30
+call getitn('enter # of lines from top for first print (n/l for 4)',fn1,line1,611060)
+if(line1.ne.0)goto a30a
+line1=4
+a30a:
+decr line1
+ 
+call getitn('enter total number of lines on 1099 form',fn10,linno,511060)
+ 
+a35:
+form =1;  all for the same form as of nov 16, 1984
+go to a35a
+;
+call msg('enter option:  1  k-com, prime, or moore')
+write(crt,fopt)'2  some stray sent in late'
+call getitn(null,fn1,form,10)
+go to (a35a,a35c)on form
+a35a:
+var1=51
+go to a35b
+ 
+a35b:
+a35c:
+call msg('enter option:  1  print all applicable a/p amts. only')
+write(crt,fopt)'2  print all vendors incl. a/p & land rental amounts'
+call getitn(null,fn1,land,911060)
+goto(a40,a40)on land
+goto a35c
+a40:
+ 
+skip=linno-15-line1;  this is normally 22-15-4=3 for skip
+ 
+a50:
+call ynget(m08b);  alignment?
+if(status.eq.0)go to a80
+ 
+    call lfeed(prt,line1); mostlikely 4
+;call lfeed(prt,1)
+    write(prt,f08)null,testnm
+    write(prt,f08)client
+   write(prt,f08)add
+    write(prt,f08)csz
+call lfeed(prt,2)
+    write(prt,f08a)ftax,testss,testnum
+  'name'='test'
+  'ad1'='test'
+  'ad2'='test'
+ 'ad3'='null'
+   call fillname
+ 
+    write(prt,f08)nad1;   shade
+write(prt,f08b)nad2,testnum
+call lfeed(prt,1)
+write(prt,f08)nad3; shaded
+    write(prt,f08b)nad4; street
+    write(prt,f08)nad5 ;shade
+    write(prt,f08)nad6;citystate
+    write(prt,f08)nad7;shade
+ 
+  call lfeed(prt,skip);  should be 3 lines
+ 
+   go to a50
+;
+a80:
+  call ynget('do you wish to print 1099 information from the a/p master file? (y/n)')
+  go to (b03)on status
+   hist=1
+   call getitn('enter 1099 processing year', fn2, year,1011060)
+   readb(oau,pnt)
+   call stat(1)
+a85:
+;
+   incr rel4
+if(rel4.gt.point)goto q0900 ; 12/16/86...wasnt checking for loop
+   readb(oau,oaurec)
+   call stat(1);   get the first one into memory
+ifs(hflg.eq.'2')goto a85 ; wasnt checking for void on 1st detail..clv ii
+;   assumes sorted into vendor number order
+ifs(hdflg.eq.'x')go to a85
+ 
+b03:
+b05:
+   call ynget('are answers correct? (y/n)')
+   go to (b08)on status
+ 
+b06:
+   load(xoa270,0,0);  reload self
+  stop 10
+ 
+b08:
+   call getitn('enter vendor #, 0 for all, 1- to end',fn5,svend,703010)
+   if(svend.eq.0)go to b10;  read all
+   if(svend.eq.-1)go to b06
+   vendnum=svend
+   call getk(oaa,vendnum)
+   if(status.ne.0)go to b08
+   rel4=1;  reset history file
+   readb(oau,oaurec)
+   call stat(1)
+   go to b11
+ 
+b10:
+   if(svend.ne.0)go to b08;  get next specific
+;
+   readb(oab,oabrec)
+   if(status.ne.0)go to b06; reload for another company
+  if(vendnum.gt.i99)go to b80;   into other companies
+   if(vendnum.le.0)go to b10;   headers
+if(rpart.gt.vendnum)goto b10
+rpart=0
+b11:
+   whtax=yinc=0
+?ypaid=?rental=0
+goto(b11q)on land
+call getk(olaa,vendnum)
+goto(b11q)on status
+readb(olaa,olaarec)
+call stat (1)
+if(jco.ne.co)goto b11f;its not here
+if(land.eq.3)goto b10;print on land 1099
+goto b11q; good one
+b11f:
+?rental=?ypaid=apflg=0
+;write b(olaa,olaarec)
+;call stat(1)
+b11q:
+?rental=?ypaid
+call getk(oaa,vendnum)
+if(status.ne.0)goto b10
+readb(oaa,oaarec)   ;  added getk above ...clv ii
+   call stat(1)
+   if(f1099.lt.1)go to b10;  not printing 1099s
+   if(f1099.eq.4)go to b10;  no 1099
+   if(f1099.eq.5)go to b10; no 1099
+   go to (b12)on hist
+  yinc=?ypgr-?ypdi
+   num=yinc+?rental
+   if(num.le.0)go to b10
+   if(f1099.gt.5)go to b50;  override min
+   if(num.lt.min)go to b10
+ 
+   go to b50
+b12:
+   write(crt,fn5)hpvend,vendnum;  test
+   if(hpvend.gt.vendnum)go to b18;   no records or next vendor
+   if(hpvend.lt.vendnum)go to b15;   read another record
+   if(hsco.ne.co)go to b15;  not right company
+   ifs(hflg.eq.'2')goto b15 ; its a void - go get next detail
+  ifs(hdflg.eq.'x')goto b15; dont put this detail on 1099
+ 
+  ldate(word,hckdte);    check date
+  sdate(string,cdate)
+   if(cdate.ne.0)go to b13
+   ldate(word,hpdte)
+   sdate(string,cdate)
+ 
+b13:
+  decode(cdate,f10)yr;   x6n2
+   call msg(cdate)
+   write(crt,fn5)yr,year
+  if(yr.ne.year)go to b15;   read next record
+   ifs(hinv.eq.'fed w/h')go to b13c
+   ifs(hdflg.eq.'1')go to b13b
+   yinc=yinc+?hnet
+ 
+   go to b15
+ 
+b13b:;  history record goes to land
+   ?rental=?rental+?hnet
+   go to b15
+ 
+b13c:
+    whtax=whtax+?hnet
+b15:
+   incr rel4
+   if(rel4.gt.point)go to b18
+   readb(oau,oaurec)
+   call stat(1)
+   ifs(hflg.eq.'2')goto b15;  voided
+   ifs(hdflg.eq.'x')go to b15; dont print on 1099
+   go to b12
+ 
+b18:
+num=yinc+?rental
+   write(crt,fn5)yinc
+   if(num.eq.0)go to b10
+ 
+   if(f1099.gt.5)go to b50;   print 1099 even if less than min
+   if(num.lt.min)go to b10
+ 
+ 
+b50:
+'ccamt'='blk12'
+if(?rental.eq.0)goto b51
+encode(ccamt,fd12)?rental
+b51:
+    call lfeed(prt,line1); 4
+;call lfeed(prt,1)
+    write(prt,f08)null,ccamt
+    write(prt,f08)client
+    write(prt,f08)add
+    write(prt,f08)csz
+    call lfeed(prt,2)
+   'ssnum'='blk12'
+   if(?ss.eq.0)go to b55
+   call ?edit(?ss,ssnum,mask1)
+ 
+    if(f1099.ne.2)go to b55
+    call ?edit(?ss,ssnum,mask1a)
+ 
+b55:
+write(prt,f08a)ftax,[ssnum+1],whtax
+   call fillname
+   write(prt,f08)nad1
+    write(prt,f08b)nad2,yinc
+call lfeed(prt,1)
+     write(prt,f08)nad3 ; shard
+    write(prt,f08)nad4; street
+   write(prt,f08)nad5
+    write(prt,f08)nad6
+    write(prt,f08)nad7
+ 
+   call lfeed(prt,skip); 3
+ 
+if(?ypaid.eq.0)goto b10
+ap flg=1
+writeb(olaa,olaarec)
+call stat(1)
+ 
+     ; 2/15/85 ifs(opt.eq.yes)call putinc
+   go to b10
+;
+b80:
+;
+;
+q0900:
+    call msg('be sure to:  1  clear your year end balances in "oamast" before')
+   call msg( '                processing january')
+   call msg( '             2  you can now clear your history file of prior year details')
+   call msg ('           n/l  to acknowledge')
+  read(crt,fn1)
+;
+   stop 0
+;
+;==========================
+subroutine getomg
+;==========================
+ 
+call getk(omg,num)
+go to (gt20)on status
+call stat(2)
+readb(omg,omgrec)
+call stat(1)
+return
+;
+;====================
+gt20:
+ 
+'omgname'='null';   not on file - clear it
+return
+;=========================
+;subroutine putinc
+;?ypgr=?ypdi=0
+;writeb(oaa,oaarec)
+;call stat(1)
+;return
+ 
+ 
+;=======================
+;=====================
+subroutine fillname
+;===================
+ 
+encode(nad1,fc30)null
+encode(nad2,fc30)null
+encode(nad3,fc30)null
+encode(nad4,fc30)null
+encode(nad5,fc30)null
+encode(nad6,fc30)null
+encode(nad7,fc30)null
+ifs(ad3.eq.null)go to fl80;   only 3 lines - 4 is in shaded area,but it is empty anyway
+go to (fl10,fl20,fl30,fl40,fl50,fl60,fl70,fl80,fl90)on namopt
+ 
+fl10:
+'nad2'='ad1';  this must be the guys name
+'nad4'='ad2'
+'nad6'='ad3'
+return
+ 
+fl20:
+'nad2'='name'
+'nad4'='ad2';  dropping ad1
+'nad6'='ad3'
+return
+ 
+fl30:
+'nad2'='name'
+'nad4'='ad1'
+'nad6'='ad3';  dropping ad2
+return
+ 
+fl40:
+'nad2'='name'
+'nad4'='ad1'
+'nad6'='ad2';  dropping ad3
+return
+ 
+fl50:
+'nad1'='name'
+'nad2'='ad1'
+'nad4'='ad2'
+'nad6'='ad3';  name is in shaded area
+return
+ 
+fl60:
+'nad2'='name'
+'nad3'='ad1';  shaded area
+'nad4'='ad2'
+'nad6'='ad3'
+return
+ 
+fl70:
+'nad2'='name'
+'nad4'='ad1'
+'nad5'='ad2'; shaded area
+'nad6'='ad3';
+return
+ 
+fl80:
+'nad2'='name'
+'nad4'='ad1'
+'nad6'='ad2'
+'nad7'='ad3'; shaded area
+return
+ 
+fl90:
+call msg(eject)
+write(crt,fc35)'option 1','   2'
+curp(crt,1,2)
+write(crt,fc35)ad1,name
+write(crt,fc35)ad2,ad2
+write(crt,fc35)ad3,ad3
+ 
+call msg(null)
+write(crt,fc35)'option 3','   4'
+write(crt,fc35)name, name
+write(crt,fc35)ad1, ad1
+write(crt,fc35)ad3, ad2
+call msg(null)
+call msg('5 - 8 will only show the line that will be in the shaded area')
+write(crt,fc35)'option 5','   6'
+write(crt,fc35)name,ad1
+call msg(null)
+write(crt,fc35)'option 7','   8'
+write(crt,fc35)ad2,ad3
+call getitn('enter option number',fn1,num,120)
+go to (fl10,fl20,fl30,fl40,fl50,fl60,fl70,fl80)on num
+go to fl90
+;======================================================================
+;=======================
+;
+;
+;
+;======================================================================
+set num:0,co:0,coseq:0,cogrp:0,hthou:100 000,i99:99999,linno:23
+set hmil: 100 000 000,yinc:0,min:0,skip:0,line1:0,form:0,whtax:0,rpart:0,land:0
+string date(8),null(0),client(45), add(45), mail(45), csz(40), ftax(30)
+string cdate(8)
+ 
+define m03a:'enter number of lines on your 1099 form (21 to 23) (99 other)'
+define m04:'company number    (1- to end)'
+define m08: 'enter federal id # for this company'
+define m08a:'enter min. amount to be printed'
+define m08b:'alignment? (y/n)'
+define d:'d',mask1:'  @###-##-#### ',blk12:'             '
+define mask1a:'  @##-#######  ',ssnum:'                    '
+define test:'name and address lines********',ccamt:'            '
+set testnum:999999999
+define testss:'999-99-9999'
+ 
+set var1:40;  is 59 if k-com form
+format fn2:n2
+format fn5: n5
+format f06: c30
+format f07: x25 c15
+format f08: x6 c30 x4 c13
+format f08a: x6 c16 x1 c16 x1 n-12.2
+format f08b: x6 c30 x18 n12.2
+format f09: c15
+format f10: x6 n2
+;
+format fn1:n1
+format fn10: n10.2
+format fd12:d12.2
+format fc30:c30
+format fopt:x15 c80
+format fc35:c35
+ 
+set year:0,hist:0,yr:0,svend:0,?rental:0
+string  nad1(30),nad2(30),nad3(30),nad4(30),nad5(30),nad6(30),nad7(30)
+ 
+set namopt:0
+ 
+define testnm: '  9999999.99'
+end
+END LIST
+.USE CRT3 FOR SYSRDR

@@ -1,0 +1,605 @@
+s.lst zoj231 1 crt3
+S.LST ZOJ231 1 CRT3
+.JOB ZOJ231
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
+LIST - 6.00
+title: 'oj231 (oj1099) (partner 1099 writer)'
+system (exp=d)
+;
+define m01:'oj231 (partner 1099 writer) 12/17/90'
+;
+;notes:
+;  01/02-30/79...written..ns
+;  11/27/79...changed for 1979 form...js
+;   1/9/80...mod for 2 different 1099 forms..ns
+;   4/18/80...change vrec format...js
+;    12/18/80...adding ojawpt to total..ns
+;    12/24/80...printing ojawpt...rufe
+;    12/11/81...new formatting, adding alignment print..ns
+; 12/27/83...changing oja to "i" type...jc
+;   2/8/84..adding partner/state 1099 option..ns
+;   9/29/84...spart was pre-set to 0 so never asked for specific partner (8-28-84-7)..ns
+;  10/15/84..spelling err..ns
+;   10/18/84...omg i type..ns
+;   10/30/84...math/buffered/equates/opens to make it compatible with c lang..ns
+;    1/16/85...1984 form..ns
+;    4/10/86...added closed parenthesis..sl
+;  12/12/85...new format for 1985...clv ii
+; 01/08/86...changed f08 for 1099...clv ii
+;   7/03/86...moved net amount to bottom of form (with wpt) & made it optional..ns
+;   10/28/86...1986 ty new format (more room for name)..ns
+;  1/14/87..adding option to print gross in either royalty or work comp..clvii
+;   2/02/87...adding ojaa..ns
+;    10/27/87...changed questions some ..ns
+;   12/17/90...changed format for 1990 ...clvii
+ 
+ 
+copy ojarec sys9
+ 
+copy oja2re sys9
+;
+copy partst sys9
+copy partco sys9
+copy ojaawr sys9
+copy omgrec
+;
+file oja:sys0,class=2,ind,recsiz=225,key=reloja
+file ojaa:sys5,class=2,ind,recsiz=8,key=relojaa
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffered;  =400,buf1
+file mmst:sys2,class=2,seq,filtyp=a
+file omst:sys3,class=2,ind,recsiz=45,key=rel3
+file oji1:sys4,class=2,ind,recsiz=4,key=rel4
+;
+string nad1(30),nad2(30),nad3(30),nad4(30),nad5(30),nad6(30),nad7(30)
+set rel3:0,rel4:0,relojaa:0
+;
+copy ojbrec sys9
+;
+file prt:syslst,class=1,seq
+file crt:sysipt
+;
+external ynget,lfeed,msg,stat,ioerr,cget,getk,tget,tput,getit,getitn
+;
+entrypoint crt
+;
+entry
+open io(crt,oja,ojaa),  input(list,mmst,omst,oji1),  output prt
+read(mmst,f06)client,add,mail,csz
+read(mmst,f07)ftax
+ldate(current)
+sdate(string,date)
+;
+call msg(eject)
+call msg(m01)
+;
+call msg(null)
+call getitn(m04,f05,co,80);  c0 number 1- to end
+if(co.eq.-1)go to b90;  end (q0900)
+ 
+a002:
+call msg('enter option for partner name & address lines')
+call msg('             (note: if 4th line is not filled in, lines 1,2,3 will print)')
+write(crt,fopt)'1  do not print line 1 (name)'
+write(crt,fopt)'2  do not print line 2'
+write(crt,fopt)'3  do not print line 3'
+write(crt,fopt)'4  do not print line 4'
+write(crt,fopt)'5  print all lines but line 1 will be in the shaded area'
+write(crt,fopt)'6  print all lines but line 2 will be in the shaded area'
+write(crt,fopt)'7  print all lines but line 3 will be in the shaded area'
+write(crt,fopt)'8  print all lines but line 4 will be in the shaded area'
+write(crt,fopt)'    (shaded areas will not be read by irs optical scanner)'
+write(crt,fopt)'9  wish to make the choice on each partner'
+call getitn(null,fn1,namopt,10)
+if(namopt.eq.0)go to a002
+call getitn('enter state number (1- for federal report)',fn3,state,150)
+cogrp=co/6+1
+coseq=co-((cogrp-1)*6)
+cogrp=cogrp*hthou
+stategr=state/14+1
+stateseq=state-((stategr-1)*14);  14 states in each record
+rpart=0
+call ynget('is this a restart? (y/n)')
+if(status.eq.0)goto a003
+call getitn('enter restart number',fn5,rpart,70)
+a003:
+call msg('enter option:  0  print net amount in account number area')
+write(crt,fopt)'1  do not print net amount'
+call cget(null,fn1,prtnet)
+go to (a003a)on prtnet
+if(prtnet.ne.0)go to a003
+ 
+a003a:
+;
+a004:
+;
+a005:
+if(co.eq.0)go to a20
+num=(hmil+co)*10
+call getomst
+ifs(omgname.eq.null)go to a05
+'client'='omgname'
+a05:
+num=num+1
+call getomst
+ifs(omgname.eq.null)go to a06
+'add'='omgname'
+ 
+a06:
+num=num+1
+call getomst
+ifs(omgname.eq.null)go to a07
+'mail'='omgname'
+ 
+a07:
+num=num+1
+call getomst
+ifs(omgname.eq.null)go to a08
+'csz'='omgname'
+ 
+a08:
+ 
+    call getitn(m08,f09,ftax,110040); federal id#
+ 
+a20:
+   call getitn(m08a,fn10,min,210040);  enter min. amount of gross to be printed
+   call getitn('enter min. royalty to be printed',fn10,rmin,210040);  royalty has new $10. min as of 1987
+   call ynget(m08b);  do you wish to print wpt amount? (y/n)
+  if(status.eq.0)go to a22; not printing (wflg=1)
+   call getitn('enter year (yy)',fn2,wflg,310040)
+   encode(m11,fx14)wflg
+   wflg=0
+ 
+a22:
+ 
+;
+; 2/12/85call ynget(m03);  do you want to 0 ytd income
+; 2/12if(status.eq.0)go to a30
+;
+;2/12'opt'='yes'
+;
+a30:
+linno=22;  call cget(m03a,f05,linno);   number of lines on 1099 (21 or 22)
+if(linno.eq.21)go to a40
+if(linno.ne.22)go to a30
+ 
+a40:
+call msg('enter option:  0  print all')
+write(crt,fopt)'1  print royalty only  (code i)'
+write(crt,fopt)'2  print all except code i'
+call cget(null,fn1,roy)
+go to (a41,a41)on roy
+if(roy.ne.0)go to a40
+ 
+a41:
+a45:
+ 
+a50:
+call msg('enter option:  0  print 1099s')
+write(crt,fopt)'1  print alignment 1099'
+write(crt,fopt)'9  recall program'
+call cget(null,fn1,num)
+goto (a51)on num; no alignment
+if(num.eq.0)goto b08;  align
+if(num.ne.9)go to a50;  error
+load('          ',0,0);  reanswer
+stop 0
+ 
+a51:
+    call lfeed(prt,4)
+write(prt,f02)null
+ 
+write(prt,f08)client
+'money'="'      9999999.99'"
+write(prt,f08)add,money    ; royalty
+write(prt,f08)csz;   not printing net as of 6/12/87
+write(prt,f08)null
+call lfeed(prt,1)
+write(prt,f09a)ftax,ftax,testnum
+   'ojaname'='test'
+   'ojaad1'='test'
+   'ojaad2'='test'
+   'ojaad3'='null'
+    call fillname;   this puts into fields nad1-nad7 the proper name & addresses due to option choosen
+    write(prt,f08)nad1;   shaded area
+write(prt,f08ab)nad2,money
+   write(prt,f08)nad3; shaded area
+call lfeed(prt,1)
+    write(prt,f08)nad4; street address
+  write(prt,f08)nad5; shaded area
+    write(prt,f08)nad6;   citystatezip
+   write(prt,f10)nad7
+encode(prtline,fc35)null
+   go to (a37h)on prtnet
+   encode(prtline,f10a)'net',999999999
+ 
+a37h:
+   go to (a38)on wflg
+   encode(prtline,f10b)'wpt',99999999
+a38:
+   write(prt,f10)prtline
+a39:
+    call lfeed(prt,2);   not printing wpt info
+ 
+go to a50
+ 
+b08:
+if(spart.eq.0)goto b10;   been in here before (preset to -1)
+call getitn('enter specific partner (n/l for all, 1- to end)',fn5,spart,10)
+if(spart.eq.0)go to b10
+if(spart.lt.0)goto b80; done
+call getk(oja,spart)
+if(status.ne.0)goto b08
+ojbvend=spart;   set the list file info up
+go to b11
+ 
+b10:
+;
+   readb(list,ojbrec)
+   if(status.ne.0)go to b90
+  if(ojbvend.gt.i99)go to b80;   into other companies
+   if(ojbvend.le.0)go to b08
+if(rpart.gt.ojbvend)goto b10
+rpart=0
+   arg=co*100 000+ojbvend
+   call getk(oji1,arg)
+   if(status.eq.0)go to b10;   excluded partner number
+   arg=ojbvend-100 000;   neg 1 on company # says exclude it in all companies
+   call getk(oji1,arg)
+   if(status.eq.0)goto b10
+ 
+b11:
+   readb(oja,ojarec)
+   call stat(1)
+   ifs(delflg.eq.d)go to b08
+   save=reloja
+  ifs(delflg.eq.i)go to b12
+  go to (b08)on roy;     only print i
+ 
+   go to b13
+ 
+b12:
+   goto (b13,b08)on roy;    print i, 2=dont print i
+ 
+;   0= print all
+ 
+b13:
+   arg=twomil+ojbvend;  check mailing address
+   call getk(oja,arg)
+   if(status.ne.0)go to b18;  ok
+   readb(oja,oja2rec)
+   call stat(1)
+   if(mailflg.lt.2)go to b18;  get this overwith
+   if(mailflg.lt.64)go to b10f
+   decr mailflg,64
+ 
+b10f:
+   if(mailflg.lt.32)go to b10g
+   decr mailflg,32
+ 
+b10g:
+   if(mailflg.lt.16)goto b10h
+   decr mailflg,16
+ 
+b10h:
+   if(mailflg.lt.8)goto b10i
+   decr mailflg,8
+ 
+b10i:
+   if(mailflg.lt.4)goto b10j
+   decr mailflg,4
+ 
+b10j:
+   if(mailflg.lt.2)go to b18
+   'ojaad1'='mail1'
+   'ojaad2'='mail2'
+   'ojaad3'='mail3'
+ 
+b18:
+   reloja=save
+callgetinc
+   ifs(delflg.eq.d)go to b08
+    ygro=ojaawi+ojaari;  w.i. & royalty income
+   if(ojaari.ge.rmin)go to b18f
+   if(ygro.lt.min)go to b08;   min. gross to be printed
+ 
+b18f:
+ 
+   ojayinc=ojayinc+ojawpt;   income+(-wpt);  this is combo of w.i & roy
+    if(ygro.eq.0)go to b08; dont print one
+ 
+b20:
+    call lfeed(prt,4)
+write (prt,f02)null
+'money'="'                '"
+if(ojaari.eq.0)goto b20a
+encode(money,fn162)ojaari
+b20a:
+write(prt,f08)client
+write(prt,f08)add,money
+write(prt,f08)csz;  not printing as of 6/12/86,ojayinc
+;goto (b25) on prtgrs ; dont print gross amount here-must be w/i
+ 
+b21:
+write(prt,f08)null
+call lfeed(prt,1)
+write(prt,f09a)ftax,ojaid,ojawhtax
+call fillname
+'money'="'                '"
+if(ojaawi.eq.0)goto b21a
+encode(money,fn162)ojaawi
+b21a:
+write(prt,f08)nad1
+write(prt,f08ab)nad2,money
+write(prt,f08)nad3
+call lfeed(prt,1)
+write(prt,f08)nad4
+write(prt,f08)nad5
+write(prt,f08)nad6
+b57:
+write(prt,f08)nad7
+ 
+encode(prtline,fc35)null
+  go to (b57f)on prtnet
+   encode(prtline,f10a)'net',ojayinc
+b57f:
+goto(b55)on wflg
+ojawpt=0-ojawpt ; get positive value
+   encode(prtline,f10b)'wpt',ojawpt
+ 
+b55:
+ 
+   write(prt,f10)prtline;  last account number optional - print net & wpt
+ 
+b58:
+   call lfeed(prt,2)
+b22:
+   ; 2/12/85 removed ability to clear balances in 1099ifs(opt.eq.yes)call putinc
+   go to b08
+;
+b80:
+;
+load(xoj231,0,0);   resets all of the paramters
+;
+b90:
+ call msg('be sure to:  1  save this year end master file for 6248/6249 processing.')
+ call msg('             2  clear your year end balances in "ojinc" before ')
+ call msg('                processing january.  check all companies & states before jan.'
+ 
+  call msg('             n/l to acknowledge')
+ read(crt,fn1)
+ stop 0
+;
+;====================
+subroutine getinc
+;====================
+lvend=ojbvend
+if(state.ne.-1)go to s100;  state records
+if(co.eq.0)goto s90;   main - fed record
+num=cogrp+ojbvend
+call getk(oja,num)
+go to (s80)on status
+call stat(2)
+readb(oja,partco)
+call stat(1)
+call tget(ojayinc,coseq,yinc0,4)
+call tget(ojaytax,coseq,ptax0,4)
+call tget(ojawpt,coseq,wpt0,4)
+call tget(ojawhtax,coseq,wh0,4)
+lvend=co*100000+ojbvend
+goto s90
+;
+s80:
+'delflg'='d'
+;
+return
+ 
+s90:
+call getk(ojaa,lvend)
+if(status.ne.0)go to s80
+readb(ojaa,ojaawr)
+call stat(1)
+return
+s100:
+num=(stategr*100+co)*100 000+ojbvend
+call getk(oja,num)
+if(status.ne.0)go to s80;   say it must be deleted
+readb(oja,partstate)
+call stat(1)
+call tget(ojayinc,stateseq,snet0,4)
+call tget(ojaytax,stateseq,smt0,4)
+call tget(ojawpt,stateseq,swpt0,4)
+ojaari=ojawhtax=0
+ojaawi=ojayinc+ojaytax;   putting all state money into w.i.
+ 
+return
+ 
+;
+;==========================
+subroutine getomst
+;==========================
+ 
+call getk(omst,num)
+go to (gt20)on status
+call stat(2)
+readb(omst,omgrec)
+call stat(1)
+return
+;
+gt20:
+ 
+'omgname'='null';   not on file - clear it
+return
+;=======================
+;subroutine putinc
+;=======================
+ 
+;if(reloja.eq.0)goto pt90; done - dont write it
+;
+;if(state.ge.0)go to p100
+;if(co.eq.0)go to p90
+;call tput(zero,coseq,yinc0,4)
+;call tput(zero,coseq,ptax0,4)
+;call tput(zero,coseq,wpt0,4)
+;call tput(zero,coseq,wh0,4)
+;writeb(oja,partco);   this rel key should be right
+;call stat(1)
+;return
+;
+;p90:
+;ojawpt=ojayinc=ojaytax=ojawhtax=0
+;writeb(oja,ojarec)
+;call stat(1)
+ 
+;pt90:
+;return
+;p100:
+;call tput(zero,stateseq,snet0,4)
+;call tput(zero,stateseq,smt0,4)
+;call tput(zero,stateseq,swpt0,4)
+;writeb(oja,partstate)
+;call stat(1)
+;return
+;
+;=========================
+;
+;
+;
+subroutine fillname
+;===================
+ 
+encode(nad1,fc30)null
+encode(nad2,fc30)null
+encode(nad3,fc30)null
+encode(nad4,fc30)null
+encode(nad5,fc30)null
+encode(nad6,fc30)null
+encode(nad7,fc30)null
+ifs(ojaad3.eq.null)go to fl80;   only 3 lines - 4 is in shaded area,but it is empty anyway
+go to (fl10,fl20,fl30,fl40,fl50,fl60,fl70,fl80,fl90)on namopt
+ 
+fl10:
+'nad2'='ojaad1';  this must be the guys name
+'nad4'='ojaad2'
+'nad6'='ojaad3'
+return
+ 
+fl20:
+'nad2'='ojaname'
+'nad4'='ojaad2';  dropping ojaad1
+'nad6'='ojaad3'
+return
+ 
+fl30:
+'nad2'='ojaname'
+'nad4'='ojaad1'
+'nad6'='ojaad3';  dropping ojaad2
+return
+ 
+fl40:
+'nad2'='ojaname'
+'nad4'='ojaad1'
+'nad6'='ojaad2';  dropping ojaad3
+return
+ 
+fl50:
+'nad1'='ojaname'
+'nad2'='ojaad1'
+'nad4'='ojaad2'
+'nad6'='ojaad3';  name is in shaded area
+return
+ 
+fl60:
+'nad2'='ojaname'
+'nad3'='ojaad1';  shaded area
+'nad4'='ojaad2'
+'nad6'='ojaad3'
+return
+ 
+fl70:
+'nad2'='ojaname'
+'nad4'='ojaad1'
+'nad5'='ojaad2'; shaded area
+'nad6'='ojaad3';
+return
+ 
+fl80:
+'nad2'='ojaname'
+'nad4'='ojaad1'
+'nad6'='ojaad2'
+'nad7'='ojaad3'; shaded area
+return
+ 
+fl90:
+call msg(eject)
+write(crt,fc35)'option 1','   2'
+curp(crt,1,2)
+write(crt,fc35)ojaad1,ojaname
+write(crt,fc35)ojaad2,ojaad2
+write(crt,fc35)ojaad3,ojaad3
+ 
+call msg(null)
+write(crt,fc35)'option 3','   4'
+write(crt,fc35)ojaname, ojaname
+write(crt,fc35)ojaad1, ojaad1
+write(crt,fc35)ojaad3, ojaad2
+call msg(null)
+call msg('5 - 8 will only show the line that will be in the shaded area')
+write(crt,fc35)'option 5','   6'
+write(crt,fc35)ojaname,ojaad1
+call msg(null)
+write(crt,fc35)'option 7','   8'
+write(crt,fc35)ojaad2,ojaad3
+call getitn('enter option number',fn1,num,120)
+go to (fl10,fl20,fl30,fl40,fl50,fl60,fl70,fl80)on num
+go to fl90
+;======================================================================
+set line:60,num:0,co:0,coseq:0,cogrp:0,hthou:100 000,i99:99999,ygro:0,linno:22,save:0
+set state:0,stateseq:0,stategr:0,spart:-1,namopt:0,rpart:0,prtnet:0
+set hmil: 100 000 000,arg:0,twomil:2 000 000,testnum:999 999 999,roy:0
+set lvend:0
+string date(8),null(0),client(45), add(45), mail(45), csz(45), ftax(45),money(16),prtline(35)
+;
+define m03:'do you want to clear ytd income totals?'
+define m03a:'enter number of lines on your 1099 form (21 or 22)'
+define m04:'company number    (1- to end)'
+define m08: 'enter federal id # for this company'
+define m08a:'enter minimum amount of gross to be printed'
+define m08b:'do you wish to print wpt amount? (y/n)'
+define m08c:'alignment? (y/n)'
+define test:'testing alignment************'
+;define m09: 'gr'
+;define m10: 'nt'
+define m11: 'wpt amt w/h 1984'
+; 2/15/85define opt:'n',yes:'y'
+;
+;
+set min:0,wflg:1,rmin:0
+define d:'d',i:'i'
+format f02: x80
+format f05:n2
+format f06: c30
+format f07: x25 c15
+format fx14: x14 n2
+format f08: x6 c30  c16
+format f08a: x6 c30 x3 c15
+format f08ab: x6 c30  x14 c16
+format f09: c15
+format f09a: x6 c17 c16 x3 n10.2
+format f10: x6 c33 c16 n10.2
+format f10a: c5 n10.2
+format f10b: x18 c5 n8.2
+ 
+format fn3:n3
+format fn1:n1
+format fn10: n10.2
+format fn162:n16.2
+format fn2: n2
+format fn5:n5
+ 
+format fc35:c35
+format fc30:c30
+format fopt:x15 c80
+define xoj231:'xoj231'
+end
+END LIST
+.USE CRT3 FOR SYSRDR

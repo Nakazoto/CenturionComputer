@@ -1,0 +1,324 @@
+s.lst zoc 1 crt3
+S.LST ZOC 1 CRT3
+.JOB ZOC
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(rvarec)
+record rvarec(40)
+set emp:0
+string vname(25)
+endrec
+;
+(rvahd )
+record rvahd(104)
+set hd:0
+string firm(30)
+string fad1(30),fad2(30)
+set paswrd:0
+endrec
+;
+(ocurec)
+record ocurec(20);       history
+set hemp:0
+set hckno:0
+set hnet:0
+string hflg(1)
+string hpdte(1)
+string hcdate(1)
+endrec
+;
+(rvbrec)
+record rvbrec(64);       this is 395, but we are using only first 64 bytes
+set taxnul:0;            indicates header
+define a01ref:'   ';                  3 char. tax referrence code
+define a02ref:'   ';     3 char. tax referrence code
+define a03ref:'   ';     3 char. tax referrence code
+define a04ref:'   ';     3 char. tax referrence code
+define a05ref:'   ';     3 char. tax referrence code
+define a06ref:'   ';     3 char. tax referrence code
+define a07ref:'   ';     3 char. tax referrence code
+define a08ref:'   ';     3 char. tax referrence code
+define a09ref:'   ';     3 char. tax referrence code
+define a10ref:'   ';     3 char. tax referrence code
+define a11ref:'   ';     3 char. tax referrence code
+define a12ref:'   ';     3 char. tax referrence code
+define a13ref:'   ';     3 char. tax referrence code
+define a14ref:'   ';     3 char. tax referrence code
+define a15ref:'   ';     3 char. tax referrence code
+endrec
+;
+(rvbhea)
+record rvbhead(100)
+set pjrn:64;             payroll journal number
+set lckd:0;              ;st check date used (not as absolute stop, but as a caution
+;   options
+string mtopt(1);         sending meals and tips to g/l? (y/n)
+set    sum:0;            summarize option 0=none
+;                                         1=summarize all net amounts
+;                                         2=summarize all fields for all employees within a dept.
+;                                         3=summarize all fields for all empl.
+set nbrn:0;              number of branches (0-3) from g/l header; 2 in o&g
+set nmaj:0;              number of digits in maj (1-6) from g/l header
+set nmin:0;              number of digits in minor (0-3) from g/l header
+string tax01(3);         tax ref code (from p/r tax table)
+string tax02(3);         tax ref code (from p/r tax table)
+string tax03(3);         tax ref code (from p/r tax table)
+string tax04(3);         tax ref code (from p/r tax table)
+string tax05(3);         tax ref code (from p/r tax table)
+string tax06(3);         tax ref code (from p/r tax table)
+string tax07(3);         tax ref code (from p/r tax table)
+string tax08(3);         tax ref code (from p/r tax table)
+string tax09(3);         tax ref code (from p/r tax table)
+string tax10(3);         tax ref code (from p/r tax table)
+string tax11(3);         tax ref code (from p/r tax table)
+string tax12(3);         tax ref code (from p/r tax table)
+string tax13(3);         tax ref code (from p/r tax table)
+string tax14(3);         tax ref code (from p/r tax table)
+string tax15(3);         tax ref code (from p/r tax table)
+set fcheck:0;            first check number on previous run
+set jsub:0;              jsub=0 no sub, 1=job/dept, 2=dept only, 3=job only, 4=empl #
+endrec
+;
+;
+(ocarec)
+record ocarec(224)
+set jobdep:0;          job and dept (jjjjjjddd) also the index argument
+set ?net:0;            g/l account for net (credit amount)
+set ?gros:0;           g/l account for gross
+set ?com:0;            g/l account for commission (if it is to be seperate)
+set ?fica:0;           g/l account for fica
+set ?wh:0;             g/l account for withholding
+set ?rded1:0;          g/l account for regular deduction 1
+set ?rded2:0;          g/l account for reg. deduction 2
+set ?rded3:0;          g/l account for reg. deduction 3
+set ?cded1:0;          g/l account for countered deduction 1
+set ?cded2:0;         g/l account for countered deduction 2
+set ?cded3:0;         g/l account for countered deduction 3
+set ?cded4:0;         g/l account for countered deduction 4
+set ?empar:0;         g/l account for employee a/r deduction
+set ?sbond:0;         g/l account for employee saving bonds
+set ?rfundn:0;        g/l account for retirement fund (non-taxable)
+set ?rfundt:0;        g/l account for retirement fund (taxable)
+set ?lins:0;          g/l account to life insurance
+set ?mins:0;          g/l account for medical insurance
+set ?trustf:0;        g/l account for trust fund
+set ?sus:0;           suspense account for 1 time deductions
+set ?plsnet:0;        regular plus to net
+set ?eadv:0;          expense advances (issued, reported and payments made)
+set ?meal:0;          meals
+set ?mcont:0;         contra for meals
+set ?tips:0;          tips
+set ?tcont:0;         contra for tips
+;
+set scat01:0;         g/l account for state,city,and area tax - ref 1
+set scat02:0;         g/l account for state,city,and area tax - ref 2
+set scat03:0;         g/l account for state,city,and area tax - ref 3
+set scat04:0;         g/l account for state,city,and area tax - ref 4
+set scat05:0;         g/l account for state,city,and area tax - ref 5
+set scat06:0;         g/l account for state,city,and area tax - ref 6
+set scat07:0;         g/l account for state,city,and area tax - ref 7
+set scat08:0;         g/l account for state,city,and area tax - ref 8
+set scat09:0;         g/l account for state,city,and area tax - ref 9
+set scat10:0;         g/l account for state,city,and area tax - ref 10
+set scat11:0;         g/l account for state,city,and area tax - ref 11
+set scat12:0;         g/l account for state,city,and area tax - ref 12
+set scat13:0;         g/l account for state,city,and area tax - ref 13
+set scat14:0;         g/l account for state,city,and area tax - ref 14
+set scat15:0;         g/l account for state,city,and area tax - ref 15
+endrec
+;
+(ocbrec)
+record ocbrec(8)
+set job:0
+set rel0:0
+endrec
+;
+(ocatre)
+record ocatrec(224)
+set njobdep:0;          job and dept (jjjjjjddd) also the index argument
+set ?tnet:0;            g/l account for net (credit amount)
+set ?tgros:0;           g/l account for gross
+set ?tcom:0;            g/l account for commission (if it is to be seperate)
+set ?tfica:0;           g/l account for fica
+set ?twh:0;             g/l account for withholding
+set ?trded1:0;          g/l account for regular deduction 1
+set ?trded2:0;          g/l account for reg. deduction 2
+set ?trded3:0;          g/l account for reg. deduction 3
+set ?tcded1:0;          g/l account for countered deduction 1
+set ?tcded2:0;         g/l account for countered deduction 2
+set ?tcded3:0;         g/l account for countered deduction 3
+set ?tcded4:0;         g/l account for countered deduction 4
+set ?tempar:0;         g/l account for employee a/r deduction
+set ?tsbond:0;         g/l account for employee saving bonds
+set ?trfundn:0;        g/l account for retirement fund (non-taxable)
+set ?trfundt:0;        g/l account for retirement fund (taxable)
+set ?tlins:0;          g/l account to life insurance
+set ?tmins:0;          g/l account for medical insurance
+set ?ttrustf:0;        g/l account for trust fund
+set ?tsus:0;           suspense account for 1 time deductions
+set ?tplsnet:0;        regular plus to net
+set ?teadv:0;          expense advances (issued, reported and payments made)
+set ?tmeal:0;          meals
+set ?tmcont:0;         contra for meals
+set ?ttips:0;          tips
+set ?ttcont:0;         contra for tips
+;
+set tscat01:0;         g/l account for state,city,and area tax - ref 1
+set tscat02:0;         g/l account for state,city,and area tax - ref 2
+set tscat03:0;         g/l account for state,city,and area tax - ref 3
+set tscat04:0;         g/l account for state,city,and area tax - ref 4
+set tscat05:0;         g/l account for state,city,and area tax - ref 5
+set tscat06:0;         g/l account for state,city,and area tax - ref 6
+set tscat07:0;         g/l account for state,city,and area tax - ref 7
+set tscat08:0;         g/l account for state,city,and area tax - ref 8
+set tscat09:0;         g/l account for state,city,and area tax - ref 9
+set tscat10:0;         g/l account for state,city,and area tax - ref 10
+set tscat11:0;         g/l account for state,city,and area tax - ref 11
+set tscat12:0;         g/l account for state,city,and area tax - ref 12
+set tscat13:0;         g/l account for state,city,and area tax - ref 13
+set tscat14:0;         g/l account for state,city,and area tax - ref 14
+set tscat15:0;         g/l account for state,city,and area tax - ref 15
+endrec
+;
+(ocat1r)
+record ocat1rec(224)
+set t1dept:0;          job and dept (jjjjjjddd) also the index argument
+set ?t1net:0;            g/l account for net (credit amount)
+set ?t1gros:0;           g/l account for gross
+set ?t1com:0;            g/l account for commission (if it is to be seperate)
+set ?t1fica:0;           g/l account for fica
+set ?t1wh:0;             g/l account for withholding
+set ?t1rded1:0;          g/l account for regular deduction 1
+set ?t1rded2:0;          g/l account for reg. deduction 2
+set ?t1rded3:0;          g/l account for reg. deduction 3
+set ?t1cded1:0;          g/l account for countered deduction 1
+set ?t1cded2:0;         g/l account for countered deduction 2
+set ?t1cded3:0;         g/l account for countered deduction 3
+set ?t1cded4:0;         g/l account for countered deduction 4
+set ?t1empar:0;         g/l account for employee a/r deduction
+set ?t1sbond:0;         g/l account for employee saving bonds
+set ?t1rfundn:0;        g/l account for retirement fund (non-taxable)
+set ?t1rfundt:0;        g/l account for retirement fund (taxable)
+set ?t1lins:0;          g/l account to life insurance
+set ?t1mins:0;          g/l account for medical insurance
+set ?t1trustf:0;        g/l account for trust fund
+set ?t1sus:0;           suspense account for 1 time deductions
+set ?t1plsnet:0;        regular plus to net
+set ?t1eadv:0;          expense advances (issued, reported and payments made)
+set ?t1meal:0;          meals
+set ?t1mcont:0;         contra for meals
+set ?t1tips:0;          tips
+set ?t1tcont:0;         contra for tips
+;
+set t1scat01:0;         g/l account for state,city,and area tax - ref 1
+set t1scat02:0;         g/l account for state,city,and area tax - ref 2
+set t1scat03:0;         g/l account for state,city,and area tax - ref 3
+set t1scat04:0;         g/l account for state,city,and area tax - ref 4
+set t1scat05:0;         g/l account for state,city,and area tax - ref 5
+set t1scat06:0;         g/l account for state,city,and area tax - ref 6
+set t1scat07:0;         g/l account for state,city,and area tax - ref 7
+set t1scat08:0;         g/l account for state,city,and area tax - ref 8
+set t1scat09:0;         g/l account for state,city,and area tax - ref 9
+set t1scat10:0;         g/l account for state,city,and area tax - ref 10
+set t1scat11:0;         g/l account for state,city,and area tax - ref 11
+set t1scat12:0;         g/l account for state,city,and area tax - ref 12
+set t1scat13:0;         g/l account for state,city,and area tax - ref 13
+set t1scat14:0;         g/l account for state,city,and area tax - ref 14
+set t1scat15:0;         g/l account for state,city,and area tax - ref 15
+endrec
+;
+;
+(ocat2r)
+record ocat2rec(224)
+set t2dept:0;          job and dept (jjjjjjddd) also the index argument
+set ?t2net:0;            g/l account for net (credit amount)
+set ?t2gros:0;           g/l account for gross
+set ?t2com:0;            g/l account for commission (if it is to be seperate)
+set ?t2fica:0;           g/l account for fica
+set ?t2wh:0;             g/l account for withholding
+set ?t2rded1:0;          g/l account for regular deduction 1
+set ?t2rded2:0;          g/l account for reg. deduction 2
+set ?t2rded3:0;          g/l account for reg. deduction 3
+set ?t2cded1:0;          g/l account for countered deduction 1
+set ?t2cded2:0;         g/l account for countered deduction 2
+set ?t2cded3:0;         g/l account for countered deduction 3
+set ?t2cded4:0;         g/l account for countered deduction 4
+set ?t2empar:0;         g/l account for employee a/r deduction
+set ?t2sbond:0;         g/l account for employee saving bonds
+set ?t2rfundn:0;        g/l account for retirement fund (non-taxable)
+set ?t2rfundt:0;        g/l account for retirement fund (taxable)
+set ?t2lins:0;          g/l account to life insurance
+set ?t2mins:0;          g/l account for medical insurance
+set ?t2trustf:0;        g/l account for trust fund
+set ?t2sus:0;           suspense account for 1 time deductions
+set ?t2plsnet:0;        regular plus to net
+set ?t2eadv:0;          expense advances (issued, reported and payments made)
+set ?t2meal:0;          meals
+set ?t2mcont:0;         contra for meals
+set ?t2tips:0;          tips
+set ?t2tcont:0;         contra for tips
+;
+set t2scat01:0;         g/l account for state,city,and area tax - ref 1
+set t2scat02:0;         g/l account for state,city,and area tax - ref 2
+set t2scat03:0;         g/l account for state,city,and area tax - ref 3
+set t2scat04:0;         g/l account for state,city,and area tax - ref 4
+set t2scat05:0;         g/l account for state,city,and area tax - ref 5
+set t2scat06:0;         g/l account for state,city,and area tax - ref 6
+set t2scat07:0;         g/l account for state,city,and area tax - ref 7
+set t2scat08:0;         g/l account for state,city,and area tax - ref 8
+set t2scat09:0;         g/l account for state,city,and area tax - ref 9
+set t2scat20:0;         g/l account for state,city,and area tax - ref 10
+set t2scat21:0;         g/l account for state,city,and area tax - ref 11
+set t2scat22:0;         g/l account for state,city,and area tax - ref 12
+set t2scat23:0;         g/l account for state,city,and area tax - ref 13
+set t2scat24:0;         g/l account for state,city,and area tax - ref 14
+set t2scat25:0;         g/l account for state,city,and area tax - ref 15
+endrec
+;
+;
+;
+(rvrrec)
+record rvrrec(41)
+set prempl:0;    employee number
+set prdept:0;    job/dept
+set prtcode:0;   transaction code number
+set prhours:0;   number hours
+set prrate:0
+set prfactr:0
+set pramt:0;     amount of money deducted or added
+string prname(8);reference code (ie. state code on state taxes)
+string rtax(3);  state tax ref.
+endrec
+;
+;
+(rvahea)
+record rvahead(41)
+set regnul:0
+set regped:0;     period ending date
+set regckd:0;     check date
+set regnum:0;     first check number
+set runfac:0;     pay factor (if used in a void, it will be -1)
+set payop:0;      pay option
+direct
+nctra dw 0        counter a
+nctrb dw 0
+nctrc dw 0
+nctrd dw 0
+cpl
+define dumrun:'y';    dummy run flag
+endrec
+;
+;
+(oirecq)
+record oirecq(96)
+set dvend:0,?did:0,ddist:0,recnu:0,dvou:0,dvdte:0,dacct:0,dbbl:0,dnet:0,dtax:0,dmis:0,dnetpart:0
+string ddesc(14)
+set wptven:0,wptrat:0,wptamt:0,wptdflg:0
+set dnum6:0
+string qtype(1)
+set innum:0,ck:0,dperc:0
+endrec
+;
+;
+END LIST
+.USE CRT3 FOR SYSRDR

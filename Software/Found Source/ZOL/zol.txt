@@ -1,0 +1,304 @@
+s.lst zol 1 crt3
+S.LST ZOL 1 CRT3
+.JOB ZOL
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(olbrec)
+record olbrec(10)
+set ?olbid:0
+set relola:0
+endrec
+;
+(olarec)
+ 
+record olarec(400)
+ set ?prop:0;          p/l/w number
+ set anum:0;           area #
+ set admnum:0;         administrator #
+ string lessor(30);    lessor name
+ string lename(30);    original lessee name
+ string ltype(1);      lessor type
+ string tint(1);       interest type
+ set tinta:0;          participate in bonus?
+ set tintb:0;          participate in rentals?
+ set tintc:0;          exec. rights
+ string rr(1);         rental responsibility
+ string mref(19);      map code + ref #
+ set ldte:0;           lease/inst date
+ set efdte:0;          effective date
+ string rbk(6);        recording book #
+ set rpg:0;            recording page #
+ string microfiche(12); microfiche #
+ set edte:0;           expiration date
+ set rdte:0;           rental date (mmdd)
+ set period:0;         # months in rent period
+ set ramt:0;           rent amt w/o bnk (2 dec)
+ set bnkch:0;          bank charge
+ set crent:0;          company's rent
+ set pd:0;             ytd rent
+ set ?rent:0;          itd rent
+ set odte1:0;          1st obl date
+ set odte2:0;          2nd obl date
+ set odte3:0;          3rd obl date
+ set shdte:0;          shut-in date
+ set ?gacre:0;         gross acres
+ set ?gnaacre:0;       non-add gross
+ set ?nacre:0;         net acres
+ set ?cacre:0;         company net acres
+ set land:0;           landowner royalty (8 dec)
+ set orr:0;            overriding royalty (8 dec)
+ set bonus:0;          bonus paid
+ set ocap:0;           other capital costs
+ set nri:0;            net revenue interest
+ set cnri:0;           company net revenue interest (8 dec)
+ set nmi:0;            net mineral interest (8 dec)
+ set cnmi:0;           company net minerals (8 dec)
+ set adte:0;           acquired date
+ string from(30);      acquired from
+ string instr(1);      acq. instrument type
+ string abook(6);      acq. book #
+ set apage:0;          acq. page
+ string amicro(12);    acq. microfiche
+ set bdis:0;           dist # for billing
+ set dco:0;            d/r co # (for g/l)
+ string paycod(1);     n/l=checks, n=next time, x=no
+ set point1:0;         points to desc1
+ set point6:0;         points to desc6
+ set point7:0;         points to desc7
+ set point9:0;         points to desc9
+ set cdte:0;           date of last change
+ set paynum:0;         number of payees
+ set numpd:0;          # checks written last time out
+ set cknum:0;          1st check # last time
+ set rectype:0;        0=lease, 1=mineral/royalty
+endrec
+;
+(ola2  )
+record ola2(400)
+set ?opro:0
+string ofil(316)
+set opoint1:0,opoint6:0,opoint7:0,opoint9:0
+endrec
+;
+;
+ 
+(olahea)
+record olahead(400)
+set ?hprop:0
+string hdrdte(4)
+set headflg:0
+set headco:0
+string hcknu(6)
+set hrmm:0;   last rental date paid
+set covdate:0;  last conversion date (grin)
+define cyour:'your ';   alternate for "your" in all reports
+string grtype(12);   grantor types - 1 char codes
+string grtit(120);    grantor types expanded names (12- 10 char each)
+ 
+string inttype(12)
+string inttit(120);   interest type expanded name
+endrec
+ 
+record olahead2(400)
+string acqtype(12);  acquisition instr. type
+string acqtit(120);   acq instr. titles
+string rrtype(12);   rental responsibility
+string rrtit(120);    rr titles
+string sttype(11);  status ty
+string sttit(110);   titles for status
+endrec
+;
+;
+;
+(olgrec)
+record olgrec(15)
+string area(14);   area name 8/19/81
+endrec
+ 
+(olglst)
+record olglst(8)
+set olganum:0
+set relolg:0
+endrec
+ 
+ 
+ 
+(olaare)
+record olaarec(200)
+set jpart:0
+string pname(40),pad1(40),pad2(40),pad3(40);  payee name & adress
+set ?ypaid:0,?lss:0,?lphone:0,jco:0
+set apflg:0
+endrec
+ 
+(olbbre)
+record olbbrec(8);   list file for ol-aa
+set lvend:0,relolaa:0
+endrec
+ 
+ 
+;
+(oldmdr)
+record oldmdrec(10)
+set ?oldid:0,oldcode:0;  code=1 pay pros, 2=n/p pros, 3=pay 4=nopay lse;
+;      5=pay 6=n/p area,  11=pay 12=no pay prop,  13=pay (override everything)
+endrec
+ 
+(olddre)
+ 
+record olddrec(15)
+set ?oldplw:0,oldrelola:0,oldstate:0
+string oldpayit(1)
+endrec
+ 
+(olirec)
+record olirec(49);    descriptions
+set ?dprop:0;         p/l/w/description code
+;  description codes are  1=land description
+;                         2=special obligations
+;                         3=orr remarks
+;                         4=royalty remarks
+;                         5=contract reference
+;                         6=credit check to
+;                         8=misc. remarks
+;
+set seq:0;            seq. ##
+set fpntr:0
+string desc(32);      description
+endrec
+ 
+(olipnt)
+record olipnt(16)
+set point:0
+set delete:0;    beginning of deleted chain
+endrec
+ 
+;
+(olhrec)
+record olhrec(50);   snapshot
+string pool(1),shutin(1),rassgn(1),pugh(1),sdam(1),bonopt(1),minr(1),coming(1),nkind(1),warr(1)
+string backin(1),depth(1),opag(1),abstr(1),title(1),dedi(1),minc(1)
+endrec
+;
+(ollrec)
+record ollrec(100)
+set ?ollprop:0
+set ollseq:0
+set ollfpntr:0
+set ollamt:0
+set ollbpamt:0
+set ollpart:0,ollytdpd:0
+string olldesc(64)
+endrec
+(ollpay)
+record ollpay(100)
+set ?payprop:0
+set payseq:0
+set pfpntr:0
+set payamt:0
+set bankamt:0
+set payeenum:0,payytdpd:0
+string payeename(64)
+endrec
+ 
+;
+(olcrec)
+record olcrec(48)
+set ?plw:0 ;  property number
+set  olcrelola:0;    rel key for ola file
+set olccnty:0;   county
+set olcst:0;  state
+set olcrd:0;    rental date
+set areanum:0
+string olctype(1);
+string olclint(1)
+string olclrr(1)
+set olcdist:0;    district #
+set olcxlse:0;   lse w/o pros
+set expdate:0;  expiration date
+set olclsedate:0;  lease date
+endrec
+ 
+(olccre)
+record olccrec(42);   record used for sorting in ol218
+set relxx:0
+string sortfield(31)
+set ?pp:0
+endrec
+(olk2  )
+record olk2(50)
+set ?dprop2:0,seq2:0,ofpntr:0
+string odesc(32)
+endrec
+ 
+(olmrec)
+ 
+record olmrec(50);    royalty delay rental details
+set ?olmid:0     ;  property (receipt of payments)
+set olmbkdate:0;   bank received date
+set olmrntdate:0;  rental due
+set olmrentpaid:0;  rental amt rec.
+string olmdesc(30);  payor
+endrec
+ 
+(olm1re)
+record olm1rec(50);   royalty delay rental master file
+set ?olm1id:0;  property
+set ?olm1hlbcost:0;   user cost
+set olm1amtrent:0;   each period rental due
+set olm1duerent:0;  date rental due
+set olm1period:0
+set olm1lastdate:0;  last paid rental
+set olm1type:0;    description # refers to header types 1-9
+endrec
+ 
+(olm1he)
+record olm1rec0(50)
+string type1(9),type2(9),type3(9),type4(9),type5(9)
+endrec
+ 
+record olm1rec1(50);   arg for this record is 1
+string type6(9),type7(9),type8(9),type9(9),type10(9)
+endrec
+ 
+(olm2re)
+record olm2rec(10);   list file for olm1
+set ?olm2id:0
+set relolm1:0
+endrec
+ 
+ 
+ 
+(olscre)
+record olscrec(25);   ol285
+set ?plw:0
+set relola:0
+set partner:0
+set interest:0
+set sarea:0
+endrec
+ 
+(olpnt )
+record olpnt(25);   ol285
+set point:0,sco:0,rmm:0,popt:0,intent:0
+endrec
+ 
+;
+;
+(olupnt)
+record olupnt(4)
+set upoint:0
+endrec
+ 
+(olurec)
+record olurec(57);  history
+set cknumber1:0
+set ?hist:0
+string ckd(1),bnkname(30)
+set ckamt:0
+set hco:0
+string hflg(1)
+endrec
+ 
+END LIST
+.USE CRT3 FOR SYSRDR

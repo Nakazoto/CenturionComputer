@@ -1,0 +1,75 @@
+s.lst zod 1 crt3
+S.LST ZOD 1 CRT3
+.JOB ZOD
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(odarec)
+record odarec(55)
+set   odattype:0;  tuvvwx= ttype where x=0=report calculations only, 1=go to g/l only, 2=bill, 3=bill and g/l
+;4 & 5 removed 8/2/81       4=income only, 5=inc&gl, 1x=factor amounts based only on non-zero,  2x=all lses will get even distr.
+;      0wx=automatic request for new % info, 1wx=only request when spec. called,
+;    2,3,4,5 removed 8/02/81 2wx=auto. based on prod. mcf, 3wx=auto prod. bbl, 4wx=sales mcf, 5wx=sales bbl
+;     2wx=dont calculate factors - use already enter factors
+;   0vvwx=do not summarize information,  1vvwx=summarize,
+;  0uvvwx=oddail lines are properties, 1uvvwx=oddail lines are partners
+string odadesc(30);   description of group
+define odahead1:'lease'
+define odahead2:'amt  '
+set odataxpc:0;  8/02/81...no longer used
+set  odaacct:0;   used for summary acct number for billings
+endrec
+ 
+(odbrec)
+ 
+record odbrec(8)
+set odbgr:0
+set reloda:0
+endrec
+ 
+;
+(oddrec)
+ 
+record oddrec(30)
+set  oddtamt:0;  total amount this month
+set  oddfactor:0; factor arrived at this month
+set  odddist:0;  distribution number
+set  oddamt1:0;  used to calc. % factor
+set  oddamt2:0;  dr. income account number if not using acct
+set  oddamt3:0;
+set oddamt4:0;  head uses it for # of records in group
+endrec
+(oddtot)
+ 
+record oddtotal(30)
+set  oddtgramt:0;  total amount this month
+set  oddtfactor:0; factor arrived at this month
+set  oddtdist:0;  distribution number
+set  oddtamt1:0;  used to calc. % factor
+set  oddtamt2:0;  dr. income account number if not using acct
+set  oddtamt3:0;
+set oddtamt4:0;  head uses it for # of records in group
+endrec
+;
+(oderec)
+ 
+record oderec(10);   list for oddrec
+set  ?lgr:0;  gr,pros,lse,sub,well#
+set  relodd:0
+endrec
+;
+(odmrec)
+ 
+record odmrec(65)
+set odmgrno:0;  group
+set odmglno:0;  account
+set odmvou :0;  voucher
+set odmdate:0;  date
+set odmvend:0;  a/p vendor
+set odmamt  :0;   amount
+set ?odmid:0;   property
+set odmdist:0;  distr.#
+string odmdesc(30);  description
+endrec
+;
+END LIST
+.USE CRT3 FOR SYSRDR

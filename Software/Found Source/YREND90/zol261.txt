@@ -1,0 +1,452 @@
+s.lst zol261 1 crt3
+S.LST ZOL261 1 CRT3
+.JOB ZOL261
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
+LIST - 6.00
+title: 'ol261 (ol1099a) (1099 writer)'
+system (exp=d)
+;
+define m01:'ol261   (delay rental - 1099 writer)       12/17/90'
+;
+;   notes:
+;   04/21/80...change vmrec for wpt...js
+;   12/06/80...or to ol/   exp b..ns
+;   1/23/82...added ol-aa & pbamt holds total paid to this guy this year in second record..ns
+;  2/15/82...changed record layout..ns
+;  9/18/82...new file layout
+;   2/5/83..new file layouts
+;   12/06/83...new 1099 layout
+;   9/5/84...exp=d, ola is copy statement
+;  11/17/84...1984 1099 form..ns
+;   12/20/84..adding name&address options...ns
+;  03/07/85...restart option(2-25-85-3-1)
+;  03/18/85...alignment on testamt and ss#..sl
+;  05/07/85...adding help screens...lll
+;  08/29/85...fixing title and jcl's...lll
+; 12/16/85...changing print format for 1985 1099's...clv ii
+; 4/1/86...added getk to readb for p.c. ...clv ii
+; 4/10/86...cleaned up note message..sl
+;   10/28/86...new format 1986ty..ns (f08/f08a change)
+;  02/20/90..fixing other co ssn# to print ...clv ii
+;  12/17/90..changes for 1990 formats ...clv ii
+ 
+ 
+file ola:sys0,class=2,ind,recsiz=400,key=relola
+file bmst:sys2,class=2,ind, recsiz=55, key=rel2
+file list:sys5,class=2,seq,lsr=4,filtyp=b,buffered;  =400,buf5
+file mmst:sys8,class=2,seq,filtyp=a
+file omg:sys9,class=2,ind,recsiz=45,key=rel9
+file olaa:sys13,class=2,ind,recsiz=200,key=relolaa
+file olbb:sys14,class=2,seq,lsr=4,filtyp=b,buffered;=400,buf14
+file oll:sys15,class=2,rnd,recsiz=100,key=rel15
+set rel15:0
+ 
+;
+set  rel1:0,rel2:0,rel3:0,rel4:0,rel6:0,rel7:0,rel9:0,rel10:0,rel11:0
+ 
+copy olbbre sys10
+copy olarec
+copy olaare sys10
+copy ollrec sys10
+copy olbrec sys10
+copy omgrec
+;
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+;
+entrypoint crt
+;
+external lfeed,msg,stat,getk,clrec,pupsi,?edit,ynget,getit,getitn
+;
+entry
+;
+open io (crt,ola,oll,olaa),  input(bmst,omg,mmst,list,olbb),  output prt
+;
+call msg(eject)
+call msg(m01); 1099
+call msg(null)
+call ynget(m10);  do you wish to write 1099's for companies with fed. id. numbers? (y/n)
+go to (a001)on status
+fedflg=0;   dont print these guys
+ 
+a001:
+call msg('enter option for partner name & address lines')
+call msg('             (note: if 4th line is not filled in, lines 1,2,3 will print)')
+write(crt,fopt)'1  do not print line 1 (name)'
+write(crt,fopt)'2  do not print line 2'
+write(crt,fopt)'3  do not print line 3'
+write(crt,fopt)'4  do not print line 4'
+write(crt,fopt)'5  print all lines but line 1 will be in the shaded area'
+write(crt,fopt)'6  print all lines but line 2 will be in the shaded area'
+write(crt,fopt)'7  print all lines but line 3 will be in the shaded area'
+write(crt,fopt)'8  print all lines but line 4 will be in the shaded area'
+write(crt,fopt)'    (shaded area will not be read by irs optical scanner)'
+write(crt,fopt)'9  wish to make the choice on each partner'
+call getitn(null,fn1,namopt,10)
+if(namopt.eq.0)go to a001
+call getitn(m09,fd102,?min,210040);'print minimum 1099 amount to be printed',fd102,?min)
+read(mmst,f02)client,cad1,cad2,cad3
+read(mmst,f02a)ftax;  fed id number
+call getitn(m100,f04,sco,80);company
+if(sco.eq.0)go to a010
+num=(hmil+sco)*10
+call getomg
+ifs(omgname.eq.null)go to a002
+'client'='omgname'
+ 
+a002:
+incr num
+call getomg
+ifs(omgname.eq.null)go to a003
+'cad1'='omgname'
+ 
+a003:
+incr num
+call getomg
+ifs(omgname.eq.null)go to a004
+'cad2'='omgname'
+ 
+a004:
+incr num
+call getomg
+ifs(omgname.eq.null)go to a005
+'cad3'='omgname'
+ 
+a005:
+a006:
+call getit(m08,fc15,ftax,110040);   get the fed id number
+ 
+a010:
+lcr=22;  call getitn(m12,f04,lcr,zero);  enter number of lines on 1099 (should be 21 or 22)
+rpart=0
+call ynget('is this a restart?(y/n)')
+if(status.eq.0)goto a015
+call getitn('enter restart number',fn5,rpart,70)
+a015:
+prev=0
+call ynget('have some of these 1099s been printed in a/p?(y/n)')
+goto(a020)on status
+prev=1
+ 
+a020:
+call ynget(m13);   print alignment? (y/n)
+if(status.eq. 0)go to a050;   start printing
+ 
+call lfeed(prt,4)
+write(prt,f08)null,testamt ;  rents
+write(prt,f08)client
+write(prt,f08)cad1
+write(prt,f08)cad3
+call lfeed(prt,2)
+write(prt,f08a)ftax,testss;   fed id & ss#
+'pname'='testing'
+'pad1'='testing'
+'pad2'='testing'
+'pad3'='null'
+call fillname
+write(prt,f08)nad1; shade
+write(prt,f08)nad2   ;name
+call lfeed(prt,1)
+write(prt,f08)nad3; shade
+write(prt,f08)nad4; street
+write(prt,f08)nad5; shade
+write(prt,f08)nad6; city state
+write(prt,f08)nad7; shade at bottom
+call lfeed(prt,3)
+go to a020
+ 
+a050:
+call ynget(m04);  do you wish to clear totals
+go to (b010)on status
+clear=1;   dont clear if clear is 1
+ 
+ 
+b010:
+ 
+;
+;   first we read & print all of the info in 1099 file
+readb(olbb,olbbrec)
+if(status.ne.0)go to c10;   read all not in partner file
+if(rpart.gt.lvend)goto b010
+rpart=0
+call getk(olaa,lvend); clv ii
+if(status.ne.0)goto b010 ; clv ii
+readb(olaa,olaarec)
+call stat(1)
+if(jco.ne.sco)goto b010;  not on this 1099
+goto(b010f)on prev; none have been printed
+goto(b020)on apflg
+b010f:
+if(?ypaid.lt.?min)go to b020;   dont print this one
+?lssnum=?lss/10
+ssflg=?lss-(?lssnum*10)
+go to (b011)on fedflg;  print fed id also
+go to (b020)on ssflg;  this is a fed id not a ss #
+ 
+b011:
+ 
+go to (b014)on ssflg;   fed id
+call ?edit(?lssnum,ssnum,mask02)
+go to b015
+ 
+b014:
+call ?edit(?lssnum,ssnum,mask02a)
+ 
+b015:
+ 
+ 
+call lfeed(prt,4)
+call ?edit(?ypaid,amt,mask01)
+write(prt,f08)null,[amt+1] ; rentals
+write(prt,f08)client
+write(prt,f08)cad1
+write(prt,f08)cad3
+call lfeed(prt,2)
+write(prt,f08a)ftax,[ssnum+1]
+call fillname
+write(prt,f08)nad1
+write(prt,f08)nad2
+call lfeed(prt,1)
+write(prt,f08)nad3
+write(prt,f08)nad4;street
+write(prt,f08)nad5;shade
+write(prt,f08)nad6;city
+write(prt,f08)nad7;shade
+t1099=t1099+?ypaid
+call lfeed(prt,3)
+ 
+b020:
+go to (b010)on clear;  not clearing
+?ypaid=apflg=0
+writeb(olaa,olaarec)
+call stat(1)
+go to b010
+ 
+c10:
+ 
+c010:
+go to (q0900)on clear;   we are going to clear totals only in master
+readb(list,olbrec)
+if(status.ne.0)go to q0900;  eoj
+if(?olbid.eq.0)go to c010;   header
+call getk(ola,?olbid) ; clv ii
+if(status.ne.0)goto c010 ; clv ii
+readb(ola,olarec);  list file sets the rel key
+if(status.ne.0)go to c010
+if(sco.ne.dco)go to c010;co number no match
+if(?prop.eq.0)go to c010;    deleted record
+if(pd.eq.0)go to c010;    amount paid this year to date
+call getk(bmst,?prop)
+if(status.ne.0)go to c010
+pd=0
+writeb(ola,olarec)
+call stat(1)
+rel15=ollfpntr=point6
+;
+c030:
+rel15=ollfpntr
+if(rel15.eq.0)go to c010; done with payees
+ 
+c030f:
+readb(oll,ollrec)
+call stat(1)
+'field'='zer6'
+encode(field,fn6)ollseq;    payee=xx,bankseq=y,seq#=zz=xxyzz if y=1 its a bank record
+decode(field,f09)cseq,bseq,lseq
+if(lseq.ne.0)go to c030;  all we care about are records number 1
+go to (c030)on bseq;  this is a bank record not a payee record
+ollytdpd=0;   clear it
+writeb(oll,ollrec)
+call stat(1)
+go to c030;  see if anymore payees
+;
+q0900:;  eof
+ 
+write(crt,f11)m34c,t1099; total in 1099 master
+ 
+call getitn(m34d,f04,num,130);  newline to continue
+ 
+stop 0
+ 
+q0910:
+stop 10;  dont continue on
+;=====================
+;  subroutines
+;=====================
+;==============
+subroutine getomg
+;==============
+ 
+call getk(omg,num)
+if(status.ne.0)goto gt10
+readb(omg,omgrec)
+call stat(1
+return
+ 
+gt10:
+'omgname'='null'
+return
+ 
+;=====================
+subroutine fillname
+;===================
+decode(pad1,fc30)nad1
+encode(pad1,fc40)nad1
+decode(pname,fc30)nad1
+encode(pname,fc40)nad1;  stripping off the last bytes
+decode(pad2,fc30)nad1
+encode(pad2,fc40)nad1
+ 
+decode(pad3,fc30)nad1
+encode(pad3,fc40)nad1
+ 
+encode(nad1,fc40)null
+encode(nad2,fc40)null
+encode(nad3,fc40)null
+encode(nad4,fc40)null
+encode(nad5,fc40)null
+encode(nad6,fc40)null
+encode(nad7,fc40)null
+ifs(pad3.eq.null)go to fl80;   only 3 lines - 4 is in shaded area,but it is empty anyway
+go to (fl10,fl20,fl30,fl40,fl50,fl60,fl70,fl80,fl90)on namopt
+ 
+fl10:
+'nad2'='pad1';  this must be the guys name
+'nad4'='pad2'
+'nad6'='pad3'
+return
+ 
+fl20:
+'nad2'='pname'
+'nad4'='pad2';  dropping pad1
+'nad6'='pad3'
+return
+ 
+fl30:
+'nad2'='pname'
+'nad4'='pad1'
+'nad6'='pad3';  dropping pad2
+return
+ 
+fl40:
+'nad2'='pname'
+'nad4'='pad1'
+'nad6'='pad2';  dropping pad3
+return
+ 
+fl50:
+'nad1'='pname'
+'nad2'='pad1'
+'nad4'='pad2'
+'nad6'='pad3';  name is in shaded area
+return
+ 
+fl60:
+'nad2'='pname'
+'nad3'='pad1';  shaded area
+'nad4'='pad2'
+'nad6'='pad3'
+return
+ 
+fl70:
+'nad2'='pname'
+'nad4'='pad1'
+'nad5'='pad2'; shaded area
+'nad6'='pad3';
+return
+ 
+fl80:
+'nad2'='pname'
+'nad4'='pad1'
+'nad6'='pad2'
+'nad7'='pad3'; shaded area
+return
+ 
+fl90:
+call msg(eject)
+write(crt,fc35)'option 1','   2'
+curp(crt,1,2)
+write(crt,fc35)pad1,pname
+write(crt,fc35)pad2,pad2
+write(crt,fc35)pad3,pad3
+ 
+call msg(null)
+write(crt,fc35)'option 3','   4'
+write(crt,fc35)pname, pname
+write(crt,fc35)pad1, pad1
+write(crt,fc35)pad3, pad2
+call msg(null)
+call msg('5 - 8 will only show the line that will be in the shaded area')
+write(crt,fc35)'option 5','   6'
+write(crt,fc35)pname,pad1
+call msg(null)
+write(crt,fc35)'option 7','   8'
+write(crt,fc35)pad2,pad3
+call getitn('enter option number',fn1,num,10)
+go to (fl10,fl20,fl30,fl40,fl50,fl60,fl70,fl80)on num
+go to fl90
+;======================================================================
+;
+;
+set clear:0,sco:0,lcr:20,num:0,hmil:100 000 000,?lssnum:0,ssflg:0,fedflg:1
+set ?min:0,namopt:0,rpart:0,prev:0
+set t1099:0,thou:1 000
+set lnum:0
+set bseq:0,cseq:0,clseq:0,lseq:0
+;
+string ca1(14),ftax(15)
+define mask01:'  ####,###@.##-'
+define    amt:'                 ',x2:'               ',x3:'               '
+string null(0),client(45),cad1(45),cad2(45),cad3(45)
+define field:'000000', zer6:'000000'
+define mask02: '  @###-##-#### ';  ss #
+define mask02a:'  @##-#######  ';  fed id number
+define ssnum:  '               '
+define testing:'xxxxxxxxxx testing xxxxxxxxxx'
+define testamt:'  12,345.67                  '
+define  testss:'123-45-6789                   '
+;
+;
+define m08:'enter federal id number for this company'
+define m04:'do you wish to clear ytd totals? (y/n)'
+define m10:'do you wish to write 1099s for companies with fed. id. numbers? (y/n)'
+ 
+define m09:'enter minimum 1099 amount to be printed'
+define m12:'enter number of lines on 1099  (should be 21 or 22)'
+define m13:'do you wish to print alignment form? (y/n)'
+ 
+define m34c:'total payments recorded in payee 1099 master'
+define m34d: 'newline to continue'
+;
+define m100:'enter company number:'
+;
+format f02:c30
+format f02a:x25 c15
+format f03: x6 c16 c15
+format f04:n2n2
+format f07:n6
+format f08: x6c34 c13
+format f08a: x6 c16 x1 c17
+;
+format fd102:d10.2
+format fc15: c15
+format f09: n3 n1 n2;  decode seq
+ 
+format fn6: n6
+format f11: c50 n11.2
+format fn5:n5
+;
+format fn1:n1
+format fopt:x15 c80
+format fc30:c30
+format fc35:c35
+format fc40:c40
+string nad1(40),nad2(40),nad3(40),nad4(40),nad5(40),nad6(40),nad7(40)
+ 
+end
+;             ol261 - 1099 report
+;
+END LIST
+.USE CRT3 FOR SYSRDR

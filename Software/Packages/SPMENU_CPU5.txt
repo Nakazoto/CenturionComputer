@@ -1,0 +1,166 @@
+.nolog
+.notime
+.job specal
+.run s.xeject on #s
+/-----------------------------------------------------------------------------
+/                       special analysis reporting
+/-----------------------------------------------------------------------------
+/                       key=#0      disk=#1      printer=#2
+/
+/  enter function:  1 - establish new data file and delete existing file
+/                   2 - enter transactions
+/                   3 - print audit listing
+/                   4 - sort by acct# & sub-acct#  and print report
+/                   5 - sort by sub-acct# & acct#  and print report
+/                   6 - sort by acct# & reference# and print report
+/
+/                   98 - change key,disk,printer
+/                   99 - end spmenu
+/-----------------------------------------------------------------------------
+/  awaiting response
+.enter 9
+.skip 1 if 99 ne #9
+s.con
+.skip to chg  if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 7 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter key
+.enter 0
+/  enter disk
+.enter 1
+/  enter printer
+.enter 2
+.skipr 0
+=opt1
+.run s.xeject on #s
+.fspec sp#0a on #1 4=size
+.skip to go if 0 eq #4
+/  sp#0a already on file--do you wish to delete? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr 0
+=go
+.skip 1 if 0 eq #4
+.del sp#0a on #1
+.fspec sp#0l on #1 4=size
+.skip 1 if 0 eq #4
+.del sp#0l on #1
+.seta 4 = 43
+.seta 5 = 4
+.seta 6 = 10
+/  enter number of records you will have
+.enter 7
+.seta 7 = #7
+.run xvsize
+.new sp#0a on #1 'c' #7
+.use sp#0a on #1 for sys0
+.run s.xvrint
+recsiz=43
+keylen=4
+
+___5___!_s___P_X5______s___P__%__s__
+
+L
+L
+
+___5___!_s___P_X5______s___P__%__s__
+
+L
+L
+;                             f i l e s
+;==============================================================================
+;
+file crt:sysipt
+;
+file mst:sys0,class=2,rnd,recsiz=395,key=mstkey
+;
+file detail:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+buffer buf2 (400)
+;
+file regfil:sys5,class=2,seq,lsr=4,filtyp=b,buffer=400,buf5
+buffer buf5 (400)
+;
+;==============================================================================
+;                           r e c o r d s
+;==============================================================================
+;
+record prmsth (395)
+;
+set prhcon:0
+define firm:'.......... new firm ..........'
+define faddr:'..............................'
+define fcity:'..............................'
+define fedtax:'**********'
+define sttax:'************'
+define mtop:'n'       ; meals / tips option (y = used, n = not used)
+define liopt:'n'      ; automatic life ins deduction probation period
+define miopt:'n'      ; automatic med ins deduction probation period
+define vopt:'n'       ; variable vacation accrual option
+define sopt:'n'       ; variable sick leave accrual option
+define prtckn:'y'     ; flag printing check numbers
+define prtcad:'n'     ; flag to print client address on checks
+define prtead:'y'     ; flag to print employee address on checks
+define delemp:'n'     ; flag to purge file at end of year
+define mdeda:'misc a  '; message define for reg deduction a
+define mdedb:'misc b  '; message string for reg deduction b
+define mdedc:'misc c  '; message string for reg deduction c
+define mdedca:'c dedn a'; message string for cntr deduction a
+define mdedcb:'c dedn b'; message string for cntr deduction b
+define mdedcc:'c dedn c'; message string for cntr deduction c
+define mdedcd:'c dedn d'; message string for cntr deduction d
+set lock:0            ; security password number
+set colock:0          ; comptroller's password number
+set lpcknm:0          ; last paycheck number used
+set lpdat:0           ; date last pay run
+set lactr:0           ; last pay run counter a was
+set lbctr:0           ; last pay run counter b was
+set lcctr:0           ; last pay run counter c was
+set ldctr:0           ; last pay run counter d was
+set comlim:0          ; commission pay limit preset to $0.00
+set probli:0          ; probation period (days) auto life ins deduction
+set probmi:0          ; probation period (days) auto medical ins deduction
+set probva:0          ; probation period (days) auto vacation hrs accrual
+set probsl:0          ; probation period (days) auto sick leave accrual
+set mxvac:80          ; maximum vacation hour accrual
+set mxsick:40         ; maximum sick leave hour accrual
+set dskdhr:4000       ; default scheduled hours
+set declas:1          ; default employee class code
+set dpfac:52          ; default pay period
+set drate:2500        ; default minimum pay rate
+set vh1:40            ; vacation hours - year 1
+set vh2:80            ;     "      "   - year 2
+set vh3:80            ;     "      "   - year 3
+set vh4:80            ;     "      "   - year 4
+set vh5:80            ;     "      "   - year 5
+set vh610:120         ;     "      "   - years 6 - 10
+set vh1115:120        ;     "      "   - years 11 - 15
+set vh1620:160        ;     "      "   - years 16 - 20
+set vh2125:160        ;     "      "   - years 21 - 25
+set vh2630:160        ;     "      "   - years 26 - 30
+;
+set sh1:40            ; sick leave hours - year 1
+set sh2:40            ;  "     "     "   - year 2
+set sh3:40            ;  "     "     "   - year 3
+set sh4:40            ;  "     "     "   - year 4
+set sh5:40            ;  "     "     "   - year 5
+set sh610:40          ;  "     "     "   - years 6 - 10
+set sh1115:40         ;  "     "     "   - years 11 - 15
+set sh1620:40         ;  "     "     "   - years 16 - 20
+set sh2125:40         ;  "     "     "   - years 21 - 25
+set sh2630:40         ;  "     "     "   - years 26 - 30
+define ctropt:'n'     ; preset no countered deductions
+endrec
+;
+;
+record reckey (8)
+record dethdr (44)
+set detkey:0          ; detail file key
+set detnl2:0          ; null for sorting by employee
+set depact:0          ; department accounting flag
+set staact:0          ; state accounting flag
+set perend:0          ; data herein is for period ending
+set lastin:0          ; last data herein was entered on
+set lstrec:0          ; the last record of the file is index number #

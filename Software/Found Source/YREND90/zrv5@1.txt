@@ -1,0 +1,3562 @@
+s.lst zrv5@1 1 crt3
+S.LST ZRV5@1 1 CRT3
+.JOB ZRV5@1
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
+LIST - 6.00
+title ' zrv9@1 (payroll register - calculation phase) '
+;
+system zrv9@1 (stack=200)              ;04-21-82...added stack=200...pln0309..dl
+;
+define m00:'rv9@1 (payroll register - calculation phase) 12/27/90'
+;
+;notes:
+;      11-26-75...this program produces the payroll register for the
+;                 random access payroll system...klf
+;      02-13-76...initial release...klf
+;      02-20-76...correction to nopay & terminations, mod for commission &
+;                 salaried period pay calculation...klf
+;      02-25-76...correction to subroutine 'sicvac'...klf
+;      02-27-76...addition of additional fwt, fica routines...klf
+;      03-02-76...mod for fica and retirement fund dedns...klf
+;      03-03-76...correct 'sicvac', correct bonus to net pay...klf
+;      03-16-76...correct meals/tips handling; add bypass on countered dedn
+;                 question if not used; correct auto-epq routine...klf
+;      03-18-76...mod nopays to add 'no vac/sick'; correct codes 23,34...klf
+;      05-06-76...add default on run factor for detail run; correct hours
+;                 on sched salaried empl; mod plus to net dedns to take
+;                 after taxes; added trial/live upsi flag for future use;
+;                 general size reduction...klf
+;      06-17-76...prototype split-phase register copied from zr520...klf
+;      01-23-77...initial release zrp5@1...klf
+;      02-18-77...mod for variable meals/tips; general clean-up...klf
+;      02-20-77...mod for neg fed/state exemps flag...klf
+;      02-24-77...corrected assignment of home tax areas;
+;                 second release...klf
+;      03-02-77...mod to not try fwt on zero gross...klf
+;      03-07-77...clean-up zero-net loopholes...klf
+;      03-30-77...restructured state overlay handling...klf
+;      04-07-77...mod to clear module work integers between empls...klf
+;      04-08-77...correct percentage fwt; correct expense advance...klf
+;      05-27-77...revised federal tax calculation...klf
+;      10-07-77...corrected fwt calc for low pay/high exemptions...klf
+;      11-16-77...correction for non-taxable i.r.a.; correction for
+;                 plus-to-net not taken; correction for commission
+;                 employees balance, vac & sick leave; correction for
+;                 special-pay to honor "nopay" flags...klf
+;      01-31-78...correct accumulation of vac/sick pay in state wages...klf
+;      04-12-78...correct adnl state tax transaction...klf
+;      12-15-78...revised w/h table and percentages...cb
+;      02-19-79...changed literal 0's in tables to zero...jwb
+;      06-27-79...added earned income credit calculation (code 29)...klf
+;      08-01-79...corrected error in subroutine doeic...ok
+;      09-06-79...modified for vsi type master file...kag
+;      09-07-79...corrected to exempt sick leave pay from fica, mod to
+;                 accumulate wages subject to fica in separate data field...ok
+;      09-24-79...mod for transparent live run...ok
+;      10-25-79...modified to print separate vacation check(s), if paid advance
+;                 vacation. also added separate subroutines for sick leave
+;                 and vacation...kag
+;      01-16-80...corrected error in subroutine vacsubr ...kag
+;      01-28-80...mod to have holiday pay make up short hours...ok
+;      02-11-80...changed all program names from "rp" to "rv" to reflect change
+;                 to vsi type master file, updated msthdr for 1980...ok
+;      04-15-80...correct vacation calc (can't use subr. equals for strings),
+;                 correct typos (ifstring for if),shrink run size...ok
+;      05-21-80...replaced all single character string equates with calls to
+;                 subrs equflg & equstr to cut run size & time, more shrinking,
+;                 moved bltrun to externals, corrected vacation to handle
+;                 more than one reg hrs transaction, removed subr. eqsum,
+;                 put in correct version of subroutine zeroit...ok
+;      07-03-80...modified so fica max. can't be exceeded...kag
+;      07-18-80...modified to take out correct number of
+;                 counter deductions for each employee...kag
+;      10-07-80...modified equflg & equstr subroutine to run ok on cp4...dle
+;      01-09-81...mod to move ytd fica wages into epq fica wages field at change
+;                 of quarter...dle
+;      07-14-81...update state tax epq at the end of quarter correctly...dl
+;      09-11-81...inserted new federal withholding tables effective
+;                 10-01-81...dle
+;      10-19-81...error message displayed when scheduled hrs not set up with a
+;                 vacation hrs entry...dpy
+;      01/06/82...new government regs say sickpay is now subject to fica,
+;                 changes involved around label g0330, g0331, dofica, also
+;                 modified to not accumulate fica wages for class codes
+;                 greater than or equal to 800 (fica exempt) label g0330, also
+;                 added "k800" a constant of 800...rrs
+;
+;      04-21-82...modified to expand the stack size to 200 bytes...dl pln#0309
+;      04-28-82...modified to handle dept. # and tran code # correctly when code
+;                 35 was used...dl pln#0370
+;      05-04-82...modified to print out one-time deduction from net if a code 25
+;                 is followed by it...dl pln#0106
+;      05-04-82...modified in the handling of meals correctly if for employer's
+;                 convenience...dl pln#0394
+;      05-10-82...modified to take the deductions when tran code #82 is used...
+;                 dl pln#0402
+;      05-19-82...modified change made 05-04-82...mcs pln# 0394
+;      05-25-82...inserted new federal tax tables effective 7-01-82...rrs pl#452
+;      07-08-82...backed out changes made for pl#106...mcs pl#487
+;      12-15-82...modified to allow for more than one 80 type trans code for
+;                 one check; such as 82 & 83 entered into one check..mgb..pln482
+;      01-12-83...correct changes for pln#106 (see above notes)..mgb..pln106
+;      03-25-83...to fix 1983 fica due to federal law change on tips.
+;                 these fixes include pln's 584, 611 & 621...mgb..pln584.
+;      05-10-83...increment the check # again if the # of txns for an empl.
+;                 require more than one stmt in rv530, thus voiding 1st chk and
+;                 printing 2nd for same empl....aob..pln698.
+;      06-17-83...new federal tax tables effective 7-01-83...pbl#0724..rk
+;      08/16/83...correction for tips pblg766....jh
+;      09-22-83...corrected changes for pln698..pbl#773...emo
+;      02-17-84...corrected so deferred holidays adding/subtracting
+;                 to/from vacation balance...pl#0861...pmr
+;      05-29-84...changed to allow for vacation check to be written-was ignoring
+;                  trans code 25 if one was present...jwb
+;      07-31-84...removed coding from label d0122 thru goto d0122b, chged s/r
+;                 inpdet to bypass t.c. 25 records (pln 976)...jwb
+;                  (problem log # 918)
+;      11-27-84...modified to read fwt tables from data file...jwb
+;      12-07-84...added calc of b/u fwt for 1099 emp (code 8 only)...jwb
+;      01-18-85...plns 1025 & 1034...dropping vac trans code 25...jwb
+;      01-22-85...pln 1039, problem with more than 8 lines of trans...jwb
+;    12/29/86...tax table now has 1 dec. place in %..ns
+;    11/24/87...updating eic rates, meals tips hours..ns
+;    12/18/87...adding code 200+ and 300+ use retirement % as savings %
+;               fica is based on gross, w/h is based on grs.-savings..ns
+;     11/01/89...error in ytd fica gross totals due to 12/18/87 change..ns
+;     12/17/90...adding new med.fica calc and print 2 parts now...ns/clvii
+;   12/27/90...fixing fica tax calc ..clvii
+;
+;
+;==============================================================================
+;                      p r o g r a m   l i n k a g e
+;==============================================================================
+;
+entrypoint crt
+;
+external chr,clrec,f90,getkey,gupsi,hicore,ioerr,lfeed,tget,tput
+external msg,newkey,nget,pupsi,stat
+external getr,putr,newk,getk,hold,free,bltrun
+;
+;==============================================================================
+;                                f i l e s
+;==============================================================================
+;
+file crt:    sysipt
+;
+file master: sys0, class=2, ind, recsiz=435, key=mstkey
+;
+file taxfil: sys1, class=2, random, recsiz=395, key=taxkey
+set  taxkey: 0
+;
+file tagfil: sys2, class=2, seq, lsr=4, filtyp=b, buffer=400,buf2
+buffer buf2  (400)
+;
+file regfil: sys3, class=2, seq, lsr=4, filtyp=b, buffer=400,buf3
+buffer buf3  (400)
+;
+file detail: sys4, class=2, seq, lsr=4, filtyp=b, buffer=400,buf4, recsiz=52
+buffer buf4  (400)
+;
+file fwtable: sys5, class=2, random, recsiz=160, key=fwtkey
+ set fwtkey:0
+ ;
+;
+;==============================================================================
+;                              r e c o r d s
+;==============================================================================
+;
+copy msthdr
+;
+;
+copy emprec
+record taxhdr (395)
+   set    taxnul: 0
+   define a01ref: '   '          ; tax area reference code
+   define a02ref: '   '
+   define a03ref: '   '
+   define a04ref: '   '
+   define a05ref: '   '
+   define a06ref: '   '
+   define a07ref: '   '
+   define a08ref: '   '
+   define a09ref: '   '
+   define a10ref: '   '
+   define a11ref: '   '
+   define a12ref: '   '
+   define a13ref: '   '
+   define a14ref: '   '
+   define a15ref: '   '
+;
+   define a01nam: '        '     ; tax area name
+   define a02nam: '        '
+   define a03nam: '        '
+   define a04nam: '        '
+   define a05nam: '        '
+   define a06nam: '        '
+   define a07nam: '        '
+   define a08nam: '        '
+   define a09nam: '        '
+   define a10nam: '        '
+   define a11nam: '        '
+   define a12nam: '        '
+   define a13nam: '        '
+   define a14nam: '        '
+   define a15nam: '        '
+;
+   set    a01tax:0               ; area tax rate
+   set    a02tax:0
+   set    a03tax:0
+   set    a04tax:0
+   set    a05tax:0
+   set    a06tax:0
+   set    a07tax:0
+   set    a08tax:0
+   set    a09tax:0
+   set    a10tax:0
+   set    a11tax:0
+   set    a12tax:0
+   set    a13tax:0
+   set    a14tax:0
+   set    a15tax:0
+;
+   string a01mod (6)             ;area tax calculation module name
+   string a02mod (6)
+   string a03mod (6)
+   string a04mod (6)
+   string a05mod (6)
+   string a06mod (6)
+   string a07mod (6)
+   string a08mod (6)
+   string a09mod (6)
+   string a10mod (6)
+   string a11mod (6)
+   string a12mod (6)
+   string a13mod (6)
+   string a14mod (6)
+   string a15mod (6)
+;
+endrec
+;
+record taxrec (395)
+   set    txempl:0               ; employee number
+   set    a01ygr:0               ; area ytd gross pay
+   set    a02ygr:0
+   set    a03ygr:0
+   set    a04ygr:0
+   set    a05ygr:0
+   set    a06ygr:0
+   set    a07ygr:0
+   set    a08ygr:0
+   set    a09ygr:0
+   set    a10ygr:0
+   set    a11ygr:0
+   set    a12ygr:0
+   set    a13ygr:0
+   set    a14ygr:0
+   set    a15ygr:0
+;
+   set    a01pgr:0               ; area epq gross pay
+   set    a02pgr:0
+   set    a03pgr:0
+   set    a04pgr:0
+   set    a05pgr:0
+   set    a06pgr:0
+   set    a07pgr:0
+   set    a08pgr:0
+   set    a09pgr:0
+   set    a10pgr:0
+   set    a11pgr:0
+   set    a12pgr:0
+   set    a13pgr:0
+   set    a14pgr:0
+   set    a15pgr:0
+;
+   set    a01mgr:0               ; area mtd gross pay
+   set    a02mgr:0
+   set    a03mgr:0
+   set    a04mgr:0
+   set    a05mgr:0
+   set    a06mgr:0
+   set    a07mgr:0
+   set    a08mgr:0
+   set    a09mgr:0
+   set    a10mgr:0
+   set    a11mgr:0
+   set    a12mgr:0
+   set    a13mgr:0
+   set    a14mgr:0
+   set    a15mgr:0
+;
+   set    a01ytx:0               ; area ytd taxes paid
+   set    a02ytx:0
+   set    a03ytx:0
+   set    a04ytx:0
+   set    a05ytx:0
+   set    a06ytx:0
+   set    a07ytx:0
+   set    a08ytx:0
+   set    a09ytx:0
+   set    a10ytx:0
+   set    a11ytx:0
+   set    a12ytx:0
+   set    a13ytx:0
+   set    a14ytx:0
+   set    a15ytx:0
+;
+   set    a01ptx:0               ; area epq taxes paid
+   set    a02ptx:0
+   set    a03ptx:0
+   set    a04ptx:0
+   set    a05ptx:0
+   set    a06ptx:0
+   set    a07ptx:0
+   set    a08ptx:0
+   set    a09ptx:0
+   set    a10ptx:0
+   set    a11ptx:0
+   set    a12ptx:0
+   set    a13ptx:0
+   set    a14ptx:0
+   set    a15ptx:0
+;
+   set    a01mtx:0               ; area mtd taxes paid
+   set    a02mtx:0
+   set    a03mtx:0
+   set    a04mtx:0
+   set    a05mtx:0
+   set    a06mtx:0
+   set    a07mtx:0
+   set    a08mtx:0
+   set    a09mtx:0
+   set    a10mtx:0
+   set    a11mtx:0
+   set    a12mtx:0
+   set    a13mtx:0
+   set    a14mtx:0
+   set    a15mtx:0
+;
+direct
+a01ded dw -1 area tax deductions
+a02ded dw -1
+a03ded dw -1
+a04ded dw -1
+a05ded dw -1
+a06ded dw -1
+a07ded dw -1
+a08ded dw -1
+a09ded dw -1
+a10ded dw -1
+a11ded dw -1
+a12ded dw -1
+a13ded dw -1
+a14ded dw -1
+a15ded dw -1
+cpl
+;
+endrec
+;
+record tagrec (8)
+   set tag:    0
+   set mstkey: 0
+endrec
+;
+record reghdr (41)
+   set    regnul: 0              ; null for sorting by employee number
+   set    regped: 0              ; period ending date
+   set    regckd: 0              ; check date
+   set    cknum:  0              ; starting check number
+   set    runfac: 0              ; pay factor for this run
+   set    payopt: 0              ; register run option
+direct
+nctra dw 0 new command counter for deduction a
+nctrb dw 0 new command counter for deduction b
+nctrc dw 0 new command counter for deduction c
+nctrd dw 0 new command counter for deduction d
+   cpl
+   define dumrun: 'n'                    ; trial / live run flag
+   define monrun: 'n'                    ; new month flag
+   define prfrun: 'n'                    ; profit-sharing run
+   define qtrrun: 'n'                    ; new quarter flag
+endrec
+;
+record regrec (41)
+   set    rempl:  0
+   set    rdept:  0
+   set    rtcode: 0
+   set    rhours: 0
+   set    rrate:  0
+   set    rfactr: 0
+   set    ramt:   0
+   define rtname: '        '
+   define rtax:   '   '
+endrec
+;
+record dethdr (32)
+   set    detkey: 0              ; detail file key
+   set    detnl2: 0              ; null for sorting by employee
+   set    depact: 0              ; department accounting flag
+   set    staact: 0              ; state accounting flag
+   set    perend: 0              ; data herein is for period ending
+   set    lastin: 0              ; last data herein was entered on
+   set    lstrec: 0              ; the last record of the file is index number #
+   set    payfac: 0              ; pay factor for run
+endrec
+;
+record detrec (52)
+   set    trans:  0              ; transaction number is also index
+   set    dempl:  0              ; de employee numbah what is concurned
+   set    dcode:  0              ; department the employee is charging time to
+   set    tcode:  0              ; transaction code
+   set    @rate:  0              ; first field carried to register
+   set    @hours: 0              ; second field
+   set    @amt:   0              ; third field
+   set    @factr: 0              ; fourth field
+   define @name:  '        '     ; variable name field
+   define stcode: '  '           ; state code
+   define ctcode: '   '          ; city code
+   define cncode: '   '          ; county (parish) code
+endrec
+;
+record dumfwt(28)
+ set dfwt00:0
+set dfwt01:0,dfwt02:0,dfwt03:0,dfwt04:0,dfwt05:0,dfwt06:0
+endrec
+ ;
+copy fwtrec
+;
+;
+;==============================================================================
+;                                l o g i c
+;==============================================================================
+   ;
+entry
+   ;
+   open io (crt, master, tagfil, detail, regfil, fwtable)
+   readb (fwtable, dumfwt)
+   call stat (1)
+   if (dfwt06. ne. 0) goto a0050
+   writeb (fwtable, fwtrec)
+   call stat (1)
+   ;
+a0050:
+   ;
+   readb (fwtable, fwtrec)
+   call stat (1)
+a0100:
+   ;
+   readb (tagfil, tagrec)              ;read header tag record
+   go to (q0600, ioerr) on status
+   if (tag .ne. 0) go to q0600         ;header tag must be first
+   ;
+a0110:
+   ;
+   hold (master)
+   direct
+   lda/ status+2
+   bnz a0110 go back and try again if status not zero
+   cpl
+   ;
+   call getr (master, msthdr)
+   call stat (1)
+   ;
+   call equflg (char, passok)          ;get continuation flag
+   call equflg (passok, n)             ;force the flag off
+   ;
+   call putr (master, msthdr)          ;update the header
+   call stat (1)
+   ;
+   ifstring (usepas .eq. n) go to a0130;skip if not using passwords
+   if (paswrd .eq. 0) go to a0130      ;skip if operator left lock open
+   ifstring (char .eq. y) go to a0130  ;skip if pass continuation is ok
+   ;
+   call msg (m001)                     ;else scream for supervisor
+   ;
+a0120:
+   ;
+   curp (crt, 1, 23)
+   call msg (m002)
+   go to a0120
+   ;
+a0130:
+   ;
+   call gupsi (taxopt)                 ;check if using tax modules
+   direct
+   lda/ taxopt+2 skip if not using tax modules
+   bz a0140
+   cpl
+   ;
+   open io taxfil                      ;else open for business
+   ;
+   call getkey (taxfil, taxnul)        ;get the tax header record
+   go to (q0710, ioerr) on status
+   ;
+   readb (taxfil, taxhdr)
+   call stat (1)
+   ;
+a0140:
+   ;
+   readb (detail, dethdr)              ;getup detail header record
+   direct
+   lda/ status+2
+   bz *+5
+   jsr/ ioerr call ioerr if status not zero
+   cpl
+   ;
+a0150:
+   ;
+   readb (regfil, reghdr)              ;getup register header record
+   go to (ioerr, ioerr) on status
+   ;
+   call equate (lpdat, regckd)         ;set check number
+   ;
+   ldate (grin, regped)                ;put period end date to century form
+   sdate (integer, jdate)
+   direct
+   lda/ nctra get the new deduction control counters
+   sta/ lactr *
+   lda/ nctrb *
+   sta/ lbctr *
+   lda/ nctrc *
+   sta/ lcctr *
+   lda/ nctrd *
+   sta/ ldctr *
+   lda/ mtop convert meals/tips option to 4-byte internal form
+   sta/ mltpop+2 *
+   cpl
+   ;
+   call msg (eject)                  ;09-24-79...moved msg's and added code...ok
+   ifstring (dumrun .eq. y) go to a0160
+   call msg (m04)                      ;pull the wool over their eyes
+   call msg (m05)                      ;ask them to wait during "update phase"
+   curp (crt, 17,6)
+   call msg (m06)                      ;the update suffix
+   go to a0165
+   ;
+a0160:
+   ;
+   call msg (m00)                      ;the normal salutation message
+   call msg (null)
+   call msg (m01)                      ;show program running
+   ;
+a0165:
+   ;
+   go to (b0200) on payopt             ;start now if scheduled run
+   ;
+   readb (detail, detrec)              ;else get first transaction
+   direct
+   lda/ status+2
+   bz *+5
+   jsr/ ioerr scream if transaction file empty
+   cpl
+   note (detail, savptr)               ;save pointer to first detail record
+   go to b0200                         ;skip to compute loop with first record
+   ;
+b0100:
+   ;
+   ifstring (dumrun .eq. y) go to b0200;no updates on dummy run
+   ;
+b0110:
+   ;
+   call putr (master, emprec)          ;update the master file
+   call stat (1)
+   ;
+   direct
+   lda/ taxopt+2 skip if tax option turned off
+   bz b0200
+   cpl
+   ;
+   writeb (taxfil, taxrec)             ;update the tax file
+   call stat (1)
+   ;
+b0200:
+   ;
+   readb (tagfil, tagrec)              ;get next employee key
+   go to (q0900, ioerr) on status
+   ;
+   call getr (master, emprec)
+   call stat (1)
+   ;
+   direct
+   lda/ taxopt+2 skip if not using tax modules
+   bz b0210
+   cpl
+   ;
+   call getkey (taxfil, empl)          ;get up employee tax record
+   go to (q0710, ioerr) on status
+   ;
+   readb (taxfil, taxrec)              ;read tax record
+   call stat (1)
+   ;
+b0210:
+   ;
+   ifstring (monrun .eq. n) go to b0220;skip if not first run of month
+   ;
+   call clr (mmeals, mtips, mpl2nt, 0)
+   call clr (mchgtip, 0)               ;pln584
+   ;
+   direct
+   lda/ taxopt+2 skip if tax option not used
+   bz b0220
+   cpl
+   ;
+   call zeroit (a01mgr, a15mgr+3)      ;05-05-80...clr mtd area gross ...ok
+   call zeroit (a01mtx, a15mtx+3)      ;05-05-80...clr mtd area tax ...ok
+   ;
+b0220:
+   ;
+   ifstring (qtrrun .eq. n) go to b0230;skip if not first run of a quarter
+   ;
+   call equals (pgross,gross,  pfica,fica,    pretfn,retfnd, pfwt,fwt,      0)
+   call equals (pswt,swt,      pmeals,meals,  ptips,tips,    pother,other,  0)
+   call equals (pnet,net,      ptrust,ytrust, ppl2nt,ypl2nt, peic,yeic,    0)
+   call equals (pfwage,yfwage, 0)      ;01-09-81...dle
+   call equals (qshrtfall,shortfall, qtipfic,tipfica, qtiphrs,ytiphrs, 0);pln584
+   ;
+   direct
+   lda/ taxopt+2 skip if no area taxes
+   bnz *+5;(changed 07-14-81)...dl
+   jmp/ b0230
+   cpl
+   ;
+   call equals (a01pgr,a01ygr, a01ptx,a01ytx, a02pgr,a02ygr, a02ptx,a02ytx, 0)
+   call equals (a03pgr,a03ygr, a03ptx,a03ytx, a04pgr,a04ygr, a04ptx,a04ytx, 0)
+   call equals (a05pgr,a05ygr, a05ptx,a05ytx, a06pgr,a06ygr, a06ptx,a06ytx, 0)
+   call equals (a07pgr,a07ygr, a07ptx,a07ytx, a08pgr,a08ygr, a08ptx,a08ytx, 0)
+   call equals (a09pgr,a09ygr, a09ptx,a09ytx, a10pgr,a10ygr, a10ptx,a10ytx, 0)
+   call equals (a11pgr,a11ygr, a11ptx,a11ytx, a12pgr,a12ygr, a12ptx,a12ytx, 0)
+   call equals (a13pgr,a13ygr, a13ptx,a13ytx, a14pgr,a14ygr, a14ptx,a14ytx, 0)
+   call equals (a15pgr,a15ygr, a15ptx,a15ytx, 0)
+   ;
+b0230:
+   ;
+   ;ifstring (prfrun .eq. n) go to b0240;skip if not new profit-share year
+   ;call equate (regpay, 0)
+   ;
+b0240:
+   ;
+   call cv2to4 (pfac,sumnum, 0)        ;check employee's pay factor
+   if (runfac .ne. sumnum) go to b0100 ;wrong pay period for this employee
+   call clr (nopay, fired, 0)          ;clear holdout flags
+   direct
+   lda/ payopt+2
+   dca
+   bnz *+5
+   jmp/ c0100 skip if running scheduled only
+   cpl
+   if (empl .eq. dempl) go to d0100   ;skip if using detail on this employee
+   direct
+   lda/ payopt+2
+   dca ,3
+   bnz *+5
+   jmp/ b0100 detail not for this employee if payopt eq 3
+   cpl
+   ;
+;==============================================================================
+;             c a l c u l a t e   f r o m   s c h e d u l e d
+;==============================================================================
+   ;
+c0100:
+   ;
+   call preset                         ;clear & preset for run
+   direct
+   lda/ ecode+2
+   bnz *+5
+   jmp/ b0100 terminated empl don't show on register
+   cpl
+   go to (c0101,c0103,c0103,c0101,c0103,c0103,c0107,c0109,c0109,c0107)on ecode
+   direct
+   cla
+   sta/ sumnum
+   lda/ ecode+2
+   dca ,10
+   sta/ sumnum+2
+   cpl
+   go to (c0109,c0109,e0910,e0910) on sumnum
+   ;
+c0101:
+   ;
+   sumnum = skedhr * rate / thou      ;calc hourly gross
+   call equals (rtcode,1, rhours,skedhr, 0);set-up scheduled hourly
+   go to c0200
+   ;
+c0103:
+   ;
+   call dodraw                         ;check for draw also
+   go to c0101
+   ;
+c0107:
+   ;
+   sumnum = rate / runfac              ;calc salary gross
+   call equals (rtcode,21, rhours,0, 0);set-up scheduled salary
+   go to c0200
+   ;
+c0109:
+   ;
+   call dodraw                         ;check for draw also
+   go to c0107
+   ;
+c0200:
+   ;
+   if (sumnum .eq. 0) go to f0100      ;no money - no record
+   call add (sumnum, creg)             ;scheduled earnings are regular pay
+   call equals (rrate,rate, rfactr,100, ramt,sumnum, 0)
+   call grsadd (sumnum)                ;add amount to gross
+   call wrtreg                         ;write detail to reg print file
+   go to f0100                         ;go do adjustments & taxes
+   ;
+;==============================================================================
+;   s c a n   d e t a i l   f o r   n o p a y s  &  t e r m i n a t i o n s
+;==============================================================================
+   ;
+d0100:
+   ;
+   call preset                         ;make clear and presets for employee
+   ;
+   call equflg (getnx, n)
+   call equflg (regflg, n)             ;regular hours transaction flag
+   call equflg (vacatodo, n)           ;vacation flag for separate check
+   call equflg (vacflg, n)             ;vacation transaction flag
+   call equflg (shtflg, n)             ;scheduled hours not worked
+   call zeroit (vachrs,sichrs+3)       ;clear vacation & short hr fields
+   ok=0;pln106
+   vacnt=0;pln106
+   ;
+d0105:
+   ;
+   call equals (curptr,savptr, detcnt,0, 0);setup detail beginning
+   call equate (novaac, 0)             ;pln482
+   point (detail, curptr)              ;point to first detail for employee
+   ;
+d0110:
+   ;
+   readb (detail, detrec)              ;read detail & check empl number on it
+   go to (d0200, ioerr) on status
+   ;
+d0120:
+   ;
+   if (dempl .ne. empl) go to d0200    ;skip if end of detail for this employee
+   ;
+d0121:
+   ;
+   if (tcode .eq. 26)  call add (@hours, sichrs);keep track of them
+   ;
+   if (tcode .ne. 25) go to d0122b      ;no vac. don't worry about it pln 976 7/31/84
+   ifstring (vacflg. eq. y) go to d0121a;not first vac. tran.
+   call equate (vachrs,0)
+   call equstr (getnx,y, vacatodo,y, vacflg,y, 0);need to find next detail empl
+   note (detail, vactran)              ;keep vac. transaction location
+   ;
+d0121a:
+   call add (1,detcnt);add dl pl106,delet 07-08-82 ms pl487,add 12-15-82 mb pl106
+   call add (@hours, vachrs)           ;add hours to accum.
+   go to d0110                         ;loop back
+   ;
+d0122a:                                ;pln106
+   ok=1                                ;pln106
+   call add (1,detcnt)             ;pln106
+goto d0110                            ;pln1011.rlk,jr
+d0122b:                                ;pln106
+   call add (1, detcnt)                ;incr count of detail for this employee
+   if (tcode .le. 80) go to d0110      ;loop more if not nopay or term
+   sumnum = tcode - 80                 ;check for nopays
+   if (sumnum .gt. 7) go to d0130      ;skip if not nopay
+   if (sumnum.eq.2) go to d0123        ;pln482
+   if (nopay.eq.2) go to d0125         ;pln482
+   go to d0126                         ;pln482
+d0123:                                 ;pln482
+   if (nopay.ne.0) go to d0124         ;pln482
+   go to d0126                         ;pln482
+d0124:                                 ;pln482
+   novaac=1                            ;pln482
+   go to d0127                         ;pln482
+d0125:                                 ;pln482
+   novaac=1                            ;pln482
+d0126:                                 ;pln482
+   call equate (nopay, sumnum)         ;put no-pay into internal format
+d0127:                                 ;pln482
+   go to d0110                         ;input next
+   ;
+d0130:
+   ;
+   sumnum = tcode - 90                 ;check for termination codes
+   go to (d0131,d0131) on sumnum
+   go to d0110                         ;invalid code
+   ;
+d0131:
+   ;
+   call equals (fired,sumnum, tdate,@rate, 0);set-up termination
+   go to d0110                         ;loop for next
+   ;
+d0200:
+   ;
+   note (detail, savptr)               ;save pointer to first detail, next empl
+   note (detail, nxdemp)               ;save pointer of next detail emp
+   call equate (savcnt, detcnt)        ;save count of detail for this employee
+   call setptr                         ;reset point to beginning of empl detail
+   ;
+;==============================================================================
+;                         d e t a i l   i n p u t
+;==============================================================================
+   ;
+   month=0 ; 05/21/84 pln 918
+e0100:
+   ;
+   go to (e0905) on nopay             ;don't waste time checking detail if no ck
+   call inpdet                         ;read employee detail
+   go to e0900                         ;skip if eoe or eof
+   ; call equate (month, 0)              ;preset flag for no regular pay
+   ;
+   go to (e0105) on tcode              ;t code 1 = regpay
+   if (tcode .eq. 11) go to e0105      ;t code 11 = regpay
+   if (tcode .le. 20) go to e0110      ;calc amt if hours detail
+   direct
+   cla
+   sta/ sumnum
+   lda/ tcode+2
+   dca ,10
+   dca ,10
+   sta/ sumnum+2 (sumnum=tcode-20)
+   cpl
+   go to (e0210,e0220,e0230,e0230,e025x,e0260,e0270,e0280,e0290) on sumnum
+   call sub (10, sumnum)
+   go to (e0310,e0320,e0330,e0340,e0350,e0360,e0370,e0380,e0390) on sumnum
+   call sub (10, sumnum)
+   goto (e0410,e0420,e0100,e0100,e0450,e0460,e0470,e0480,e0490) on sumnum;pln584
+   call sub (10, sumnum)
+   go to (e0510,e0520,e0530,e0510,e0520,e0530) on sumnum ;pln584
+   call sub (10, sumnum)               ;pln584
+   go to (e0320,e0620) on sumnum       ;pln584
+   go to e0100
+   ;
+e0105:                                 ;regular hours
+   ;
+   call regcod                         ;05-21-80...call to new subroutine...ok
+   ;
+e0110:                                 ;specified hours
+   ;
+   sumnum = @hours * @rate * @factr / i0r1m
+   ;
+e0120:
+   ;
+   go to (e0100, e0130, e0130, e0100, e0100) on nopay
+   ;
+e0130:
+   ;
+   if (month .eq. 0) go to e0135       ;skip if reg pay flag not set
+   call add (sumnum, creg)
+   ;
+e0135:
+   ;
+   call grsadd (sumnum)                ;add amount in sumnum to gross pay
+   call equals (rrate,@rate,  rfactr,@factr,  ramt,sumnum,  0)
+   ;
+e0140:
+   ;
+   call equals (depsav,dcode,  rtcode,tcode,   rhours,@hours,  0)
+   'rtname' = '@name'
+   call wrtreg
+   go to e0100                         ;loop get next detail
+   ;
+e0210:                                 ;regular salarly, full pay period
+   ;
+   call equals (sumnum,rate, @rate,rate, 0);set regular rate for period
+   go to e0225
+   ;
+e0220:                                 ;temporary salary, full pay period
+   ;
+   call equals (sumnum,@amt, @rate,@amt, 0);set tempy rate for period
+   ;
+e0225:
+   ;
+   call equflg (regflg, y)
+   ;
+   sumnum = sumnum / runfac            ;calc for period
+   call equals (@hours,0, month,1, 0)  ;no hours involved
+   go to e0120                         ;loop to post
+   ;
+e0230:                                 ;regular salary, specified hours
+   ;
+   call regcod                         ;05-21-80...call to new subroutine...ok
+   ;
+e0230a:
+   ;
+   sumnum = @amt * @hours / 208 / thou;calc part period salary
+   call equate (@rate, @amt)           ;pass the salary to the print program
+   go to e0120                         ;post & loop
+   ;
+e0250:
+   ;
+   ifstring (sodopt .eq. y) go to e0250a
+   ;
+   sumnum = sick / thou
+   ;
+   if  (sichrs .le. sumnum) go to e0250a
+   ;
+   call equate (sichrs, sumnum)        ;give em all hours available
+   ;
+e0250a:
+   ;
+   call sub (sichrs,shthr)             ;sick leave also makes up short hours
+   ;
+   if (shthr .gt. 0) go to e0251
+   ;
+   call equflg (shtflg, n)
+   call equate (shthr, 0)
+   go to e0900
+   ;
+e0251:
+   ;
+   vacnum = vac / thou                ;vacation hrs rounded down
+   ;
+   ifstring (vodopt .eq. n) go to e0257;can't owe vacation
+   ;
+e0252:
+   ;
+   if (shthr .ge. vachrs) go to e0254  ;gt or eq give em what he asked for
+                                       ;still have some time left down here
+   ;
+e0253:
+   ;
+   call equate (givhrs,shthr)
+   call sub (shthr,vachrs)             ;vachrs left to be paid
+   ;
+   call equstr (shtflg,n, vacflg,n, vacatodo,y, 0)
+   go to e0256
+   ;
+e0254:
+   ;
+   call equate (givhrs,vachrs)         ;no vachrs left to be paid
+   ;
+e0255:
+   ;
+   call equstr (shtflg,n, vacflg,n, vacatodo,n, 0)
+   call equate (vachrs, 0)
+   ;
+e0256:
+   ;
+   call equals (cvac,givhrs, detcnt,savcnt, 0)
+   call equflg (getnx, y)
+   point (detail, vactran)
+   readb (detail, detrec)
+   ;
+   go to e0905                         ;go do it....
+   ;
+e0257:
+   ;
+   ;   can't owe company vacation hours
+   if (vacnum .ne. 0) go to e0257a     ;vacation hours are available
+   ;
+   call equstr (vacatodo,n, vacflg,n, shtflg,n, 0)
+   go to e0905
+   ;
+e0257a:
+   ;
+   if (vachrs .gt. vacnum) go to e0259 ;to much, give em what he has
+   if (shthr  .ge. vachrs) go to e0258 ;nothing left from here
+   ;
+   call equate (givhrs,shthr)          ;still vac to be paid
+   call sub (shthr,vachrs)             ;remaining vachrs in separate check
+   call equstr (vacatodo,y, vacflg,n, shtflg,n, 0)
+   ;
+   go to e0256
+   ;
+e0258:
+   ;
+   call equate (givhrs,vachrs)
+   go to e0255
+   ;
+e0259:
+   ;
+   call equate (vachrs,vacnum)         ;give max accrued
+   go to e0251                         ;and try again from top..
+   ;
+e025x:
+   ;
+   ; call sub (1,detcnt) ; 05/21/84 pln 918
+   go to e0100
+   ;
+e0260:                                 ;sick leave hours taken
+   ;
+   call add (@hours, csick)           ;add sick leave hours detail
+   'axxcit' = 'ctcode'         ;save tax areas for gross distribution (01-31-78)
+   'axxcnt' = 'cncode'         ;this means only 1 sick detail per emp (01-31-78)
+   'axxsta' = 'stcode'         ;if multi, last areas will be used (01-31-78)
+   go to e0100
+   ;
+e0270:                                 ;special one-time gross pay amount
+   ;
+   call equate (sumnum, @amt)          ;set up special pay amount
+   go to e0120                         ;loop to post
+   ;
+e0280:                                 ;commission
+   ;
+   call add (@amt, ccom)               ;save new commission posting
+   go to e0100
+   ;
+e0290:                                 ;earned income credit payment
+   ;
+   call add (@amt, ceic)               ;save eic amount (06-22-79)
+   go to e0100                         ;(06-22-79)
+   ;
+e0310:                                 ;dollar amount of meals
+   ;
+   call equate (depsav, dcode)         ;record meals from detailed department
+   call add (@amt, cmeals)             ;add meals amount to empl subtotal
+   call regamt (@amt, 31)              ;put data to the register print file
+   call add (@amt, meals)              ;update y-t-d
+   call add (@amt, mmeals)             ;update m-t-d
+   go to e0100
+   ;
+e0320:                                 ;dollar amount of tips
+   ;
+   call equate (depsav, dcode)         ;record tips from detailed department
+   call add (@amt, ctips)              ;add tips amount to empl subtotal
+   call add (@amt, tips)               ;update y-t-d
+   call add (@amt, mtips)              ;update m-t-d
+   call add (@hours, ytiphrs)          ;pln584
+   call add (@hours, waghrs)           ;pln584
+   if (tcode.eq.32) go to e0325        ;pln584
+   call add (@amt, ychgtip)            ;pln584
+   call add (@amt, mchgtip)            ;pln584
+   call add (@amt,cpdtip)              ;pln584
+   call comrwrt                        ;pln584
+   ;call grsadd (@amt)                 ;pln584
+   'rtname' = '@name'                  ;pln584
+   call regamt (@amt, 61)              ;pln584
+   go to e0100                         ;pln584
+e0325:                                 ;pln584
+   call add (@rate, ytiphrs);  overtime hours add to ytd tip hours
+   num=@rate*@factr/100;   using overtime factor change the hours
+   call add (num, otwaghrs);  total wage hours overtime for calc. tips
+   call regamt (@amt, 32);             pln584
+   go to e0100                         ;pln584
+   ;
+e0330:                                 ;addition to employee's accounts receiv
+   ;
+   call add (@amt, arbal)              ;add new a/r to balance
+   call equate (arded, @hours)         ;get new a/r deduction amount from detail
+   go to e0100
+   ;
+e0340:                                 ;one-time deduction from gross
+   ;
+   call equflg (ded34, y)              ;set flag for deduction 34
+   go to e0100
+   ;
+e0350:                                 ;one-time deduction from net
+   ;
+   call equflg (ded35, y)              ;set flag for deduction 35
+   go to e0100
+   ;
+e0360:                                 ;one-time plus-to-net deduction
+   ;
+   call equflg (ded36, y)              ;set flag for special plus-to-net detail
+   go to e0100
+   ;
+e0370:                                 ;additional one-time fica deduction
+   ;
+   call equflg (ded37, y)              ;set flag for additional fica
+   go to e0100
+   ;
+e0380:                                 ;one-time deduction for fwt
+   ;
+   call equflg (ded38, y)              ;set flag for additional fwt
+   go to e0100
+   ;
+e0390:                                 ;one-time deduction for area tax
+   ;
+   'sumstr' = 'cncode'                 ;save the trans area code    (04-12-78)
+   call bltrun (sumstr)
+   call ckarea (sumstr)
+   go to q0300
+   call areadd (@amt, a01swt)          ;add specified amt to specified area
+   go to e0100
+   ;
+e0410:                                 ;expense advance amount
+   ;
+   call add (@amt, cadv)               ;add expense advance amount
+   go to e0100
+   ;
+e0420:                                 ;reported expenses
+   ;
+   call add (@amt, cexp)               ;add reported expense amount
+   go to e0100
+   ;
+e0450:                                 ;pln584...pay allowance 1
+   call comrwrb                        ;pln584
+   call regamt (@amt,45)               ;pln584
+   call adckot                         ;pln584
+   goto e0100                          ;pln584
+;
+e0460:                                 ;pln584...pay allowance 2
+   call comrwrb                        ;pln584
+   call regamt (@amt,46)               ;pln584
+   call adckot                         ;pln584
+   goto e0100                          ;pln584
+;
+e0470:                                 ;pln584...pay allowance 3
+   call comrwrb                        ;pln584
+   call regamt (@amt,47)               ;pln584
+   call adckot                         ;pln584
+   goto e0100                          ;pln584
+;
+e0480:                                 ;pln584...pay allowance 4
+   call comrwrb                        ;pln584
+   call regamt (@amt,48)               ;pln584
+   call adckot                         ;pln584
+   goto e0100                          ;pln584
+;
+e0490:                                 ;pln584...pay allowance 5
+   call comrwrb                        ;pln584
+   call regamt (@amt,49)               ;pln584
+   call adckot                         ;pln584
+   goto e0100                          ;pln584
+;
+e0510:                                 ;holiday hours taken
+   ;
+   ; call sub (@hours,shthr)      ;holiday hours make up short time too (01-28-80)
+   ;
+   if (ecode .le. 6) go to e0110       ;holiday for hourly empl
+   go to e0230a                        ;holiday for salaried empl
+   ;
+e0520:                                 ;holiday hours deferred
+   ;
+   ;call add (@hours, vac)             ;add deferred holiday hours to vacation
+   @num = @hours * thou               ;pl0861...scale @hours to 5 decimals
+   call add (@num, vac)                ;pl0861...add deferred holiday hours
+                                       ;vacation hours are carried to 5 decimals
+   go to e0140                         ;loop to print
+   ;
+e0530:                                 ;deferred holiday hours taken
+   ;
+   ;call sub (@hours, vac)             ;taking deferred holiday out of vacation
+   @num = @hours * thou               ;pl0861...scale @hours to 5 decimals
+   call sub (@num, vac)                ;pl0861...subtract deferred holiday hrs
+                                       ;vacation hours are carried to 5decimals
+   go to e0510                         ;loop to figure how to calculate
+   ;
+e0620:                                 ;pln584...shortfall
+   call add (@amt,shortfall)           ;pln584
+   call comrwrb                        ;pln584
+   call regamt(@amt,62)                ;pln584
+   go to e0100                         ;pln584
+;
+e0900:
+   ;
+   ifstring (regflg .eq. y) go to e0901;regular hours record was in transactions
+   ;
+   call equstr (shtflg,y, regflg,y, 0)
+   call equate (shthr,skedhr)          ;no reg-hours in transaction
+   ifstring (vacflg .eq. y) go to e0251;
+   ;
+e0901:
+   ;
+   ifstring (shtflg .eq. n) go to e0905;short on reg-hrs
+   ;
+   ; ifstring (vacflg .eq. y) go to e0250;take short hours out of vac.
+   ;
+e0902:
+   ;
+   ifstring (vacflg .eq. y) go to e0251
+   ;
+e0905:
+   ;
+   if (novaac.eq.1) go to e0910;pln482
+   go to (f0100,e0910,e0910,e0910,e0910,f0100,f0100) on nopay
+   ;
+e0910:
+   ;
+   call dodraw                         ;setup commission if not 'no-pay'
+   ;
+;==============================================================================
+;                 a d j u s t m e n t s   &   t a x e s
+;==============================================================================
+   ;
+f0100:
+; removed the following line 05-10-82...dl pln#0402
+;  if (nopay .eq. 2) go to g0100;     skip if no vac / sick leave accrual
+   call equate (depsav, dept)         ;vac / sick leave charged to home dept
+   sumnum = ecat + 1                  ;no vacation or sick leave for parttimers
+   goto(f0101,f0101a, f0101,f0101a,f0101,f0101a,f0101,f0101a,f0101,f0101a)on -
+sumnum
+   go to f0101a                       ;no accrual on error either
+   ;
+f0101:
+   ;
+; added the following line 05-10-82...dl pln#0402
+   if (nopay.eq.2) go to f0101a       ;skip if no vac / sick leave accrual
+   if (novaac.eq.1) go to f0101a      ;pln482
+   'cncode' = 'axxcnt'           ;get areas for sick pay distribution (01-31-78)
+   'ctcode' = 'axxcit'                ;(01-31-78)
+   'stcode' = 'axxsta'                 ;(01-31-78)
+   call sicdoit (sopt,sfac,26,siktbl,sick,probsl,csick,mxsick,sodopt);sick leave
+   call settax                         ;force home areas for vac pay (01-31-78)
+   call vacdoit (vopt,vfac,25,vactbl,vac,probva,cvac,mxvac,vodopt); vacation
+   ;
+f0101a:
+   ;
+   go to (g0100,f0102,f0150,f0102,f0150,f0102,f0150) on nopay
+   ;
+f0102:
+   ;
+   go to (f0110,f0150) on fired
+   ;
+f0110:
+   ;
+   ifstring (ded34 .eq. n) go to f0130 ;skip if no dedns from gross
+   call setptr                         ;else set-up to peel amounts from detail
+   ;
+f0121:
+   ;
+   call inpdet                         ;read detail file
+   go to f0130                         ;until eoe or eof
+   if (tcode .ne. 34) go to f0121      ;looking for dedns from gross
+   'rtname' = '@name'                  ;preset to pass special name
+   call equate (depsav, dcode)         ;deduction from detailed department
+   call dedgrs (@amt, ygtime, -24)     ;take the deduction if possible
+   direct
+   lda/ taken+2 check if deduction was taken
+   bz f0121 loop if not
+   cpl
+   call sub (@amt, creg)
+   go to f0121                         ;and loop for any more
+   ;
+f0130:
+   ;
+   if (pl2net .eq. 0) go to f0140      ;skip if no regular plus-to-net deduction
+   call settax                         ;else set-up to reduce home areas
+   call equate (depsav, dept)          ;regular dedn from home department
+   call dedgrs (pl2net, ypl2nt, -26)   ;take deduction if possible
+   direct
+   lda/ taken+2 check if deduction was taken
+   bz f0140 skip if not taken
+   cpl
+   call add (pl2net, ccheck)           ;add the plus-to-net amt to final check
+   call add (pl2net, other)            ;and to total pay amount
+   call add (pl2net, mpl2nt)           ;and to m-t-d
+   call sub (pl2net, creg)             ;and subtract from profit sharing wages
+   ;
+f0140:
+   ;
+   ifstring (ded36 .eq. n) go to f0150 ;skip if no additional plus-to-net amts
+   call setptr                         ;else set-up to peel out the details
+   ;
+f0141:
+   ;
+   call inpdet                         ;read the detail file
+   go to f0150                         ;until eoe or eof
+   if (tcode .ne. 36) go to f0141      ;looking for code 36 only
+   call equate (depsav, dcode)         ;deduction from detailed department
+   call dedgrs (@amt, ypl2nt, -25)     ;take the deduction if possible
+   direct
+   lda/ taken+2 check if deduction was taken
+   bz f0141 loop if not taken
+   cpl
+   call add (@amt, ccheck)             ;add adnl plus-to-net amt to final check
+   call add (@amt, other)              ;and to total other pay amount
+   call add (@amt, mpl2nt)             ;and to m-t-d
+   call sub (@amt, creg)               ;and subtract from profit sharing wages
+   go to f0141                         ;loop check for more code 36's
+   ;
+f0150:
+   ;
+   call equals (cnet,cgross, depsav,dept, savret, zero,0);preset net pay & home dept
+   if (ecat .le. 1) go to f0170
+   month = cgross * retrat + i5r0k / i10r0k;calc ret fund deduction
+   ;
+   go to (f0155, f0160, f0160, f0160, f0160) on ecat;   2-5 ded ret fnd from gross to get total gross
+   ;
+f0155:
+   ;
+   call rcmded (month, retfnd, -18)    ;take taxable i.r.a. dedn if possible (as normal deduction)
+   go to f0170
+   ;
+f0160:
+   ;
+   call settax                         ;preset adjustment to home tax areas
+   call dedgrs (month, retfnd, -11)    ;take non-taxable i.r.a. dedn if possible (as an adj. to gross)
+   direct
+   lda/ taken+2 check adjustment taken
+   bz f0170 skip if not taken
+   cpl
+   call equate (cnet, cgross)
+   call sub (month, creg)              ;comes out of profit sharing wages too
+   ;
+   if(ecat.gt.3)go to f0170
+   savret=month
+ 
+f0170:
+   ;
+   if (ecat .ge. 8) go to f0200        ;skip if no fica
+   call dofica                         ;else calculate mandatory fica
+   ;
+f0200:
+   ;
+   call dofwt                          ;calculate fed holdout
+   ;
+   call doeic                          ;check/calculate eic (06-22-79)
+   ;
+   if (taxopt .eq. 0) go to f0290      ;skip if tax option not in use
+   ;
+   call equals (citind,-1, cntind,-1, staind,-1, taken,15, 0)
+  call clr (citwag,cntwag,stawag,tcitax,tcntax,tsttax,work1,work2,work3,work4,0)
+   ;
+f0210:
+   ;
+   call sub (1, taken)                 ;decr area taken
+   if (taken .lt. 0) go to f0250       ;skip if finished with non-home areas
+   ;
+   call bldbuf (taken)                 ;build work area for indexed area
+   ;
+f0220:
+   ;
+   ifstring (axxref .ne. stacod) go to f0221
+   call equate (staind, taken)
+   go to f0210
+   ;
+f0221:
+   ;
+   ifstring (axxref .ne. cntcod) go to f0222
+   call equate (cntind, taken)
+   go to f0210
+   ;
+f0222:
+   ;
+   ifstring (axxref .ne. citcod) go to f0230
+   call equate (citind, taken)
+   go to f0210
+   ;
+f0230:
+   ;
+   if (axxgrs .ne. 0) go to f0240      ;skip if money in gross accumulator
+   if (axxswt .eq. 0) go to f0210      ;loop next area if no gross, no adnl tax
+   ;
+f0240:
+   ;
+   call doswt (taken)                  ;calc everybody else first
+   go to f0210
+   ;
+f0250:
+   ;
+   direct
+   lda/ citind+2 does he have a home city?
+   bm f0251 skip if not
+   cpl
+   ;
+   call bldbuf (citind)                ;build datalink buffer for home city
+   call add (citwag, axxgrs)           ;add deferred tax wages
+   call doswt (citind)                 ;calc home city tax
+   ;
+f0251:
+   ;
+   direct
+   lda/ cntind+2 does he have a home area?
+   bm f0252 skip if not
+   cpl
+   ;
+   call bldbuf (cntind)                ;build datalink buffer for home county
+   call add (cntwag, axxgrs)           ;add deferred tax wages
+   call doswt (cntind)                 ;calc home area
+   ;
+f0252:
+   ;
+   direct
+   lda/ staind+2 does he have a home state?
+   bm f0290 skip if not
+   cpl
+   ;
+   call bldbuf (staind)                ;build datalink buffer for home state
+   call add (stawag, axxgrs)           ;add deferred tax wages
+   call doswt (staind)                 ;calc home state
+   ;
+f0290:
+   ;
+   ;
+   call equate (rtax, 0)               ;clear ref code till needed again
+   ;
+   go to (g0100,f0296,f0500,f0296,f0500,f0296,f0500) on nopay;skip for no-pays
+   ;
+f0296:
+   ;
+   go to (f0300,f0500) on fired        ;skip on termination
+   ;
+;==============================================================================
+;                  o p t i o n a l   d e d u c t i o n s
+;==============================================================================
+   ;
+f0300:
+   ;
+   call rcmded (afwt, fwt, -8)         ;take extra fwt as defined in empl's rec
+   ;
+   call addded (ded38, 38, fwt, -8)    ;and check for detailed extra fwt
+   ;
+   call addded (ded37, 37, fica, -7)   ;and check for detailed extra fica
+   ;
+   call cv2to4 (probli,day, probmi,year, 0)
+   call doins (lfins, day, ylfins, -12);try the life insurance
+   ;
+   call doins (mdins, year, ymdins, -13);try the medical insurance
+   ;
+   call rcmded (misca, ymisca, -3)     ;take deduction if possible
+   ;
+   call rcmded (miscb, ymiscb, -4)     ;take deduction if possible
+   ;
+   call rcmded (miscc, ymiscc, -5)     ;take deduction if possible
+   ;
+   if (arded .eq. 0) go to f0320       ;skip if no a/r deduction
+   call equate (month, arded)          ;check if need to take full amount
+   if (arded .lt. arbal) go to f0310   ;skip to take full dedn
+   call equals (month,arbal, arded,0, 0);set-up to take final deduction
+   ;
+f0310:
+   ;
+   call rcmded (month, yarded, -1)     ;take deduction if possible
+   direct
+   lda/ taken+2 skip if dedn not taken
+   bz f0320
+   cpl
+   call sub (month, arbal)             ;adjust a/r balance
+   ;
+f0320:
+   ;
+   call rcmded (svbnd, ysvbnd, -2)     ;take dedn if possible
+   direct
+   lda/ taken+2 skip if deduction not taken
+   bz f0330
+   cpl
+   call add (svbnd, bndbal)            ;update bond balance
+   ;
+f0330:
+   ;
+   call rcmded (trust, ytrust, -20)    ;take deduction if possible
+   ;
+   call addded (ded35, 35, yntime, -21);check for 1-time dedns in detail file
+   ;
+   call equate (depsav, dept)          ;set home department for remainder
+   ;
+   ifstring (ctropt .eq. n) go to f0500;skip if countered dedns not in use
+   ;
+   call docntr (lactr, actr, cdedna, ycdeda, -14);check/do c dedn a
+   call docntr (lbctr, bctr, cdednb, ycdedb, -15);check/do c dedn b
+   call docntr (lcctr, cctr, cdednc, ycdedc, -16);check/do c dedn c
+   call docntr (ldctr, dctr, cdednd, ycdedd, -17);check/do c dedn d
+   ;
+;==============================================================================
+;                        n o n  -  t a x a b l e s
+;==============================================================================
+   ;
+f0500:
+   ;
+   call add (cnet, ccheck)             ;add remainder to pre-existing pay amts
+   ;
+   if (advbal .ne. 0) go to f0510      ;skip if expense balance on books
+   if (cadv .ne. 0) go to f0510        ;skip if new advance issued
+   if (cexp .eq. 0) go to g0100        ;bypass expense section if no activity
+   ;
+f0510:
+   ;
+   call regamt (advbal, 40)            ;put old balance to register
+   call regamt (cadv, 41)              ;put new advance issue to register
+   call regamt (cexp, 42)              ;put new reported expenses to register
+   call add (cadv, advbal)             ;add new advance to balance
+   ;
+   ;if (cexp .eq. 0) go to f0530;      skip if no reported expenses
+   if (cexp .eq. 0) go to f0550        ;pln584
+   ;
+   if (cexp .le. advbal) go to f0520   ;are expenses covered?
+   ;
+   call sub (advbal, cexp)             ;expenses exceed advances
+   call equals (advbal,0, sumnum,cexp, 0);zero balance, save reimbursement
+   go to f0540
+   ;
+f0520:
+   ;
+   call sub (cexp, advbal)             ;advances covered expenses
+   go to f0550
+   ;
+f0530:
+   ;
+   call equate (sumnum, cadv)          ;advance goes on the check
+   ;
+f0540:
+   ;
+   call regamt (sumnum, 43)            ;output reimbursement
+   call add (sumnum, ccheck)           ;add to check amount
+   call add (sumnum, other)            ;and to ytd non-tax money
+   ;
+f0550:
+   ;
+   call regamt (advbal, 44)            ;put new balance to register
+   ;
+;==============================================================================
+;                 w r i t e   s u m m a r y   r e c o r d
+;==============================================================================
+   ;
+g0100:
+   ;
+   if (nopay .eq. 0) go to g0200       ;skip if no nopays
+   sumnum = nopay + 80
+   call regamt (0, sumnum)             ;pass to the register
+   if (novaac.ne.1) go to g0200        ;pln482
+   sumnum=82                           ;pln482
+   call regamt (0, sumnum)             ;pln482
+   ;
+g0200:
+   ;
+   if (fired .eq. 0) go to g0300       ;skip if no fired
+   sumnum = fired + 90
+   call equate (rrate, tdate)          ;get back the term date that we saved
+   call equate (tdate, 0)              ;cause we can't terminate yet
+   call regamt (0, sumnum)             ;register message
+   ;
+g0300:
+   ;
+   call equate (ramt, 0)               ;preclear carry to check number
+   go to (g0310) on nopay              ;skip to summary if no check
+   call equals (rhours,cgross, rrate,cnet, rfactr,ccheck, ramt,cknum, 0)
+   ;
+g0310:
+   ;
+   call equate (rtcode,0)              ;tcode = 0 is summary record for empl
+   if (ccheck .le. 0) go to g0315  ;pln698-no incr ck number if no money (check)
+   if (reccnt.lt.10) go to g0315;pln698-over 9 lines needs 2nd ck, void 1st num.
+;
+g0312:                                 ;pbl#773
+   incr cknum                          ;pln698-skip voided ck and get nxt ck num
+   incr ramt                           ;pln698-ditto
+   strrec=flag=0                       ;pbl#773
+;
+g0315:                                 ;pln698
+   if (strrec.gt.9) goto g0312         ;pbl#773
+   call wrtreg
+   call clr (reccnt, 0)                ;pln698-start the record counter over
+   call clr (strrec,0)
+   call clr (flag,0)
+   if (ccheck .le. 0) go to g0320      ;no incr ck number if no money (check)
+   call add (1, cknum)                 ;incr check number
+   ;
+g0320:
+   ;
+   if (creg .le. 0) go to g0330        ;skip if no current profit-sharing wages
+   call add (creg, regpay)             ;else update y-t-d
+   ;
+g0330:
+   ;
+   call add (cnet, net)                ;update ytd's
+   call add (ccheck, ychcks)
+   call add (cgross, gross)
+   ;
+   if (eclass .ge. k800) go to g0340   ;01/06/82 skip fica accum for exempt
+   ;
+; removed the following line 01/06/82 and added the following line for sickpay
+;   exemption from fica
+;  sumnum = yfwage + (cgross-sicpay)   ;total year to date fica wages
+;   sumnum = yfwage + cgross    ;calc total ytd fica wages (add in ret fund if ecat is 2 or 3)
+   if(ecat.gt.3)go to g0330f
+   if(ecat.lt.2)go to g0330f
+   sumnum=sumnum+savret;
+ 
+g0330f:
+   ;if(sumnum.le.ficmax) go to g0331    ;not reached fica max
+   ;yfwage=ficmax                       ;fica-max is max value
+   ;go to g0340
+   ;
+g0331:
+; following two lines removed 01/06/82 for fica tax on sick pay
+  ;sumnum = cgross - sicpay
+  ;call add (sumnum, yfwage)
+; the following line was added 01/06/82 for ficas tax on sick pay
+   sumnum=cgross;   add back fica taxable (ecat=2 & 3)
+   if(ecat.gt.3)go to g0331f
+   if(ecat.lt.2)go to g0331f
+   sumnum=sumnum+savret
+ 
+g0331f:
+   call add(sumnum,yfwage)
+   ;
+g0340:
+   ;
+   ifstring (vacatodo .eq. n) go to g0344
+   if (skedhr. eq. 0) go to q0800      ;skeduled hrs not set up
+   call vacsubr
+   go to (e0905,g0340) on ckflg
+   ;
+g0344:
+   ;
+   ifstring (getnx .eq. n) go to g0345 ;no need to relocate next empl
+   ;
+   point (detail, nxdemp)
+   readb (detail, detrec)              ;get next detail empl
+   call equflg (getnx, n)
+   ;
+g0345:
+   ;
+   go to b0100                         ;let's get next empl ..loop..
+   ;
+;trace off
+;==============================================================================
+;                p r o g r a m   t e r m i n a t i o n
+;==============================================================================
+   ;
+q0300:
+   ;
+   'errmsg' = 'm9300 + sumstr + quote' ;undefined tax area
+   go to q0510
+   ;
+q0400:
+   ;
+   'errmsg' = 'star + m9400a + modsav + m9400b';no overlay in directory
+   go to q0510
+   ;
+q0500:
+   ;
+   'errmsg' = 'star + m9500 + m9400a + modsav + quote';module calc error
+   ;
+q0510:
+   ;
+   call msg (errmsg)                   ;define the error
+   go to q0710
+   ;
+q0600:
+   ;
+   call msg (m9600)                    ;master & tag files screwed up
+   go to q0710
+   ;
+q0700:
+   ;
+   call msg (m9700)                    ;tax file screwed up
+   ;
+q0710:
+   ;
+   call close
+   stop 100
+   ;
+q0800:
+  call msg (m9800)                     ;scheduled hrs not set up
+  call msg (m9801)                     ;enter scheduled hrs in the master
+  call close
+  stop 120
+q0900:
+   ;
+   call msg (eject)
+   call msg (m9900)                    ;stand by for register print
+   lpcknm = cknum - 1
+   call getk (master, zero)
+   go to (ioerr, ioerr) on status
+   ;
+   ifstring (dumrun .eq. n) go to q0910
+   ;
+   call getr (master, msthdr)
+   call stat (1)
+   ;
+q0910:
+   ;
+   call equflg (passok, y)
+              ;      see also rv529 for check on fica beyond sswage
+   ;
+   call putr (master, msthdr)
+   call stat (2)
+   ;
+   free (master)                       ;relenquish master only after finished
+   ;
+   call close
+   stop 0
+   ;
+;==============================================================================
+;                          s u b r o u t i n e s
+;==============================================================================
+;
+;=========================
+subroutine absval
+;=========================
+;
+;       assure that a four-byte integer is positive
+;
+;       calling sequence:
+;
+;       call absval (integer)
+;
+direct
+@p1 set *+11
+@p2 set *+31
+@p3 set *+26
+@p4 set *+33
+ lda- x+ get integer parameter
+ sta @p1 setup
+ sta @p2 *
+ sta @p3 *
+   cpl
+   if (@p1 .ge. 0) go to @p4           ;skip if positive
+   @p2 = 0 - @p3                       ;negate if negative
+   return
+;
+;=========================
+subroutine add
+;=========================
+;
+;       to add two 4-byte integers with reduced memory requirements
+;
+;       calling sequence:
+;
+;       call add (source, target)
+;
+direct
+@p1 set *+23
+@p2 set *+13
+@p3 set *+18
+ lda- x+ get source integer
+ sta @p3
+ lda- x+ get target parameter
+ sta @p1
+ sta @p2
+   cpl
+   @p1 = @p2 + @p3
+   return
+;
+;=========================
+subroutine addded
+;=========================
+;
+;       to check transaction file for additional dedns to be taken
+;
+;       calling sequence:
+;
+;       call addded (flag-string, trans-code, ytd-integer, dedn-code)
+;
+direct
+ lda- x+ get flag-string address
+ sta addd0+3 *
+ lda- x+ get trans-code address
+ sta addd2+5 *
+ lda- x+ get ytd-integer address
+ sta addd3+5 *
+ lda- x+ get dedn-code address
+ sta addd3+7 *
+cpl
+;
+addd0:
+   ifstring (null .eq. n) go to adddx  ;skip exit if no transaction flagged
+   call setptr                         ;else position transaction file
+;
+addd1:
+   call inpdet                         ;read transaction file
+   go to adddx                         ;until eoe or eof
+;
+addd2:
+   if (tcode.ne.zero) go to addd1      ;changed...04-28-82 dl...pln#0370
+   'rtname'='@name'                    ;added...04-28-82 dl...pln#0370
+   call equate (depsav, dcode)         ;set department from transaction's code
+;
+addd3:
+   call rcmded (@amt, zero, zero)      ;take the deduction if possible
+   go to addd1                         ;loop to check rest of empl's detail
+;
+adddx:
+   return
+;
+;=========================
+subroutine areadd
+;=========================
+;
+direct
+ lda= add get address of addition routine
+ jmp are0 jump to common input section
+cpl
+;
+;=========================
+subroutine aresub
+;=========================
+;
+direct
+ lda= sub get address of subtraction routine
+are0 equ *
+ sta are1+1 set routine common for subtraction
+ lda- x+ get address of integer to be added
+ sta are1+3
+ ldb- x+ get start address of table
+ lda/ wdate add index
+ aab ,4 *
+ stb are1+5 set-up address of indexed integer
+ stb are1+10 *
+   cpl
+are1:
+   call add (zero, zero)
+   if (zero .ge. 0) go to arex         ;check result
+   call equate (taken, 0)              ;set flag if result went negative
+;
+arex:
+   return
+;
+;=========================
+subroutine bldbuf
+;=========================
+;
+   call zeroit (axxcgr, axxtax+3)      ;clear pass buffer
+;
+direct
+ lda- x+ get address of index integer
+ ina ,2 get address of lsw of index
+ lda- a get index from lsw
+ xay save index
+ sla ,2 make four-byte index
+ ldb= a01grs get start address of gross accumulators
+ aab get address of current gross accumulator
+ stb bldb01+9 *
+ ldb= a01pgr set-up e-p-q gross
+ aab *
+ stb bldb01+13 *
+ ldb= a01mgr set-up m-t-d gross
+ aab *
+ stb bldb01+17 *
+ ldb= a01ygr set-up y-t-d gross
+ aab *
+ stb bldb02+5 *
+ ldb= a01ptx set-up e-p-q taxes
+ aab *
+ stb bldb02+9 *
+ ldb= a01mtx set-up m-t-d taxes
+ aab *
+ stb bldb02+13 *
+ ldb= a01ytx set-up y-t-d taxes
+ aab *
+ stb bldb02+17 *
+ ldb= a01swt set-up additional tax amount
+ aab *
+ stb bldb03+9 *
+ ldb= a01ref set-up reference code
+ aab *
+ stb bldb10+5
+ xfr y,a get index back
+ sla make two-byte index in "a"
+ ldb= a01ded set-up state tax exemptions
+ aab *
+ stb bldb05+7 *
+ xfr y,a restore index
+ ldb= a01nam *
+ aab *
+ sla ,3 *
+ aab *
+ stb bldb11+5 *
+   cpl
+;
+bldb01:
+   call equals (axxcgr,cgross, axxgrs,zero, axxpgr,zero, axxmgr,zero, 0)
+;
+bldb02:
+   call equals (axxygr,zero, axxptx,zero, axxmtx,zero, axxytx,zero, 0)
+;
+bldb03:
+   call equals (axcfwt,cfwt, axxswt,zero, axxtax,zero, axxmop,mltpop, 0)
+;
+bldb05:
+   call cv2to4 (fdtx,axftex, zero,axstex, pfac,axpfac, mast,axmast, 0)
+;
+bldb10:
+   'axxref' = 'null'
+;
+bldb11:
+   'axxnam' = 'null'
+   'axxcit' = 'citcod'
+   'axxcnt' = 'cntcod'
+   'axxsta' = 'stacod'
+;
+   ifstring (axxref .eq. axxcit) go to bldb20; skip if home city
+   ifstring (axxref .eq. axxcnt) go to bldb20; skip if home county
+   ifstring (axxref .ne. axxsta) go to bldbex; skip if not home state
+;
+bldb20:
+   call equals (axcmea,cmeals, axymea,meals, axpmea,pmeals, axmmea,mmeals, 0)
+   call equals (axctip,ctips,  axytip,tips,  axptip,ptips,  axmtip,mtips,  0)
+;
+bldbex:
+   return
+;
+;=========================
+subroutine ckarea
+;=========================
+;
+direct
+ lda- x+ get address of area name string
+ sta ckar1+3
+ ldb= 15 preset table length
+ stb/ wdate
+@p1 set *
+ ldb/ wdate
+ dcr b
+ bm ckarex
+ stb/ wdate
+ slr b,2
+ lda= a01ref
+ aab
+ stb ckar1+5
+   cpl
+ckar1:
+   ifstring (zero .ne. zero) go to @p1
+direct
+ inx ,3 incr return for valid area
+   cpl
+;
+ckarex:
+   return
+;
+;=========================
+subroutine close
+;=========================
+;
+   endfile regfil
+   close crt, master, tagfil, detail, regfil
+direct
+ lda/ taxopt+2 skip if tax option off
+ bz closx
+   cpl
+   close taxfil
+;
+closx:
+   return
+;
+;=========================
+subroutine clr           ;            clear a group of 4-byte integers
+;=========================
+;
+direct
+ cla
+clr01 equ *
+ ldb- x+ get integer address
+ bz clrex 0 is end
+ sta- b+ clear word
+ sta- b clear word
+ jmp clr01 get next
+clrex equ *
+   cpl
+   return
+;
+;=========================
+subroutine clrcur        ;            clear all current empl fields
+;=========================
+;
+   call zeroit (cgross,treghr+3)     ;05-21-80...reorg fields to use zeroit...ok
+;
+direct
+ lda/ taxopt+2 skip if tax option off
+ bz clrcx
+   cpl
+;
+   call zeroit (a01grs,a15swt+3) ;04-14-80...clear fields in one swift line...ok
+;
+clrcx:
+   return
+;
+;=========================
+subroutine cv2to4
+;=========================
+;
+;       to convert 2-byte integers to 4-byte integers
+;
+;       calling sequence:
+;
+;       call cv2to4 (int21,int41, int22,int42, ..., 0)
+;
+direct
+ lda- x+ get first parameter
+ bz cv24ex zero is end of parameter string
+ xay save address of 2-byte
+ lda- x+ get address of 4-byte
+ clr b clear msw of target
+ stb- a+
+ ldb- y+ load from 2-byte
+ stb- a store in lsw of 4-byte
+ bp cv2to4 loop if positive number
+ clr b else move negative msw
+ dcr b
+ stb- a-
+ jmp cv2to4 and loop for next pair
+   cpl
+cv24ex:
+   return
+;
+;=========================
+subroutine cv4to2
+;=========================
+;
+;       to convert 4-byte integers to 3-byte integers
+;
+;       calling sequence:
+;
+;       call cv4to2 (int41,int21, int42,int22, ..., 0)
+;
+direct
+ lda- x+ get first parameter
+ bz cv42x zero is end of parameter string
+ ina incr address of 4-byte to lsw
+ ina
+ xay save 4-byte lsw address
+ ldb- x+ get 2-byte address
+ lda- y load lsw of 4-byte
+ sta- b store in 2-byte
+ jmp cv4to2 loop for next pair
+   cpl
+cv42x:
+   return
+;
+;=========================
+subroutine dedgrs
+;=========================
+;
+direct
+@p0 set dedg01+3
+@p1 set dedg01+13
+@p2 set dedg01+28
+@p3 set dedg01+33
+@p4 set dedg02+3
+@p5 set dedg02+5
+@p6 set dedg02+10
+@p7 set dedg02+12
+ lda- x+ get deduction integer address
+ sta @p0
+ sta @p1
+ sta @p2
+ sta @p4
+ sta @p6
+ lda- x+ get ytd integer address
+ sta @p7
+ lda- x+ get memo literal
+ sta @p3
+ sta @p5
+   cpl
+;
+   call equate (taken, 1)              ;set flag presuming dedn will be taken
+;
+dedg01:
+   if (@p0 .eq. 0) go to dedgex        ;skip to exit if no deduction
+   call grssub (@p1)                   ;take deduction from all areas
+   if (taken .eq. 1) go to dedg02      ;skip if deduction was taken ok
+   call grsadd (@p2)                   ;else put it back
+   call memo (@p3)                     ;and memo not taken
+   return
+;
+dedg02:
+   call regamt (@p4, @p5)              ;write detail to register
+   call add (@p6, @p7)                 ;update ytd
+;
+dedgex:
+   return
+;
+;=========================
+subroutine docntr
+;=========================
+;
+direct
+ lda- x+ get master deduction counter
+ sta doct0+7 set-up
+ lda- x+ get employee deduction counter
+ sta doct0+3 set-up
+ sta doct0+38
+ sta doct0+42 *
+ lda- x+ get employee deduction amount
+ sta doct0+26 set-up
+ lda- x+ get employee y-t-d deduction
+ sta doct0+28 set-up
+ lda- x+ get deduction literal for tcode
+ sta doct0+30 set-up
+   cpl
+;
+doct0:
+   call cv2to4 (actr,sumnum, lactr,month, 0)
+   if (month .ge. sumnum) go to doctx  ;skip exit if counter not right
+   call rcmded (cdedna, ycdeda, -14)   ;take deduction if possible
+direct
+ lda/ taken+2 skip if deduction not taken
+ bz doctx
+ lda/ actr
+ dca
+ sta/ actr
+ jmp doct0   check to see if more ded. is needs
+   cpl
+;
+doctx:
+   return
+;
+;=========================
+subroutine dodraw
+;=========================
+;
+   call equate (sumnum, 1)
+   goto (dodx,dod0,dod1,dodx,dod0,dod1,dodx,dod0,dod1,dodx,dod0,dod1,dod0,dod1)-
+   on ecode
+;
+dod0:
+   call equate (sumnum, 0)             ;set flag for no draw
+;
+dod1:
+   call add (ccom, combal)             ;add detail commission to balance
+   go to (dodx,dod1a,dod1a,dod1a,dod1a,dodx,dodx) on nopay
+;
+dod1a:
+   if (combal .lt. comlim) go to dod2  ;commission gt company pay limit?
+   call sub (comlim, combal)           ;yes - pay limit
+   call equate (cdraw, comlim)
+   go to dod5
+;
+dod2:
+   if (sumnum .eq. 0) go to dod6       ;skip if commission only (no draw)
+   if (combal .lt. draw) go to dod3    ;commission balance gt draw amt?
+   call equate (cdraw, combal)         ;yes - pay remainder of balance
+   call equate (combal, 0)             ;and set balance to zero
+   go to dod5
+;
+dod3:
+   if (combal .le. 0) go to dod4       ;any commissions on the books?
+   sumnum = draw - combal              ;yes - add to make draw amt
+   cdraw = sumnum + combal
+   combal = sumnum * negone            ;sub draw amt from balance
+   go to dod5
+;
+dod4:
+   call sub (draw, combal)             ;go a little deeper in the hole
+   call equate (cdraw, draw)
+;
+dod5:
+   if (cdraw .eq. 0) go to dodx
+   call settax                         ;set-up commission for home tax areas
+   call grsadd (cdraw)
+   call equate (depsav, dept)          ;setup home dept for write
+   call regamt (cdraw, 28)             ;detail to register
+;
+dodx:
+   return
+;
+dod6:
+   call equate (cdraw, combal)         ;pay what is on books only
+   call equate (combal, 0)             ;and clear balance
+   go to dod5
+;
+;=========================
+subroutine doeic
+;=========================(06/25/79)
+;
+   direct
+ lda/ eicflg+2
+ ble goeix exit if eic flag is le zero
+ dca ,2
+ ble *+5 or if it's not 2 (and lt 65536)
+goeix jmp/ doeix
+   cpl
+;
+;sumnum = cgross + ctips;             calc period taxable wages
+   sumnum = cgross + ctips ; pln584  pbln#766..jh
+   direct
+ lda/ mtop
+ dca ,2
+ bz doei0 skip if convenience meals
+   cpl
+   call add (cmeals, sumnum)           ;else meals are taxable
+;
+doei0:
+   sumnum = sumnum * runfac            ;annualize the wage
+   if (sumnum .le. 0) go to doeix      ;no wages - exit
+;
+   work1 = i9836  / eicflg             ;setup calc constants (eicflg=1 single, 2=married)
+   work2 = i873  / eicflg
+   work3 = i6235  / eicflg
+;
+   if (sumnum .le. work1) go to doei1  ;skip if wages le $9,836/$4,923
+   sumnum = work2 - (sumnum - work1  /10);  $873 00 - (wages -9836.00/10);  *10% is same as /10
+   go to doei3
+;
+doei1:
+   if (sumnum .le. work3) go to doei2  ;skip if wages le $6,235./$3,114.
+   call equate (sumnum,work2);   fixed amount if between 6235 & 9836.00
+   go to doei3
+;
+doei2:
+   sumnum = sumnum * 14/ 100;    14% of wages if less then $6235. or 3,114
+;
+doei3:
+   if (sumnum .le. 0) go to doei9      ;no eic entitlement this payday
+   call equate (work4, sumnum)         ;save calculated annual entitlement
+   sumnum = sumnum / runfac            ;reduce annual eic back to pay period
+   if (ceic .ge. sumnum) go to doei4   ;pay greater of calc amt or tcode 29
+   call equate (ceic, sumnum)
+;
+doei4:
+   work1 = yeic + ceic                 ;check for excessive eic payment
+   if (work1 .le. work4) go to doei5   ;new ytd le annual entitlement is ok
+   ceic = work4 - yeic                 ;else calc remaining entitlement
+;
+doei5:
+   if (ceic .le. 0) go to doei9        ;no eic payment is to be made
+   call add (ceic, yeic)               ;update master field
+   call regamt (ceic, 29)              ;output register detail record
+   call add (ceic, ccheck)             ;add amount to check
+;
+doei9:
+;
+   call zeroit (work1,work4+3)
+;
+doeix:
+   return
+;
+;=========================
+subroutine dofica
+;=========================
+;
+   month=cgross+ctips ; pln584(-cpdtip).delete...jh/for fica tx
+  sumnum=0;
+  sumnum2=0
+  if(ecat.gt.3)go to dofi01a
+  if(ecat.lt.2)go to dofi01a;
+   month=month+savret; code 200 & 300 use gross to figure fica
+ 
+;   others may use gross-retirement fund
+ 
+dofi01a:
+ 
+direct
+ lda/ mtop added...05-04-82...dl pln#0394
+ dca  ,2 added...05-04-82...dl pln#0394
+ bz   dofi0 skip if convenience meals...added 05-04-82...dl pln#0394
+   cpl
+   call add (cmeals,month);else meals are taxable...added 05-04-82...dl pln#0394
+;     (also mtop=3 benefits are taxable)
+;
+dofi0:;added...05-04-82...dl pln#0394
+   scrtch=month;
+   if ( ssmed .le. fica) go to dofi0x ;skip if it has combined max up to ss max
+   sumnum=month+yfwage
+   if(sumnum.le.sswage)go to dofi0aa;  all is fica taxable
+   scrtch=sswage-yfwage
+   if(scrtch.le.0)go to dofi0x;   skip ssfica already maxed, check medfica
+dofi0aa:
+sumnum2=(scrtch * ssfac + i50r0k / i0r1m)+ nopafica; 6.2% of amount upto max
+ 
+dofi0x:
+   if(ficamax.le.fica)go to dofi05;  maxed out
+   scrtch=month+yfwage
+   if(scrtch.le.medwage)go to dofi0xa; calc on full aount
+   month=(ficamax-fica)-sumnum
+   go to dofi0xc
+ 
+dofi0xa:
+ 
+   month=month*medfac+i50r0k/i0r1m;
+ 
+dofi0xc:
+ 
+   sumnum2=sumnum2+month;   add medc to ss
+scrtch=fica+sumnum2 ; test to see if we went over fica max of 5123.30
+if(scrtch.lt.ficamax)goto doit ; fica is ok
+sumnum2=ficamax-fica           ; we exceeded 5123.30 so reduce it
+doit:
+dofi01:
+   call rcmded (sumnum2, fica, -6)      ;take the fica deduction
+   if (taken.eq.1) goto dofi02         ;pln584
+   call putnofic                       ;pln584
+   goto dofi02a                        ;pln584
+dofi02:                                ;pln584
+   nopafica = 0                        ;pln584
+dofi02a:                               ;pln584
+   sminw = minwag * waghrs + (minwag * otwaghrs)/ thou     ;pln584 (11/23/87) calc wages if they were paid min. wage
+   if (ecode.gt.6) goto dofi02b        ;pln584
+   month = rate * waghrs + (rate * otwaghrs) / thou       ;pln584 figure how much they made for hrs tip appl.
+   goto dofi02c                        ;pln584
+dofi02b:                               ;pln584
+   month = rate / runfac               ;pln584
+dofi02c:                               ;pln584
+   sumnum = ctips                      ;pln584 amt they got for their tips
+   if (month.ge.sminw) goto dofi03     ;pln584 did they rec at least min. wage?
+   diff = sminw - month                ;pln584 dif. between min wage & what they got
+   ; 11/24/87   if (diff.gt.ctips) goto dofi04      ;pln584
+   sumnum=diff; its of for them to make less than min. wage, but co. fica has to cover min. wage
+   goto dofi04                         ;pln584
+dofi03:                                ;pln584
+   sumnum=0                            ;pln584
+dofi04:                                ;pln584
+   tipfica=tipfica+sumnum              ;pln584 (amt. co. must pay fica on)
+   if (sumnum.eq.0) goto dofi05        ;pln584
+   call comrwrt                        ;pln584
+   'rtname'='ktipfic'                  ;pln584
+   call regamt(sumnum,69)              ;pln584
+dofi05:                                ;pln584
+   return
+;
+;================================
+;   take care of no pay on fica
+;================================
+;
+putnofic:                              ;pln584
+   nopafica = sumnum                   ;pln584
+   call wrt68                          ;pln584
+   return                              ;pln584
+;
+;=========================================
+;   update other & check amount
+;=========================================
+;
+adckot:                                ;pln584
+   call add (@amt,ccheck)              ;pln584
+   call add (@amt,other)               ;pln584
+   return                              ;pln584
+;
+   return
+;
+;================================================
+;   common setup for write of regfile
+;================================================
+;
+comrwrb:                               ;pln584
+   'rtname' = '@name'                  ;pln584
+comrwrt:                               ;pln584
+   rrate=0
+   rfactr=0
+   rhours=0
+   return
+;
+;=========================
+subroutine dofwt
+;=========================
+;
+   call cv2to4 (fdtx, axxtax, w2s, ww2s, mast,married, 0)
+   if (ww2s. eq. 8) goto dofw6 ; go calc b/u fwt for 1099 emp code 8
+   if (axxtax .eq. 15) go to dofw5     ;15 dedns = no tax
+   sumnum = cgross + ctips             ;calc period taxable wage
+   ;sumnum = cgross + ctips - cpdtip   ;pln584 correction pbln#766..jh
+direct
+ lda/ mtop
+ dca ,2
+ bz dofw0 skip if convenience meals
+   cpl
+   call add (cmeals, sumnum)           ;else meals are taxable
+;
+dofw0:
+   sumnum = sumnum * runfac            ;annualize the wage
+   if (sumnum .le. 0) go to dofw5      ;exit now if no gross to tax
+   if (axxtax .lt. 15) go to dofw00    ;skip for tax table calc
+   sumnum = sumnum * axxtax / 100      ;else use flat percentage
+   go to dofw3
+;
+dofw00:
+   wdate = axxtax * depalw             ;calc dependent allowance
+   call sub (wdate, sumnum)            ;calc taxable wage
+   if (sumnum .le. 0) go to dofw5      ;exit if no taxable wages left
+   call equate (wdate, 7);            preset index for tax tables
+dofw1:
+   decr wdate
+   if(wdate.lt.0)go to dofw5
+   go to (dofw1s)on married;  they are single
+   call tget(amt, wdate, fwt13, 4);    minimum amount for this tax bracket
+   go to dofw1q
+ 
+dofw1s:
+   call tget(amt, wdate, fwt00, 4);  single minimum amt
+ 
+dofw1q:
+ 
+  amt2=0
+   if (sumnum .le. amt) go to dofw1;   not in this tax bracket
+   go to (dofw1qs)on married; single
+   call tget(amt1, wdate, fmpc1, 4);    married percent
+  if(wdate.eq.0)goto dofw1qq
+  decr wdate
+  call tget(amt2, wdate, fwt20, 4)
+  go to dofw1qq
+ 
+dofw1qs:;  single
+  call tget(amt1, wdate, fspc1, 4);   single percent
+  if(wdate.eq.0)go to dofw1qq
+  decr wdate
+  call tget(amt2, wdate, fwt07, 4)
+ 
+dofw1qq:
+dofw2:
+   if (amt .eq. 0) go to dofw5      ;skip if no tax
+   sumnum = sumnum - amt * amt1 / thou + amt2;    12/29/86...xx.x% in pcttbl
+ 
+;
+dofw3:
+   cfwt = sumnum / runfac              ;pro-rate tax for pay period
+;
+printoff
+dofw4:
+   if (cfwt .le. 0) go to dofw5        ;double-check valid tax amount
+   call rcmded (cfwt, fwt, -23)        ;take the fwt deduction
+;
+dofw5:
+   return
+   ;
+dofw6:
+   ;
+   if (bufwt. le. 0) goto dofw5
+   cfwt = cgross * bufwt + 50 / 100
+   goto dofw4 ; go show it was taken
+   ;
+;
+;=========================
+subroutine doins
+;=========================
+;
+direct
+@p1 set doins1+3
+@p2 set doins1+13
+@p3 set doins1+23
+@p4 set doins1+38
+@p5 set doins1+68
+@p6 set doins1+58
+@p7 set doins2+5
+@p8 set doins2+17
+@p9 set doins2+19
+ lda- x+ get deduction amount
+ sta @p1
+ sta @p3
+ sta @p5
+ sta @p6
+ sta @p7
+ lda- x+ get probation period
+ sta @p2
+ sta @p4
+ lda- x+ get ytd total amount
+ sta @p8
+ lda- x+ get deduction code
+ sta @p9
+   cpl
+;
+doins1:
+   if (@p1 .eq. 0) go to doinsx       ;skip return if no deduction amount
+   if (@p2 .eq. 0) go to doins2       ;skip if no probation period
+   if (@p3 .lt. 0) go to doins2       ;skip if already past probation period
+   sumnum = jhire + @p4
+   if (jdate .lt. sumnum) go to doinsx;exit if not past prob period
+   @p5 = @p6 * negone                 ;reverse sign as past probation flag
+;
+doins2:
+   call equate (month, @p7)
+   call absval (month)
+   call rcmded (month, @p8, @p9)       ;take deduction if possible
+;
+doinsx:
+   return
+;
+;=========================
+subroutine doswt
+;=========================
+;
+direct
+   lda- x+ get index integer
+   sta dosw01+5 save in four-byte form
+   ina ,2
+   lda- a
+   sla ,2
+   ldb= a01tax set-up tax rate
+   aab *
+   stb dosw01+9 *
+   cpl
+;
+dosw01:
+   call equals (month,zero, sumnum,zero, 0);get index and tax flag
+;
+   if (sumnum .lt. 0) go to dosw03     ;skip if module required
+;
+   call add (axctip, axxgrs)           ;home taxes the tips
+   if (mltpop .eq. 2) go to dosw02     ;skip if convenience meals
+   call add (axcmea, axxgrs)
+;
+dosw02:
+   axxtax = sumnum * axxgrs + i50r0k / i0r1m;calculate flat rate tax
+;
+   call add (axxswt, axxtax)           ;add any additional tax
+   go to dosw07                        ;skip to update / post
+;
+dosw03:
+direct
+   lda/ month+2 check for module already loaded
+   xab
+   sla ,3
+   sab
+   lda= a01mod
+   aab
+   stb dosw04+5
+   cpl
+;
+dosw04:
+   'axxmod' = 'null'
+;
+   call putbuf                         ;move datalink out
+;
+   ifstring (modsav .eq. axxmod) go to dosw05;skip if module is still loaded
+   'modsav' = 'axxmod'                 ;else remember who we are loading
+;
+   load (modsav, hicore, 1)            ;load and jsr
+   if (status .eq. 4) go to q0400      ;screaming error exit if no module
+go to dosw06                           ;skip to update record
+;
+dosw05:
+   call hicore                         ;call module already loaded
+;
+dosw06:
+   if (status .ne. 0) go to q0500      ;announce module calculation error
+;
+   call getbuf                         ;return the datalink
+;
+dosw07:
+   if (axxtax .eq. 0) go to doswex     ;skip exit if no tax
+   if (axxtax .lt. 0) go to dosw09     ;skip if wages forward to home
+   call add (axxtax, swt)
+   'rtax' = 'axxref'                   ;pass area ref code to reg print
+   'rtname' = 'axxnam'                 ;pass area name also
+   call takout (axxtax, -19)           ;write record to register file
+;
+direct
+ lda/ month+2
+ sla ,2
+ ldb= a01mtx
+ aab
+ stb dosw08+5
+ ldb= a01ytx
+ aab
+ stb dosw08+12
+   cpl
+;
+dosw08:
+   call add (axxtax, zero)             ;update month-to-date tax
+   call add (axxtax, zero)             ;update year-to-date tax
+   go to doswex                        ;exit for next area
+;
+dosw09:
+   call absval (axxtax)                ;add returned split wages to home
+   go to (dosw11, dosw12, dosw13) on axxtax
+   go to q0500
+;
+dosw11:
+   call add (axmast, citwag)
+   go to doswex
+;
+dosw12:
+   call add (axmast, cntwag)
+   go to doswex
+;
+dosw13:
+   call add (axmast, stawag)
+;
+doswex:
+   return
+;
+;=========================
+subroutine equals
+;=========================
+;
+;       multiple integer equate
+;
+;       calling sequence:
+;
+;       call equals (this1, that1, this2, that2, this3, that3, 0)
+;
+direct
+ lda- x+ get first integer of equating pair
+ bnz *+3 continue if valid address
+ rsr return on terminator of 0
+ sta *+14 set-up integer
+ lda- x+ get second integer of equating pair
+ sta *+5 set-up
+   cpl
+   zero=zero; equate the pair
+   go to equals; get the next pair
+;
+;=========================
+subroutine equate        ;         to equate two integers
+;=========================
+;
+direct
+@p1 set *+11
+@p2 set *+16
+ lda- x+ get target integer
+ sta @p2
+ lda- x+ get source integer
+ sta @p1
+   cpl
+   @p2 = @p1
+   return
+;
+;=========================
+subroutine equflg
+;=========================
+;
+; calling sequence:
+;                   call equflg (target[+lit], source)
+;
+; single character string equate (this, that) for reduced memory requirements
+; equivalent to a 'this' = 'that' where both are defined as one-byte strings
+; example: define this:'a',that:'z'. or to move one character into a specific
+; location into a longer target string (ex: call equflg (target+3,character)
+; where the target string is at least four characters long).
+;
+direct
+ lda- x+       get target character address
+*ldbb- *x+     get character to be moved ;removed will not work on cp4
+ ldb- x+
+ ldbb- b
+ stbb- a       deposit character into target
+   cpl
+   return
+;
+;=========================
+subroutine equstr
+;=========================
+;
+; calling sequence:
+;                   call equstr (this1[+lit],that1, this2[+lit],that2, 0)
+;
+; multiple pair single string equate (this1,that1, this2,that2, 0) for reduced
+; memory requirements.  equivalent to 'this' = 'that' where both have been
+; defined as single characters (example: define this:'a',that:'z') or to move a
+; character into a specfic location in a longer target string.
+;
+direct
+ lda- x+      get target character address
+ bnz *+3      continue if valid address
+ rsr          return on terminator of zero
+ ldb- x+
+ ldbb- b    get the source character
+ stbb- a      deposit character into target
+   cpl
+   go to equstr                        ;go back for another pair
+;
+;
+;=========================
+subroutine getbuf
+;=========================
+;
+direct
+ lda= hicore get source start address
+ xay
+ lda= taxlnk get target start address
+ stx- s-
+ xax
+getbf1 equ *
+ lda- y+
+ sta- x+
+ ldb= lnkend
+ sub x,b
+ bnz getbf1
+ ldx- s+
+   cpl
+   return
+;
+;=========================
+subroutine getecd        ;         convert empl class code into
+;=========================         ecode (0-14) & ecat (0,1,8,9)
+;
+   call equate (ecat, 0)
+   call equate (ecode, eclass)
+getec1:
+   if (ecode .lt. 100) go to getecx
+   call sub (100, ecode)
+   call add (1, ecat)
+   go to getec1
+getecx:
+   return
+;
+;=========================
+subroutine grsadd
+;=========================
+;
+;       to add an amount to all appropriate gross pay accumulators
+;
+;       calling sequence:
+;
+;       call grsadd (integer)
+;
+;       note: areas will be determined from "stcode", "cncode", & "ctcode"
+;
+direct
+ lda= areadd get address of area addition routine
+ ldb= add get address of addition routine
+ jmp grs00 jump to routine common
+   cpl
+;
+;=========================
+subroutine grssub
+;=========================
+;
+;       to subtract an amount from all appropriate gross pay accumulators
+;
+;       calling sequence:
+;
+;       call grssub (integer)
+;
+;       note: areas will be determined from "stcode", "cncode", & "ctcode"
+;
+direct
+ lda= aresub get address of area subtraction routine
+ ldb= sub get address of subtraction routine
+grs00 equ *
+ sta grs01+34 set routine common for desired add/sub
+ sta grs01+41 *
+ sta grs01+48 *
+ stb/ grs04+1 *
+*
+ lda- x+ get address of source integer
+ sta grs01+36 *
+ sta grs01+43 *
+ sta grs01+50 *
+ sta/grs04+3 *
+   cpl
+;
+   if (taxopt .eq. 0) go to grs04      ;skip if tax option turned off
+   call equate (axxtax, negone)        ;preset pass count
+   'sumstr' = 'cncode'                 ;set-up to accumulate first area's monies
+;
+grs01:
+   call bltrun (sumstr)                ;truncate trailing blanks
+   ifstring (sumstr .eq. null) go to grs02;skip next if non-area
+   ifstring (sumstr .eq. dublat) go to grs02;skip next if non-area (@@)
+   call ckarea (sumstr)                ;check if referenced area is defined
+   go to q0300                         ;screaming error exit if not defined area
+   call areadd (@p1, a01ygr)           ;accumulate for the area
+   call areadd (@p2, a01mgr)
+   call areadd (@p3, a01grs)
+;
+grs02:
+   call add (1, axxtax)                ;incr pass flag
+   go to (grs03, grs04) on axxtax
+;
+   'sumstr' = 'ctcode'                 ;set-up for second area
+   go to grs01
+;
+grs03:
+   'sumstr' = 'stcode'                 ;set-up for third loop
+   go to grs01
+;
+grs04:
+   call add (@p4, cgross)              ;manipulate employee total gross
+  if (cgross .gt. 0) go to grsex   ;adjustments must not take gross pay to $0.00
+   call equate (taken, 0)              ;flag the overdraft
+;
+grsex:
+   return
+;
+;=========================
+subroutine inpdet
+;=========================
+;
+   readb (detail, detrec)              ;read sorted detail input file
+   go to (inpx, ioerr) on status
+   ; if (tcode. eq. 25) goto inpxa ; pln 976..07/31/84
+   call add (1, detcnt)                ;incr # records read
+   if (detcnt .gt. savcnt) go to inpx  ;return short if end of employee
+inpxa:
+direct
+ inx ,3 incr return for ok status
+   cpl
+inpx:
+   return
+;
+;=========================
+subroutine memo                        ;put dedn not taken memo on register file
+;=========================
+;
+direct
+@p1 set *+9
+ lda- x+
+ sta @p1
+   cpl
+   call regamt (negone, @p1)           ;set amt to -1 to show not taken
+   return
+;
+;=========================
+subroutine preset
+;=========================
+;
+   curp (crt, 1, 6)                    ; 09-24-79...lowered row one notch...ok
+   write (crt, f01) m02, empl          ;keep the world posted on current events
+   ldate (grin, hire)                  ;put hire date into century form
+   sdate (integer, jhire)
+   call getecd                         ;set up class code
+   call clrcur                         ;clear accumulators
+   call equate (rempl, empl)           ;set up empl number for reg write
+   call equate (depsav, dept)          ;set up home department
+   call settax                         ;set up home tax areas
+   ; preset for no detailed deductions:
+   call equstr (ded34,n, ded35,n, ded36,n, ded37,n, ded38,n, 0)
+   return
+;
+;=========================
+subroutine putbuf
+;=========================
+;
+direct
+ lda= taxlnk get source start address
+ xay
+ lda= hicore get target start address
+ stx- s-
+ xax
+putbf1 equ *
+ lda- y+
+ sta- x+
+ ldb= lnkend
+ sub y,b
+ bnz putbf1
+ ldx- s+
+   cpl
+   return
+;
+;=========================
+subroutine rcmded        ;            register, check, & master update
+;=========================             for deductions taken
+;
+direct
+@p1 set *+23
+@p2 set *+33
+@p3 set *+43
+@p4 set *+56
+@p5 set *+58
+@p6 set *+63
+@p7 set *+65
+@p8 set *+70
+ lda- x+ get deduction integer address
+ sta @p1
+ sta @p2
+ sta @p4
+ sta @p6
+ lda- x+ get ytd integer address
+ sta @p7
+ lda- x+ get memo literal
+ sta @p3
+ sta @p5
+   cpl
+   if (@p1 .eq. 0) go to rcmdx         ;return if no deduction
+   if (@p2 .lt. cnet) go to rcmd1      ;skip if can take deduction
+   call memo (@p3)                     ;memo if not taken
+   call equate (taken, 0)              ;set flag for dedn not taken
+   return
+rcmd1:
+   call takout (@p4, @p5)              ;take deduction & list on register
+   call add (@p6, @p7)                 ;update ytd integer
+   call equate (taken, 1)              ;set flag for dedn was taken
+rcmdx:
+   return
+;
+;============================================
+;   write no pay fica transaction
+;============================================
+;
+wrt68: ; pln584
+   call comrwrt
+   'rtname'='knopafic'
+   call regamt (sumnum , 68)
+   return
+;
+;==========================
+subroutine regamt                      ;write amount detail to register file
+;==========================
+;
+direct
+@p1 set *+13
+@p2 set *+17
+ lda- x+
+ sta @p1
+ lda- x+
+ sta @p2
+   cpl
+   call equals (ramt,@p1, rtcode,@p2, 0)
+   if (rtcode.eq.32) goto regh2        ;pln584
+   if (rtcode.eq.61) goto regh2        ;pln584
+   go to wrtreg                        ;go write the record
+;
+;=========================
+subroutine reghrs                      ;write hours detail to the register and
+;=========================              check files
+;
+   call equals (rtcode,tcode, rrate,@rate, rfactr,@factr, ramt,sumnum, 0)
+regh2: ; pln584
+   call equals (rhours,@hours, 0)      ;pln584
+;
+wrtreg:
+;*****************************************************************************
+;*    below, we are going to increment a counter for certain trans. codes.   *
+;*    the counter accumulates the number of transactions that print on a     *
+;*    separate line of the check statement in zrv530. this counter will be   *
+;*    used to determine if the check number should be incremented again be-  *
+;*    fore the register control record (last rec for an employee) is writ-   *
+;*    ten. the statement will hold 9 detail lines. the 10th line will cause  *
+;*    zrv530 to void that check and continue to the next check and use the   *
+;*    check number stored in ramt.  pln698                                   *
+;*****************************************************************************
+   call clr (scrtch, 0)                ;pln698
+   if (rtcode .le. 0) goto wrcont      ;pln698-internal txns (negative).
+   if (rtcode .gt. 61) goto noincr   ;pln698-not used or don't print (n.u.o.d.p)
+   if (rtcode .lt. 40) goto iincr      ;pln698-normal txns that print on stmt.
+   if (rtcode .ne. 43) goto rtcont     ;pln698-sometimes yes, sometimes no.
+   if (ramt .gt. 0) goto iincr         ;pln698-yes if amt is positive.
+   goto noincr                         ;pln698-all others don't print on stmt.
+rtcont:                                ;pln698
+   scrtch = rtcode - 40                ;pln698-check for codes 41-49.
+   goto (noincr,noincr,noincr,noincr,iincr,iincr,iincr,iincr,iincr) on scrtch
+   scrtch = rtcode - 50                ;pln698-check for codes 51-61.
+  goto (iincr,iincr,iincr,iincr,iincr,iincr,noincr,noincr,noincr,noincr,iincr) -
+   on scrtch
+   goto noincr                         ;pln698-(n.u.o.d.p.).
+wrcont:                                ;pln698-internal (negative) txns.
+   if (rtcode .eq. 0) goto noincr      ;pln698-control rec. doesn't print.
+   if (flag.eq.1) goto wrc10      ;pbl#773-flag to determine which side of check
+   strrec=reccnt                       ; pbl#773-we are working on at the moment
+   reccnt=0                            ; pbl#773
+   flag=1                              ; pbl#773
+;
+wrc10:                                 ; pbl#773
+   call equate (scrtch,rtcode)         ;pln698.
+   call absval (scrtch)                ;pln698.
+   goto (iincr,iincr,iincr,iincr,iincr,noincr,noincr,noincr) on scrtch
+   if (scrtch .eq. 10) goto noincr     ;pln698-(n.u.o.d.p.)
+   if (scrtch .eq. 22) goto noincr     ;pln698-(n.u.o.d.p.)
+   if (scrtch .eq. 23) goto noincr     ;pln698-(n.u.o.d.p.)
+   if (scrtch .gt. 26) goto noincr     ;pln698-(n.u.o.d.p.).
+iincr:                             ;pln698-for txns that print on stmt in zrv530
+   call add (1,reccnt)                 ;pln698-increment a counter.
+noincr:                                ;pln698-don't increment (n.u.o.d.p.).
+   call equate (rdept, depsav)         ;set department for register detail
+   writeb (regfil, regrec)             ;write the record
+   call stat (2)
+;
+   call zeroit (rhours,rtname+7)    ;05-21-80...this was originally a "call clr"
+;                                         even on the rtname string...ok
+   return
+;
+;=========================
+subroutine regcod
+;=========================
+;
+   if (@hours .ge. skedhr) go to regcdx;check regular pay hours
+   call add (@hours, treghr)           ;accum reg hrs for empl
+   if (treghr .gt. skedhr) call equate (treghr, skedhr)
+   shthr = skedhr - treghr             ;short hours=sched hrs-total reg hrs
+   call equflg (shtflg, y)             ;short hours flag - on
+   if (skedhr.le.treghr) call equflg (shtflg,n);unless empl made it up elsewhere
+   note (detail, wkdhr)                ;note that location on reg-hrs
+;
+regcdx:
+;
+   call equflg (regflg, y)             ;raise the regular hours flag
+   call equate (month, 1)              ;raise the regular pay flag
+;
+   return
+;
+;=========================
+subroutine setptr
+;=========================
+;
+   call equate (detcnt, 0)             ;clear count of detail records read
+   point (detail, curptr)              ;set pointer to beginning of empl detail
+   return
+;
+;=========================
+subroutine settax
+;=========================
+;
+   'stcode' = 'stacod'                 ;set-up home tax areas
+   'cncode' = 'cntcod'
+   'ctcode' = 'citcod'
+   return
+;
+;========================
+subroutine sicdoit                     ;accrual, detail handling, and posting
+;========================               for sick leave....10-25-79
+;
+direct
+ cla
+ sta/ day
+@p1 set dos0+3
+@p6 set dos1+49
+@p7 set dos2+28
+@p8 set dos2+23
+@p9 set dos4+3
+@p10 set dos4+29
+@p11 set dos4+41
+@p12 set dos4+39
+@p13 set dos4+46
+@p14 set dos4+66
+@p15 set dos4+68
+@p16 set dos4+73
+@p18 set dos7+23
+@p19 set dos7+45
+@p20 set dos8+3
+@p21 set dos8+27
+@p22 set dos8+37
+@p23 set dos7+52
+@p24 set dos3+13
+@p25 set dos3+3
+@p26 set dos7+13
+@p27 set dos7+3
+@p28 set dos4+56
+ lda- x+ get option address
+ sta @p1
+ ldb- x+ get straight factor address
+ lda- b
+ sta/ day+2
+ lda- x+ get transaction code
+ sta/ @p19
+ lda- x+ get accrual table address
+ sta/ @p6
+ lda- x+ get ytd integer address
+ sta/ @p7
+ sta/ @p8
+ sta/ @p11
+ sta/ @p13
+ sta/ @p14
+ sta/ @p16
+ sta/ @p21
+ sta/ @p22
+ lda- x+ get probation integer address
+ sta/ @p9
+ lda- x+ get current detail integer address
+ sta/ @p10
+ sta/ @p12
+ sta/ @p15
+ sta/ @p18
+ sta/ @p23
+ sta/ @p24
+ sta/ @p25
+ sta/ @p26
+ sta/ @p27
+ lda- x+ get maximum accrual integer address
+ sta/ @p20
+ lda- x+ get overdraft option flag
+ sta/ @p28
+   cpl
+;
+dos0:
+;
+   ifstring (@p1 .eq. y) go to dos1    ;skip if using variable option
+   if (day .eq. 0) go to dos3          ;skip if zero straight factor
+   call equate (sumnum, day)           ;set straight factor
+   go to dos2
+;
+dos1:
+   year = jdate - jhire / i365 + 1     ;how many years on the force?
+   if (year .ge. 26) call equate (year, 26)
+direct
+ lda/ year+2 get appropriate hours from master table
+ dca
+ ldb= @p6
+ aab
+ aab
+ cla
+ sta/ sumnum
+ lda- b get two-byte integer address from table
+ ldb- a hours are in two byte integer
+ stb/ sumnum+2
+   cpl
+;
+   ifstring (chk .eq. n) go to dos2
+   sichrs = sumnum * i0r1m / runfac + 1 + sick / thou; sichrs max amount
+   call equflg (chk, n)                ;available
+   return
+;
+dos2:
+   @p7 = sumnum * i0r1m / runfac + 1 + @p8
+;
+dos3:
+   @p24 = @p25 * thou
+;
+dos4:
+   call cv2to4 (@p9,sumnum, 0)         ;past probation period?
+   call add (jhire, sumnum)
+   if (jdate .lt. sumnum) go to dos8   ;skip if not past probation
+   if (@p10 .eq. 0) go to dos8         ;skip if no detail entries
+   call sub (@p12, @p11)               ;deduct hours used this pay period
+   if (@p13 .ge. 0) go to dos5         ;skip if not over-drawn
+   ifstring (@p28 .eq. y) go to dos5   ;skip if overdraft is ok
+   call add (@p14, @p15)               ;only pay for hours accrued
+   call equate (@p16, 0)
+;
+dos5:
+   if (ecode .gt. 12) go to dos8       ;can't dock or pay commission empl
+   if (ecode .gt. 6)  go to dos6       ;skip to pay salaried
+   call equate (month, rate)
+   go to dos7
+;
+dos6:
+   month = rate / 208
+;
+dos7:
+   @p26 = @p27 / thou
+   sumnum = month * @p18 / thou
+   call grsadd (sumnum)                ;add sick leave pay to gross
+   call equate (tcode , @p19)          ;output detail to check and register
+   call equate (@hours, @p23)
+   call equate (dcode, dept)
+   call equate (@rate, month)
+   call reghrs
+;
+   call equate (sicpay, sumnum)        ;09-07-79..save amt for fica calculations
+;
+dos8:
+   call cv2to4 (@p20,month, 0)         ;get max hours allowed
+   sumnum = month * i0r1m              ;scale max hours
+   if (@p21 .le. sumnum) go to dosex   ;skip if not over max accrued hours
+   call equate (@p22, sumnum)          ;reset accrued to maximum
+;
+dosex:
+   return
+;
+;subroutine pause
+;write (crt,fx1) empl,csick,vachrs,givhrs,month, day
+;read (crt,fx1) peic
+;return
+;=========================
+subroutine vacdoit                     ;accrual, detail handling, and posting
+;=========================              for  vacation hours...10-25-79
+;
+direct
+ cla
+ sta/ day
+@p1 set dov0+3
+@p6 set dov1+49
+@p9 set dov4+3
+@p10 set dov4+29
+@p11 set dov4+41
+@p12 set dov4+39
+@p13 set dov4+46
+@p14 set dov4+66
+@p15 set dov4+68
+@p16 set dov4+73
+@p18 set dov7+23
+@p19 set dov7+45
+@p20 set dov8+3
+@p21 set dov8+27
+@p22 set dov8+37
+@p23 set dov7+52
+@p24 set dov3+13
+@p25 set dov3+3
+@p26 set dov7+13
+@p27 set dov7+3
+@p28 set dov4+56
+ lda- x+ get option address
+ sta @p1
+ ldb- x+ get straight factor address
+ lda- b
+ sta/ day+2
+ lda- x+ get transaction code
+ sta/ @p19
+ lda- x+ get accrual table address
+ sta/ @p6
+ lda- x+ get ytd integer address
+ sta/ @p11
+ sta/ @p13
+ sta/ @p14
+ sta/ @p16
+ sta/ @p21
+ sta/ @p22
+ lda- x+ get probation integer address
+ sta/ @p9
+ lda- x+ get current detail integer address
+ sta/ @p10
+ sta/ @p12
+ sta/ @p15
+ sta/ @p18
+ sta/ @p23
+ sta/ @p24
+ sta/ @p25
+ sta/ @p26
+ sta/ @p27
+ lda- x+ get maximum accrual integer address
+ sta/ @p20
+ lda- x+ get overdraft option flag
+ sta/ @p28
+   cpl
+;
+dov0:
+;
+   ifstring (@p1 .eq. y) go to dov1    ;skip if using variable option
+   if (day .eq. 0) go to dov3          ;skip if zero straight factor
+   call equate (sumnum, day)           ;set straight factor
+   go to dov2
+;
+dov1:
+   year = jdate - jhire / i365 + 1     ;how many years on the force?
+   if (year .ge. 26) call equate (year, 26)
+direct
+ lda/ year+2 get appropriate hours from master table
+ dca
+ ldb= @p6
+ aab
+ aab
+ cla
+ sta/ sumnum
+ lda- b get two-byte integer address from table
+ ldb- a hours are in two byte integer
+ stb/ sumnum+2
+cpl
+;
+dov2:
+;
+call add (1, acnum)                     ;number to calc accrued hours
+;
+   ifstring (acflg .eq. y) go to dov3
+   acrat = sumnum * i0r1m / runfac + 1
+   call equflg (acflg, y)
+;
+dov3:
+   @p24 = @p25 * thou
+;
+dov4:
+   call cv2to4 (@p9,sumnum, 0)         ;past probation period?
+   call add (jhire, sumnum)
+   if (jdate .lt. sumnum) go to dov8   ;skip if not past probation
+   if (@p10 .eq. 0) go to dov8         ;skip if no detail entries
+   call sub (@p12, @p11)               ;deduct hours used this pay period
+   if (@p13 .ge. 0) go to dov5         ;skip if not over-drawn
+   ifstring (@p28 .eq. y) go to dov5   ;skip if overdraft is ok
+   call add (@p14, @p15)               ;only pay for hours accrued
+   call equate (@p16, 0)
+;
+dov5:
+   if (ecode .gt. 12) go to dov8       ;can't dock or pay commission empl
+   if (ecode .gt. 6)  go to dov6       ;skip to pay salaried
+   call equate (month, rate)
+   go to dov7
+;
+dov6:
+   month = rate / 208
+;
+dov7:
+   @p26 = @p27 / thou
+   sumnum = month * @p18 / thou
+   call grsadd (sumnum)                ;add vacation pay to gross
+   call equate (tcode , @p19)          ;output detail to check and register
+   call equate (@hours, @p23)
+   call equate (dcode, dept)
+   call equate (@rate, month)
+   call reghrs
+;
+dov8:
+   call cv2to4 (@p20,month, 0)         ;get max hours allowed
+   sumnum = month * i0r1m              ;scale max hours
+   if (@p21 .le. sumnum) go to dov9    ;skip if not over max accrued hours
+   call equate (@p22, sumnum)          ;reset accrued to maximum
+;
+dov9:
+;
+   ifstring (vacatodo .eq. y) go to dovex
+;
+   vac = (acrat * acnum) + vac         ;update vac with total accrued hours
+   call equflg (acflg, n)              ;10-25-79..
+   call clr (acnum,acrat, 0)
+;
+dovex:
+   return
+;
+;=========================
+subroutine sub
+;=========================
+;
+;       to subtract two four-byte integers and reduce memory requirements
+;
+;       calling sequence:
+;
+;       call sub (subtrahend, minuend)
+;
+direct
+@p1 set *+23
+@p2 set *+13
+@p3 set *+18
+ lda- x+ get source integer
+ sta @p3
+ lda- x+ get target integer
+ sta @p1
+ sta @p2
+   cpl
+   @p1 = @p2 - @p3
+   return
+;
+;=========================
+subroutine takout        ;            take deduction & list on register
+;=========================
+;
+direct
+@p1 set *+13
+@p2 set *+20
+@p3 set *+22
+ lda- x+ get amount
+ sta @p1
+ sta @p2
+ lda- x+ get deduction code
+ sta @p3
+   cpl
+   call sub (@p1, cnet)                ;reduce net
+   call regamt (@p2, @p3)              ;write detail to register
+   return
+;
+;============================
+subroutine vacsubr
+;============================
+;
+vacs1:
+;
+   call equate (ckflg,0)
+   if (vachrs .le. skedhr) go to vacs2 ;only one pass through here ..10-25-79
+;
+   call preset
+   call sub (skedhr, vachrs)
+   call equals (cvac,skedhr, detcnt,savcnt, 0)
+   go to vacsx1                        ;go to it..
+;
+vacs2:
+;
+   call preset
+   call equstr (vacatodo,n, vacflg,n, shtflg,n, getnx,y, 0)
+   call equals (cvac,vachrs, vachrs,0, detcnt,savcnt, 0);cvac=vachrs then clear
+;                                                        vachrs (05-05-80)
+   ifstring (vodopt .eq. y)  go to vacsx1
+;
+   if (vac .ne. 0) go to vacsx1
+;
+   vac = (acrat * acnum) + vac
+   call equflg (acflg, n)
+   call clr (acrat,acnum, 0)
+;
+   call add (1,ckflg)
+;
+vacsx1:
+;
+   call add (1,ckflg)
+;
+   return
+;
+;=========================
+subroutine zeroit
+;=========================
+;
+;       to clear a block of memory
+;
+;       calling sequence:
+;
+;       call zeroit (starting-address, ending-address)
+;
+direct
+ lda- x+ get start address
+ xay
+ lda- x+ get end address
+ sta= *-*
+zera equ *-2
+zer01 equ *
+ cla
+ stab- y+
+ xfr y,b
+ lda zera
+ sab
+ bp zer01
+   cpl
+   return
+;
+;==============================================================================
+;                    m e s s a g e s  &  f o r m a t s
+;==============================================================================
+;
+define n:'n', y:'y'
+define dublat: '@@'                    ;reference code for null tax area
+define modsav:'      '                 ;blanked to guarantee init module load
+define quote: '"'
+define star:  '*  '
+define ktipfic: 'tipfica '
+define knopafic: 'nopafica'
+;
+define acflg: 'n'
+define chk:  'n'
+define getnx: 'n'
+define regflg: 'n'
+define shtflg: 'n'
+define vacatodo: 'n'
+define vacflg : 'n'
+;
+define m01:'program running'
+define m02:'employee'
+;
+define m04:'rv5@1 (payroll register - update phase) 05-21-80'
+define m05:'please stand by while master file is updated'
+define m06:'being updated'
+;
+define m001:'***   unauthorized access attempt'
+define m002:''                        ;m002 contains a 'control-g'bell
+;
+define m9300:'undefined area tax code' ;so does this one
+define m9400a:'area tax module "'
+define m9400b:'" not found'           ;and this too
+define m9500:'error occured in '
+define m9600:'bad master file'        ;another beep
+define m9700:'bad tax file'
+define m9800:'scheduled hours not set up for this employee'
+define m9801:'correct the employees master record at field 17'
+define m9900:'standby for print'
+;
+format f01: c9 n6
+format fn10:n-10
+;format fx1: x1,n9.2
+format fc13: c13
+;
+integer ecat, ecode, nopay, fired, jdate, wdate, month, day, year
+integer jhire, taken, citind, cntind, staind, citwag, cntwag, stawag
+integer taxopt, sminw, diff
+;
+set ww2s:0
+set ssfac:6200,medfac:1450,ficamax:512330,ssmed:408510;ss&med up to 53400.
+set sswage:53400 00, medwage:125 000 00
+set married:0, amt:0, amt1:0, amt2:0;  used in dofwt
+;
+set k800:800, strrec:0, flag:0
+set i365:365, thou:1000, i5r0k:5000, i10r0k:10000, i50r0k:50000, i0r1m:100000
+set i6235:6 235 00, i9836: 9 836 00, i873: 873 00;  eic values
+set num: 0
+integer @num                           ;pl0861...utility # for scaling @hours
+;
+set nxdemp:0, wkdhr:0, vactran:0, ckflg:0
+;
+set sumnum:0, negone:-1, mltpop:0, savcnt:0, detcnt:0, curptr:0, savptr:0
+set sumnum2:0
+set depsav:0, lastemp:0, vacnum:0, acrat:0, acnum:0, novaac:0, savret:0
+set ok:0, vacnt:0;pln106
+set reccnt:0                   ;pln698-record counter(txns that print in rv530).
+;
+set scrtch:0                           ;pln698-scratch variable.
+; these fields are used in vacation calc.
+set vachrs:0, givhrs:0, shthr:0, sichrs:0;and are cleared as a group
+;
+; the following are empl. check amount and accumulator fields and are cleared
+;    as a group
+set cgross:0,cdraw:0,cmeals:0, ctips:0, cadv:0, cexp:0, cfwt:0, creg:0, cpdtip:0
+set csick:0,cvac:0,ccom:0,cnet:0,ccheck:0, ceic:0, sicpay:0, waghrs:0, otwaghrs:0, treghr:0
+;   end check fields
+;
+;
+string axxmod (6)
+string axxnam (8)
+string axxref (3)
+string char   (1)
+string ded34  (1)
+string ded35  (1)
+string ded36  (1)
+string ded37  (1)
+string ded38  (1)
+string null   (0)
+string sumstr (3)
+errmsg:
+;
+;========== current employee area gross pay accumulators ==========
+;
+set a01grs:0, a02grs:0, a03grs:0, a04grs:0, a05grs:0
+set a06grs:0, a07grs:0, a08grs:0, a09grs:0, a10grs:0
+set a11grs:0, a12grs:0, a13grs:0, a14grs:0, a15grs:0
+;
+;========== current employee additional tax accumulators ==========
+;
+set a01swt:0, a02swt:0, a03swt:0, a04swt:0, a05swt:0
+set a06swt:0, a07swt:0, a08swt:0, a09swt:0, a10swt:0
+set a11swt:0, a12swt:0, a13swt:0, a14swt:0, a15swt:0
+;
+;==============================================================================
+;                               t a b l e s
+;==============================================================================
+;
+direct
+siktbl dw sh1
+ dw sh2
+ dw sh3
+ dw sh4
+ dw sh5
+ dw sh610
+ dw sh610
+ dw sh610
+ dw sh610
+ dw sh610
+ dw sh1115
+ dw sh1115
+ dw sh1115
+ dw sh1115
+ dw sh1115
+ dw sh1620
+ dw sh1620
+ dw sh1620
+ dw sh1620
+ dw sh1620
+ dw sh2125
+ dw sh2125
+ dw sh2125
+ dw sh2125
+ dw sh2125
+ dw sh2630
+*
+vactbl dw vh1
+ dw vh2
+ dw vh3
+ dw vh4
+ dw vh5
+ dw vh610
+ dw vh610
+ dw vh610
+ dw vh610
+ dw vh610
+ dw vh1115
+ dw vh1115
+ dw vh1115
+ dw vh1115
+ dw vh1115
+ dw vh1620
+ dw vh1620
+ dw vh1620
+ dw vh1620
+ dw vh1620
+ dw vh2125
+ dw vh2125
+ dw vh2125
+ dw vh2125
+ dw vh2125
+ dw vh2630
+*
+cpl
+;
+;==============================================================================
+;                t a x   m o d u l e   d a t a   l i n k a g e
+;==============================================================================
+;
+direct
+taxlnk ds 3
+ dw add
+ dw equate
+ dw sub
+cpl
+set axxcgr: 0;                        total current taxable gross pay
+set axxgrs: 0;                        total gross pay for area
+set axxpgr: 0;                        e-p-q gross pay for area
+set axxmgr: 0;                        m-t-d gross pay for area
+set axxygr: 0;                        y-t-d gross pay for area
+set axxptx: 0;                        e-p-q taxes paid in area
+set axxmtx: 0;                        m-t-d taxes paid in area
+set axxytx: 0;                        y-t-d taxes paid in area
+set axcfwt: 0;                        total fwt this payday
+set axxswt: 0;                        additional tax amount to be withheld
+set axxmop: 0;                        meals/tips option
+set axcmea: 0;                        current area meals
+set axpmea: 0;                        e-p-q meals in home area
+set axmmea: 0;                        m-t-d meals in home area
+set axymea: 0;                        y-t-d meals in home area
+set axctip: 0;                        current area tips
+set axptip: 0;                        e-p-q tips in home area
+set axmtip: 0;                        m-t-d tips in home area
+set axytip: 0;                        y-t-d tips in home area
+define axxcit:'   ';                  ref code for home city
+define axxcnt:'   ';                  ref code for home county
+define axxsta:'  ';                   ref code for home state
+set axftex: 0;                        federal tax exemptions
+set axstex: 0;                        state tax exemptions
+set axpfac: 0;                        pay factor
+set axmast: 0;                        marital status
+set tcitax: 0;                        employee total city tax
+set tcntax: 0;                        employee total county tax
+set tsttax: 0;                        employee total state tax
+set axxtax: 0;                        resulting tax due
+set work1:  0
+set work2:  0
+set work3:  0
+set work4:  0
+lnkend:
+;
+end
+END LIST
+.USE CRT3 FOR SYSRDR

@@ -1,0 +1,910 @@
+s.lst a zrvs 1 crt3
+S.LST ZRVS 1 CRT3
+.JOB ZRVS
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
+LIST - 6.00
+system
+;
+define m00:'external statement library for random access payroll - vsi 12/08/88'
+;
+;notes
+;   11/23/87...change to 1988 rates for original setup amounts..ns
+;   12/08/88...change to 1989 rates for original setup amounts ...ns
+ 
+;==================== r e c o r d  l a y o u t s   =========================
+;
+(msthdr)
+record msthdr (435)
+;
+;      record is 435 bytes long but only 328 are used ;changed from 324 to 328
+                                                     ;02-23-83..jg
+;
+   set    prhcon: 0
+   define firm:   '.......... new firm ..........'
+   define faddr:  '..............................'
+   define fcity:  '..............................'
+   set    paswrd: 0              ; security password number
+   set    cmpwrd: 0              ; comptroller's password number
+   set    fedtax: 0              ; federal tax reporting number
+   set    ficmax: 48 00000        ; fica max wages ($48,000.00) (1989 rates)
+   set    ficfac: 7 510           ; fica factor (7.510 %)
+   set    depalw: 2 000 00         ; federal dependent allowance ($2 000.00)
+   define usepas: 'n'            ; does this file require password     (yes/no)
+   define passok: 'n'            ; is password ok to continue          (yes/no)
+   define qtrdun: 'y'            ; have 941's been printed             (yes/no)
+   define yrdone: 'y'            ; have w-2's been printed             (yes/no)
+   define psdone: 'y'            ; has profit sharing report been run  (yes/no)
+   define vopt:   'n'            ; variable vacation accrual option
+   define sopt:   'n'            ; variable sick leave accrual option
+   define vodopt: 'n'            ; vacation over-draft option          (yes/no)
+   define sodopt: 'n'            ; sick leave over-draft option        (yes/no)
+   define prtckn: 'y'            ; flag printing check numbers         (yes/no)
+   define prtcad: 'n'            ; flag to print client address on checks (y/n)
+   define prtead: 'y'            ; flag to print employee address on checks
+   define delemp: 'n'            ; flag to purge file at end of year   (yes/no)
+   define ctropt: 'n'            ; flag for using countered deduction  (yes/no)
+   define mdeda:  'misc a  '     ; message string for reg deduction a
+   define mdedb:  'misc b  '     ; message string for reg deduction b
+   define mdedc:  'misc c  '     ; message string for reg deduction c
+   define mdedca: 'c dedn a'     ; message string for cntr deduction a
+   define mdedcb: 'c dedn b'     ; message string for cntr deduction b
+   define mdedcc: 'c dedn c'     ; message string for cntr deduction c
+   define mdedcd: 'c dedn d'     ; message string for cntr deduction d
+   set    lpcknm: 0              ; last paycheck number used
+   set    lpdat:  0              ; date last pay run
+   set    prfshr: 0              ; profit-sharing year begins (mm), 0=not used
+   set    comlim: 0              ; commission pay limit preset to $0.00
+   set    dskdhr: 4000           ; default scheduled hours - 40.00
+   set    declas: 1              ; default employee classification code
+   set    dpfac:  52             ; default pay factor
+   set    drate:  3100           ; default minimum pay rate
+   set    otbhr1: 0              ; overtime breakpoint 1 (xxx.xx hours)
+   set    otbhr2: 0              ; overtime breakpoint 2 (xxx.xx hours)
+   set    otbhr3: 0              ; overtime breakpoint 3 (xxx.xx hours)
+direct
+otcod1 dw 3                  overtime breakpoint 1 transaction code
+otcod2 dw 3                  overtime breakpoint 2 transaction code
+otcod3 dw 3                  overtime breakpoint 3 transaction code
+mtop   dw 0                  meals/tips (0=not used,1=taxable,2=convenience)
+lactr  dw 0                  last pay run counter a was
+lbctr  dw 0                  last pay run counter b was
+lcctr  dw 0                  last pay run counter c was
+ldctr  dw 0                  last pay run counter d was
+probli dw 0                  probation period (days) auto life ins deduction
+probmi dw 0                  probation period (days) auto med ins deduction
+probva dw 0                  probation period (days) auto vacation hrs accrual
+probsl dw 0                  probation period (days) auto sick leave accrual
+mxvac  dw 80                 maximum vacation hour accrual
+mxsick dw 40                 maximum sick leave hour accrual
+vh1    dw 40                 vacation hours - year 1
+vh2    dw 80                     "      "   - year 2
+vh3    dw 80                     "      "   - year 3
+vh4    dw 80                     "      "   - year 4
+vh5    dw 80                     "      "   - year 5
+vh610  dw 120                    "      "   - years 6 - 10
+vh1115 dw 120                    "      "   - years 11 - 15
+vh1620 dw 160                    "      "   - years 16 - 20
+vh2125 dw 160                    "      "   - years 21 - 25
+vh2630 dw 160                    "      "   - years 26 - 30
+*
+sh1    dw 40                 sick leave hours - year 1
+sh2    dw 40                  "     "     "   - year 2
+sh3    dw 40                  "     "     "   - year 3
+sh4    dw 40                  "     "     "   - year 4
+sh5    dw 40                  "     "     "   - year 5
+sh610  dw 40                  "     "     "   - years 6 - 10
+sh1115 dw 40                  "     "     "   - years 11 - 15
+sh1620 dw 40                  "     "     "   - years 16 - 20
+sh2125 dw 40                  "     "     "   - years 21 - 25
+sh2630 dw 40                  "     "     "   - years 26 - 30
+   cpl
+   set    minwag: 0                    ;federal mininium wage...2-23-83..jg
+   set bufwt:0
+   define retnam: 'ret fnd ';      retirement fund / savings
+   string mstfiller (94); unused portion as of 12/18/87
+endrec
+;
+;
+(emprec)
+record emprec (435)     ; record is 435 bytes long - all in use
+                        ; 02-23-83...jg
+   set    empl:   0
+   string name   (25)
+   string addr   (25)
+   set    zipcod: 0
+   string citcod (3)             ; city code (ccc)
+   string cntcod (3)             ; county (parish) code (ccc)
+   string stacod (2)             ; state code (ss)
+direct
+fdtx   dw      0                number of federal tax exemptions
+mast   dw      0                marital status (1=single, 2=married)
+pfac   dw      0                pay factor (12=monthly, 52=weekly)
+sfac   dw      0                sick leave accrual straight rate
+vfac   dw      0                vacation leave accrual straight rate
+w2s    dw      0                0-8 gets w2, 9 gets 1099
+   cpl
+   set    ssno:   0           ; social security number           (xxx-xx-xxxx)
+   set    eclass: 0           ; employee class
+   set    dept:   0           ; employee home job/department       (jjjjjjddd)
+   set    rate:   0           ; xx.xxx hourly - xxxx.xx salary
+   set    skedhr: 0           ; scheduled work hours                   (xx.xx)
+   set    vac:    0           ; accrued vacation hours                (xxx.xx)
+   set    sick:   0           ; accrued sick leave hours              (xxx.xx)
+   set    hire:   0           ; date hired                            (mmddyy)
+   set    born:   0           ; date born                             (mmddyy)
+   set    raise:  0           ; date last raise                       (mmddyy)
+   set    tdate:  0           ; termination date                      (mmddyy)
+   set    draw:   0           ; draw ammount (for commission/draw employees)
+   set    combal: 0           ; commission/draw balance (credit or debit)
+   set    advbal: 0           ; expense advance balance
+   set    gross:  0           ; ytd gross earnings
+   set    fica:   0           ; ytd fica deductions
+   set    retfnd: 0           ; ytd retirement fund
+   set    fwt:    0           ; ytd fwt deductions
+   set    swt:    0           ; ytd swt deductions
+   set    meals:  0           ; ytd meals
+   set    tips:   0           ; ytd tips
+   set    net:    0           ; ytd net pay
+   set    other:  0           ; ytd other (non-taxable) income
+   set    ychcks: 0           ; ytd total checks
+   set    regpay: 0           ; ytd regular earnings
+   set    pgross: 0           ; epq gross earnings
+   set    pfica:  0           ; epq fica deductions
+   set    pretfn: 0           ; epq retirement fund
+   set    pfwt:   0           ; epq fwt deductions
+   set    pswt:   0           ; epq swt deductions
+   set    pmeals: 0           ; epq meals
+   set    ptips:  0           ; epq tips
+   set    pnet:   0           ; epq net pay
+   set    pother: 0           ; epq other (non-taxable) income
+   set    mmeals: 0           ; mtd meals reported
+   set    mtips:  0           ; mtd tips reported
+;
+;                             special deductions
+;
+   set    arded:  0           ; accounts rec deduction
+   set    arbal:  0           ; a/r current balance
+   set    pl2net: 0           ; plus to net deduction
+   set    svbnd:  0           ; savings bond deduction amount
+   set    bndbal: 0           ; total dedn towards bonds not yet purchased
+;
+;                             regular deductions
+;
+   set    afwt:   0           ; additional fwt amount
+   set    lfins:  0           ; life insurance deduction
+   set    mdins:  0           ; medical insurance deduction
+   set    trust:  0           ; trust fund deduction
+   set    misca:  0           ; misc deduction a
+   set    miscb:  0           ; misc deduction b
+   set    miscc:  0           ; misc deduction c
+;
+;                             countered deductions
+;
+   set    cdedna: 0           ; countered deduction amount a
+   set    cdednb: 0           ; countered deduction amount b
+   set    cdednc: 0           ; countered deduction amount c
+   set    cdednd: 0           ; countered deduction amount d
+direct
+actr   dw      0                deduction counter a
+bctr   dw      0                deduction counter b
+cctr   dw      0                deduction counter c
+dctr   dw      0                deduction counter d
+   cpl
+;
+;                             optional deduction totals
+;
+   set    yarded: 0           ; ytd deduction (a/r)
+   set    ypl2nt: 0           ; ytd deduction (plus to net)
+   set    ppl2nt: 0           ; epq deduction (plus to net)
+   set    mpl2nt: 0           ; mtd deduction (plus to net)
+   set    ysvbnd: 0           ; ytd deduction (savings bonds)
+   set    ylfins: 0           ; ytd deduction (life insurance)
+   set    ymdins: 0           ; ytd deduction (medical insurance)
+   set    ytrust: 0           ; ytd deduction (trust fund)
+   set    ptrust: 0           ; epq deduction (trust fund)
+   set    ymisca: 0           ; ytd deduction (misc a)
+   set    ymiscb: 0           ; ytd deduction (misc b)
+   set    ymiscc: 0           ; ytd deduction (misc c)
+   set    ycdeda: 0           ; ytd countered deduction a
+   set    ycdedb: 0           ; ytd countered deduction b
+   set    ycdedc: 0           ; ytd countered deduction c
+   set    ycdedd: 0           ; ytd countered deduction d
+   set    ygtime: 0           ; ytd misc one-time deductions from gross
+   set    yntime: 0           ; ytd misc one-time deductions from net
+;
+;                             other info
+;
+   set    shrcon: 0           ; controls shares
+   set    retrat: 0           ; retirement fund deduction percentage
+   set    eicflg: 0           ; earned income credit flag
+   set    yeic:   0           ; ytd earned income credit
+   set    peic:   0           ; epq earned income credit
+   set    yfwage: 0           ; ytd wages subject to fica
+   set    pfwage: 0           ; epq wages subject to fica
+   set    shortfall:  0       ;non-reported tips up to 8% (reported tips
+                              ;plus shortfall equals 8% of employees sales)
+                              ;added 2-23-83...jg
+   set    qshrtfall:  0       ;quarterly short fall
+   set    nopafica:   0       ;fica that was due yet not taxed due to lack
+                              ;of gross pay...2-23-83..jg
+   set     tipfica:    0      ;reported ytd tips subject to employer fica tax
+                              ;...02-23-83...jg
+   set    qtipfic:     0      ;qtd tipfica
+   set    ychgtip:     0      ;ytd charged tips
+   set    mchgtip:     0      ;monthly charged tips
+   set    ytiphrs:     0      ;ytd tip hours
+   set    qtiphrs:     0      ;quarterly tip hours
+endrec
+;
+(oldemp)
+record oldemp (390)
+   set    empl:   0
+   string name   (25)
+   string addr   (25)
+   string city   (25)
+   string citcod (3)             ; city code (ccc)
+   string cntcod (3)             ; county (parish) code (ccc)
+   string stacod (2)             ; state code (ss)
+direct
+fdtx   dw      0                number of federal tax exemptions
+mast   dw      0                marital status (1=single, 2=married)
+pfac   dw      0                pay factor (12=monthly, 52=weekly)
+sfac   dw      0                sick leave accrual straight rate
+vfac   dw      0                vacation leave accrual straight rate
+w2s    dw      0                0-8 gets w2, 9 gets 1099
+   cpl
+   set    ssno:   0           ; social security number            (xxx-xx-xxxx)
+   set    eclass: 0           ; employee class
+   set    dept:   0           ; employee home job/department       (jjjjjjddd)
+   set    rate:   0           ; xx.xxx hourly - xxxx.xx salary
+   set    skedhr: 0           ; scheduled work hours                   (xx.xx)
+   set    vac:    0           ; accrued vacation hours                (xxx.xx)
+   set    sick:   0           ; accrued sick leave hours              (xxx.xx)
+   set    hire:   0           ; date hired                            (mmddyy)
+   set    born:   0           ; date born                             (mmddyy)
+   set    raise:  0           ; date last raise                       (mmddyy)
+   set    tdate:  0           ; termination date                      (mmddyy)
+   set    draw:   0           ; draw ammount (for commission/draw employees)
+   set    combal: 0           ; commission/draw balance (credit or debit)
+   set    advbal: 0           ; expense advance balance
+   set    gross:  0           ; ytd gross earnings
+   set    fica:   0           ; ytd fica deductions
+   set    retfnd: 0           ; ytd retirement fund
+   set    fwt:    0           ; ytd fwt deductions
+   set    swt:    0           ; ytd swt deductions
+   set    meals:  0           ; ytd meals
+   set    tips:   0           ; ytd tips
+   set    net:    0           ; ytd net pay
+   set    other:  0           ; ytd other (non-taxable) income
+   set    ychcks: 0           ; ytd total checks
+   set    regpay: 0           ; ytd regular earnings
+   set    pgross: 0           ; epq gross earnings
+   set    pfica:  0           ; epq fica deductions
+   set    pretfn: 0           ; epq retirement fund
+   set    pfwt:   0           ; epq fwt deductions
+   set    pswt:   0           ; epq swt deductions
+   set    pmeals: 0           ; epq meals
+   set    ptips:  0           ; epq tips
+   set    pnet:   0           ; epq net pay
+   set    pother: 0           ; epq other (non-taxable) income
+;
+;                             special deductions
+;
+   set    arded:  0           ; accounts rec deduction
+   set    arbal:  0           ; a/r current balance
+   set    pl2net: 0           ; plus to net deduction
+   set    svbnd:  0           ; savings bond deduction amount
+   set    bndbal: 0           ; total dedn towards bonds not yet purchased
+;
+;                             regular deductions
+;
+   set    afwt:   0           ; additional fwt amount
+   set    lfins:  0           ; life insurance deduction
+   set    mdins:  0           ; medical insurance deduction
+   set    trust:  0           ; trust fund deduction
+   set    misca:  0           ; misc deduction a
+   set    miscb:  0           ; misc deduction b
+   set    miscc:  0           ; misc deduction c
+;
+;                             countered deductions
+;
+   set    cdedna: 0           ; countered deduction amount a
+   set    cdednb: 0           ; countered deduction amount b
+   set    cdednc: 0           ; countered deduction amount c
+   set    cdednd: 0           ; countered deduction amount d
+direct
+actr   dw      0                deduction counter a
+bctr   dw      0                deduction counter b
+cctr   dw      0                deduction counter c
+dctr   dw      0                deduction counter d
+   cpl
+;
+;                             optional deduction totals
+;
+   set    yarded: 0           ; ytd deduction (a/r)
+   set    ypl2nt: 0           ; ytd deduction (plus to net)
+   set    ppl2nt: 0           ; epq deduction (plus to net)
+   set    ysvbnd: 0           ; ytd deduction (savings bonds)
+   set    ylfins: 0           ; ytd deduction (life insurance)
+   set    ymdins: 0           ; ytd deduction (medical insurance)
+   set    ytrust: 0           ; ytd deduction (trust fund)
+   set    ptrust: 0           ; epq deduction (trust fund)
+   set    ymisca: 0           ; ytd deduction (misc a)
+   set    ymiscb: 0           ; ytd deduction (misc b)
+   set    ymiscc: 0           ; ytd deduction (misc c)
+   set    ycdeda: 0           ; ytd countered deduction a
+   set    ycdedb: 0           ; ytd countered deduction b
+   set    ycdedc: 0           ; ytd countered deduction c
+   set    ycdedd: 0           ; ytd countered deduction d
+   set    ygtime: 0           ; ytd misc one-time deductions from gross
+   set    yntime: 0           ; ytd misc one-time deductions from net
+;
+;                             other info
+;
+   set    shrcon: 0           ; controls shares
+   set    retrat: 0           ; retirement fund deduction percentage
+endrec
+;
+(tagrec)
+record tagrec (8)
+   set    tag:    0
+   set    mstkey: 0
+endrec
+;
+(ziprec)
+record ziprec (20)
+   string city   (19)
+endrec
+;
+(reghdr)
+record reghdr (41)
+   set    regnul: 0              ; null for sorting by employee number
+   set    regped: 0              ; period ending date
+   set    regckd: 0              ; check date
+   set    cknum:  0              ; starting check number
+   set    runfac: 0              ; pay factor for this run
+   set    payopt: 0              ; register run option
+direct
+nctra dw 0 new command counter for deduction a
+nctrb dw 0 new command counter for deduction b
+nctrc dw 0 new command counter for deduction c
+nctrd dw 0 new command counter for deduction d
+   cpl
+   define dumrun: 'y'                    ; trial / live run flag
+   define monrun: 'n'                    ; new month flag
+   define prfrun: 'n'                    ; profit-sharing run
+   define qtrrun: 'n'                    ; new quarter flag
+endrec
+;
+(regrec)
+record regrec (41)
+   set    rempl:  0
+   set    rdept:  0
+   set    rtcode: 0
+   set    rhours: 0
+   set    rrate:  0
+   set    rfactr: 0
+   set    ramt:   0
+   define rtname: '        '
+   define rtax:   '   '
+endrec
+;
+(dethdr)
+record dethdr (32)
+   set    detkey: 0              ; detail file key
+   set    detnl2: 0              ; null for sorting by employee
+   set    depact: 0              ; department accounting flag
+   set    staact: 0              ; state accounting flag
+   set    perend: 0              ; data herein is for period ending
+   set    lastin: 0              ; last data herein was entered on
+   set    lstrec: 0              ; the last record of the file is index number #
+   set    payfac: 0              ; pay factor for run
+endrec
+;
+(detrec)
+record detrec (52)
+   set    trans:  0              ; transaction number is also index
+   set    dempl:  0              ; de employee numbah what is concurned
+   set    dcode:  0              ;department dat de employee is charging time to
+   set    tcode:  0              ; transaction code
+   set    @rate:  0              ; first field carried to register
+   set    @hours: 0              ; second field
+   set    @amt:   0              ; third field
+   set    @factr: 0              ; fourth field
+   define @name:  '        '     ; variable name field
+   define stcode: '  '           ; state code
+   define ctcode: '   '          ; city code
+   define cncode: '   '          ; county (parish) code
+endrec
+;
+(adjhdr)
+record adjhdr (20)
+   set last:   0                   ; last line of detail record written
+   set pedate: 0                   ; period ending date
+   set indate: 0                   ; date last entry written
+   define imfrom:'a'               ; i'm from: a-adjustments,v-voids
+   define dumrun:'n'               ; dummy run - trial run flag (y/n)
+   define posted:'n'               ; has data been posted yet? (y/n)
+endrec
+;
+(adjrec)
+record adjrec (35)
+   set aempl:  0
+   set acknum: 0
+   set acdate: 0
+   set acode:  0
+   set ahours: 0
+   set aamt:   0
+   define actcod:'   '
+   define acncod:'   '
+   define astcod:'  '
+endrec
+;
+(gldet )
+record gdet   (79)               ; ragl detail record
+   set    ?acct:  0              ; br/maj/min (6 bytes)
+   set    ?sub:   0              ; sub account number
+   set    jrn:    0              ; journal number
+   set    ref:    0              ; reference number
+   set    date:   0              ;detail date (mmddyy) - payroll period end date
+   set    emp:    0              ; employee number
+   string ddesc  (30)            ; description entry for detail
+   set    amt:    0              ; amount entered
+endrec
+;
+(pglhdr)
+record pglhdr (395)              ; payroll/general ledger header record
+   set    pglnul: 0              ; zero indicates header record
+   set    pjourn: 0              ; payroll journal number (xx)
+   set    ?pbank: 0              ; payroll bank account
+   set    ?pfwt:  0              ; fwt bank account
+   set    ?pfica: 0              ; fica bank account
+   set    ?psusp: 0              ; suspense account for undefined departments
+   set    pglc01: 0              ; account 01 transaction code
+   set    pglc02: 0
+   set    pglc03: 0
+   set    pglc04: 0
+   set    pglc05: 0
+   set    pglc06: 0
+   set    pglc07: 0
+   set    pglc08: 0
+   set    pglc09: 0
+   set    pglc10: 0
+   set    pglc11: 0
+   set    pglc12: 0
+   set    pglc13: 0
+   set    pglc14: 0
+   set    pglc15: 0
+   set    pglc16: 0
+   set    pglc17: 0
+   set    pglc18: 0
+   set    pglc19: 0
+   set    pglc20: 0
+   set    pglc21: 0
+   set    pglc22: 0
+   set    pglc23: 0
+   set    pglc24: 0
+   set    pglc25: 0
+   string pgli01 (8)             ; account 01 transaction identifier
+   string pgli02 (8)
+   string pgli03 (8)
+   string pgli04 (8)
+   string pgli05 (8)
+   string pgli06 (8)
+   string pgli07 (8)
+   string pgli08 (8)
+   string pgli09 (8)
+   string pgli10 (8)
+   string pgli11 (8)
+   string pgli12 (8)
+   string pgli13 (8)
+   string pgli14 (8)
+   string pgli15 (8)
+   string pgli16 (8)
+   string pgli17 (8)
+   string pgli18 (8)
+   string pgli19 (8)
+   string pgli20 (8)
+   string pgli21 (8)
+   string pgli22 (8)
+   string pgli23 (8)
+   string pgli24 (8)
+   string pgli25 (8)
+endrec
+;
+(pglrec)
+record pglrec (178)           ; payroll/general ledger job/dept record
+;
+;      record is 178 bytes, but file statement must advance 395 bytes
+;      due to length of header record.
+;
+   set    pgdept: 0              ; job/dept number  (jjjjjjddd)
+   set    ?dgros: 0              ; gross wages account number
+   set    ?dfica: 0              ; fica account number
+   set    ?dfwt:  0              ; fwt account number
+   set    ?dsusp: 0              ; department suspense number
+   set    ?da01:  0              ; transaction 01 account number
+   set    ?da02:  0
+   set    ?da03:  0
+   set    ?da04:  0
+   set    ?da05:  0
+   set    ?da06:  0
+   set    ?da07:  0
+   set    ?da08:  0
+   set    ?da09:  0
+   set    ?da10:  0
+   set    ?da11:  0
+   set    ?da12:  0
+   set    ?da13:  0
+   set    ?da14:  0
+   set    ?da15:  0
+   set    ?da16:  0
+   set    ?da17:  0
+   set    ?da18:  0
+   set    ?da19:  0
+   set    ?da20:  0
+   set    ?da21:  0
+   set    ?da22:  0
+   set    ?da23:  0
+   set    ?da24:  0
+   set    ?da25:  0
+endrec
+;
+(taxhdr)
+record taxhdr (395)
+   set    taxnul: 0
+   define a01ref: '   '          ; tax area reference code
+   define a02ref: '   '
+   define a03ref: '   '
+   define a04ref: '   '
+   define a05ref: '   '
+   define a06ref: '   '
+   define a07ref: '   '
+   define a08ref: '   '
+   define a09ref: '   '
+   define a10ref: '   '
+   define a11ref: '   '
+   define a12ref: '   '
+   define a13ref: '   '
+   define a14ref: '   '
+   define a15ref: '   '
+;
+   define a01nam: '        '     ; tax area name
+   define a02nam: '        '
+   define a03nam: '        '
+   define a04nam: '        '
+   define a05nam: '        '
+   define a06nam: '        '
+   define a07nam: '        '
+   define a08nam: '        '
+   define a09nam: '        '
+   define a10nam: '        '
+   define a11nam: '        '
+   define a12nam: '        '
+   define a13nam: '        '
+   define a14nam: '        '
+   define a15nam: '        '
+;
+   set    a01tax:0               ; area tax rate
+   set    a02tax:0
+   set    a03tax:0
+   set    a04tax:0
+   set    a05tax:0
+   set    a06tax:0
+   set    a07tax:0
+   set    a08tax:0
+   set    a09tax:0
+   set    a10tax:0
+   set    a11tax:0
+   set    a12tax:0
+   set    a13tax:0
+   set    a14tax:0
+   set    a15tax:0
+;
+   string a01mod (6)             ;area tax calculation module name
+   string a02mod (6)
+   string a03mod (6)
+   string a04mod (6)
+   string a05mod (6)
+   string a06mod (6)
+   string a07mod (6)
+   string a08mod (6)
+   string a09mod (6)
+   string a10mod (6)
+   string a11mod (6)
+   string a12mod (6)
+   string a13mod (6)
+   string a14mod (6)
+   string a15mod (6)
+;
+endrec
+;
+(taxrec)
+record taxrec (395)
+   set    txempl:0               ; employee number
+   set    a01ygr:0               ; area ytd gross pay
+   set    a02ygr:0
+   set    a03ygr:0
+   set    a04ygr:0
+   set    a05ygr:0
+   set    a06ygr:0
+   set    a07ygr:0
+   set    a08ygr:0
+   set    a09ygr:0
+   set    a10ygr:0
+   set    a11ygr:0
+   set    a12ygr:0
+   set    a13ygr:0
+   set    a14ygr:0
+   set    a15ygr:0
+;
+   set    a01pgr:0               ; area epq gross pay
+   set    a02pgr:0
+   set    a03pgr:0
+   set    a04pgr:0
+   set    a05pgr:0
+   set    a06pgr:0
+   set    a07pgr:0
+   set    a08pgr:0
+   set    a09pgr:0
+   set    a10pgr:0
+   set    a11pgr:0
+   set    a12pgr:0
+   set    a13pgr:0
+   set    a14pgr:0
+   set    a15pgr:0
+;
+   set    a01mgr:0               ; area mtd gross pay
+   set    a02mgr:0
+   set    a03mgr:0
+   set    a04mgr:0
+   set    a05mgr:0
+   set    a06mgr:0
+   set    a07mgr:0
+   set    a08mgr:0
+   set    a09mgr:0
+   set    a10mgr:0
+   set    a11mgr:0
+   set    a12mgr:0
+   set    a13mgr:0
+   set    a14mgr:0
+   set    a15mgr:0
+;
+   set    a01ytx:0               ; area ytd taxes paid
+   set    a02ytx:0
+   set    a03ytx:0
+   set    a04ytx:0
+   set    a05ytx:0
+   set    a06ytx:0
+   set    a07ytx:0
+   set    a08ytx:0
+   set    a09ytx:0
+   set    a10ytx:0
+   set    a11ytx:0
+   set    a12ytx:0
+   set    a13ytx:0
+   set    a14ytx:0
+   set    a15ytx:0
+;
+   set    a01ptx:0               ; area epq taxes paid
+   set    a02ptx:0
+   set    a03ptx:0
+   set    a04ptx:0
+   set    a05ptx:0
+   set    a06ptx:0
+   set    a07ptx:0
+   set    a08ptx:0
+   set    a09ptx:0
+   set    a10ptx:0
+   set    a11ptx:0
+   set    a12ptx:0
+   set    a13ptx:0
+   set    a14ptx:0
+   set    a15ptx:0
+;
+   set    a01mtx:0               ; area mtd taxes paid
+   set    a02mtx:0
+   set    a03mtx:0
+   set    a04mtx:0
+   set    a05mtx:0
+   set    a06mtx:0
+   set    a07mtx:0
+   set    a08mtx:0
+   set    a09mtx:0
+   set    a10mtx:0
+   set    a11mtx:0
+   set    a12mtx:0
+   set    a13mtx:0
+   set    a14mtx:0
+   set    a15mtx:0
+;
+direct
+a01ded dw -1 area tax deductions
+a02ded dw -1
+a03ded dw -1
+a04ded dw -1
+a05ded dw -1
+a06ded dw -1
+a07ded dw -1
+a08ded dw -1
+a09ded dw -1
+a10ded dw -1
+a11ded dw -1
+a12ded dw -1
+a13ded dw -1
+a14ded dw -1
+a15ded dw -1
+   cpl
+;
+endrec
+;
+(jobhdr)
+record jobhdr (395)           ; payroll job standards header record
+   set    jobnul: 0              ; zero indicates header record
+   set    jobsus: 0              ; suspense record for undefined jobs
+   set    jobt01: 0              ; accumulator 01 transaction code
+   set    jobt02: 0
+   set    jobt03: 0
+   set    jobt04: 0
+   set    jobt05: 0
+   set    jobt06: 0
+   set    jobt07: 0
+   set    jobt08: 0
+   set    jobt09: 0
+   set    jobt10: 0
+   set    jobt11: 0
+   set    jobt12: 0
+   set    jobt13: 0
+   set    jobt14: 0
+   set    jobt15: 0
+   set    jobt16: 0
+   set    jobt17: 0
+   set    jobt18: 0
+   set    jobt19: 0
+   set    jobt20: 0
+   set    jobt21: 0
+   set    jobt22: 0
+   set    jobt23: 0
+   set    jobt24: 0
+   set    jobt25: 0
+   define jobi01: '        '     ; accumulator 01 transaction identifier
+   define jobi02: '        '
+   define jobi03: '        '
+   define jobi04: '        '
+   define jobi05: '        '
+   define jobi06: '        '
+   define jobi07: '        '
+   define jobi08: '        '
+   define jobi09: '        '
+   define jobi10: '        '
+   define jobi11: '        '
+   define jobi12: '        '
+   define jobi13: '        '
+   define jobi14: '        '
+   define jobi15: '        '
+   define jobi16: '        '
+   define jobi17: '        '
+   define jobi18: '        '
+   define jobi19: '        '
+   define jobi20: '        '
+   define jobi21: '        '
+   define jobi22: '        '
+   define jobi23: '        '
+   define jobi24: '        '
+   define jobi25: '        '
+endrec
+;
+(jobrec)
+record jobrec (295)           ; payroll job standards record
+;
+   set    job:    0              ; job/dept number  (jjjjjjddd)
+   set    jdhsus: 0              ; job / department suspense accumulator (hours)
+   set    jdasus: 0              ;job/department suspense accumulator (amounts)
+   set    jdhr01: 0              ; transaction 01 hours accumulator
+   set    jdhr02: 0
+   set    jdhr03: 0
+   set    jdhr04: 0
+   set    jdhr05: 0
+   set    jdhr06: 0
+   set    jdhr07: 0
+   set    jdhr08: 0
+   set    jdhr09: 0
+   set    jdhr10: 0
+   set    jdhr11: 0
+   set    jdhr12: 0
+   set    jdhr13: 0
+   set    jdhr14: 0
+   set    jdhr15: 0
+   set    jdhr16: 0
+   set    jdhr17: 0
+   set    jdhr18: 0
+   set    jdhr19: 0
+   set    jdhr20: 0
+   set    jdhr21: 0
+   set    jdhr22: 0
+   set    jdhr23: 0
+   set    jdhr24: 0
+   set    jdhr25: 0
+   set    ?jda01: 0              ; transaction 01 amount accumulator
+   set    ?jda02: 0
+   set    ?jda03: 0
+   set    ?jda04: 0
+   set    ?jda05: 0
+   set    ?jda06: 0
+   set    ?jda07: 0
+   set    ?jda08: 0
+   set    ?jda09: 0
+   set    ?jda10: 0
+   set    ?jda11: 0
+   set    ?jda12: 0
+   set    ?jda13: 0
+   set    ?jda14: 0
+   set    ?jda15: 0
+   set    ?jda16: 0
+   set    ?jda17: 0
+   set    ?jda18: 0
+   set    ?jda19: 0
+   set    ?jda20: 0
+   set    ?jda21: 0
+   set    ?jda22: 0
+   set    ?jda23: 0
+   set    ?jda24: 0
+   set    ?jda25: 0
+endrec
+;
+;
+(fwtrec)
+;
+;
+record fwtrec(160) ; contains fwt constants
+ set fwt00:  1 100 00
+ set fwt01:  1 100 00
+ set fwt02:  1 100 00
+ set fwt03:  1 100 00
+ set fwt04: 19 650 00
+ set fwt05: 46 000 00
+ set fwt06: 105 430 00
+ ;
+ set fwt07:       0
+ set fwt08:       0
+ set fwt09:       0
+ set fwt10:  2 782 50
+ set fwt11:  10 160 50
+ set fwt12:  29 772 40
+ ;
+ set fwt13:   3 200 00   ;   married not over
+ set fwt14:   3 200 00
+ set fwt15:   3 200 00
+ set fwt16:   3 200 00
+ set fwt17:  34 150 00
+ set fwt18:  78 050 00
+ set fwt19:  192 120 00
+ ;
+ set fwt20:       0
+ set fwt21:       0
+ set fwt22:       0
+ set fwt23:  4 642 50
+ set fwt24: 16 934 50
+ set fwt25: 54 577 60
+ ;
+ set fspc1:      150
+ set fspc2:      150
+ set fspc3:      150
+ set fspc4:      150
+ set fspc5:      280
+ set fspc6:      330
+ set fspc7:      280
+ ;
+ set fmpc1:      150
+ set fmpc2:      15 0
+ set fmpc3:      15 0
+ set fmpc4:      15 0 ;%
+ set fmpc5:      28 0
+ set fmpc6:      33 0
+ set fmpc7:      28 0
+ ;
+endrec
+ ;
+ ;
+END LIST
+.USE CRT3 FOR SYSRDR

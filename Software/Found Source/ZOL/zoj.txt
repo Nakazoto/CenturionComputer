@@ -1,0 +1,349 @@
+s.lst zoj 1 crt3
+S.LST ZOJ 1 CRT3
+.JOB ZOJ
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(oja2re)
+record oja2rec(225)
+string mail1(30)
+string mail2(30)
+string mail3(30)
+string phdes1(3)
+string phdes2(3)
+set ?phone1:0,?phone2:0
+set mailflg:0
+endrec
+ 
+(ojahea)
+record ojahead(225)
+string hdelfg(1),hpmt(1);   if hdelfg is n means no summary invoices - else 0
+set st1:0,st2:0,st3:0,st4:0,st5:0,st6:0,st7:0,st8:0,st9:0,st10:0,st11:0,st12:0
+set st13:0,st14:0,st15:0;   up to 15 states that we will accum for state 1099's
+;  (note st1-st15 used to be title (60) - hence the extra byte
+string fil(0);  1 byte space
+set lsd:0
+set ldate:0
+string hlchrg(1);   y to take late charges on all, n to take on specific
+set vco:0,totfinc:0;   used in stmt program only
+set amaj1:0,amaj2:0,amaj3:0,amaj4:0,amaj5:0,amaj6:0,amaj7:0,amaj8:0,amaj9:0,amaj10:0
+endrec
+;
+(ojarec)
+record ojarec(225)
+string delflg(1),ojapay(1)
+string ojaname(30);      vendee name
+string ojaad1(30);             address
+string ojaad2(30)
+string ojaad3(30)
+string ojaid(11);       fed. id number
+set ojawptlev:0;   0=variable, 1=exempt, 2 ind, 3 integ., 4=integ. dont withhold tax
+set ojana1:0;    temp. holding field for late charge
+set ojaychg:0;      year to date charges
+set ojawpt:0; wpt amount
+set ojacdue:0;        current due
+set ojac30:0;   past due 30 days
+set ojac60:0;   past due 60 days
+set ojac90:0;    past due 90 days
+set ojayinc:0;   year to date income
+set ojasus:0;    suspense
+set ojaytax:0;        year to date tax
+set ojattax:0;  total tax
+set ojasscd:0; surpress netck & suspense code 0=not suspense, 1=all income in suspense
+set ojainc:0;   total income owed to this partner (used for temp. suspense)
+string ojalchrg(1);   y take late charge, n=dont take late charge (overrides header)
+set ojawhtax:0
+endrec
+ 
+(ojaflg)
+record ojaflg(2)
+string ptrflg(1);   partnership flag etc
+endrec
+ 
+(ojanre)
+record ojanrec(50)
+string ojandel(3)
+string ojanoncom(30)
+endrec
+(ojapar)
+record ojapart(225);  partnership name etc.
+string pdelflg(1),ojappay(1)
+string ojapname(30);      vendee name
+string ojapad1(30);             address
+string ojapad2(30)
+string ojapad3(30)
+string ojapid(11);       fed. id number
+set ojapwptlev:0;   0=variable, 1=exempt, 2 ind, 3 integ., 4=integ. dont withhold tax
+set ojapna1:0;    temp. holding field for late charge
+set ojapychg:0;      year to date charges
+set ojapwpt:0; wpt amount
+set ojapcdue:0;        current due
+set ojapc30:0;   past due 30 days
+set ojapc60:0;   past due 60 days
+set ojapc90:0;    past due 90 days
+set ojapyinc:0;   year to date income
+set ojapsus:0;    suspense
+set ojapytax:0;        year to date tax
+set ojapttax:0;  total tax
+set ojapsscd:0; surpress netck & suspense code 0=not suspense, 1=all income in suspense
+set ojapinc:0;   total income owed to this partner (used for temp. suspense)
+string ojaplchrg(1);   y take late charge, n=dont take late charge (overrides header)
+set ojapwhtax:0
+endrec
+ 
+(ojbrec)
+record ojbrec(8)
+set ojbvend:0
+set reloja: 0
+endrec
+ 
+(ojcrec)
+record ojcrec(40)
+set cvend:0
+string cdate(1),acd(1);  2 byte date & add/change/delete flag
+string cfld(29)
+;36 used
+endrec
+ 
+(ojc1re)
+record ojc1rec(400)
+set ?b1:0,pv1:0,?b2:0,pv2:0,?b3:0,pv3:0,?b4:0,pv4:0,?b5:0,pv5:0,?b6:0,pv6:0
+set ?b7:0,pv7:0,?b8:0,pv8:0,?b9:0,pv9:0,?b10:0,pv10:0,?b11:0,pv11:0,?b12:0
+set pv12:0,?b13:0,pv13:0,?b14:0,pv14:0,?b15:0,pv15:0
+;   this continues through ?b40
+endrec
+;
+(ojcopy)
+integer paydate
+string repdate(30)
+string firm(45)
+integer co,adv
+integer flg
+integer pdet
+integer datecur
+integer prtopt
+integer pdopt
+record dpnt(4)
+integer point
+endrec
+;
+(ojerec)
+record ojerec(4)
+set flg:0
+endrec
+;
+(ojfrec)
+ 
+record ojfrec(12)
+set ?arg:0,rel0:0
+endrec
+;
+(ojghea)
+record ojghead(4)
+set neg:0;   flg if advance can go negitive
+endrec
+ 
+(ojgrec)
+record ojgrec(50)
+define ppd:'00000000000000000000'; 20
+set ojgadv:0,ojgcost:0,ojgccost:0,ojgdate:0
+endrec
+ 
+(ojhrec)
+record ojhrec(27)
+string arg2(22)
+set relojg:0
+endrec
+;
+(ojihea)
+record ojihead(12)
+set cur:0
+endrec
+;
+(ojirec)
+record ojirec(12)
+set yincnet:0,ymistax:0,ywptpart:0
+endrec
+ 
+(ojilst)
+record ojilst(24)
+string ojiarg(19)
+set reloji:0
+endrec
+ 
+(ojmmre)
+record ojmmrec(96)
+set dvend2:0,?did2:0,dist2:0,drec2:0,dvou2:0,ddte2:0,dacct2:0
+set dnum12:0,dnum22:0,dnum32:0,dnum42:0,dnum52:0
+string desc2(30)
+set dpc2:0
+endrec
+;
+(ojmrec)
+record ojmrec(98)
+set ojmpart:0;    vendee number
+set ?ojmid:0;     pros/lse/well
+set ojmdist:0;    dist code
+set ojmvrec:0;    30=billable, 40=payment, 50=income
+set ojmvou:0;     voucher
+set ojmdate:0;    voucher date
+set ojmacct:0;    g/l = acct/minor
+set ojmseq:0; was dnum1
+set ojmamt:0;   partners amt
+set ojmvendor:0;  dnum3:0;  a/p #
+set ojmtot:0;   total invoicednum4:0
+set ojmperc:0;   dnum5:0
+string ojmdesc(30)
+set ojmoff:0;   offset account if in-house (dnum6)
+string ojmtype(1);   used in invoicing
+set ojminv:0;   invoice number used in invoicing
+endrec
+;
+(ojohd )
+record ojohd(80)
+set ojocur:0
+string ojoroy(1);  y/n
+endrec
+ 
+(ojorec)
+record ojorec(120)
+set ?o1:0,?o2:0,?o3:0,?o4:0, ?g1:0,?g2:0,?g3:0,?g4:0; units,gross,tax,wpt ytd
+set ?oth1:0,?oth2:0,?oth3:0,?oth4:0; ytd other product
+set co1:0,co2:0,co3:0,co4:0, cg1:0,cg2:0,cg3:0,cg4:0; units,grcoss,tax,wpt;  current mconth
+set coth1:0,coth2:0,coth3:0,coth4:0;  current
+endrec
+(ojolst)
+record ojolst(24)
+string ojoid(19);  property & partner
+set relojo:0
+endrec
+ 
+(ojprec)
+record ojprec(12)
+set ?ojprop:0,ojpart:0
+endrec
+;
+(ojp2re)
+record ojprec(24)
+string ojplid(19)
+set relojo:0
+endrec
+ 
+(ojqrec)
+record ojqrec(98)
+set ojqpart:0;    vendee number
+set ?ojqid:0;     pros/lse/well
+set ojqdist:0;    dist code
+set ojqvrec:0;    30=billable, 40=payment, 50=income
+set ojqvou:0;     voucher
+set ojqdate:0;    voucher date
+set ojqacct:0;    g/l = acct/minor
+set ojqseq:0; was dnum1
+set ojqamt:0;   partners amt
+set ojqvendor:0;  dnum3:0;  a/p #
+set ojqtot:0;   total invoicednum4:0
+set ojqperc:0;   dnum5:0
+string ojqdesc(30)
+set ojqoff:0;   offset account if in-house (dnum6)
+string ojqtype(1);   used in invoicing (type p/l/w)
+set ojqinv:0;   invoice number used in invoicing
+endrec
+;
+(ojshea)
+record ojshead(80)
+set cur:0
+set acct1:0,acct2:0,acct3:0,acct4:0,acct5:0,acct6:0,acct7:0
+string acctfil(6)
+endrec
+;
+;
+;
+(ojsrec)
+record ojsrec(80)
+set ?y1:0,?y2:0,?y3:0,?y4:0,?y5:0,?y6:0
+set c1:0,c2:0,c3:0,c4:0,c5:0,c6:0
+endrec
+;
+ 
+(ojtrec)
+ 
+record ojtrec(24)
+string ojtid(19)
+set relojs:0
+endrec
+;
+ 
+(ojurec)
+record ojurec(12)
+string nname(12)
+endrec
+ 
+(oju2re)
+record oju2rec(12)
+string nname2(12)
+endrec
+ 
+;
+;
+ 
+(ojwrec)
+record ojwrec(12)
+set jwpt:999900,jtype:0,jstatus:0
+endrec
+;
+(ojwlis)
+record ojwlist(8)
+set ojwcopart:0
+set relojw:0
+endrec
+ 
+ 
+(partco)
+ 
+record partco(225)
+set    inc0:0,inc1:0,inc2:0,inc3:0,inc4:0,inc5:0
+set    ptax0:0,ptax1:0,ptax2:0,ptax3:0,ptax4:0,ptax5:0
+set    yinc0:0,yinc1:0,yinc2:0,yinc3:0,yinc4:0,yinc5:0
+set    cdue0:0,cdue1:0,cdue2:0,cdue3:0,cdue4:0,cdue5:0
+set    c300:0,c301:0,c302:0,c303:0,c304:0,c305:0
+set    c600:0,c601:0,c602:0,c603:0,c604:0,c605:0
+set    c900:0,c901:0,c902:0,c903:0,c904:0,c905:0
+set   wpt0:0,wpt1:0,wpt2:0,wpt3:0,wpt4:0,wpt5:0
+set paymt6:0
+set wh0:0,wh1:0,wh2:0,wh3:0,wh4:0,wh5:0
+;
+endrec
+ 
+(ojaawr)
+;    arg=co*100000+partner #
+;    accumulated in check writer & zero reg
+;    master service in ojmast
+;
+record ojaawr(8);   working interest & royalty interest gross
+set ojaawi:0;    w/i gross
+set ojaari:0;   royalty gross
+endrec
+ 
+(partst)
+record partstate(225);    totals for state 1099 info
+set snet0:0,snet1:0,snet2:0,snet3:0,snet4:0,snet5:0,snet6:0
+set snet7:0,snet8:0,snet9:0,snet10:0,snet11:0,snet12:0,snet13:0;  14 states per record
+set smt0:0,smt1:0,smt2:0,smt3:0,smt4:0,smt5:0,smt6:0
+set smt7:0,smt8:0,smt9:0,smt10:0,smt11:0,smt12:0,smt13:0
+set swpt0:0,swpt1:0,swpt2:0,swpt3:0,swpt4:0,swpt5:0,swpt6:0
+set swpt7:0,swpt8:0,swpt9:0,swpt10:0,swpt11:0,swpt12:0,swpt13:0
+endrec
+(scrojc)
+;
+;
+ 
+record scrojc(10)
+set ?prop:0,partner:0
+endrec
+;
+;
+(opzrec)
+record opzrec(4)
+ set zdist:0
+endrec
+END LIST
+.USE CRT3 FOR SYSRDR

@@ -1,0 +1,106 @@
+.nolog
+.job dpmenu
+.notime
+.use crt#v for syslst
+.setc 2 = crt
+.skip to dpmenu if dpmenu eq #4
+.setc 4 = no
+.seta upsi = 3
+.run s.xopt
+=dpmenu
+.setc 4 = dpmenu
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  centurion depreciation application
+*
+*******************************************************************************
+*                  key number = #0          disk = #1
+*******************************************************************************
+*
+*
+*
+*   enter option:  1  establish file set
+*                  2  master file service
+*                  3  detail file sort
+*                  4  calculate bonus depreciation
+*                  5  schedule listing
+*                  6  post to general ledger
+*                 97  change key number / disk number for file set
+*                 99  processing completed
+*
+*
+*
+.nolog
+.enter upsi
+.skip to err1 if 0 ge #u
+.seta 9=#u
+.skip 2 if 99 ne #9
+.setc 4=no
+s.con
+.skip 2 if 97 ne #9
+.setc 4=no
+dpmenu
+.skip to err1 if 7 le #9
+.fspec dp#0a on #1 8=size
+.skip to go if 1 ne #9
+.skip to err3 if 0 ne #8
+.fspec dp.init on #d 8=size
+.skip to notfnd if 0 eq #8
+dp.init
+=go
+.skip to err2 if #8 eq 0
+.skip to opt2 if 2 eq #9
+.skip to opt3 if 3 eq #9
+.seta upsi=2
+.run s.xopt
+.skip to opt#9
+=opt2
+.setc 7=mast
+.skip to call
+=opt3
+.setc 7=sort
+.skip to call
+=opt4
+.setc 7=bon
+.skip to call
+=opt5
+.setc 7=sced
+.skip to call
+=opt6
+.setc 7=genl
+=call
+.fspec dp.#7 on #d 8=size
+.skip to notfnd if 0 eq #8
+dp.#7
+=err1
+.log
+*   invalid option selected_
+.nolog
+.skip to recall
+=err2
+.log
+*   improper request - file set not on specified disk_
+.nolog
+.skip to recall
+=err3
+.log
+*   improper request - file set already exists_
+.nolog
+.skip to recall
+=notfnd
+.log
+*   this module is not installed_
+.nolog
+=recall
+.log
+*   enter newline to recall menu
+.nolog
+.pause
+dpmenu
+=eoj
+.end
+.setc 4 = no
+s.con
+*   07-24-78...initial release...kam

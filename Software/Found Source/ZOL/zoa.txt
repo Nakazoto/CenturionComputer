@@ -1,0 +1,215 @@
+s.lst zoa 1 crt3
+00:01:34 S.LST ZOA 1 CRT3
+00:01:34 .JOB ZOA
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(ckhead)
+record ckhead (79) ;   data passed from register to check writer
+set filck:0,fckno:0;   flick is 0 so that sorting will be ok in check writer
+set rstfg:0
+set dopt:0
+set dodate:0
+set all:0
+set cco:0
+set ckopt:1
+set sched:1;           printing schedules? (1=yes, 0=no)
+set inck:0;            incr check # even if we are printing check #s (1=incr, 0=no)
+string rdate(30)
+set dateck:0 ;         check date to history file ..8/13/86..clv ii
+endrec
+ ;
+(ck2hd )
+record ck2hd(79)
+set filck2:0;   for sorting this is here - also it is 0 so next prog. will reject it
+set vflgck:0
+string client(45)
+set sum:1
+set cnt:13
+set ck:0
+set btm:48
+set pmnth:0
+set dumnth:0
+endrec
+ ;
+(feddet)
+record feddet(96)
+set ckven:0,okdte:0,ckcknn:0,?fedamt:0,?dis:0
+define ckdesc:'federal income tax w/h        ';30 char
+set ckdue:0,ckpcd:0,cksco:0
+define ckpinv:'fed w/h    '
+set ckpvou:0,ckdpd:0
+endrec
+ ;
+(oaahea)
+record oaahead(225)
+set hvend:0      ; zero / 1 if not printing vendor name on check
+string title(30)
+string dumy1(30); filler so oaarec & head have same layout
+string dumy2(30); filler so oaarec & head have same layout
+string dumy3(30); filler so oaarec & head have same layout
+set ?cgr:0
+set ?cdi:0
+set lsd:0
+set ?cpgr:0,?cpdi:0
+set ldate:0
+set ?oaahd1:0,?oaahd2:0;  dummy fields to make oaarec & head compatible
+set vflg:0;   print voucher # on check instead of discount
+set i1plus:0;   this is added to one time vendors to get alternate vendor name /address
+endrec
+ ;
+(oaarec)
+record oaarec(225)      ; accts payable mst record of vendors
+set oaavend:0             ; vendor #
+string  name(30)      ; vendor name
+string  ad1(30)       ; vendor address 1
+string  ad2(30)       ; vendor adderss 2
+string  ad3(30)       ; vendor address 3
+set ?ygr:0           ; year to date gross
+set ?ydi:0           ; year to date discount
+set camt:0         ;   current net due to this vendor
+set ?ypgr:0            ; year to date payments made
+set ?ypdi:0             ; year to date discount taken
+set f1099:0            ;1099 flag (1=print, 0=don't print, etc.)
+set ?ss:0;    ss or federal id (based on f1099 flag)
+set ?phone:0;   ; includes area code
+set oaaint1:0,oaaint2:0;   2 integers waiting to be used (makes header same layout)
+endrec
+;
+(oabrec)
+record oabrec(8);   list file for oaarec
+set    vendnum:0
+set    reloaa:0
+endrec
+ ;
+(oachng)
+record oachngrec(20);   audit list of changes made in oa200
+set cvend:0;  vendor number for change
+string acd(1);  add/change/delete
+string cdte(1); 2 byte word date
+string cfld(11); 1 in each column where change took place
+endrec
+;
+(oamrec)
+record oamrec(78)  ;       unposted a/p details
+set tvend:0        ;    vendor #
+set tdte:0        ;    invoice date (integer date)
+set tvou:0        ;    voucher #
+set ?tgr:0        ;    gross
+set ?tdi:0        ;    discount
+string tdesc(30)  ;    description entry
+set tdue:0        ;    due date (integer date)
+set tcd:0         ;    code
+set tco:0         ;    company #
+string tinv(10)   ;    inv. #
+endrec
+;
+(oaq1re)
+record oaqrec(97)  ;    posted a/p details (used during a/p check processing - extra fields
+set pvend:0        ;    vendor #
+set pdte:0        ;    invoice date (integer date)
+set cknn:0        ;    voucher # & check numer
+set ?pgr:0        ;    gross
+set ?pdi:0        ;    discount
+string pdesc(30)  ;    description entry
+set pdue:0        ;    due date (integer date)
+set xpcd:0         ;    code
+set sco:0         ;    company #
+string pinv(10)   ;    inv. #
+set pvou:0,dpd:0; check writer data added
+endrec
+;
+(oaqrec)
+record oaqrec(80)  ;    posted a/p details
+set pvend:0        ;    vendor #
+set pdte:0        ;    invoice date (integer date)
+set pvou:0        ;    voucher #
+set ?pgr:0        ;    gross
+set ?pdi:0        ;    discount
+string pdesc(30)  ;    description entry
+set pdue:0        ;    due date (integer date)
+set pcd:0         ;    code
+set sco:0         ;    company #
+string pinv(10)   ;    inv. #
+string oaqnew(1);     astrick if new posting only used in oa205/b & oa215 oaaudi
+endrec
+ ;
+(oas5re)
+record oas5rec(40)
+set hvou:0,hgl:0,?hid:0,hvend:0;  voucher is voucher & flag
+set hamt:0,hcknum:0
+string hidate(1);                 2 byte word date - invoice date
+string hckdate(1);                2 byte word date - invoice date
+string hinv(10)
+endrec
+ ;
+(oaschr)
+record oaschrec(4)
+set lvend:0
+endrec
+ ;
+(oasrec)
+record oasrec(100)
+set avouch:0;          voucher number
+set avdate:0;          voucher date
+set agl:0;             g/l acct number
+set ?aid:0;            pros/lse/sub/well
+set avend:0;           a/p vendor number
+string inv(10);        invoice number
+set idate:0;           invoice date (integer)
+string adesc(30);      contents of this string determined by oasflg in ommast
+set aamt:0;            amount of a/p
+endrec
+;
+(oau2re)
+record oau2rec (40)
+set hvend2:0; a/p vendor number
+set hckno2:0; check date
+set ?hnet2:0;   net paid amount for this detail
+set hsco2:0;  company number
+set hvou2:0;  voucher number
+string hinv2(10),hflg2(1);     invoice # ; blank=check is outstanding, 1=cleared, 2=voided
+string hpdte2 (1);            invoice date
+string hcdate2 (1);           check date
+string hdflg2(1);   blank non-emp comp data, 1=rental figure, x=not on 1099misc
+endrec
+ ;
+(oaurec)
+record oaurec (40);  history
+set hpvend:0;  vendor number
+set hckno:0; check number
+set ?hnet:0; net amount for this detail
+set hsco:0;  company number
+set hvou:0; voucher #
+string hinv(10);  invoice number
+string hflg(1);  standard/cleared check/ void check detail flag
+string hpdte (1); invoice date
+string hckdte(1);   check date
+string hdflg(1);   blank non-emp comp data, 1=rental figure, x=not on 1099misc
+endrec
+ ;
+(oax2re)
+record oax2rec(26)
+set code2:0;      payment code only 2 & 9 go into this
+set dvnd2:0;      vendor
+set date2:0;      on code 9 - pay all invoices through this date (if 0 pay all)
+endrec
+ ;
+(oaxrec)
+record oaxrec(26)
+set code:0   ;   payment code
+set xvend:0   ;   vendor
+set amt:0    ;   if paying partial invoice (can also be inv. date - pay through)
+set oaxdate:0;   check date for prepaids
+string inv(10)
+endrec
+ ;
+(scrbal)
+record scrbal(16); added vamt 3/24/88
+set vamount:0;   total for this mm/yy based on invoice date
+set damount:0;   total based on due date
+set prepaidamt:0;   total prepaids (accumulated based on invoice date)
+set vamt:0;      based on voucher date either voucher number is mmyy..., yymm...., or mm...
+endrec
+ ;
+END LIST
+.USE CRT3 FOR SYSRDR

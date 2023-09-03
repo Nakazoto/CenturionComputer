@@ -1,0 +1,832 @@
+s.lst zolib 1 crt3
+S.LST ZOLIB 1 CRT3
+.JOB ZOLIB
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+;  9/17/85..adding equ1
+(copart)
+record copart(197)
+set inc0:0,inc1:0,inc2:0,inc3:0,inc4:0,inc5:0
+endrec
+;
+;
+ 
+(cpnt  )
+record cpnt(12)
+set cpoint:0
+set cfilco:0
+set cfilnet:0
+endrec
+ 
+ 
+(crec  )
+record crec(31)
+string workdesc(30)
+endrec
+;
+ 
+(dpnt  )
+record dpnt(4)
+set dpoint:0
+endrec
+ 
+(equ1  )
+equate sixbyte,6
+ 
+(files )
+file oba:sys0,class=2,ind,recsiz=55,key=rel0
+;file oga:sys1,class=2,ind,recsiz=133,key=rel1
+file oiw:sys5,class=2,seq,lsr=4,filtyp=b,buffered;  =400,buf5
+;file omg:sys6,class=2,ind,recsiz=45,key=rel6
+file oiu:sys2,class=2,ind,recsiz=70,key=rel2;
+file oiv:sys3,class=2,seq,lsr=4,filtyp=b,buffered;  =400,buf2
+file oia:sys7,class=2,ind,recsiz=30,key=rel7
+file oiv2:sys8,class=2,rnd,recsiz=35,key=rel8,buffered;  =400,buf8
+file oiv3:sys9,class=2,rnd,recsiz=100,key=rel9; totals file
+file opa:sys13,class=2,ind,recsiz=350,key=rel14;  this may be opa or oig
+file opb:sys14,class=2,seq,lsr=4,filtyp=b,buffered;  =400,buf14
+set rel0:0,rel7:0,rel8:0,rel9:0;    rel1:0,rel6:0
+file crt:sysipt
+entrypoint crt
+file obe:sys11,class=2,ind,recsiz=40,key=rel11
+file obg:sys15,class=2,ind,recsiz=40,key=rel15
+file oiut:sys16,class=2,spn,recsiz=410,key=rel16
+set rel11:0,rel15:0,rel16:0
+file oiux:sys17,class=2,ind,recsiz=70,key=rel17
+file opax:sys18,class=2,ind,recsiz=350,key=rel18
+ 
+set rel17:0,rel18:0
+file prt:syslst,class=1
+file dum:sys10,class=1;   dummy
+ 
+ 
+(gorec )
+record gorec(45)
+set ?x:0
+set x2:0;   codes
+string goname(30)
+endrec
+;
+ 
+(gpnt  )
+record gpnt(4)
+set gpoint:0
+endrec
+ 
+(helpre)
+ 
+record helprec(70)
+string doc(70)
+endrec
+;
+ 
+(ipnt  )
+record ipnt(4)
+set ipoint:0
+endrec
+;
+(lserec)
+record lserec(30)
+string lname(30)
+endrec
+;
+ 
+(newold)
+record newold(64)
+set oacct:0
+set ?osub:0
+set ojrn:0
+string odesc(30)
+set oref:0
+set odate:0
+set oamt:0
+set ojdte:0
+endrec
+;
+ 
+(newpnt)
+record newpnt(400)
+set point:0
+string filler(395)
+endrec
+;
+ 
+(newscr)
+record newscr(18)
+set ?c1net:0,?c1wpt:0,?c1ven:0
+endrec
+;
+ 
+(oaa2sh)
+record oaa2rec(35)
+set apvend2:0
+string oaaname2(30)
+endrec
+;
+;
+ 
+(oaashr)
+record oaarec(40);  short from of a/p master
+set apvend:0
+string apname(30)
+endrec
+ 
+(oaa2sh)
+record oaa2rec(40)
+set vend2:0
+string aname2(30)
+endrec
+ 
+ 
+;
+ 
+(obashr)
+record obarec(30);  short form of billable master
+string mname(30)
+endrec
+ 
+ 
+ 
+(odashr)
+record odamst(35)
+set odatype:0
+string odades(30)
+endrec
+;
+ 
+(oeashr)
+record oearec(33)
+string edesc1(30)
+endrec
+;
+ 
+(offrec)
+ 
+record offrec(45)
+set ogl:0,?oid:0,olcd:0
+string odesc(30)
+endrec
+;
+ 
+(ogashr)
+record ogarec(45);  short form of g/l master
+set ?ff:0
+set vv:0
+string gname(30);  g/l descritpion
+endrec
+ 
+;
+ 
+(oig1he)
+ 
+record oig1head(100)
+string chrqty(100);   qty decription 5 char each
+endrec
+ 
+ 
+(oig2he)
+record oig2head(100)
+string chrqty2(100); qty decr
+endrec
+ 
+ 
+(oig3he)
+record oig3head(350)
+string dplace(48)
+integer gasconv0;   convert to bbl  (multi)
+integer con2,con3,con4,con5,con6; etc there are 48 of these
+endrec
+ 
+ 
+(oig4he)
+record oig4head(100)
+string expdesc1(100)
+endrec
+ 
+ 
+(oig5he)
+record oig5head(100)
+string expdesc2(100)
+endrec
+ 
+ 
+(oig6he)
+record oig6head(100)
+string expdesc3(100)
+endrec
+ 
+record oig7head(100)
+string expdesc4(100)
+endrec
+record oig8head(100)
+string expdesc5(100)
+endrec
+ 
+ 
+(oighea)
+record oighead(350)
+string dmon(2),ctype(48),ccodwpt(48)
+integer oigfmon,lastmon
+set oigcur:0;   current processing month
+string oigdepl(48);  y/n put on depletion report
+set ?oigzero:0,oigckn:0;
+endrec
+ 
+ 
+;
+(oih5re)
+ 
+record oih5rec(40)
+set hvend:0,?hid:0,hck:0,hamt:0,hwpt:0,hco:0
+string hdte(1),pdte(1),htype(1),hprod(1)
+define hflg:'0'
+endrec
+;
+;
+ 
+(oiqhea)
+record oiqhead(99)
+define pck:'y',plse:'y'
+set ?zero:0,ckn:0
+set x:0,x1:0,x2:0,x3:0
+define ppunit:'y'     ; added 12/18/86..print price/unit..clv ii
+endrec
+;
+;
+ 
+;
+ 
+;
+ 
+(ojapshp)
+record ojapshp(35);  partnership name
+string del(1),py(1)
+string pship(30)
+endrec
+;
+ 
+(ojashr)
+ 
+record ojarec(45)
+string delflg(1),pmtflg(1)
+string ojaname(30)
+endrec
+(oja2sh)
+record oja2rec(45)
+string delflg2(1),paymt2(1)
+string ojaname2(30)
+endrec
+ 
+ 
+(olarec)
+ 
+record olarec(400)
+ set ?prop:0;          p/l/w number
+ set anum:0;           area #
+ set admnum:0;         administrator #
+ string lessor(30);    lessor name
+ string lename(30);    original lessee name
+ string ltype(1);      lessor type
+ string tint(1);       interest type
+ set tinta:0;          participate in bonus?
+ set tintb:0;          participate in rentals?
+ set tintc:0;          exec. rights
+ string rr(1);         rental responsibility
+ string mref(19);      map code + ref #
+ set ldte:0;           lease/inst date
+ set efdte:0;          effective date
+ string rbk(6);        recording book #
+ set rpg:0;            recording page #
+ string microfiche(12); microfiche #
+ set edte:0;           expiration date
+ set rdte:0;           rental date (mmdd)
+ set period:0;         # months in rent period
+ set ramt:0;           rent amt w/o bnk (2 dec)
+ set bnkch:0;          bank charge
+ set crent:0;          company's rent
+ set pd:0;             ytd rent
+ set ?rent:0;          itd rent
+ set odte1:0;          1st obl date
+ set odte2:0;          2nd obl date
+ set odte3:0;          3rd obl date
+ set shdte:0;          shut-in date
+ set ?gacre:0;         gross acres
+ set ?gnaacre:0;       non-add gross
+ set ?nacre:0;         net acres
+ set ?cacre:0;         company net acres
+ set land:0;           landowner royalty (8 dec)
+ set orr:0;            overriding royalty (8 dec)
+ set bonus:0;          bonus paid
+ set ocap:0;           other capital costs
+ set nri:0;            net revenue interest
+ set cnri:0;           company net revenue interest (8 dec)
+ set nmi:0;            net mineral interest (8 dec)
+ set cnmi:0;           company net minerals (8 dec)
+ set adte:0;           acquired date
+ string from(30);      acquired from
+ string instr(1);      acq. instrument type
+ string abook(6);      acq. book #
+ set apage:0;          acq. page
+ string amicro(12);    acq. microfiche
+ set bdis:0;           dist # for billing
+ set dco:0;            d/r co # (for g/l)
+ string paycod(1);     n/l=checks, n=next time, x=no
+ set point1:0;         points to desc1
+ set point6:0;         points to desc6
+ set point7:0;         points to desc7
+ set point9:0;         points to desc9
+ set cdte:0;           date of last change
+ set paynum:0;         number of payees
+ set numpd:0;          # checks written last time out
+ set cknum:0;          1st check # last time
+ set rectype:0;        0=lease, 1=mineral/royalty
+endrec
+;
+record headl(400)
+set ?hprop:0
+string hdrdte(4)
+set headflg:0
+set headco:0
+string hcknu(6)
+set hrmm:0;   last rental date paid
+set covdate:0;  last conversion date (grin)
+define cyour:'your ';   alternate for "your" in all reports
+string grtype(12);   grantor types - 1 char codes
+string grtit(120);    grantor types expanded names (12- 10 char each)
+ 
+string inttype(12)
+string inttit(120);   interest type expanded name
+endrec
+ 
+record olahead2(400)
+string acqtype(12);  acquisition instr. type
+string acqtit(120);   acq instr. titles
+string rrtype(12);   rental responsibility
+string rrtit(120);    rr titles
+string sttype(11);  status ty
+string sttit(110);   titles for status
+endrec
+;
+;
+;
+record olgrec(15)
+string area(14);   area name 8/19/81
+endrec
+ 
+(olmrec)
+record olmrec(50)
+set ?olmid:0;     property number
+set olmbk:0;       bank recieved date (integer date)
+set olmrent:0;    rental due date
+set olmamt:0;     amount paid
+string olmdesc(30);   payor
+endrec
+ 
+;
+;
+ 
+;
+ 
+ 
+(omg6re)
+record omg6rec(45);     arg=hmil+co*10+9
+set lastapck:0, lastincck:0
+endrec
+ 
+ 
+(omg7re)
+ 
+record omg7rec(12);  arg= bil+partner#
+set partner:0
+set pco:0
+set pcol:0
+set pcoyrend:0;    this is added/updated just before lsep&l is run (8/10/85)
+endrec
+;
+ 
+(omg8re)
+record omg8rec(28);    hmil+co*10+6
+set num0:0,ocol1:0,ocol2:0,ocol3:0,ocol4:0,ocol5:0,ocol6:0
+endrec
+;
+;
+;
+(omg9re)
+record omg9rec(45);    offseting account=arg
+set bnum:0
+set onum:0
+set onum7:0
+set onum6:0
+set onum5:0
+set onum4:0
+set onum3:0
+endrec
+;
+ 
+(omgkey)
+record omgkey(45);   arg=hmil+co*10+5
+set omgco:0;       company number
+set partn:0;    no longer applicable
+set pnetck:0;   netck option on co
+set pinv:0;     last invoive number for this co
+set opros:0;    royalty offsets income to this property number
+set cyrend:0;   company's year ending
+set cooar:0;    company open item a/r
+endrec
+;
+ 
+(omglre)
+record omglrec(6)
+set ?omglamt:0
+endrec
+;
+;
+ 
+(omgrec)
+ 
+record omgrec(45);  arg=hmil+co*10 + x; where x= 0=name,1=add1,2=mail, 3=city/,4=phone
+string omgname(45)
+endrec
+ 
+ 
+(omhrec)
+record omhrec(8)
+set off:0
+set relomg:0
+endrec
+;
+ 
+(ommrec)
+record ommrec(131)
+integer rec;  :-1;     aux=-1
+integer vouch;    voucher number
+integer vdate;    voucher date
+integer gl;       general ledger (acct/min)
+integer ?id;      pros/lea/sl/well
+integer vend;     accounts payable vendor #
+string item(8); item number for equipment
+integer vnde;     vendee number
+integer ommdist;     distribution
+string all(80); contains various info depending on which module it goes to
+integer gr;       group number for aux record
+endrec
+(ommlre)
+record ommlrec(131)
+integer lrec;  :-1;     aux=-1
+integer lvouch;    voucher number
+integer lvdate;    voucher date
+integer lgl;       general ledger (acct/min)
+integer ?lid;      pros/lea/sl/well
+integer lvend;     accounts payable vendor #
+string litem(8); item number for equipment
+integer lvnde;     vendee number
+integer ldist;     distribution
+string lall(80); contains various info depending on which module it goes to
+integer ommlgr;       group number for aux record
+endrec
+ 
+ 
+(omr1re)
+record omr1rec(20)
+set rel1:0
+string all(15)
+endrec
+;
+ 
+(omrrec)
+record omrrec(8)
+set voucher:0
+set voudte:0
+endrec
+;
+ 
+(omxrec)
+record omxrec(4)
+set pend:0
+endrec
+;
+ 
+(osprec)
+record osprec(51)
+set opcode:0,seq:0
+string opname(30),opint(5)
+set opcode2:0
+endrec
+;
+ 
+(ostrec)
+record ostrec(51)
+string tentry(50)
+endrec
+;
+ 
+(overly)
+record parameter(489);  added 4 loe accts 3/19/85
+string client(45),today(10),time(10),key(6),alt(6),repdate(30)
+integer bill,loe,loe2,loe3,loe4,loe5,dr,tan,equip,inv,equ4,equ5,equ6,equ7,equ8,equ9,equ10
+integer idc,idc2,idc3,idc4,idc5, ab2,ab3,ab4,ab5,lhold,lh2,lh3,lh4,lh5,ot1,ot2,ot3,ot4,ot5
+integer opt,lopt,subopt,long,topt,mm,lmm,fyr,rgr,default
+integer rgr1,rgr2,rgr3,rgr4,rgr5,rgr6,rgr7,rgr8,rgr9,rgr10
+integer notev,noteg,notew,?prev,page
+integer pprod; 4/23/84
+string m13a(7),m13(7),m13b(9)
+string m14a(7),m14(7),m14b(7)
+string m15a(7),m15(7),m15b(7),m15c(7),m15d(7),m15e(7),m15f(7),m15g(7),m15h(7)
+integer inpart;
+endrec
+integer report
+record oighead(120)
+string dmon(2),ctype(48),ccodwpt(48)
+integer fmonth,lastmon
+endrec
+ 
+record oihead1(100)
+string chrqty(100);   qty decription 5 char each
+endrec
+ 
+record oihead2(100)
+string chrqty2(100); qty decr
+endrec
+ 
+record oihead3(350)
+string dplace(48)
+integer gasconv0;   convert to bbl  (multi)
+integer con2,con3,con4,con5,con6,con7;  this continues for 48 types other than gas
+endrec
+ 
+record oihead4(100)
+string desc1(100)
+endrec
+ 
+record oihead5(100)
+string desc2(100)
+endrec
+ 
+record oihead6(100)
+string desc3(100)
+endrec
+ 
+record oihead7(100)
+string desc4(100)
+endrec
+record oihead8(100)
+string desc5(100)
+endrec
+ 
+record oberec(20)
+string county(20)
+endrec
+ 
+record obgrec(20)
+string state(20)
+endrec
+ 
+integer lseflg
+ 
+(pnt   )
+record pnt(12)
+set point:0
+set pntco:0
+set pntnetck:0
+endrec
+;
+(pnt1  )
+record pnt1(8)
+set point1:0
+set point2:0
+endrec
+;
+;
+ 
+(pntnew)
+record pntnew(48)
+set point:0
+set opt:0
+string rdate(30)
+set cdate:0
+set proco:0;     processing co#
+endrec
+;
+;
+(pnt6  )
+record pnt6(4)
+set point6:0
+endrec
+;
+(pnt7  )
+record pnt7(12)
+set point7:0
+set co7:0
+set oar7:0
+endrec
+;
+ 
+(pntx  )
+record pntx(4)
+ set pointx:0
+endrec
+;
+(pnty  )
+record pnty(4)
+ set pointy:0
+endrec
+;
+(recomg)
+record recomg(12)
+set partner:0
+set co:0
+set colnum:0
+endrec
+;
+(recs  )
+ 
+record oiurec(70)
+set    ?pid:0;   property name
+; pros/lse/sub/abcdefg c=7 is loe def=min, c=8 other bil, de=low maj #,
+;           a=9=in house, bc=in-house partner: de=1 qty ef=prod code #
+;           a=9=in house, bc=in-house partner: de=2 gros ef=prod code #
+;           a=9=in house, bc=in-house partner: de=3=ptax,4=misc,5=wpt ef=prod code #
+;                  de=10 loe, 15-24 tan,26=depr,27=resdepr,30-34=idc,36=depl(amort)
+;                  de=37 res depl, 40-44 lhc, 46=amort lhc, 47=res amort lhc, 50=dr
+;                  de=51-55 abandonment, 60-64 other
+set mon1:0,mon2:0,mon3:0,mon4:0,mon5:0,mon6:0,mon7:0,mon8:0,mon9:0,mon10:0,mon11:0,mon12:0
+set    ?ytd:0;   year to date total
+set    ?itd:0;   inception to date total
+endrec
+record oiurecx(70)
+set    ?pidx:0;   property name
+; pros/lse/sub/abcdefg c=7 is loe def=min, c=8 other bil, de=low maj #,
+;           a=9=in house, bc=in-house partner: de=1 qty ef=prod code #
+;           a=9=in house, bc=in-house partner: de=2 gros ef=prod code #
+;           a=9=in house, bc=in-house partner: de=3=ptax,4=misc,5=wpt ef=prod code #
+;                  de=10 loe, 15-24 tan,26=depr,27=resdepr,30-34=idc,36=depl(amort)
+;                  de=37 res depl, 40-44 lhc, 46=amort lhc, 47=res amort lhc, 50=dr
+;                  de=51-55 abandonment, 60-64 other
+set mon1x:0,mon2x:0,mon3x:0,mon4x:0,mon5x:0,mon6x:0,mon7x:0,mon8x:0,mon9x:0,mon10x:0,mon11x:0,mon12x:0
+set    ?ytdx:0;   year to date total
+set    ?itdx:0;   inception to date total
+endrec
+ 
+record obarec(55)
+string mname(30)
+set mcnt:0,mstat:0
+endrec
+;
+record group(12)
+set xpros:0
+set lse:0
+set sub:0
+endrec
+;
+record omg9rec(8)
+set bnum:0;   arg here is ppyyxx where pp=2 dig partner, yy=10-15 loe, xx=minor in the offset
+set onum:0
+endrec
+ 
+record oiv2rec(35)
+set argv2:0
+string v2desc(30);   g/l desc
+endrec
+ 
+record pntv2(4)
+set pointv2:0
+endrec
+ 
+record oiv3rec(100)
+set argv3:0,?check:0;   argument that lead us here/property# either lse or prosor 1 if grand
+set ?f1:0,?f2:0,?f3:0,?f4:0,?f5:0,?f6:0,?f7:0,?f8:0,?f9:0,?f10:0,?f11:0,?f12:0
+set ?f13:0,?f14:0
+endrec
+ 
+;
+;
+record oivb(24)
+string  lkey(19);  pros+lse+slse+(rec# or min if loe) n4n5n3n5
+set  rel2:0
+endrec
+;
+record oiarec(30)
+string filler(11);    12 bytes
+set nwi:0;  wi % for figuring lse p&l gross to wi partners
+set rgroup:0,fmon:0;  1st month of year
+endrec
+ 
+ 
+(recs2 )
+record oparec(350)
+set ?qty:0; mcf sold (gas)
+set tax:0; prod. tax on gas
+set misc:0
+set   ?net:0;net gas sales (money amount)
+set   nwpt:0;net w.i. wpt
+set wpt:0;
+set  ?yqty:0; ytd  mcf (gas)/ oil bbl
+set  ytax:0
+set ymisc:0
+set  ?ynet:0
+set  ynwpt:0
+set  ywpt:0
+set mqty:0,mqty2:0,mqty3:0,mqty4:0,mqty5:0,mqty6:0,mqty7:0,mqty8:0,mqty9:0,mqty10:0,mqty11:0,mqty12:0
+set mtax:0,mtax2:0,mtax3:0,mtax4:0,mtax5:0,mtax6:0,mtax7:0,mtax8:0,mtax9:0,mtax10:0,mtax11:0,mtax12:0
+set mmisc:0,mmisc2:0,mmisc3:0,mmisc4:0,mmisc5:0,mmisc6:0,mmisc7:0,mmisc8:0,mmisc9:0,mmisc10:0,mmisc11:0,mmisc12:0
+set mnet:0,mnet2:0,mnet3:0,mnet4:0,mnet5:0,mnet6:0,mnet7:0,mnet8:0,mnet9:0,mnet10:0,mnet11:0,mnet12:0
+set mnwpt:0,mnwpt2:0,mnwpt3:0,mnwpt4:0,mnwpt5:0,mnwpt6:0,mnwpt7:0,mnwpt8:0,mnwpt9:0,mnwpt10:0,mnwpt11:0,mnwpt12:0
+set mwpt:0,mwpt2:0,mwpt3:0,mwpt4:0,mwpt5:0,mwpt6:0,mwpt7:0,mwpt8:0,mwpt9:0,mwpt10:0,mwpt11:0,mwpt12:0
+set clrmon:0;    month that this record will have ytd cleared
+endrec
+record oparecx(350)
+set ?qtyx:0; mcf sold (gas)
+set taxx:0; prod. tax on gas
+set miscx:0
+set   ?netx:0;net gas sales (money amount)
+set   nwptx:0;net w.i. wpt
+set wptx:0;
+set  ?yqtyx:0; ytd  mcf (gas)/ oil bbl
+set  ytaxx:0
+set ymiscx:0
+set  ?ynetx:0
+set  ynwptx:0
+set  ywptx:0
+set mqtyx:0,mqty2x:0,mqty3x:0,mqty4x:0,mqty5x:0,mqty6x:0,mqty7x:0,mqty8x:0,mqty9x:0,mqty10x:0,mqty11x:0,mqty12x:0
+set mtaxx:0,mtax2x:0,mtax3x:0,mtax4x:0,mtax5x:0,mtax6x:0,mtax7x:0,mtax8x:0,mtax9x:0,mtax10x:0,mtax11x:0,mtax12x:0
+set mmiscx:0,mmisc2x:0,mmisc3x:0,mmisc4x:0,mmisc5x:0,mmisc6x:0,mmisc7x:0,mmisc8x:0,mmisc9x:0,mmisc10x:0,mmisc11x:0,mmisc12x:0
+set mnetx:0,mnet2x:0,mnet3x:0,mnet4x:0,mnet5x:0,mnet6x:0,mnet7x:0,mnet8x:0,mnet9x:0,mnet10x:0,mnet11x:0,mnet12x:0
+set mnwptx:0,mnwpt2x:0,mnwpt3x:0,mnwpt4x:0,mnwpt5x:0,mnwpt6x:0,mnwpt7x:0,mnwpt8x:0,mnwpt9x:0,mnwpt10x:0,mnwpt11x:0,mnwpt12x:0
+set mwptx:0,mwpt2x:0,mwpt3x:0,mwpt4x:0,mwpt5x:0,mwpt6x:0,mwpt7x:0,mwpt8x:0,mwpt9x:0,mwpt10x:0,mwpt11x:0,mwpt12x:0
+set clrmonx:0;    month that this record will have ytd cleared
+endrec
+ 
+record opbrec(10)
+set ?liid:0,rel14:0
+endrec
+ 
+external getk,stat,ioerr,msg,pupsi,ynget,lfeed,cget,?edit,gjp,clrec,mvfile,tget,tput,getit,getitn; 4/15/85
+;
+(scrrec)
+record scrrec(36)
+set ?tqty:0
+set ?ttax:0
+set ?tmis:0
+set ?tnet:0
+set ?twpt:0
+set dnum:0
+string c1(1)
+endrec
+;
+;
+(sixdef)
+record sixdef(3)
+string og(3)
+endrec
+;
+;
+(subrec)
+record subrec(30)
+string sname(30);   sublease name
+endrec
+ 
+;
+(sixrec)
+record sixrec(6)
+set ?field:0
+endrec
+;
+(srec  )
+record srec(4)
+set gvdte:0
+endrec
+;
+;
+(srtrec)
+record srtrec(18)
+set nvou:0
+set rel0:0
+set nseq:0
+set ?nnid:0
+endrec
+;
+(stpnt )
+record stpnt(4)
+set stpoint:0
+endrec
+;
+;
+(temrec)
+record temrec(400)
+set newone1:0,newone2:0,newone3:0;  this goes on for 100 per record
+endrec
+;
+(welrec)
+record welrec(30)
+string wname(30)
+endrec
+;
+(xseqre)
+record xseqre(4)
+set seq:1
+endrec
+;
+;
+;
+END LIST
+.USE CRT3 FOR SYSRDR

@@ -1,0 +1,543 @@
+s.lst zot 1 crt3
+S.LST ZOT 1 CRT3
+.JOB ZOT
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
+LIST - 6.00
+(otds  )
+record otd2rec(80)
+set ?prop2:0,adate2:0,taxoil2:0,gas2:0,ex2:0,gptax2:0,loe2:0,depr2:0,ovhd2:0,cdep2:0,oexp2:0,bbl2:0
+string fil2(15)
+set pshar2:0
+endrec
+;
+record otd3rec(80)
+set ?prop3:0,adate3:0,taxoil3:0,gas3:0,ex3:0,gptax3:0,loe3:0,depr3:0,ovhd3:0,cdep3:0,oexp3:0,bbl3:0
+string fil3(15)
+set pshar3:0
+endrec
+;
+record otd4rec(80)
+set ?prop4:0,adate4:0,taxoil4:0,gas4:0,ex4:0,gptax4:0,loe4:0,depr4:0,ovhd4:0,cdep4:0,oexp4:0,bbl4:0
+string fil4(15)
+set pshar4:0
+endrec
+;
+record otd5rec(80)
+set ?prop5:0,adate5:0,taxoil5:0,gas5:0,ex5:0,gptax5:0,loe5:0,depr5:0,ovhd5:0,cdep5:0,oexp5:0,bbl5:0
+string fil5(15)
+set pshar5:0
+endrec
+;
+record otd6rec(80)
+set ?prop6:0,adate6:0,taxoil6:0,gas6:0,ex6:0,gptax6:0,loe6:0,depr6:0,ovhd6:0,cdep6:0,oexp6:0,bbl6:0
+string fil6(15)
+set pshar6:0
+endrec
+;
+record otd7rec(80)
+set ?prop7:0,adate7:0,taxoil7:0,gas7:0,ex7:0,gptax7:0,loe7:0,depr7:0,ovhd7:0,cdep7:0,oexp7:0,bbl7:0
+string fil7(15)
+set pshar7:0
+endrec
+;
+(otfs  )
+record otf2rec(50)
+integer line21,line22c,line211,line212,line214,line215,line216,line217,line218
+endrec
+;
+record otf3rec(50)
+integer line31,line32c,line311,line312,line314,line315,line316,line317,line318
+endrec
+;
+record otf4rec(50)
+integer line41,line42c,line411,line412,line414,line415,line416,line417,line418
+endrec
+;
+record otf5rec(50)
+integer line51,line52c,line511,line512,line514,line515,line516,line517,line518
+endrec
+;
+record otf6rec(50)
+integer line61,line62c,line611,line612,line614,line615,line616,line617,line618
+endrec
+;
+record otf7rec(50)
+integer line71,line72c,line711,line712,line714,line715,line716,line717,line718
+endrec
+;
+(otfrec)
+record otfrec(50)
+integer line1,line2c,line11,line12,line14,line15,line16,line17,line18
+endrec
+;
+(otoore)
+record otoorec(25)
+string arg(19)
+set relx:0
+endrec
+;
+(otorec)
+record otorec(6)
+set ?exprop:0;   exception property number
+endrec
+;
+(oterec)
+record oterec(10)
+set ?pr:0,relotd:0
+endrec
+;
+(oteere)
+record oteerec(24);   list file if otdd is sys0 instead of otd
+set relx:0
+string arg(19)
+endrec
+;
+(otddre)
+record otddrec(80);  same format as otd just dif. entry & dif. key
+set ?prop:0,adate:0,taxoil:0,gas:0,expoil:0,gptax:0,loe:0,depr:0
+set ovhd:0,cdep:0,oexp:0,bbl:0,cost:0,prdep:0,units:0,rr:0
+set propshar:0
+endrec
+;
+(otddsh)
+record otddship(80);  same format as otd just dif. entry & dif. key
+set ?sprop:0,sadate:0,staxoil:0,sgas:0,sexpoil:0,sgptax:0,sloe:0,sdepr:0
+set sovhd:0,scdep:0,soexp:0,sbbl:0,scost:0,sprdep:0,sunits:0,srr:0
+set spropshar:0
+endrec
+;
+(kahead)
+;   property / partner header record
+;
+;   key = pros + lse + sub + partner + co encoded into 19 byte string
+;          n4     n5    n3     n5      n2
+;         header key = '0000000000000000000'
+;
+;
+record kahead (40)
+ integer kaev      ; eqv units (2.dec i.e. 6.00)
+ integer kadp      ; depl % (2.dec i.e. 20.00)
+endrec
+;
+(k1arec)
+;
+;                        this record format needs to have the same items
+;                        in the same order as kbhead for the split program
+;                        to work
+;
+record k1arec(300)
+ string aexcl(1)     ; exclusion flag (n-do not print on k1 reports)
+ integer ?aprop      ; property # (key)
+ integer apart       ; partner # (key)
+ integer aco         ; company # (partnership #)
+ integer ?aoinc      ; oil income               9999999999.99
+ integer ?aginc      ; gas   "                       "
+ integer ?aolhc       ; lease hold cost               "
+ integer ?aglhc       ; lease hold cost               "
+ integer ?aoadepl     ; accumulated depl.              "
+ integer ?agadepl     ; accumulated depl.              "
+ integer ?aoequip     ; total equip cost              "
+ integer ?agequip     ; total equip cost              "
+ integer ?aodry       ; dry hole cost                 "
+ integer ?agdry       ; dry hole cost                 "
+ integer ?aoidc       ; intanglable drilling cost     "
+ integer ?agidc       ; intanglable drilling cost     "
+ integer ?aogpt       ; gpt                           "
+ integer ?aggpt       ; gpt                           "
+ integer ?awpt       ; windfall profit tax           "
+ integer ?aocdepl     ; cost depletion amt            "
+ integer ?agcdepl     ; cost depletion amt            "
+ integer ?aodepr      ; depreciation amt              "
+ integer ?agdepr      ; depreciation amt              "
+ integer ?aoadepr     ; accumulated depr              "
+ integer ?agadepr     ; accumulated depr              "
+ integer ?aoohead     ; overheat
+ integer ?agohead     ; overheat
+ integer ?aoloe       ; lease operating expense       "
+ integer ?agloe       ; lease operating expense       "
+ integer ?aomfee      ; management fee                "
+ integer ?agmfee      ; management fee                "
+ integer ?aoint       ; interest expense              "
+ integer ?agint       ; interest expense              "
+ integer ?aores      ; oil reserves barrels          "
+ integer ?agres      ; gas reserves mcf              "
+ integer ?aoprod     ; units oil produced            "
+ integer ?agprod     ; units gas produced            "
+ integer ?abcap      ; beginning capital             "
+ integer ?accont     ; capital contributions         "
+ integer ?aord       ; ordinary income losses        "
+ integer ?aincni     ; income not included           "
+ integer ?alosni     ; losses not included           "
+ integer ?acwd       ; capital withdrawals           "
+ integer ?awd        ; withdrawals                   "
+ integer ?aecap      ; ending capital                "
+ integer ?aocap      ; other capitalized costs       "
+ ;
+endrec
+;
+(k1brec)
+;
+;       property record layout
+;
+;   ?key = pros * 1000000 + lse * 1000 + sub * 100
+;
+record k1brec (395)
+ string bfid(30)     ; property (partnership) federal id #
+ integer ?boinc      ; oil income               9999999999.99
+ integer ?bginc      ; gas   "                       "
+ integer ?bolhc       ; lease hold cost               "
+ integer ?bglhc       ; lease hold cost               "
+ integer ?boadepl     ; accumlated depl.             "
+ integer ?bgadepl     ; accumlated depl.             "
+ integer ?boequip     ; total equip cost              "
+ integer ?bgequip     ; total equip cost              "
+ integer ?bodry       ; dry hole cost                 "
+ integer ?bgdry       ; dry hole cost                 "
+ integer ?boidc       ; intanglable drilling cost     "
+ integer ?bgidc       ; intanglable drilling cost     "
+ integer ?bogpt       ; gpt                           "
+ integer ?bggpt       ; gpt                           "
+ integer ?bwpt       ; windfall profit tax           "
+ integer ?bocdepl     ; cost depletion amount         "
+ integer ?bgcdepl     ; cost depletion amount         "
+ integer ?bodepr      ; depreciation amt              "
+ integer ?bgdepr      ; depreciation amt              "
+ integer ?boadepr     ; accumulated depr              "
+ integer ?bgadepr     ; accumulated depr              "
+ integer ?boohead     ; overheat
+ integer ?bgohead     ; overheat
+ integer ?boloe       ; lease operating expense       "
+ integer ?bgloe       ; lease operating expense       "
+ integer ?bomfee      ; management fee                "
+ integer ?bgmfee      ; management fee                "
+ integer ?boint       ; interest expense              "
+ integer ?bgint       ; interest expense              "
+ integer ?bores      ; oil reserves barrels          "
+ integer ?bgres      ; gas reserves mcf              "
+ integer ?boprod     ; units oil produced            "
+ integer ?bgprod     ; units gas produced            "
+ integer ?bbcap      ; beginning capital             "
+ integer ?bccont     ; capital contributions         "
+ integer ?bord       ; ordinary income losses        "
+ integer ?bincni     ; income not included           "
+ integer ?blosni     ; losses not included           "
+ integer ?bcwd       ; capital withdrawals           "
+ integer ?bwd        ; withdrawals                   "
+ integer ?becap      ; ending capital                "
+ integer ?bocap      ; other capitalized costs       "
+ ;
+endrec
+;
+(k1lrec)
+record k1lrec(18)
+set relk1a:0
+set co:0,?lid:0,partner:0
+endrec
+;
+(otdrec)
+record otdrec(80)
+set ?prop:0,adate:0,taxoil:0,gas:0,expoil:0,gptax:0,loe:0,depr:0
+set ovhd:0,cdep:0,oexp:0,bbl:0,cost:0,prdep:0,units:0,rr:0
+set propshar:0
+endrec
+;
+(otspnt)
+record otspnt (12)
+ set spoint:0
+ set d1num:0
+ set d2num:0
+endrec
+;
+(scrrec)
+/  2 copy scrrec records in zot  - they are different - now they are scr1rec&scr2rec
+(scr1re)
+record scrrec(24)
+set rel0:0
+set wpct:0,dbbl:0,d1:0,d2:0
+endrec
+;
+(otnrec)
+record otnrec(40)
+ set npart:0;     partner
+ set ?nprop:0;    p/l/w
+ set npdate:0;    production date mmyy
+ set ntier:0;     tier # (13-33)
+ set nrate:0;     tax rate
+ set nbbl:0;      barrels
+ set nwpamt:0;    wp amt per bbl
+ set namtwh:0;   wpt wh / units digit of nflag is now  0=ind rate, 1=integ
+ set nflag:0;     0=royalty, 1=w.i.
+endrec
+;
+(othrec)
+record othrec(26);  list
+ string arg(21)
+ set relotg:0
+endrec
+;
+(scr2re)
+record scrrec(10)
+ set ?pr:0,nm:0
+endrec
+;
+(otsrec)
+record otsrec(100)
+ set spart:0;      partner #
+ set ?sprop:0;     p/l/w
+ set spdate:0;     production date (mmyy)
+ set stier:0;      13,17,20,30-33
+ set sco:0;        company #
+ set purch:0;      purchaser #
+ set pint:0;       partner interest (8 dec.)
+ set paycd:0;      1=suspense, 2=nopay
+ set taxpct:0;     % actually withheld
+ set scode:0;      1-4, 12, 11-71 for exempt
+ set wrate:0;      liability %
+ set sbbl:0;       partner's share of bbl
+ set sprice:0;     removal price
+ set sbase:0;      adjusted base price
+ set pstax:0;      severance tax %
+ set swpamt:0;     partner's taxable windfall profit
+ set swptwh:0;      actual wpt withheld
+ set slib:0;       liability amt
+ set crate:0;      category for 6248 part iv
+ set sflag:0;      0=this is royalty detail, 1=w.i.
+ set s100pc:0;     100% barrels
+endrec
+;
+(ottrec)
+record ottrec(20)
+ set vtier:0
+ set vbase:0
+ set vsev:0
+ set vcol:0;      wpt column code (like scode in otsrec)
+endrec
+;
+(oturec)
+record oturec(30)
+ set vwint:0
+ set vrint:0
+ set vwrate:0
+ set vrrate:0
+ set vlib:0
+endrec
+;
+(otmmre)
+record otmmrec(96)
+set dpart:0;    partner #
+set ?did:0;     p/l/w
+set ddist:0;    0-9=wi,11-19=roy,21-29=orr,31-39=orr that is ind for wpt
+set recnu:0;    100% barrels for the transaction
+set dvou:0;     voucher # (not needed here)
+set dvdte:0;    voucher date (not needed here)
+set dacct:0;    co/maj/min, probably lid, rid, lsp, or rsp
+set dbbl:0;     partner's share of bbls
+set dnetv:0;    value of all oil on check before taxes
+set dptax:0;    all production taxes this transaction
+set dmis:0;     all misc. expenses this transaction
+set dvenet:0;   none of our business
+string ddesc(6);  character mm  yy production date
+set dtier:0;      entered tier number
+set descode:0;    description code #
+set wptven:0;     ???
+set wptrat:0;     rate at which wpt was actually w/h
+set wptamt:0;     amt of wpt w/h
+set dcode:0;       wpt col (either one or two, selected earlier)
+           ;       1-4 (rates), 12 (ind on roy and wi), 11-71 (exemptions)
+set  dperc:0;      partner's share in property (wi or roy, as appropriate)
+string type(1);    o or g
+set dgros:0;       total net value after taxes
+string posflg(1);  posting flag
+endrec
+;
+(otirec)
+record otirec(50)
+set jan:0,feb:0,mar:0,apr:0,may:0,jun:0,jul:0,aug:0,sep:0,oct:0,nov:0,dec:0
+string yr(1);  1 digit year that this applies to
+endrec
+;
+(otkrec)
+;
+record otkrec(50);   obsolete
+set ?tid:0,tvou:0,tvdte:0,tbpr:0,tbbl:0,tgross:0
+set trdiwpt:0; tier/distr/wptflg(xxyyzz)  if tier=0 use master
+string tpdate(6)
+set trwpt:0,trco:0
+endrec
+ 
+(otmrec)
+record otmrec(58)
+ set ?pro:0;  pppp/lllll/sss/ww
+ set voudte:0;  voucher date
+ set pdate:0;  production date
+ set dstcd:0; distribution code (yyxx; yy=variation distr. & xx=main distr.)
+ set bbl:0;   # of bbls
+ set price:0;  removal price
+ set otmtier:0; 11-15,20,30-33
+ set abase:0;  adj.  base
+ set sadj:0;   severance tax adjusted
+ set wpamt:0;  windfall profit amt.
+ set wptot:0; total wp this detail
+ set wptwh:0;  wpt amount withheld
+ set pnum:0;   purchaser number - is in vendee file
+ set conum:0;  company number
+ set tvouch:0;  voucher number
+endrec
+;
+(oic2re)
+record oic2rec(4)
+ set purchnum:0
+endrec
+;
+(otkrec)
+record otkrec(50)
+set    ?tid:0                         ;pros,lse,sublse,well (well is 0)
+set    tvou:0                         ;voucher no.
+set    tvdte:0                        ;voucher date
+set    tbpr:0                         ;base price
+set    tbbl:0                         ;barrels
+set    tgross:0                       ;netvalue+productiontax+misc.
+set    trdiwpt:0                      ;tier,distr,wpt flag in form xxyyzz
+string tpdate(6)
+set    trwpt:0                        ;wpt amount withheld
+set trco:0
+endrec
+;
+(othds )
+record head81(30)
+ set iff181:11187,iff281:11404,iff381:11680,iff481:11861
+endrec
+;
+record head82(30)
+ set iff182:12126,iff282:12410,iff382:12523,iff482:12736; inf factor table
+endrec
+ 
+record head83(30)
+  set iff183:12875,iff283:13001,iff383:13183,iff483:13263; 83
+endrec
+ 
+record head84(30)
+  set iff184:13364,iff284:13511,iff384:13625,iff484:13737; 1984
+endrec
+ 
+record head85(30)
+  set iff185:15398,iff285:0,iff385:0,iff485:0;  1985
+endrec
+ 
+record head86(30)
+ set iff186:0,iff286:0,iff386:0,iff486:0;   the end (we hope)
+endrec
+ 
+record head87(30)
+ set iff187:0,iff287:0,iff387:0,iff487:0;   the end (we hope)
+endrec
+record head88(30)
+  set iff188:0,iff288:0,iff388:0,iff488:0 ;   really the end (we hope)
+endrec
+ 
+record head380(30)
+ set iff1803:10195,iff2803:10422,iff3803:10649,iff4803:10924
+endrec
+ 
+record head381(30)
+ set iff1813:11187,iff2813:11404,iff3813:11680,iff4813:11861
+endrec
+ 
+record head382(30)
+ set iff1823:12683,iff2823:13045,iff3823:13230,iff4823:13522; inf factor table
+endrec
+ 
+record head383(30)
+  set iff1833:13737,iff2833:13941,iff3833:14207,iff4833:14365; 83
+endrec
+ 
+record head384(30)
+  set iff1843:14546,iff2843:14780,iff3843:14979,iff4843:15178; 1984
+endrec
+ 
+record head385(30)
+  set iff1853:15398,iff2853:0,iff3853:0,iff4853:0;  1985
+endrec
+ 
+record head386(30)
+ set iff1863:0,iff2863:0,iff3863:0,iff4863:0;   the end (we hope)
+endrec
+ 
+record head387(30)
+ set iff1873:0,iff2873:0,iff3873:0,iff4873:0;   1987
+endrec
+ 
+record head388(30)
+  set iff1883:0,iff2883:0,iff3883:0,iff4883:0 ; 1988 the end !!!!
+endrec
+(otlrec)
+record otlrec(12)
+set vwi:0,vroy:0,wptc:0
+endrec
+;
+(otvrec)
+record otvrec(131);  should fit into 1 sec with next record
+set code:1,lpartner:0
+set bblg:0,bbl2g:0,bbl3gh:0,bbl3gn:0,bbl3git:0
+set bblr:0,bbl2r:0,bbl3r:0,bbl4r:0;   royalty exemption
+set bbl70:0,lib70:0; tier 1
+set bbl50:0,lib50:0; tier 1
+set bbl60:0,lib60:0; tier 2
+set bbl30:0,lib30:0; tier 2
+set bbl3n:0,lib3n:0; tier 3 new
+set bbl3i:0,lib3i:0; tier 3 incr ter
+set bbl3h:0,lib3h:0; tier 3 heavy
+set totwh:0,totlib:0,xcrate:0
+set bblsexempt:0
+endrec
+;
+(otv2re)
+record otv2rec(100)
+set pcd:0
+set ppart:0
+set pur0:0,pur1:0,pur2:0,pur3:0,pur4:0,pur5:0;    put in with tput
+set pur6:0,pur7:0,pur8:0,pur9:0,pur10:0,pur11:0,pur12:0,pur13:0,pur14:0
+set pur15:0,pur16:0,pur17:0,pur18:0,pur19:0,pur20:0,pur21:0,pur22:0
+endrec
+;
+(otvvre)
+ 
+record otvvrec(131)
+ 
+set code1:1,lpartner1:0;  used in ot586b
+set bblg1:0,bbl2g1:0,bbl3gh1:0,bbl3gn1:0,bbl3git1:0
+set bblr1:0,bbl2r1:0,bbl3r1:0,bbl4r1:0;   royalty exemption
+set bbl701:0,lib701:0; tier 1
+set bbl501:0,lib501:0; tier 1
+set bbl601:0,lib601:0; tier 2
+set bbl301:0,lib301:0; tier 2
+set bbl3n1:0,lib3n1:0; tier 3 new
+set bbl3i1:0,lib3i1:0; tier 3 incr ter
+set bbl3h1:0,lib3h1:0; tier 3 heavy
+set totwh1:0,totlib1:0,xcrate1:0
+set bblsexempt1:0,col1:0
+endrec
+;
+(sbttl )
+record sbttl(28);                   this is a record so it can be cleared
+ set tbbl:0,tsprice:0,tsbase:0,tpstax:0,tswpamt:0,tslib:0,twptwh:0
+endrec
+;
+(vrecs )
+record vrec1(225)
+set x0:0
+string vpnam(30),fil(92),pid(11)
+endrec
+;
+record vrec2(225)
+set x2:0
+string vp2nam(30),fil1(92),p2id(11)
+endrec
+;
+record vrec3(225)
+set x3:0
+string vp3nam(30),fil2(92),p3id(11)
+endrec
+;
+END LIST
+.USE CRT3 FOR SYSRDR

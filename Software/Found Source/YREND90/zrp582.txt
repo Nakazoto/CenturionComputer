@@ -1,0 +1,1503 @@
+s.lst zrp582 1 crt3
+S.LST ZRP582 1 CRT3
+.JOB ZRP582
+/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
+LIST - 6.00
+title ' zrp582 (print w2/1099 forms) '
+system(exp=d)
+;
+define m00:'rp582 (print w2 / 1099 forms) 12/04/90'
+;
+;notes:
+;     10-25-76...prototype work began...klf
+;     10-28-76...initial release (zpr680)...klf
+;     12-06-76...revised for "qualified plan" question...klf
+;     04-12-77...prototype conversion of pr680 to rp582...klf
+;     11-23-77...initial release (rp582)...klf
+;     12-28-77...corrected city/state wage limiting...klf
+;
+;     12-02-78...mod for new style w-2's...jwb
+;     12-27-78...corrected final sub-total print..jwb
+;     12-29-78...corrected meals being added to fica wages...jwb
+;     01-23-79...removed one line feed in 1099 print routine...jwb
+;     08-10-79...mod for new style w-2's containing advance eic payment
+;                data fields...ok
+;     08-31-79...modified for vsi type master file, newer w-2's
+;                with mixed english and metric measurements...ok
+;     09-20-79...added jwb's form alignment option,correct format for style,
+;                replace 1099-misc with 1099-nec, made tiny improvement to
+;                alignment print...ok
+;     10-08-79...removed vsi to make program compatible with released version...ok
+;     11-15-79...modified program to incorporate the format and form type
+;                option for the 2 wide w-2's...rle
+;     12-20-79...modified program to print 2 styles of single wide forms and
+;                added changes to allow for proper totaling when re-starting,
+;                corrected vertical spacing on single wide forms...jwb
+;     01-22-80...mod for more correct calculation of fica wages, corrected typo
+;                after b0130 which had a "9" instead of a right parenthesis...ok
+;     09-24-80...completely revised program for single style w2...jg
+;     11-26-80...corrected firm address print on single wide w-2's...dle
+;     01-09-81...modified for correct printing of w-2's without social
+;                security number following a program restart...jg
+;     01-13-81...corrected to print proper tips amount in last subtotal
+;               prior to grand total w-2...dle
+;    08/20/82...correction for flag 2 if meals are not to be added to
+;               wages......pbn454 ...jh
+;      12/08/82...bypass employees with zero earnings when printing w2's..pbl565...jh
+ ;   01/27/83...changed employers state number to accept 10 characters...lmv
+;
+;  02/18/83...garbage on w2 form pbl620...jh
+;  11/16/83...modified 1099 print formatand deleted pension box
+; 1/05/87...format change for 1-wide w2's 1986...clv ii
+;    01/30/88...cafe. plan (fica wages include 401k deductions)..ns
+;  12/19/88...updating ficamax, deductable allowance, fica %...clv ii
+;  01/19/89 ..adding an 'x' for deferred compensation (401k)...clv ii
+;  12/04/90...changing format for 2 w2's on a page .and changing to exp=d..clvii
+ 
+ 
+;==============================================================================
+;                      p r o g r a m   l i n k a g e
+;==============================================================================
+;
+entrypoint crt
+;
+external aget,agkey,ankey,cget,chr,clrec,f90,gdate,getkey,gupsi,hicore,ioerr
+external absval,bltrun,nosign,tget
+external lfeed,msg,msgn,newkey,nget,pupsi,sget,stat,xchar,ynget
+;
+;==============================================================================
+;                                f i l e s
+;==============================================================================
+;
+file crt:    sysipt
+;
+file prt:    syslst, class=1, seq
+;
+file master: sys0, class=2, rnd, recsiz=395, key=mstkey
+;
+file tagfil: sys1, class=2, seq, filtyp=b, lsr=4, buffer=400,buf1
+     buffer  buf1  (400)
+;
+file zipfil: sys2, class=2, random, recsiz=20, key=zipkey
+ set zipkey: 0
+;
+file taxfil: sys3, class=2, random, recsiz=395, key=taxkey
+ set taxkey: 0
+;
+;==============================================================================
+;                               r e c o r d s
+;==============================================================================
+;
+record msthdr (395)
+;
+;      record is 395 bytes, but only first 270 are required here
+;
+set    prhcon: 0
+define firm:   '.......... new firm ..........'
+define faddr:  '..............................'
+define fcity:  '..............................'
+set    paswrd: 0              ; security password number
+set    cmpwrd: 0              ; comptroller's password number
+set    fedtax: 0              ; federal tax reporting number
+set    ficmax: 4800000        ; fica max wages ($48,000.00)
+set    ficfac: 7510           ; fica factor (7.51 %)
+set    depalw: 200000         ; federal dependent allowance ($2000.00)
+define usepas: 'n'            ; does this file require password     (yes/no)
+define passok: 'n'            ; is password ok to continue          (yes/no)
+define qtrdun: 'y'            ; have 941's been printed             (yes/no)
+define yrdone: 'y'            ; have w-2's been printed             (yes/no)
+define psdone: 'y'            ; has profit sharing report been run  (yes/no)
+define vopt:   'n'            ; variable vacation accrual option
+define sopt:   'n'            ; variable sick leave accrual option
+define vodopt: 'n'            ; vacation over-draft option          (yes/no)
+define sodopt: 'n'            ; sick leave over-draft option        (yes/no)
+define prtckn: 'y'            ; flag printing check numbers         (yes/no)
+define prtcad: 'n'            ; flag to print client address on checks (y/n)
+define prtead: 'y'            ; flag to print employee address on checks
+define delemp: 'n'            ; flag to purge file at end of year   (yes/no)
+define ctropt: 'n'            ; flag for using countered deduction  (yes/no)
+define mdeda:  'misc a  '     ; message string for reg deduction a
+define mdedb:  'misc b  '     ; message string for reg deduction b
+define mdedc:  'misc c  '     ; message string for reg deduction c
+define mdedca: 'c dedn a'     ; message string for cntr deduction a
+define mdedcb: 'c dedn b'     ; message string for cntr deduction b
+define mdedcc: 'c dedn c'     ; message string for cntr deduction c
+define mdedcd: 'c dedn d'     ; message string for cntr deduction d
+set    lpcknm: 0              ; last paycheck number used
+set    lpdat:  0              ; date last pay run
+set    prfshr: 0              ; profit-sharing year begins (mm), 0=not used
+set    comlim: 0              ; commission pay limit preset to $0.00
+set    dskdhr: 4000           ; default scheduled hours - 40.00
+set    declas: 1              ; default employee classification code
+set    dpfac:  52             ; default pay factor
+set    drate:  2500           ; default minimum pay rate
+set    otbhr1: 0              ; overtime breakpoint 1 (xxx.xx hours)
+set    otbhr2: 0              ; overtime breakpoint 2 (xxx.xx hours)
+set    otbhr3: 0              ; overtime breakpoint 3 (xxx.xx hours)
+direct
+otcod1 dw 3                     overtime breakpoint 1 transaction code
+otcod2 dw 3                     overtime breakpoint 2 transaction code
+otcod3 dw 3                     overtime breakpoint 3 transaction code
+mtop   dw 0                     meals/tips (0=not used,1=taxable,2=convenience)
+cpl
+endrec
+;
+;
+record emprec (395)     ; record is 395 bytes long but only 391 used
+set    empl:   0
+string name   (25)
+string addr   (25)
+set    zipcod: 0
+string citcod (3)             ; city code (ccc)
+string cntcod (3)             ; county (parish) code (ccc)
+string stacod (2)             ; state code (ss)
+direct
+fdtx   dw      0                number of federal tax exemptions
+mast   dw      0                marital status (1=single, 2=married)
+pfac   dw      0                pay factor (12=monthly, 52=weekly)
+sfac   dw      0                sick leave accrual straight rate
+vfac   dw      0                vacation leave accrual straight rate
+w2s    dw      0                0-8 gets w2, 9 gets 1099
+cpl
+set    ssno:   0              ; social security number           (xxx-xx-xxxx)
+set    eclass: 0              ; employee class
+set    dept:   0              ; employee home job/department       (jjjjjjddd)
+set    rate:   0              ; xx.xxx hourly - xxxx.xx salary
+set    skedhr: 0              ; scheduled work hours                   (xx.xx)
+set    vac:    0              ; accrued vacation hours                (xxx.xx)
+set    sick:   0              ; accrued sick leave hours              (xxx.xx)
+set    hire:   0              ; date hired                            (mmddyy)
+set    born:   0              ; date born                             (mmddyy)
+set    raise:  0              ; date last raise                       (mmddyy)
+set    tdate:  0              ; termination date                      (mmddyy)
+set    draw:   0              ; draw ammount (for commission/draw employees)
+set    combal: 0              ; commission/draw balance (credit or debit)
+set    advbal: 0              ; expense advance balance
+set    gross:  0              ; ytd gross earnings
+set    fica:   0              ; ytd fica deductions
+set    retfnd: 0              ; ytd retirement fund
+set    fwt:    0              ; ytd fwt deductions
+set    swt:    0              ; ytd swt deductions
+set    meals:  0              ; ytd meals
+set    tips:   0              ; ytd tips
+set    net:    0              ; ytd net pay
+set    other:  0              ; ytd other (non-taxable) income
+set    ychcks: 0              ; ytd total checks
+set    regpay: 0              ; ytd regular earnings
+set    pgross: 0              ; epq gross earnings
+set    pfica:  0              ; epq fica deductions
+set    pretfn: 0              ; epq retirement fund
+set    pfwt:   0              ; epq fwt deductions
+set    pswt:   0              ; epq swt deductions
+set    pmeals: 0              ; epq meals
+set    ptips:  0              ; epq tips
+set    pnet:   0              ; epq net pay
+set    pother: 0              ; epq other (non-taxable) income
+set    mmeals: 0              ; mtd meals reported
+set    mtips:  0              ; mtd tips reported
+;
+;                             special deductions
+;
+set    arded:  0              ; accounts rec deduction
+set    arbal:  0              ; a/r current balance
+set    pl2net: 0              ; plus to net deduction
+set    svbnd:  0              ; savings bond deduction amount
+set    bndbal: 0              ; total dedn towards bonds not yet purchased
+;
+;                             regular deductions
+;
+set    afwt:   0              ; additional fwt amount
+set    lfins:  0              ; life insurance deduction
+set    mdins:  0              ; medical insurance deduction
+set    trust:  0              ; trust fund deduction
+set    misca:  0              ; misc deduction a
+set    miscb:  0              ; misc deduction b
+set    miscc:  0              ; misc deduction c
+;
+;                             countered deductions
+;
+set    cdedna: 0              ; countered deduction amount a
+set    cdednb: 0              ; countered deduction amount b
+set    cdednc: 0              ; countered deduction amount c
+set    cdednd: 0              ; countered deduction amount d
+direct
+actr   dw      0                deduction counter a
+bctr   dw      0                deduction counter b
+cctr   dw      0                deduction counter c
+dctr   dw      0                deduction counter d
+cpl
+;
+;                             optional deduction totals
+;
+set    yarded: 0              ; ytd deduction (a/r)
+set    ypl2nt: 0              ; ytd deduction (plus to net)
+set    ppl2nt: 0              ; epq deduction (plus to net)
+set    mpl2nt: 0              ; mtd deduction (plus to net)
+set    ysvbnd: 0              ; ytd deduction (savings bonds)
+set    ylfins: 0              ; ytd deduction (life insurance)
+set    ymdins: 0              ; ytd deduction (medical insurance)
+set    ytrust: 0              ; ytd deduction (trust fund)
+set    ptrust: 0              ; epq deduction (trust fund)
+set    ymisca: 0              ; ytd deduction (misc a)
+set    ymiscb: 0              ; ytd deduction (misc b)
+set    ymiscc: 0              ; ytd deduction (misc c)
+set    ycdeda: 0              ; ytd countered deduction a
+set    ycdedb: 0              ; ytd countered deduction b
+set    ycdedc: 0              ; ytd countered deduction c
+set    ycdedd: 0              ; ytd countered deduction d
+set    ygtime: 0              ; ytd misc one-time deductions from gross
+set    yntime: 0              ; ytd misc one-time deductions from net
+;
+;                             other info
+;
+set    shrcon: 0              ; controls shares
+set    retrat: 0              ; retirement fund deduction percentage
+set    eicflg: 0              ; earned income credit flag
+set    yeic:   0              ; ytd earned income credit
+set    peic:   0              ; epq earned income credit
+endrec
+;
+record tagrec (8)
+set    tag:    0
+set    mstkey: 0
+endrec
+;
+record ziprec (20)
+string city   (19)
+endrec
+;
+record taxhdr (200)
+;
+;      record is 395 bytes, but only first 200 are required here
+;
+set    taxnul: 0
+define a01ref: '   '          ; tax area reference code
+define a02ref: '   '
+define a03ref: '   '
+define a04ref: '   '
+define a05ref: '   '
+define a06ref: '   '
+define a07ref: '   '
+define a08ref: '   '
+define a09ref: '   '
+define a10ref: '   '
+define a11ref: '   '
+define a12ref: '   '
+define a13ref: '   '
+define a14ref: '   '
+define a15ref: '   '
+;
+define a01nam: '        '     ; tax area name
+define a02nam: '        '
+define a03nam: '        '
+define a04nam: '        '
+define a05nam: '        '
+define a06nam: '        '
+define a07nam: '        '
+define a08nam: '        '
+define a09nam: '        '
+define a10nam: '        '
+define a11nam: '        '
+define a12nam: '        '
+define a13nam: '        '
+define a14nam: '        '
+define a15nam: '        '
+;
+endrec
+;
+record taxrec (260)
+;
+;      record is 395 bytes, but only first 260 are required here
+;
+set    txempl:0               ; employee number
+set    a01ygr:0               ; area ytd gross pay
+set    a02ygr:0
+set    a03ygr:0
+set    a04ygr:0
+set    a05ygr:0
+set    a06ygr:0
+set    a07ygr:0
+set    a08ygr:0
+set    a09ygr:0
+set    a10ygr:0
+set    a11ygr:0
+set    a12ygr:0
+set    a13ygr:0
+set    a14ygr:0
+set    a15ygr:0
+;
+set    a01pgr:0               ; area epq gross pay
+set    a02pgr:0
+set    a03pgr:0
+set    a04pgr:0
+set    a05pgr:0
+set    a06pgr:0
+set    a07pgr:0
+set    a08pgr:0
+set    a09pgr:0
+set    a10pgr:0
+set    a11pgr:0
+set    a12pgr:0
+set    a13pgr:0
+set    a14pgr:0
+set    a15pgr:0
+;
+set    a01mgr:0               ; area mtd gross pay
+set    a02mgr:0
+set    a03mgr:0
+set    a04mgr:0
+set    a05mgr:0
+set    a06mgr:0
+set    a07mgr:0
+set    a08mgr:0
+set    a09mgr:0
+set    a10mgr:0
+set    a11mgr:0
+set    a12mgr:0
+set    a13mgr:0
+set    a14mgr:0
+set    a15mgr:0
+;
+set    a01ytx:0               ; area ytd taxes paid
+set    a02ytx:0
+set    a03ytx:0
+set    a04ytx:0
+set    a05ytx:0
+set    a06ytx:0
+set    a07ytx:0
+set    a08ytx:0
+set    a09ytx:0
+set    a10ytx:0
+set    a11ytx:0
+set    a12ytx:0
+set    a13ytx:0
+set    a14ytx:0
+set    a15ytx:0
+endrec
+;
+;==============================================================================
+;                                l o g i c
+;==============================================================================
+   ;
+entry
+   ;
+   open io (crt, master, tagfil, zipfil)
+   open output prt
+   ;
+   readb (tagfil, tagrec)
+   go to (q0800, ioerr) on status
+   if (tag .ne. 0) go to q0800
+   ;
+a0010:
+   ;
+   hold (master)
+   if (status .ne. 0) go to a0010
+   ;
+   readb (master, msthdr)
+   call stat (1)
+   ;
+   'passok' = 'n';                    force door closed
+  'statax' = 'null'     ;force statax to be clean..pbl620...jh
+   ;
+   writeb (master, msthdr)
+   call stat (2)
+   ;
+   ifstring (usepas .eq. n) go to a0050; skip no security
+   if (paswrd .eq. 0) go to a0050
+   ;
+   call msg (m001);                   enter password
+   read (crt, f10) sumnum
+   ;
+   if (sumnum .eq. paswrd) go to a0050; skip password ok
+   ;
+   call msg (access)
+   ;
+a0020:
+   ;
+   curp (crt, 1, 23)
+   call msg (beep)
+   go to a0020
+   ;
+a0050:
+   ;
+   call gupsi (taxopt);               upsi flag for tax file
+   ;
+   if (taxopt .eq. 0) go to a0090;    skip no tax file
+   ;
+   open io taxfil
+   ;
+   call getkey (taxfil, zero)
+   go to (q0700, ioerr) on status
+   ;
+   readb (taxfil, taxhdr)
+   call stat (1)
+   ;
+a0090:
+   ;
+   call edit (fedtax, ftxbuf, mask01)
+   direct
+   lda/ mtop
+   sta/ mltpop+2
+   cpl
+   ;
+a0100:
+   ;
+   call msg (eject)
+   call msg (m00)
+   call msg (null)
+   ;
+   write (crt, f01) m101, firm;       show the colors
+   write (crt, f01) m102, faddr
+   write (crt, f01) m103, fcity
+   ;
+   call lfeed (crt, 2)
+   ;
+   call msg (m01);                    display option list
+   write (crt, f02) m02
+   write (crt, f02) m03
+   write (crt, f02) m09
+   ;
+a0110:
+   ;
+   read (crt, f10) option
+   call absval (option)
+   if (option .eq. 0) go to a0100;    0 = redisplay screen
+   if (option .eq. 9) go to q0900;    9 = end of program
+   go to (a0115, a0115,  a0120) on option
+   ;
+   call msg (m10);                    else error
+   go to a0110;                       try again
+;
+a0115:
+   ;
+a0120:
+   ;
+   call ynget (m30);                  restart?
+   if (status .eq. 0) go to a0130;    skip if not
+   ;
+   call cget (m31, f03, lempl);       enter last employee printed (restart-1)
+   call absval (lempl)
+   ;
+a0130:
+   ;
+   if (taxopt .eq. 0) go to a0900;    bypass non-federal setup on single-state
+   ;
+   go to (a0200, a0200, a0910) on option
+   ;
+a0200:
+   ;
+taxflg=0;  presume no state or city taxes
+   call ynget (m11);                  are state taxes being reported?
+   if (status .eq. 0) go to a0210;    skip if no state
+   ;
+taxflg=1;  set flag to print state tax fields
+   ;
+   call cget (m12, fc2, refcod);      else get state reference code
+   ;
+   call valtax;                       validate and setup state index
+   if (sumnum .lt. 0) go to a0200;    skip unvalid reference
+   ;
+   'staref' = 'refcod';               save ref for m/t home check
+staind=sumnum;  save state index
+   call tget (stanam, staind, a01nam, 9); get state name to print
+   ;
+   call cget (m13, f11, statax);      state id
+   ;
+stamax=nines;  presuppose all reportable
+   call ynget (m15);                  are they?
+   go to (a0205) on status
+   call cget (m16, f13, stamax)
+   call absval (stamax)
+   ;
+a0205:
+   ;
+   if (mltpop .eq. 0) go to a0209;    skip if no meals/tips
+stmflg=sttflg=0 ; preset to zero
+   ;
+   call ynget (m17);                   report state meals?
+if(status.eq.1)stmflg=1 ; set it to yes.
+   ;
+   call ynget (m18);                   report state tips?
+if(status.eq.1)sttflg=1; set it to yes
+   ;
+a0209:
+   ;
+   ;
+a0210:
+   ;
+   ;
+   call ynget (m21);                  are city taxes being reported?
+   if (status .eq. 0) go to a0900;    skip if no city
+   ;
+   call cget (m22, fc3, refcod);      get city reference code
+   ;
+   call valtax;                       validate and setup city reference code
+   if (sumnum .lt. 0) go to a0210;    skip unvalid ref code
+   ;
+   'citref' = 'refcod';               save ref for m/t home check
+citind=sumnum;    save city index
+   call tget (citnam, citind, a01nam, 9); get city name to print
+   ;
+   call cget (m23, f11, cittax);      city id
+   ;
+citmax=nines ; presuppose all taxable
+   call ynget (m15)
+   go to (a0215) on status
+   call cget (m16, f13, citmax)
+   call absval (citmax)
+   ;
+a0215:
+   ;
+   if (mltpop .eq. 0) go to a0219;    skip if no meals/tips
+ctmflg=cttflg=0 ; preset to no
+   ;
+   call ynget (m17);                   report city meals?
+if(status.eq.1)ctmflg=1 ; set to yes
+   ;
+   call ynget (m18);                   report city tip?
+if(status.eq.1)cttflg=1 ; set to yes
+   ;
+a0219:
+   ;
+   taxflg = taxflg + 2;               now set flag for city work
+   ;
+   ;
+a0900:
+   ;
+   'plan'='null'                           ;qualified pension plan
+   ;
+a0910:
+   ;
+   call ynget (m37);                  plus to net also?
+   direct
+   lda/ status+2
+   sta/ pnopt+2
+   cpl
+   ;
+   if (taxopt .eq. 0) go to a0920;    skip if single-state
+   ;
+   call ynget (m38);                  print for federal reporting?
+   ;
+   direct
+   lda/ status+2
+   sta/ prtall+2
+   cpl
+   ;
+a0920:
+;  09-14-79...all the code from this point until a9000 added on...ok
+   ;
+   call ynget (m50);                  print alignnment guide?
+   if (status .eq. 0) go to a8000
+   count = 0
+   go to (a1000, a2000, a3000) on option
+   ;
+a1000:
+   ;
+   ;
+a1100:                              ;alignment guide for 1 wide w2's
+   call lfeed(prt,5)
+write(prt,f32a)xes,x,null,x
+   write(prt,f31a)xes
+write(prt,f35a)xes,nines,nines
+   call lfeed(prt,1)
+   write(prt,f33a)nines,nines
+   call lfeed(prt,1)
+write(prt,f37a)xes,xes,nines,nines
+call lfeed(prt,1)
+write(prt,f37a)xes,xes,nines,nines
+call lfeed(prt,1)
+   write(prt,f35a)xes,nines,nines
+call lfeed(prt,1)
+   write(prt,f35a)xes,nines,nines
+   write(prt,f35a)xes,nines,nines
+   write(prt,f35a)xes,nines,nines
+   call lfeed(prt,4)
+   write(prt,f36a)nines,nines,xes,nines,nines,xes
+   call lfeed(prt,1)
+   write(prt,f36a)nines,nines,xes,nines,nines,xes
+   call lfeed(prt,6); chng 2 to 6 for w2 format above 11/28/90..clv ii
+   ;
+   incr count
+   if (count .lt. 2) go to a1100
+   count = 0
+   call ynget (m52);                  again?
+   if (status .eq. 0) go to a8000
+   go to a1100
+   ;
+   ;
+a2000:
+   ;
+a2010:    ;alignment guide for 2 wide w2
+   call lfeed(prt,4)
+   write(prt,f30b)xes,xes,xes,xes,xes,xes
+   write(prt,f31b)xes,xes
+   write(prt,f32bb)xes,x,xes,x
+   call lfeed(prt,1)
+   write(prt,f33b)nines,nines
+   call lfeed(prt,1)
+   write(prt,f34b)xes,nines,nines,nines,xes,nines,nines,nines
+   call lfeed(prt,1)
+   write(prt,f35b)xes,nines,nines,xes,nines,nines
+   call lfeed(prt,1)
+   write(prt,f31b)xes,xes
+   write(prt,f31b)xes,xes
+   write(prt,f36b)nines,nines,xes,nines,nines,xes
+   call lfeed(prt,1)
+   write(prt,f36b)nines,nines,xes,nines,nines,xes
+   call lfeed(prt,3)
+   incr count
+   if (count .lt. 3) go to a2010
+   count = 0
+   call ynget (m52);                  again?
+   if (status .eq. 0) go to a8000
+   go to a2010
+   ;
+   ;
+   ;
+a3000:
+   call lfeed(prt,3)
+   write(prt,f41)xes
+   write(prt,f41)xes
+   write(prt,f41)xes
+   write(prt,f41)xes
+   call lfeed(prt,2)
+   write(prt,f43)xes
+   call lfeed(prt,2)
+   write(prt,f46)nines
+   write(prt,f41)xes
+   write(prt,f41)xes
+   write(prt,f41)xes
+   call lfeed(prt,6)
+   ;
+   call ynget (m52);                  again?
+   if (status .eq. 1) go to a3000;    let's have another
+a8000:
+    'zeropt'='n'           ;12/08/82...jh
+    call ynget(m53)        ;print zero balances...12/08/82...jh
+    if(status.eq.0)go to a9000         ;this means no....jh
+    'zeropt'='y'           ;this means yes.....jh
+   ;
+a9000:
+   ;
+   call ynget (m39);                  ready to print?
+   if (status .eq. 0) go to a0100;    0 = no = restart screen
+   ;
+;==============================================================================
+;            i n p u t   a n d   w - 2   c a l c u l a t i o n
+;==============================================================================
+   ;
+b0100:
+   ;
+   readb (tagfil, tagrec)
+   go to (d0110, ioerr) on status
+   if (tag. le. 0) goto b0100 ; 12-02-78...jwb
+   ;
+   readb (master, emprec)
+   call stat (1)
+   ifstring(zeropt .eq. y)go to b0105     ;yes print zero bal...12/08/82.jh
+   gropay=0
+   gropay=fwt+gross+tips+fica               ;no gross no tips no meals..12/08/82
+   if(gropay .eq. 0)go to b0100          ;yes s get next guy..12/08/82 jh
+b0105:
+   ;
+   call edit (ssno, ssnum, mask02);   set empl id
+   ;
+   direct
+   lda/ w2s
+   sta/ w2flag+2
+   cpl
+   ;
+   'city' = 'null'
+   call getkey (zipfil, zipcod)
+   go to (b0110, ioerr) on status
+   ;
+   readb (zipfil, ziprec)
+   call stat (1)
+b0110:
+   ;
+   ;
+   if (option .ge. 3) go to c0100;    skip if printing 1099's
+   ;
+   if (w2flag .eq. 9) go to b0100;    loop if empl doesn't get w2
+   ;
+   if (pass. ne. 0) goto b0115 ; 12-02-78...jwb
+   if (ssno. ne. 0) goto b0117 ; 12-02-78...jwb
+   nossno=nossno+1 ; 12-02-78...jwb
+   goto b0100 ; 12-02-78...jwb
+   ;
+b0115: ; 12-02-78...jwb
+   ;
+   if (ssno. eq. 0) goto b0117 ; 12-02-78...jwb
+   goto b0100 ; 12-02-78...jwb
+   ;
+b0117: ; 12-02-78...jwb
+   ;
+cwages=swages=0 ; was call clr...clv ii
+   if (taxopt .eq. 0) go to b0130
+   if (taxflg .eq. 0) go to b0130
+   ;
+   call getkey (taxfil, empl)
+   go to (q0800, ioerr) on status
+   ;
+   readb (taxfil, taxrec)
+   call stat (1)
+   ;
+   if (taxflg .eq. 2) go to b0120
+   ;
+   call tget (swages, staind, a01ygr, 4); get ytd state wages
+   call tget (axxswt, staind, a01ytx, 4); get ytd state taxes
+   ;
+   go to (b0130) on taxflg
+   ;
+b0120:
+   ;
+   call tget (cwages, citind, a01ygr, 4); get ytd city wages
+   call tget (axxcwt, citind, a01ytx, 4); get ytd city taxes
+   ;
+b0130:
+   ;
+wages=gross ; calculate total annual wages
+fwages=0 ; presume no taxable wages
+   ;
+   if (mltpop .eq. 0) go to b0140;    skip if meals/tips not in effect
+   wages = gross + tips
+   ;
+   if (taxopt .eq. 0) go to b0135;    skip non-federals on single-state
+   if (cttflg .eq. 0) go to b0133;    skip not report city tips
+   ;
+   ifstring (citcod .ne. citref) go to b0133
+   cwages = cwages + tips
+   ;
+b0133:
+   ;
+   if (sttflg .eq. 0) go to b0135;    skip not report state tips
+   ifstring (stacod .ne. staref) go to b0135
+   swages = swages + tips
+   ;
+b0135:
+   ;
+   if (mltpop .eq. 2) go to b0140;    skip if no taxable meals
+   wages = wages + meals
+   ;
+   if (taxopt .eq. 0) go to b0140;    skip non-federals on single-state
+   if (ctmflg .eq. 0) go to b0137;    skip not report city meals
+   ;
+   ifstring (citcod .ne. citref) go to b0137
+   cwages = cwages + meals
+   ;
+b0137:
+   ;
+   if (stmflg .eq. 0) go to b0140;    skip not report state meals
+   ifstring (stacod .ne. staref) go to b0140
+   swages = swages + meals
+   ;
+b0140:
+   ;
+fwages=gross; calculate fica taxable annual wages
+   fwages = fwages + ylfins;   401k  is fica but not income taxable
+   if (mltpop. eq. 2) goto b0145 ; don't add meals to fica wages  pbn454...jh
+   fwages=fwages+meals ; add em in
+   ;
+b0145: ; 01-22-80...added next two paragraphs of code (b0145 until b0145b)...ok
+   ;
+   if (mltpop .eq. 0) go to b0145b
+   if (fwages .ge. ficmax) go to b0145a
+   sumnum = fwages + tips           ; see how much tips affect total
+   if (sumnum .le. ficmax) go to b0150 ; leave all numbers alone, they're fine
+   tips = ficmax - fwages           ; calculate maximum reportable tips
+   go to b0150
+   ;
+b0145a:
+   ;
+tips=zero ; no reportable fica tips because fwages reached ficmax
+b0145b:
+   ;
+   if (fwages .le. ficmax) go to b0150
+fwages=ficmax
+   ;
+b0150:
+   ;
+   if (pnopt .eq. 0) go to b0160;     skip to hide plus-to-net       (12-28-77)
+   ;
+   wages = wages + ypl2nt;            else add to ytd wages
+   ;
+   if (taxopt .eq. 0) go to b0190
+   ifstring (citcod .ne. citref) go to b0155; skip not home city
+   ;
+   cwages = cwages + ypl2nt
+   ;
+b0155:
+   ;
+   ifstring (stacod .ne. staref) go to b0160; skip not home state
+   ;
+   swages = swages + ypl2nt
+   ;
+b0160:
+   ;
+   if (taxopt .eq. 0) go to b0190;    no wage maxing if single state (12-28-77)
+   ;
+   if (cwages .le. citmax) go to b0165
+cwages=citmax
+   ;
+b0165:
+   ;
+   if (swages .le. stamax) go to b0190
+swages=stamax
+   ;
+b0190:
+   ;
+   if (taxopt .eq. 0) go to b0200;    single-state does all
+   if (prtall .eq. 1) go to b0200;    multi-area ordered to print all
+   ;
+   if (swages .gt. 0) go to b0200;    multi-area supplemental print
+   if (cwages .gt. 0) go to b0200
+   if (axxswt .gt. 0) go to b0200
+   if (axxcwt .le. 0) go to b0100;    no print supplemental if city/state $0.00
+   ;
+b0200:
+   ;
+   if (empl .le. lempl) call update;  total up to restart
+   if (empl. le. lempl) goto b0100
+   totemp=totemp+1
+   ?fwt1=?fwt1+fwt
+   ?wage1=?wage1+wages
+   ?fica1=?fica1+fica
+   ?fwag1=?fwag1+fwages
+   ?eic1=?eic1+yeic
+   ;
+   go to (b0205, b0305) on option
+   ;
+;==============================================================================
+;                   p r i n t   o n e - w i d e   w - 2
+;==============================================================================
+   ;
+;
+b0205:
+   call lfeed(prt,5)
+if(ylfins.gt.0)write(prt,f32a)firm,null,xes ; deferred comp box
+if(ylfins.le.0)write(prt,f31a)firm
+;
+   write(prt,f31a)faddr
+   write(prt,f35a)fcity,zero,yeic
+   call lfeed(prt,1)
+   write(prt,f33a)fwt,wages
+   call lfeed(prt,1)
+if(taxflg.eq.2)write(prt,f37a)[ftxbuf+1],null,fica,fwages
+if(taxflg.ne.2)write(prt,f37a)[ftxbuf+1],statax,fica,fwages
+call lfeed(prt,1)
+if(fwages.ge.ficmax) tips=0  ; dont report tips over maximum
+   write(prt,f37a)[ssnum+1],null,tips
+   call lfeed(prt,1)
+   ?fwt=?fwt+fwt
+   ?wages=?wages+wages
+   ?fica=?fica+fica
+   ?fwage=?fwage+fwages
+   ?eic=?eic+yeic
+   write(prt,f35a)name;     depend
+   ?tips=?tips+tips
+   ?tips1=?tips1+tips
+   ?tips2=?tips2+tips
+call lfeed(prt,2)
+if(ylfins.gt.0)write(prt,f35aa)addr,'d-',ylfins
+if(ylfins.le.0)write(prt,f35a)addr
+   write(prt,f31c)city,zipcod
+call lfeed(prt,4); 11/28/90...see note ..clv ii
+   write(prt,f36a)axxswt,swages,stanam,axxcwt,cwages,citnam
+   ?swt1=?swt1+axxswt
+   ?swag1=?swag1+swages
+   ?swt2=?swt2+axxswt
+   ?swag2=?swag2+swages
+;
+   ?cwt1=?cwt1+axxcwt
+   ?cwag1=?cwag1+cwages
+   ?cwt2=?cwt2+axxcwt
+   ?cwag2=?cwag2+cwages
+;
+b0290:
+   call lfeed(prt,8)     ;skip to top of form..chng 2 to 8 ..11/28/90..clv ii
+;
+b0300:
+   sempl=sempl+1
+   templ=templ+1
+   if(sempl.lt.41)goto b0100
+   call lfeed(prt,5)
+   write(prt,f32a)firm,xes
+   write(prt,f31a)faddr
+   write(prt,f35t)fcity,zero,?eic
+   call lfeed(prt,1)
+   write(prt,f34t)?fwt,?wages
+   call lfeed(prt,1)
+   write(prt,f37t)[ftxbuf+1],null,?fica,?fwage
+   call lfeed(prt,1)
+    write(prt,f37t)null,null,?tips
+    call lfeed(prt,1)
+    ;write(prt,f35a)null,?depend
+    call lfeed(prt,19)
+   sempl=0
+   ?fwt=?wages=?fica=?fwage=?tips=?eic=0
+   goto b0100
+;
+;          ===========================================
+;            print two wide w2's
+;          ===========================================
+;
+b0305:
+   goto(b0310,b0320,b0310)on taxflg
+   goto b0320
+;
+b0310:
+   call lfeed(prt,4)
+   write(prt,f30b)firm,[ftxbuf+1],statax,firm,[ftxbuf+1],statax
+   goto b0330
+;
+b0320:
+   call lfeed(prt,4)
+   write(prt,f30b)firm,[ftxbuf+1],null,firm,[ftxbuf+1],null
+;
+b0330:
+   write(prt,f31b)faddr,faddr
+if(lfins.ne.0)goto b0330aa ; 401k -need an 'x' in deferred comp..clv ii
+write(prt,f32b)fcity,null,null,fcity,null,null
+goto b0330ab
+b0330aa:
+   write(prt,f32bb)fcity,x,fcity,x
+b0330ab:
+   call lfeed(prt,1)
+   write(prt,f33b)yeic,yeic
+   call lfeed(prt,1)
+   write(prt,f34b)[ssnum+1],fwt,wages,fica,ssnum+1,fwt,wages,fica
+   call lfeed(prt,1)
+   ?fwt=?fwt+fwt
+   ?wages=?wages+wages
+   ?fica=?fica+fica
+   ?fwage=?fwage+fwages
+   ?eic=?eic+yeic
+   if(fwages.ge.ficmax)goto b0340         ;don't report tips over maximum
+   write(prt,f35b)name,fwages,tips,name,fwages,tips
+   ?tips=?tips+tips
+   ?tips1=?tips1+tips
+   ?tips2=?tips2+tips
+   goto b0350
+;
+b0340:
+   write(prt,f35b)name,fwages,zero,name,fwages,zero
+;
+b0350:
+   call lfeed(prt,1)
+   write(prt,f31b)addr,addr
+   write(prt,f31d)city,zipcod,city,zipcod
+   if(taxflg.eq.1)goto b0360               ;state taxes
+   if(taxflg.eq.3)goto b0360               ;state taxes
+   call lfeed(prt,2)
+   goto b0370                              ;check local taxes
+;
+b0360:
+call lfeed(prt,1) ; gina
+   write(prt,f36b)axxswt,swages,stanam,axxswt,swages,stanam
+   ?swt1=?swt1+axxswt
+   ?swag1=?swag1+swages
+   ?swt2=?swt2+axxswt
+   ?swag2=?swag2+swages
+;
+b0370:
+   if(taxflg.gt.1)goto b0380               ;local taxes
+   call lfeed(prt,1)                       ;skip print - no local taxes
+   goto b0390                              ;position to top of form
+;
+b0380:
+   write(prt,f36b)axxcwt,cwages,citnam,axxcwt,cwages,citnam
+   ?cwt1=?cwt1+axxcwt
+   ?cwag1=?cwag1+cwages
+   ?cwt2=?cwt2+axxcwt
+   ?cwag2=?cwag2+cwages
+;
+b0390:
+   call lfeed(prt,3)                       ;skip to top of form
+   goto b0300                              ;check subtotal
+;
+;
+;
+;==============================================================================
+;                           p r i n t   1 0 9 9
+;==============================================================================
+   ;
+c0100:
+   ;
+   if (w2flag.ne.9)go to b0100   ;loop if empl doesn't get 1099's
+   ;
+   if (pnopt .eq. 0) go to c0110;     skip to hide plus-to-net
+   ;
+   gross = gross + ypl2nt
+   ;
+c0110:
+   ;
+   if (empl .le. lempl) go to c0120;  skip to total up to restart
+   ;
+   call lfeed (prt, 3); 09-20-79...mod vertical spacing for 1099-nec...ok
+   ;
+   write (prt, f41) firm
+   write (prt, f41) faddr
+   write (prt, f41) fcity
+   write (prt, f42) [ftxbuf+1]
+   ;
+   call lfeed (prt, 2)
+   ;
+   write (prt, f43) [ssnum+1]
+   ;
+   call lfeed (prt, 2)
+   write (prt,f46) gross
+   ;
+   write (prt, f41) name
+   write (prt, f41) addr
+   write (prt, f41a) city, zipcod
+   ;
+   call lfeed (prt, 6)
+   ;
+c0120:
+   ;
+   templ = templ + 1;                 incr number of 1099's printed
+   ;
+   ?wages = ?wages + gross
+   ;
+   go to b0100
+   ;
+;==============================================================================
+;                 p r i n t   t o t a l s   &   c l o s e
+;==============================================================================
+   ;
+;
+d0110:
+   if(option.eq.3)goto d0270           ;1099
+   if(sempl.le.0)goto e0100
+;
+d0130:
+   if(sempl.le.2)goto d0140
+   sempl=sempl-2
+   goto d0130
+;
+;          ============================================
+;             w2 subtotals
+;          ============================================
+;
+d0140:
+   goto(d0180,d0160)on sempl;
+;
+d0150:
+   ;call lfeed(prt,5)
+  ;goto d0180
+;
+d0160:
+   call lfeed(prt,5)
+   write(prt,f32a)null,null,null,x
+   call lfeed(prt,27)
+   goto d0180
+;
+d0170:
+   ;call lfeed(prt,6)
+   ;write(prt,f32a)null,null,x
+   ;call lfeed(prt,21)
+   ;write(prt,f32a)null,null,x
+   ;call lfeed(prt,19)
+;
+d0180:
+ call lfeed(prt,5)
+   if(templ.lt.41)goto d0180a
+   write(prt,f32a)firm,x
+   write(prt,f31a)faddr
+   write(prt,f35t)fcity,zero,?eic                  ;subtotal
+   goto d0180b
+d0180a:
+   write(prt,f32a)firm,null,null,x
+   write(prt,f31a)faddr
+   write(prt,f35t)fcity,zero,?eic                   ;void
+;
+d0180b:
+   call lfeed(prt,1)
+   write(prt,f34t)?fwt,?wages
+call lfeed(prt,1)
+write(prt,f37t)[ftxbuf+1],statax,?fica,?fwage
+   call lfeed(prt,1)
+write(prt,f37t)null,null,?tips
+   call lfeed(prt,4)
+   write(prt,f10)templ
+   call lfeed(prt,5)
+   write(prt,f36t)?swt2,?swag2,stanam,?cwt2,?cwag2,citnam
+   call lfeed(prt,8)
+goto e0100
+;
+;          ===================================
+;             1099 total
+;          ===================================
+   ;
+   ;
+d0270:
+   ;
+   call lfeed (prt,3); 09-20-79...mod for 1099-nec...ok
+   write (prt, f44) totmsg, templ
+   call lfeed (prt, 8)
+   write (prt, f45) ?wages
+   call lfeed (prt, 8)
+   goto q0909
+   ;
+;          ==============================================
+;           check for missing s.s. numbers
+;          ==============================================
+;
+e0100:
+   ;
+   ; write (prt, f90) eject ; 12/29/78...jwb
+   if (nossno. eq. 0) goto e0200 ; 12-02-78...jwb
+   pass=1 ; 12-02-78...jwb
+   templ=sempl=nossno=lempl=0 ; 01-09-81...jg
+   ?fwt=?wages=?fica=?fwage=?tips=?eic=0 ; 12-02-78...jwb, 08-10-79...ok
+   ?tips2=?cwt2=?cwag2=?swt2=?swag2=0
+   close prt ; 12-02-78...jwb
+   open output prt ; 12-02-78...jwb
+   rewind tagfil ; 12-02-78...jwb
+   call msg (null) ; 12-02-78...jwb
+   call msg (m40)  ; 12-02-78...jwb
+   call msg (m41)  ; 12-02-78...jwb
+   call msg (m42)  ; 12-02-78...jwb
+   read (crt, f11) ssnum ; 12-02-78...jwb
+   goto b0100 ; 12-02-78...jwb
+   ;
+e0200: ; 12-02-78...jwb
+   ;
+   call getkey (master, zero)
+   if (status .ne. 0) call ioerr
+   ;
+   'yrdone' = 'y'
+   ;
+   writeb (master, msthdr)
+   call stat (2)
+   ;
+   go to q0900
+   ;
+q0700:
+   ;
+   call msg (m9700)
+   go to q0910
+   ;
+q0800:
+   ;
+   call msg (m9800);                  invalid master file
+   go to q0910
+   ;
+q0900:
+   ;
+   if (pass. ne. 0) goto q0905a
+   if (totemp. gt. 41) goto q0905a
+   goto q0909
+   ;
+;          ======================================
+;            print final w2 totals
+;          ======================================
+;
+q0905a:
+   write(prt,f50)m28                       ;final totals
+   call lfeed(prt,4)
+write(prt,f32a)firm,x
+   write(prt,f31a)faddr
+   write(prt,f35t)fcity,zero,?eic1
+   call lfeed(prt,1)
+   write(prt,f34t)?fwt1,?wages
+   call lfeed(prt,1)
+write(prt,f37t)[ftxbuf+1],null,?fica1,?fwag1
+   call lfeed(prt,1)
+write(prt,f37t)null,null,?tips1
+   call lfeed(prt,4)
+   write(prt,f10)totemp
+   call lfeed(prt,5)
+   write(prt,f36t)?swt1,?swag1,stanam,?cwt1,?cwag1,citnam
+   call lfeed(prt,8)
+   ;write(prt,f36t)?cwt1,?cwag1,citnam
+;
+q0909:
+   ;
+   write (prt, f90) eject
+   call msg (m9900);                  end of program
+   ;
+q0910:
+   ;
+   close crt, prt, master
+   stop 0
+   ;
+;==============================================================================
+;                          s u b r o u t i n e s
+;==============================================================================
+;
+;=========================
+;=========================
+subroutine update
+;===========================
+;
+?fwt=?fwt+fwt
+?eic=?eic+yeic
+?wages=?wages+wages
+?fica=?fica+fica
+?fwage=?fwage+fwages
+?fwt1=?fwt1+fwt
+?wage1=?wage1+wages
+?fica1=?fica1+fica
+?fwag1=?fwag1+fwages
+?eic=?eic+yeic
+;
+if (fwages. ge. ficmax) goto up1
+?tips=?tips+tips
+?tips1=?tips1+tips
+?tips2=?tips2+tips
+;
+up1:
+;
+?swt1=?swt1+axxswt
+?swag1=?swag1+swages
+?swt2=?swt2+axxswt
+?swag2=?swag2+swages
+?cwt1=?cwt1+axxcwt
+?cwag1=?cwag1+cwages
+?cwt2=?cwt2+axxcwt
+?cwag2=?cwag2+cwages
+;
+totemp=totemp+1
+sempl=sempl+1
+templ=templ+1
+if (sempl. lt. 41) goto up99
+sempl=0
+?eic=?fwt=?wages=?fica=?fwage=?tips=0
+;
+up99:
+;
+return
+;
+;=========================
+subroutine valtax
+;=========================
+;
+call nosign (refcod)
+ifstring (refcod .eq. null) go to valter
+;
+sumnum=-1;
+;
+valt1:
+incr sumnum
+if (sumnum .ge. 15) go to valter;      error on undefined area
+call tget (str3, sumnum, a01ref, 4); fetch next area ref code
+call bltrun (str3)
+ifstring (str3 .eq. refcod) go to valtx
+go to valt1
+;
+valter:
+call msg (invref)
+call cget (acknow, fc1, refcod);      newline to acknowledge
+sumnum=-1;
+;
+valtx:
+return
+;
+;=========================
+;==============================================================================
+;            f o r m a t s ,  m e s s a g e s ,  &  s t o r a g e
+;==============================================================================
+;
+define access:'***   unauthorized access attempt   ***'
+define acknow:'enter "newline" to acknowledge'
+;define beep:''
+define invref:'***   undefined reference code   ***'
+define n:'n'
+define totmsg:'**  total forms printed'
+define y:'y'
+define x: 'x'
+;
+define mask01:'0 @##-#######'
+define mask02:'0 @###-##-####'
+;
+define m001:'enter password'
+;
+define m01:'enter option:  1  print form w-2'
+define m02:'2  print two-wide form w-2'
+define m03:'3  print form 1099-misc'
+define m09:'9  end program'
+define m10:'invalid - enter option'
+;
+define m11:'are state taxes being reported? (y/n)'
+define m12:'enter state reference code'
+define m13:'enter state reporting id'
+define m15:'are all wages to be reported?  (y/n)'
+define m16:'enter maximum wage to be reported'
+define m17:'are meals'
+define m18:'are tips'
+define m19:' to be reported as wages? (y/n)'
+;
+define m21:'are city  taxes being reported? (y/n)'
+define m22:'enter city reference code'
+define m23:'enter city reporting id'
+define m28:'grand totals - for employers use only - do not file'
+;
+define m30:'is this a restart of printing?'
+define m31:'enter number of last employee printed'
+define m37:'report "plus-to-net" also? (y/n)'
+define m38:'printing for federal reporting? (y/n)'
+define m39:'ready to print?  (y/n)'
+;
+define m40:'master file contains employee(s) without a social security number'
+define m41:'align w-2 forms at the beginning of a new page and then newline'
+define m42:'to print those forms'
+;
+define m50: 'print alignment guide? (y/n)'
+define m52: 'print another alignment guide? (y/n)'
+define m53:'print employees with zero wage balance ? (y/n)'
+;
+define m101:'firm    :'
+define m102:'address :'
+define m103:'cit sta :'
+;
+define m9700:'*   invalid tax file'
+define m9800:'*   invalid master file'
+define m9900:'end of program'
+define xes:'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+;
+format f01: c10, c50
+format f02: x15, c50
+format f03: n6
+format f10: n10
+format f11: c10
+format f13: n10.2
+   ;
+;          ===============================================
+;            formats for 1 wide w2's
+;          ===============================================
+;
+format f30a:c30,x3,c10,x7,c12                     ;line 5
+format f31a:c30                                   ;lines 6,15
+format f31c:c20,x2,n5
+format f32a:c30,x23,c1,x3 c1 x3 ,c1               ;line 7
+format f33a:x36 n11.2 x4 n11.2
+format f34a:c11,x5,n11.2,x6,n11.2,x6,n11.2        ;line 11
+format f35a:c30,x6,n11.2,x4,n11.2                 ;line 13
+format f35aa:c30,x3 c3 ,n11.2,x4,n11.2                 ;line 13
+format f36a:n9.2 n11.2 x1 c10 n11.2 n11.2 c10
+format f37a:x4 c10 x6 c10 x6 n11.2 x4 n11.2
+;
+;          ==============================================
+;            formats for 2 wide w2's
+;          ==============================================
+;
+format f30b:c30,x3,c10,x7,c12,x6,c30,x3,c10,x7,c12
+format f31b:c30,x38,c30
+format f31d:c20,x2,n5,x41,c20,x2,n5             ;line 16, 2 wide w2
+format f32b:c30,x23,c1,x7,c1,x6,c30,x23,c1,x7,c1
+format f32bb:c30 x28 c1 x9 c30 x28 c1
+format f33b:x50,n11.2,x57,n11.2
+format f34b:c11,x5,n11.2,x6,n11.2,x6,n11.2,x7,c11,x5,n11.2,x6,n11.2,x6,n11.2
+format f35b:c30,x3,n11.2,x6,n11.2,x7,c30,x3,n11.2,x6,n11.2
+format f36b:x32,n10.2,x1,n9.2,x4,c7,x37,n10.2,x1,n9.2,x4,c7
+;
+;          ======================================
+;           formats for w2 totals
+;          ======================================
+;
+format f33t:x50,d11.2
+;;format f34t:x16,d11.2,x6,d11.2,x6,d11.2
+;format f35t:x33,d11.2,x6,d11.2
+;format f36t:x32,d10.2,x1,d9.2,x1,c10
+;format f37t:x33,n5
+format f34t: x36 d11.2 x4 d11.2
+format f35t: c30 x6 n11.2  x4 d11.2
+format f36t: d9.2 d11.2 x1 c10 d11.2 d11.2 c10
+format f37t: x4 c10 x6 c10 x6 d11.2 x4 d11.2
+;
+;          ==========================================
+;             1099 formats
+;          ==========================================
+;
+format f41:x2,c30                               ;lines 4,5,6,14,15
+format f41a:x2,c20,x2,n5                        ;line 16
+format f42:x2,c10                               ;line 7
+format f43:x2,c11,x9,n11.2                      ;line 10
+format f44:x2,c23,n6
+format f45:x54,d12.2
+format f46:x55n11.2
+;
+;          ===========================================
+;             void w2's
+;          ===========================================
+;
+format f50:c51
+;
+format fc1: c1
+format fc2: c2
+format fc3: c3
+;
+;      program work integers
+;
+set ?eic1  :0
+set totemp:0
+set ?fwt1  :0
+set ?fica1 :0
+set ?fwag1:0
+set ?wage1:0
+set ?tips1 :0
+set ?swt1  :0
+set ?swag1:0
+set ?swt2  :0
+set ?swag2:0
+set ?cwt1  :0
+set ?cwag1:0
+set ?cwt2  :0
+set ?cwag2:0
+set ?tips2:0
+set    count:  0
+set    nines:  99999999
+set    ?fica:  0
+set    ?fwt:   0
+set    ?fwage: 0
+set    ?wages: 0
+set    ?tips:  0
+set    ?eic:   0
+set    axxcwt: 0;                     city tax withheld
+set    axxswt: 0;                     state tax withheld
+set    citind: 0
+set    citmax: 0
+set    ctmflg: 0;                     flag meals reportable to city
+set    cttflg: 0;                     flag tips  reportable to city
+set    cwages: 0;                     city wages
+set    fwages: 0;                     fica wages
+set    lempl:  0;                     last employee printed (for restart)
+set    mltpop: 0;                     4-byte version of meals/tips option
+set    option: 0;                     run option
+set    pnopt:  0;                     plus to net report option
+set    prtall: 0;                     print all w-2's (even if city/state = $0.00)
+set    staind: 0
+set    stamax: 0
+set    stmflg: 0;                     flag meals reportable to state
+set    sttflg: 0;                     flag tips  reportable to state
+set    sumnum: 0;                     work integer
+set    subwag: 0;                     state wages
+set    taxflg: 0
+set    taxopt: 0;                     fed / state / city reporting option
+set    templ:  0;                     total number of forms printed
+set    wages:  0;                     total wages for empl
+set    w2flag: 0;                     4-byte version w-2/1099 flag
+set    pass:   0;                     pass number (0=first, 1=second)
+set    nossno: 0;                     number of emps w/o a ss number
+set    sempl:  0;                     sub-total check (41 max)
+set    swages: 0;                     state wages
+set   gropay: 0;                      ;gross pay+tips+meals for w2 form..jh
+;
+define citnam: '        ' ; 8 duds
+string citref (3)
+string cittax (12)
+string ftxbuf (11)
+string null   (0)
+string plan   (3)
+string refcod (3)
+string ssnum  (12)
+define stanam: '        ' ; 8 duds
+string staref (3)
+string statax (12)
+string str3   (3)
+string zeropt (1)              ;12/08/82...jh
+;
+end
+END LIST
+.USE CRT3 FOR SYSRDR
