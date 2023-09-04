@@ -1,8 +1,3 @@
-s.lst zod 1 crt3
-S.LST ZOD 1 CRT3
-.JOB ZOD
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 (odarec)
 record odarec(55)
 set   odattype:0;  tuvvwx= ttype where x=0=report calculations only, 1=go to g/l only, 2=bill, 3=bill and g/l
@@ -71,5 +66,3 @@ set odmdist:0;  distr.#
 string odmdesc(30);  description
 endrec
 ;
-END LIST
-.USE CRT3 FOR SYSRDR

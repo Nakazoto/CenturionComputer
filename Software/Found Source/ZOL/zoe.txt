@@ -1,8 +1,3 @@
-s.lst zoe 1 crt3
-S.LST ZOE 1 CRT3
-.JOB ZOE
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 ;
 ;
 (ofhsta)
@@ -307,5 +302,3 @@ set ?rid:0,ofhstat:0,ofhfield:0,rel0:0
 endrec
 ;
 ;
-END LIST
-.USE CRT3 FOR SYSRDR

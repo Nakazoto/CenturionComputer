@@ -1,8 +1,3 @@
-s.lst zoa 1 crt3
-00:01:34 S.LST ZOA 1 CRT3
-00:01:34 .JOB ZOA
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 (ckhead)
 record ckhead (79) ;   data passed from register to check writer
 set filck:0,fckno:0;   flick is 0 so that sorting will be ok in check writer
@@ -211,5 +206,3 @@ set prepaidamt:0;   total prepaids (accumulated based on invoice date)
 set vamt:0;      based on voucher date either voucher number is mmyy..., yymm...., or mm...
 endrec
  ;
-END LIST
-.USE CRT3 FOR SYSRDR

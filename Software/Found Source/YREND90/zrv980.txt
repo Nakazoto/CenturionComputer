@@ -1,8 +1,3 @@
-s.lst zrv980 1 crt3
-S.LST ZRV980 1 CRT3
-.JOB ZRV980
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
-LIST - 6.00
 title ' zrv580 (period earnings report) '
 ;
 system
@@ -1284,5 +1279,3 @@ string wagbuf (11)
 string wagbuf2 (11)
 ;
 end
-END LIST
-.USE CRT3 FOR SYSRDR

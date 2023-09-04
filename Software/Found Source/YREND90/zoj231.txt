@@ -1,8 +1,3 @@
-s.lst zoj231 1 crt3
-S.LST ZOJ231 1 CRT3
-.JOB ZOJ231
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
-LIST - 6.00
 title: 'oj231 (oj1099) (partner 1099 writer)'
 system (exp=d)
 ;
@@ -601,5 +596,3 @@ format fc30:c30
 format fopt:x15 c80
 define xoj231:'xoj231'
 end
-END LIST
-.USE CRT3 FOR SYSRDR

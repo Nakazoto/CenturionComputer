@@ -1,8 +1,3 @@
-s.lst a zrvs 1 crt3
-S.LST ZRVS 1 CRT3
-.JOB ZRVS
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
-LIST - 6.00
 system
 ;
 define m00:'external statement library for random access payroll - vsi 12/08/88'
@@ -906,5 +901,3 @@ record fwtrec(160) ; contains fwt constants
 endrec
  ;
  ;
-END LIST
-.USE CRT3 FOR SYSRDR

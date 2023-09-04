@@ -1,17 +1,3 @@
-s.crt zog 1 crt3
-S.CRT ZOG 1 CRT3
-/   ENTER LIBRARY OR "NEWLINE" FOR NONE /
-.USE ZOG ON 1 FOR SYS0 SHAR
-JX13-FILE NOT FOUND
-JOB CANCELLED
-JOB STREAM BYPASSED
-.END
-.USE CRT3 FOR SYSRDR
-s.lst zog 1 crt3
-S.LST ZOG 1 CRT3
-.JOB ZOG
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 (achr  )
 record achr(1)
 string char(1)
@@ -472,6 +458,3 @@ set ?camt:0
 set ?bamt:0
 set ?wamt:0
 endrec
- 
-END LIST
-.USE CRT3 FOR SYSRDR

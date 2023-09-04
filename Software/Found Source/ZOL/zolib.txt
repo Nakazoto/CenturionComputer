@@ -1,8 +1,3 @@
-s.lst zolib 1 crt3
-S.LST ZOLIB 1 CRT3
-.JOB ZOLIB
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 ;  9/17/85..adding equ1
 (copart)
 record copart(197)
@@ -828,5 +823,3 @@ endrec
 ;
 ;
 ;
-END LIST
-.USE CRT3 FOR SYSRDR

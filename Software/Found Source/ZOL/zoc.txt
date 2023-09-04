@@ -1,8 +1,3 @@
-s.lst zoc 1 crt3
-S.LST ZOC 1 CRT3
-.JOB ZOC
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 (rvarec)
 record rvarec(40)
 set emp:0
@@ -320,5 +315,3 @@ set innum:0,ck:0,dperc:0
 endrec
 ;
 ;
-END LIST
-.USE CRT3 FOR SYSRDR

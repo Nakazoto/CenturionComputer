@@ -1,8 +1,3 @@
-s.lst zot 1 crt3
-S.LST ZOT 1 CRT3
-.JOB ZOT
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 (otds  )
 record otd2rec(80)
 set ?prop2:0,adate2:0,taxoil2:0,gas2:0,ex2:0,gptax2:0,loe2:0,depr2:0,ovhd2:0,cdep2:0,oexp2:0,bbl2:0
@@ -539,5 +534,3 @@ set x3:0
 string vp3nam(30),fil2(92),p3id(11)
 endrec
 ;
-END LIST
-.USE CRT3 FOR SYSRDR

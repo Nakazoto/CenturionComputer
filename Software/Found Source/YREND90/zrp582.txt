@@ -1,8 +1,3 @@
-s.lst zrp582 1 crt3
-S.LST ZRP582 1 CRT3
-.JOB ZRP582
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
-LIST - 6.00
 title ' zrp582 (print w2/1099 forms) '
 system(exp=d)
 ;
@@ -1499,5 +1494,3 @@ string str3   (3)
 string zeropt (1)              ;12/08/82...jh
 ;
 end
-END LIST
-.USE CRT3 FOR SYSRDR

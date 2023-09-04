@@ -1,8 +1,3 @@
-s.lst zrp5@1 1 crt3
-S.LST ZRP5@1 1 CRT3
-.JOB ZRP5@1
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
-LIST - 6.00
 title ' zrp5@1 (payroll register - calculation phase) '
 system zrp5@1 (stack=200)
 ;(changed...04/21/82 dl pln#0309)
@@ -3114,5 +3109,3 @@ set novaac: 0 ;pln482 flag for a trans code 82 with other 80 type trans
 lnkend:
 ;
 end
-END LIST
-.USE CRT3 FOR SYSRDR

@@ -1,8 +1,3 @@
-s.lst zob2 1 crt3
-S.LST ZOB2 1 CRT3
-.JOB ZOB2
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 (cfilre)
 record cfilrec(29)
 set ?ovend:0;    vendee number and invoive number
@@ -1237,5 +1232,3 @@ record wellrec(30)
 string wellname(30)
 endrec
 ;
-END LIST
-.USE CRT3 FOR SYSRDR

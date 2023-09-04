@@ -1,8 +1,3 @@
-s.lst zrv5@1 1 crt3
-S.LST ZRV5@1 1 CRT3
-.JOB ZRV5@1
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /yrend90
-LIST - 6.00
 title ' zrv9@1 (payroll register - calculation phase) '
 ;
 system zrv9@1 (stack=200)              ;04-21-82...added stack=200...pln0309..dl
@@ -3558,5 +3553,3 @@ set work4:  0
 lnkend:
 ;
 end
-END LIST
-.USE CRT3 FOR SYSRDR

@@ -1,8 +1,3 @@
-s.lst zoo 1 crt3
-S.LST ZOO 1 CRT3
-.JOB ZOO
-/   ENTER LIBRARY NAME OR "NEWLINE" IF NONE /zol
-LIST - 6.00
 (ouarec)
 record ouarec(165)
 string udesc(30)
@@ -535,5 +530,3 @@ string com2(45)
 endrec
 ;
 ;
-END LIST
-.USE CRT3 FOR SYSRDR
