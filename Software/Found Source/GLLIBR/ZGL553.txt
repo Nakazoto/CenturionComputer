@@ -1,0 +1,832 @@
+title: 'gl553   (pre-comparative statement h-acct calculation program)'
+system  (exp=b)
+;
+define m01:'gl553 (double comparative statement h-acct calculation program) 12/29/81'
+;
+;notes:
+;   10/04/78...written..ns
+;    06/20/79...putting beg/ending invent into double comparative & adding headings 3/4/5..ns
+;   07/13/79...adding column dates, adding b.s.date...ns
+;   07/16/79...taking out b.s. from this report - options are too dif. & same layout as single comparative..ns
+;   07/27/79...doing calc on bs as well as income details...ns
+;   08/06/79...inventory wrong..ns
+;   07-15-80...removed re-print option from pgm to jobstream...kag
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+ 
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+file control:sys2,class=2,rnd,recsiz=77,key=rel2
+;
+set   rel2:0
+;
+record aux(131)
+;
+set ?hid:0,hff:0,hvv:0
+string hdesc(30),hdec(10)
+set cur:0,?a9:0,?a0:0,?a1:0,?a2:0,?a3:0,?a4:0,?a5:0,?a6:0,?a7:0,?a8:0
+string hfun(10)
+endrec
+ 
+record netchg(131)
+set ?iid:0,iff:0
+set ivv:0
+string idesc(30)
+set ipos:0,icmo:0,i2:0,i3:0,i4:0,i5:0,i6:0,i7:0,i8:0,i9:0,ia:0,ib:0,ic:0,id:0,ie:0,if:0
+set ?icbal:0,?ipbal:0,iusef:0
+endrec
+;
+record aux2(77)
+set   ?id:0,cur2:0,cur3:0,?a92:0,?a93:0
+string desc2(30),dec2(10)
+endrec
+;
+record head2(77)
+string stdate(77)
+endrec
+record head3(77)
+string topcoma(64)
+set ?bseact:0;   balance sheet ending account
+define bans:'n'; print bal sheet?
+endrec
+ 
+record head4(77)
+string topcomb(64)
+set fopt:0; formating
+set vopt:0; print variance amount or %
+set bacnt:0
+endrec
+ 
+record head5(61)
+string comenta(50)
+set aa:0
+set dflag:0; date flag - 0=standard date, 1=column date
+endrec
+ 
+record head6(48)
+string to1(11),to2(11),to3(11),to4(11)
+endrec
+;
+record head7(64)
+string bbs(64)
+endrec
+record head8(64)
+string binc(64)
+endrec
+ 
+record head1(77)
+string clt(40)
+set h0:0,a2:0,opt1:0,haflg:0,?eeinv:0,?bbinv:0
+define ans:'n'
+set nmnum:0;  number of months into year
+endrec
+;
+;
+;
+record recg(131)
+set    ?gid:0;     6 byte integer - br/maj/min  2 digits, 6 digits, 3 digits
+set   ff:0;     f1=blank - no leading char, $= if money acct print $,
+;                  if title account $= print $ on next money account.
+;                  ( = enclose in parent. if neg.
+;               f2= # of lines of overlining. (0,1,2)
+;
+set    vv:0;       v1=type acct (title,money,total,etc.)
+;                  v2=scheduled or not
+;                  v3=center title or which col. a or b
+;                  v4=total level or indicates 'c' type title
+string desc(30);   description
+set    pos:0;      entered but not posted amounts
+set    cmo:0;      current month
+set    mon2:0;     last month
+set    mon3:0;      2 months ago
+set    mon4:0;     3 months ago
+set    mon5:0;     4 months ago
+set    mon6:0
+set    mon7:0
+set    mon8:0
+set    mon9:0
+set    mona:0
+set    monb:0
+set    monc:0
+set    mond:0;     this month last year
+set    mone:0;     last month last year
+set    monf:0;     2 months ago - last year
+;
+set    ?cbal:0;    current balance (does not include post)
+set    ?pbal:0;    last years total prior to monf
+;                  (ie. if cmo is 6/76 - mond=6/75, mone=5/75, mond=4/75,
+;                   and ?pbal is total as of 3/75)
+set     usef:0;    0=no postings, 1=print whether postings or not, 2=postings
+;
+set    ?inv:0;   inventory current amount(used only in type 6 accounts)
+endrec
+;
+record headb(131)
+string client(40);   clients name
+string coment(50); disclaimer
+set    month:0;      current postings are (yymm) (date of cmo)
+set    yrend:0;      month of fiscal year end (mm)
+set    post:0;       if post=3 retain all details to end of year.
+set    ?bsea:0;       balance sheet ending account #
+set    ?plact:0;      profit loss accout #
+set  hh:0; haflg=h accts?, h0=neg in paren, h1=dig.in brn, h2=maj, h3=min, h4=sub, h5=posting to p/r
+set  mnum:0;         # of months of postings in current year
+set acnt:0; accountant
+string xa(1); special sw
+endrec
+;
+;
+copy hd3
+record hd5(131)
+string topcom1(64),topcom2(64)
+endrec
+record hd4(131)
+string bs(64),inc(64)
+endrec
+ 
+;
+;
+record listb(10)
+set    ?lid:0,rel0:0
+endrec
+;
+;
+record pnt(4)
+set point:0
+endrec
+;
+;
+;
+external ?gkey,stat,ioerr,msg,cget,ynget,gupsi,clrec,msgn
+;
+file crt:sysipt
+entrypoint crt
+;
+entry
+;
+open io (crt,list,gmst,control)
+'topcoma'='null'
+'topcomb'='null'
+'bbs'='m31';   comparative statement
+'binc'='m31'
+call msg(eject)
+call msg(m01)
+call msg(null)
+;
+readb(control,pnt)
+call stat(1)
+if(point.eq.0)go to a0005
+;    call ynget(m02f);  do you wish to run another comp..removed(7-15-80..kg)
+;      go to (a0005)on status
+stop 0
+a0005:
+;traceon
+;
+?id=0
+call ?gkey(gmst,?id)
+call stat(1);   ioerr if header isnt on file
+readb(gmst,headb)
+call stat(1)
+'acct'='zer4'
+encode(acct,f04)month
+decode(acct,f05)cmm,cyy
+hh=hh/hthou
+haflg=hh/10
+h0=hh-(haflg*10)
+haflg=haflg-(haflg/10*10)
+'clt'='client'
+'comenta'='coment'
+?bseact=?bsea
+bacnt=acnt
+nmnum=mnum; number of months processed in this yr
+call msg(clt)
+call msg(null)
+;
+a0010:
+call msg(m05a);   enter option: 0=sdt date
+write(crt,f11)m05b; 1=column dates
+read(crt,fn1)dflag
+go to (a0015)on dflag
+ 
+a0011:
+call msg(m05);statement date
+call cget(null,f02,stdate)
+if(status.ne.0)go to a0011
+go to a0020
+ 
+a0015:
+'stdate'='blk77'
+call msgn(m07)
+call cget(m09,fc11,from)
+if(status.ne.0)go to a0015
+ 
+a0016:
+call msgn(m08)
+call cget(m09,fc11,to1); to date column 1
+if(status.ne.0)go to a0016
+ 
+a0017:
+call msgn(m07)
+call cget(m10,fc11,from2)
+if(status.ne.0)go to a0017
+ 
+a0018:
+call msgn(m08)
+call cget(m10,fc11,to2)
+if(status.ne.0)go to a0018
+ 
+a0019:
+call msgn(m07)
+call cget(m11,fc11,from3)
+if(status.ne.0)go to a0019
+ 
+a0019a:
+call msgn(m08)
+call cget(m11,fc11,to3)
+if(status.ne.0)go to a0019a
+ 
+a0019b:
+call msgn(m07)
+call cget(m12,fc11,from4)
+if(status.ne.0)go to a0019b
+ 
+a0019c:
+call msgn(m08)
+call cget(m12,fc11,to4)
+if(status.ne.0)go to a0019c
+ 
+encode(stdate,fhead)from,fr,from2,fr,from3,fr,from4
+ 
+a0020:
+   ?id=2
+   call ?gkey(gmst,?id)
+   call stat(1);   it had better be here
+   readb(gmst,hd3)
+   call stat(1)
+ 
+   ?id=3
+    call ?gkey(gmst,?id)
+    go to (a0025,ioerr)on status
+    readb(gmst,hd4)
+    call stat(1)
+    'bbs'='bs'
+    'binc'='inc'
+ 
+a0025:
+ 
+    ?id=4
+    call ?gkey(gmst,?id)
+    go to (a0026,ioerr)on status
+    readb(gmst,hd5)
+   call stat(1)
+   'topcoma'='topcom1'
+   'topcomb'='topcom2'
+ 
+a0026:
+;
+   ?eeinv=?einv
+   ?bbinv=?binv
+;
+a0030:
+;
+call msg(m06);  0=stnd, 1=no %
+write(crt,f11)m06a
+read(crt,fn1)a2
+if(a2.eq.0)goto a0040
+goto (a0040)on a2
+goto a0030;  error
+;
+;
+a0040:
+call msg(m21a); 0=number all pages consequatively
+write(crt,f11)m21b; 1=restart on each report
+write(crt,f11)m21c; 2=no page numbering
+read(crt,fn1)aa
+go to (a0045,a0045)on aa
+if(aa.ne.0)go to a0040
+ 
+a0045:
+call ynget(m21); print inactive?
+if(status.eq.0)go to a0048
+'ans'='yes'
+ 
+a0048:
+go to a0049;  taking out this section 7/16/79
+;call ynget(m22); print balance sheet accounts
+;if(status.eq.0)go to a0049
+;'bans'='yes'
+ 
+;a0048f:
+;call msg(m22a); enter b.s.date
+;call cget(null,f02,bsdate)
+;if(status.ne.0)go to a0048f
+ 
+ 
+a0049:
+call msg(m23); option: 1 format period / year
+write(crt,f11)m24;     2 format this year / last year
+read(crt,fn1)fopt;  format
+go to (a0049f,a0049f)on fopt
+go to a0049
+ 
+a0049f:
+call msg(m25);option: 1 print variance amount
+write(crt,f11)m26; 2 variance %
+read(crt,fn1)vopt
+go to (a0050,a0050)on vopt
+go to a0049f
+ 
+a0050:
+;
+call msg(m02a);  0=compare months and years
+write(crt,f11)m02b;1= qtrs & years
+read(crt,fn1)opt1
+;
+a0080:
+;
+go to (a0100)on opt1
+if(opt1.eq.0)go to a0100
+if(opt1.ne.9)go to a0050;error
+stop 0
+;
+;
+a0100:
+;
+;
+point=8
+rel2=0
+writeb(control,pnt)
+call stat(1)
+rel2=1
+writeb(control,head1)
+call stat(1)
+call adrel;rel2=2
+writeb(control,head2)
+call stat(1)
+;
+call adrel; rel2=3
+writeb(control,head3)
+call adrel; rel2=4
+writeb(control,head4)
+call adrel; rel2=5
+writeb(control,head5)
+call adrel; rel2=6
+writeb(control,head6)
+call adrel; rel2=7
+writeb(control,head7)
+call adrel;rel2=8
+writeb(control,head8)
+if(haflg.eq.0)go to q0900; no h accounts
+;
+;
+;
+b010:
+;
+   readb(list,listb)
+    if(status.ne.0)go to q0900; end of file
+    if(?lid.le.100)go to b010
+ 
+;
+b011:
+ 
+readb(gmst,aux)
+   call stat(1)
+   if(?hid.eq.0)goto b010
+;
+   if(hvv.lt.i4000)go to b010;  not a calcuation account, (anymore)
+   if(hvv.ge.i6000)goto c010;  inventory accounts
+ 
+   cur=?a9=?curyr=?ltyr=i=0;   counter for tget, ytd and cur period amounts
+   'desc2'='hdesc'
+   'fun'='plus';   the first field is always an add  because amount is 0 at this point
+;
+b020:
+;
+   call tget(?id,i,?a0,6);
+   call tget(dec0,i,hdec,1);  within dec - every byte there is a # of decimal places code
+   call tget(d1,i,hfun,1)
+   ifs(d1.eq.pc)goto b050
+;
+   if(?id.eq.0)go to b090;   last record was it for this account
+   call ?gkey(gmst,?id)
+   go to (b080,ioerr)on status
+   readb(gmst,recg)
+   call stat(1)
+   if(?gid.eq.0)go to b080;  deleted account - probably will be a problem
+   v1=vv/thou
+    v4=vv-(vv/10*10)
+ 
+   if(v1.eq.2)goto b040;   got the right one
+    if(v1.ne.6)go to b025
+    if(v4.eq.8)go to b040
+ 
+b025:
+   rel2=9
+;
+b0030:
+;
+   call adrel
+   if(rel2.gt.point)go to b080;   this account hasnt been calculated yet
+   readb(control,aux2)
+   call stat(1)
+   if(?id.lt.?gid)go to b0030
+   if(?id.gt.?gid)goto b080;       this account wasnt figured(may be inv.)
+;
+;
+b040:
+;
+   call ckamt;  totals the amoun field
+;
+;
+   go to b080
+;
+b050:;   integer - must be last in record
+;
+  ?curbal=?ltbal=?cmo=?tamt=?id;   amount
+  call ck150
+  goto b090;  finished
+b080:
+;
+;
+   call tget(fun,i,hfun,1);   this has the function of what to do with the next account
+   incr i
+   if(i.le.8)goto b020
+;
+b090:;   finished so write it out
+;
+;
+   cur2=cur
+   cur3=?a9
+   ?a92=?curyr
+   ?a93=?ltyr
+   ?id=?lid
+   rel2=0
+   readb(control,pnt)
+   call stat(1)
+   point=rel2=point+1
+   writeb(control,aux2)
+   call stat(1)
+;
+   rel2=0
+   writeb(control,pnt)
+   call stat(1)
+;
+   go to b010; get the next one
+;
+;
+;
+;
+q0900:;end
+;
+load(xgl552,0,0);   note only single comparative runs h accounts
+call msg(m02);    fins statement main module not found
+stop 50
+;
+c010:
+;
+readb(gmst,recg)
+call stat(1)
+if(?gid.eq.0)go to b010; deleted
+v4=hvv-(hvv/10*10)
+if(v4.eq.8)go to b010; net change
+'desc2'='desc'
+'dec2'='null'
+?id=?hid-(?hid/bil*bil)
+call clrec(netchg)
+?iid=?hid-?id+?invcon; net change
+call ?gkey(gmst,?iid)
+go to (c015,ioerr)on status
+readb(gmst,netchg)
+call stat(1)
+;   ending inv. is current balance in mon & yr
+?a9=?ltyr=cur=?curyr=?cbal
+if(?id.eq.?bbinv)go to c040
+if(?id.ne.?eeinv)go to b010
+ 
+i=0
+c013:
+call tget(fa1,i,cmo,4)
+?a9=?ltyr=?ltyr-fa1
+i=i+1
+if(i.lt.12)goto c013;   go back all the way
+c015:
+ 
+go to b090;   write the second
+ 
+c040:; beginning
+;  already have initialized these fields ?ltyr=?a9=?curyr
+i=0
+ 
+c045:
+call tget(fa1,i,cmo,4)
+?a9=?curyr=?ltyr=?ltyr-fa1
+i=i+1
+if(i.lt.nmnum)go to c045
+ 
+c048:
+call tget(fa1,i,cmo,4)
+?ltyr=?ltyr-fa1
+i=i+1
+go to (c050)on opt1
+if(i.gt.13)go to c050f;  already incremented 1
+ 
+c050:;  beg. of current qrt last yr should back out all months & beg. month should back out 13
+ 
+?a9=?a9-fa1
+ 
+c050f:
+if(i.le.14)go to c048
+?ltyr=?ltyr+?ipbal;  adding positive prev. bal from net change to neg. beg. bal (hence subtracting amount)
+ 
+go to (c051) on opt1
+ 
+cur=?cbal-cmo;   reverse current month out of current balance
+go to b090
+ 
+c051:
+cur=?cbal-cmo-mon2-mon3
+go to b090
+ 
+;=========================================================
+;  s u b r o u t i n e s
+;=========================================================
+;
+;=================
+subroutine adrel
+;===============
+rel2=rel2+1
+return
+ 
+;
+subroutine ckamt
+;=================
+;
+;
+if(v1.eq.2)go to ck05; normal account
+if(v1.ne.6)go to ck90
+if(v4.ne.8)go to ck90
+;net change
+;
+;
+ck05:
+ 
+;
+;
+go to(ck10) on opt1
+?cmo=cmo
+?tamt=mond
+call tot
+go to ck150
+;
+ck10:
+;
+?cmo=cmo+mon2+mon3
+?tamt=mond+mone+monf
+call tot
+go to ck150
+;
+ck90:
+;
+?cmo=cur2
+?tamt=cur3
+?curbal=?a92
+?ltbal=?a93
+;
+;
+;
+ck150:
+;
+;
+ 
+;
+   decode(dec0,fn1)decmil
+   ifs(fun.eq.plus)goto ck151
+   ifs(fun.eq.subt) go to ck151
+   ifs(fun.eq.null)goto ck190;return no function
+   goto ck160
+;
+ck151:;  on add or subtract we reduce everything to 2 decmil places
+;
+   go to (ck151a,ck151q)on decmil
+   if(decmil.ne.0)goto ck151b
+;
+   ?cmo=?cmo*100;   add 2 dec. places
+   ?tamt=?tamt*100
+   ?curbal=?curbal*100
+   ?ltbal=?ltbal*100
+   go to ck151q;ok
+;
+ck151a:
+;
+   ?cmo=?cmo*10;  add 1 dec. place
+   ?tamt=?tamt*10
+?curbal=?curbal*10
+?ltbal=?ltbal*10
+   go to ck151q
+;
+ck151b:;   subt 1 dec place
+;
+   decmil=decmil-2
+;
+   if(decmil.lt.1)goto ck151q
+;
+ck151c:
+;
+;
+   call divide
+   go to (ck151q)on decmil;ok
+   goto ck151c
+;
+ck151q:
+;
+   ifs(fun.eq.plus)goto ck151add
+;
+   cur=cur-?cmo
+   ?a9=?a9-?tamt
+   ?curyr=?curyr-?curbal
+   ?ltyr=?ltyr-?ltbal
+   return;     ?a9 &cur will always be 2 dec. places
+;
+ck151add:
+;
+   cur=cur+?cmo
+   ?a9=?a9+?tamt
+   ?curyr=?curyr+?curbal
+   ?ltyr=?ltyr+?ltbal
+   return
+;
+;
+;
+ck160:;mult/divide/
+;
+   num=1;    divide by to round
+   num1=decmil
+;
+ck161:
+;
+   if(num1.eq.0)goto ck162
+   num=num*10
+   num1=num1-1
+;
+   go to ck161
+;
+ck162:
+;
+   ifs(fun.ne.mult)goto ck165
+;
+ck163:
+;
+   cur=cur*?cmo/num;  num=1,10,100 etc
+   ?a9=?a9*?tamt/num
+   ?curyr=?curyr*?curbal/num
+   ?ltyr=?ltyr*?ltbal/num
+   return
+;
+;
+ck165:
+;
+   ifs(fun.ne.div) goto ck190;  seems to be a problem here
+;
+   cur=cur*num/?cmo
+   ?a9=?a9*num/?tamt
+?curyr=?curyr*num/?curbal
+?ltyr=?ltyr*num/?ltbal
+;
+ck190:
+;
+   return
+;
+;
+;traceoff
+;==================
+subroutine divide
+;==================
+;
+?cmo=?cmo/10
+?tamt=?tamt/10
+?curbal=?curbal/10
+?ltbal=?ltbal/10
+decmil=decmil-1
+return
+;
+;=================
+subroutine tot
+;==================
+?curbal=?cbal
+?ltbal=?pbal+mond+mone+monf
+return
+;
+;=================
+subroutine tget
+;==================
+;
+direct
+   lda- x+  target
+   sta  tga
+   lda-  x+   index
+   ina   ,2
+   lda-  a
+   xay
+   ldb-  x+   get table start
+   lda-  x+   unit byte lenth
+   stx-  s-
+   sta-  s-
+tg01    add  y,b  mpy index * unit lenght
+  dca
+   bnz  tg01
+   ldx=  *-*
+tga equ  *-2
+   lda-  s+
+   xay   move xfr count to y
+tg02  ldab-  b+
+   stab- x+
+   dcr   y
+   bnz   tg02
+   ldx-  s+
+cpl
+return
+;
+;====================================================================
+;   w o r k i n g    s t o r a g e
+;====================================================================
+;
+define div:'/', mult:'*', pc:'i', subt:'-'
+define blk77:'                                                                             '
+define fr:'from',from:'           ', from2:'           ',from3:'           ', from4:'           '
+define plus:'+',xgl552:'xgl552',zer4:'0000'
+define yes:'y'
+;
+;
+define m02:'xgl552 is not on file.  please call you dealer to get a copy'
+;
+define m02a:'enter option:  0  month & year'
+define m02b:'1  quarter & year'
+define m02f:'do you wish to run another comparative? (y/n)'
+define m03: 'enter option:  1  14 7/8 x 11'
+define m03a:'2   8 1/2 x 11'
+define m05:'enter report date'
+define m05a:'enter option:  0  standard heading date'
+define m05b:'1  column dates'
+define m06:'enter option:  0  standard format'
+define m06a:'1  no percentages'
+define m07:'enter from date '
+define m08:'enter to date '
+define m09:'  column 1'
+define m10:'  column 2'
+define m11:'  column 3'
+define m12:'  column 4'
+define m21:'do you want to print inactive accounts? (y/n)'
+define m21a:'enter option:  0  all pages numbered consecutively'
+define m21b:'1  restart numbering with each report'
+define m21c:'2  no numbering'
+define m22:'do you want to print balance sheet accounts? (y/n)'
+define m22a:'enter balance sheet date'
+define m23:'enter option:  1  report format period / year'
+define m24:'2  report format this year / last year'
+define m25:'enter option:  1  print variance amount'
+define m26:'2  print variance percent'
+;
+define m31:'comparative statement'
+ 
+;
+;
+;
+format f02:c77
+format f03:c18n2c1n2
+format f04:n4
+format f05:n2
+;
+format fn1:n1
+format f11:x15c70
+ 
+format fc11: c11
+format fhead: c17 c5 c17 c5 c17 c5 c11
+;
+;
+;
+;
+set   ?cmo:0,?tamt:0,bil:1000000000,cmm:0, cyy:0, decmil:0,i:0, i4000:4000, i6000:6000, mm:0
+set   num:0,num1:0, thou:1000, v1:0,v4:0,hthou:100000,?curbal:0,?ltbal:0,?curyr:0,?ltyr:0
+;
+set fa1:0
+;
+string acct(4)
+;
+string d1(1),dec0(1),fun(1),null(0)
+;
+end
+
+set fa1:0
+;
+string acct(4)
+;
+string d1(1),dec0(1),fun(1),null(0)
+;
+end
+
+
+

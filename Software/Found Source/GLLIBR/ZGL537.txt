@@ -1,0 +1,487 @@
+title:'gl537 (posting general ledger)  module 2'
+system
+;
+define m01:'gl537 (posting general ledger) 12/29/81'
+;
+;
+; notes:
+;   11/11/76...written...ns
+;  12/6/76...adding 3rd header - clearing meals and tips total...ns
+;  12/22/76..changed d200 so that if acct nbr not in master file, msg is
+;            displayed on crt, transaction is printed on syslst, and record
+;            is not written into new (posted transaction file)..glg
+;  1/4/77...added open and close for prt..glg
+;  1/6/77...added check for branches on writing to subaccount posted file;
+;           if branch is there, won't write record unless brn=999..glg
+;   1/10/77...keeping all sub account details on end of year - must use glpack
+;            to get rid of them...ns
+;    3/15/77...adding 2 new fields to detail and changing usef..ns
+;    4/12/77...adding merge instead of sort after post..ns
+;    4/22/77...creating new record if there is a no match..ns
+;   11/07/77...recompiling for new gdet..ns
+;    12/05/77...a deleted account record could send the program into a loop...ns
+;    5/17/78...end of fiscal year was not handled correctly if fla2=3...ns
+;    7/21/78...cosmetic changes..ns
+;    9/15/78...adding inventory accounts, not writing detail if "i" accounts...ns
+;    6/06/79...writing all brn details to the sub account file..ns
+;    6/19/79...if current earnings across yr end - ?cbal for retained is updated & mon of current earnings is updated
+;          if going to income/expense posts to month but not to ?cbal unless it is the inventory account..ns
+;     6/27/79...error in d210..ns
+;    8/22/79...i account details from payroll didnt have ?sub=-10..ns
+;   10/05/79...made change after label d145 to allow inventory details to be
+;              written to output detail file...jwb
+;   01/22/80...modified to clear account correctly...kag
+;   02/04/80...modified to change ref date into journal date...kag
+;   04/30/80...corrected prior earnings account bug...kag
+;   05/21/80...modified to update retained earnings amount if needed...kag
+;
+;   12/18/81...modified to print of a single prior month on gl report...dl
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;
+;
+;
+;============
+copy gdet
+copy hd3
+copy recg
+record invent(45);   this is read to get the description only
+set   ?iid:0
+set   iff:0
+set   ivv:0
+string idesc(30)
+endrec
+;
+file gofil:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+file newdet:sys3,class=2,seq,lsr=4,filtyp=b,buffer=400,buf3
+file crt:sysipt
+file prt:syslst,class=1,seq
+file new:sys6,class=2,seq,lsr=4,filtyp=b,buffer=400,buf6
+buffer buf2(400),buf3(400),buf6(400)
+;
+file gsfil:sys7,class=2,seq,lsr=4,filtyp=b,buffer=400,buf7
+file nsub:sys8,class=2,seq,lsr=4,filtyp=b,buffer=400,buf8
+buffer buf7(400),buf8(400)
+set rel0:0
+;
+record old(77)
+set  ?oacct:0
+set  ?osub:0
+set  ojrn:0
+set  osorpnt:0
+set  oref:0
+set  odate:0
+set  oemp:0
+string odesc(30)
+set  oamt:0
+set  ojdte:0
+set  orel:0
+endrec
+;
+;
+entrypoint crt
+;
+external ?gkey,ioerr,stat,cget,msg,pupsi,gupsi,clrec,?nkey
+;
+;
+;
+;
+;==================
+entry
+;
+   open io(crt,gmst,gofil,newdet,gsfil,new,nsub), output prt
+;
+   call ?gkey(gmst,?zero)
+   go to (ioerr,ioerr)on status;  no header
+   readb(gmst,headb)
+   call stat(1)
+;
+   call ?gkey(gmst,?two)
+   go to (a10,ioerr)on status
+   readb(gmst,hd3)
+   call stat(1)
+   tmeal=ttips=tmtded=0
+   writeb(gmst,hd3)
+   call stat(1)
+;
+a10:
+;
+   curp(crt,1,2)
+   call msg(m01)
+;
+   curp(crt,1,10)
+   readb(newdet,gdet)
+   call stat(1)
+   ;
+   xcdate=ref;            xcdate=last posting month
+   ;
+   'acct'='zer4'
+   encode(acct,f08)month
+   decode(acct,f10)cmm,cyy
+   cdate=cyy*100+cmm
+b05:
+   call gupsi(fla2)
+;
+c100:;  sub accounts
+   readb(gsfil,gdet)
+   if(status.ne.0)go to d100
+c150:
+;
+   writeb(nsub,gdet)
+   call stat(2)
+   go to c100
+;
+;==============  post new details ==============
+;traceon
+;
+d100:
+   readb(newdet,gdet)
+   if(status.ne.0)go to d900;   end of job
+   if(?acct.le.100)go to d100
+   rel0=rel
+   ;
+   ;
+d107:
+   ;
+   'acct'='zer4'
+   encode(acct,f08)jdte
+   decode(acct,f10)yy,mm
+   if(rel.ne.0)go to d110
+d109:
+   call ?gkey(gmst,?acct)
+   go to (d200,ioerr)on status
+   rel=rel0
+;
+d110:
+   readb(gmst,recg)
+   if(status.ne.0)go to d109
+   if(?gid.eq.0)go to d210
+;
+   if(?acct.ne.?gid)goto d109;   if there was an expand rel would be wrong
+d130:
+   if(?acct.gt.?bsea)go to d130f
+   if(?acct.ne.?plact)go to d132
+ 
+d130f:
+   if(jrn.ne.99)go to d130q
+   ldate(integer,date)
+   sdate(string,acct)
+decode(acct,f10a)mm,yy
+   if(cyy.ne.yy)go to d130t
+   if(cmm.eq.mm)go to d132;  current month even tho jrn 99
+   go to d130t
+ 
+d130q:
+ 
+   if(jdte.eq.cdate)go to d132
+ 
+d130t:
+   i=cmm
+   j=cyy
+   flg=1;   by passing first month because first month is cdate & we know it isnt =
+d131:
+ 
+    flg=flg+1
+    call iset
+    if(mm.ne.i)go to d131
+    if(yy.ne.j)go to d131
+    if(flg.le.mnum)go to d132
+ 
+   if(?gid.ne.?plact)go to d131f
+   ?retain=?retain+amt
+    go to d150
+ 
+d131f:
+ 
+   if(vv.lt.i6000)go to d150;  not the inventory
+ 
+ 
+d132:
+ 
+    ?cbal=?cbal+amt
+   if(jrn.eq.99)go to d149
+   if(jdte.ne.cdate)go to d149
+d135:
+   cmo=cmo+amt
+;
+d140:
+   xx=usef-(usef/10*10)
+   if(xx.ne.0)go to d141
+   usef=usef/10*10+2
+;
+d141:
+   writeb(gmst,recg)
+   call stat(1)
+   if(vv.lt.i6000)go to d145;   inventory accounts are v1=6
+   ?iid=?gid/?1bil*?1bil+?einv;   plugs brn # on front
+   call ?gkey(gmst,?iid)
+   go to (d143,ioerr)on status
+   readb(gmst,invent)
+   call stat(1)
+   'desc'='idesc'
+   ?gid=?iid
+;   same record except for the description is in inventory contra and ending inventory
+   vv=ivv
+   ff=iff
+   writeb(gmst,recg)
+   call stat(1)
+;
+d143:
+;  beginning inventory is exactly the opposite of ending inventory
+   ?iid=?acct/?1bil*?1bil+?binv
+   call ?gkey(gmst,?iid)
+   goto (d145,ioerr)on status
+   readb(gmst,invent)
+   call stat(1)
+   call reverse(cmo,mon2,mon3,mon4,mon5,mon6,mon7,mon8,mon9,mona,monb,monc,mond,mone,monf,0)
+   ?cbal=0-?cbal
+   ?pbal=0-?pbal
+   'desc'='idesc'
+   ?gid=?iid
+   vv=ivv
+   ff=iff
+   writeb(gmst,recg)
+   call stat(1)
+d145:
+   call rdold
+   if(?sub.eq.-10)go to d100;  indication of "i" account, "i" details are not kept. 9/05/78
+   v4=vv-(vv/10*10)
+    ; if(v4.ge.7)go to d100;  i account - from payroll details(removed 10/05/79...jwb)
+   if(jrn.ne.99) goto d145a;
+   jdte=cyy*100+cmm
+   d145a:
+   writeb(new,gdet)
+   call stat(2)
+   if(?sub.eq.0)go to d100 ; subaccount not being used so go home
+d146:
+if (?acct .gt. ?999bl) go to d100;
+   writeb(nsub,gdet) ; write into subaccount posted file
+   call stat(2)
+   go to d100
+;
+d149:; jrn 99 will have jdte=current month but it should be posted
+;       to its detail month
+   ldate(integer,date);   century date at this point
+   sdate(string,acct);    hold it temporarily
+   decode(acct,f10a)mm,yy
+   if(cyy.ne.yy)go to d150; not this year
+   if(cmm.eq.mm)go to d135; it is current month even tho it is a jrn 99
+;
+;
+d150:
+   i=cmm
+   j=cyy
+   flg=0
+   if(jrn.eq.99)go to d160
+d160:
+   call add(mon2,mon3,mon4,mon5,mon6,mon7,mon8,mon9,mona,monb,monc,mond,mone,monf,0)
+   if(flg.ne.0)go to d140;(changed 12-18-81)...dl
+   ?pbal=?pbal+amt
+   if(?gid.eq.?ret) goto d165;         retained earnings acct..5/21/80
+   go to d140;(changed 12-18-81)...dl
+;
+d165:
+    ?inv=?inv+amt  ;   update retained earnings amount...5/21/80..kg
+    goto d140;(changed 12-18-81)...dl
+;
+d200: ; account isn't in chart
+;
+   call msg(m10) ; transaction account number is not in accounts master file
+   call msg(m11)  ; see rejection report on printer
+   if(rejsw.ne.0)goto d201 ; already done tof
+   rejsw=1
+   write(prt,f20)eject
+   write(prt,f20)rejhd1
+   write(prt,f20)rejhd2
+   write(prt,f20)
+d201:
+   write(prt,f22)?acct,?sub,ref,date,emp,amt
+   call ?nkey(gmst,?acct)
+   go to (noroom,ioerr)on status
+   go to d215
+;
+d210:
+   call ?gkey(gmst,?acct)
+   goto(d200,ioerr)on status
+   readb(gmst,recg)
+   call stat(1)
+   if(?gid.eq.0)go to d215;  still
+   rel=rel0;  wrong account - must have been an expand
+   if(?gid.eq.?acct)go to d130
+   ?gid=?acct; somehow this got messedup
+   go to d130
+ 
+;
+d215:
+ 
+;
+;
+   call clrec(recg)
+   'desc'='astk'
+   vv=twot
+   ?gid=?acct
+   writeb(gmst,recg)
+   call stat(1)
+   rel=rel0
+   go to d110
+;
+noroom:;  tried to add this account but couldnt
+   write(prt,f21)m12
+   go to d145 ;  detail does get posted but not to any master record
+;
+;
+d900:;  eoj
+   ?acct=?last
+   call rdold
+   if(?retain.eq.0)go to d920
+    call ?gkey(gmst,?ret)
+    go to (d930,ioerr)on status
+   readb(gmst,recg)
+    call stat(1)
+ 
+d910:
+    ?cbal=?cbal+?retain
+    writeb(gmst,recg)
+    call stat(1)
+ 
+d920:
+endfile new,nsub
+close gmst,gofil,newdet,new,nsub,gsfil,prt
+load(xgl538,0,0)
+   call msg(m02);  module missing
+stop 25
+;
+d930:
+ 
+   call ?nkey(gmst,?ret)
+   go to (noroom,ioerr)on status
+   call clrec(recg)
+    'desc'='astk'
+   vv=twot
+   ?gid=?ret
+   go to d910
+;
+;
+;========= s u b r o u t i n e s ============
+;traceoff
+;
+;==================
+subroutine rdold;   reads the old detail file
+;==================
+   if(fla2.eq.2)go to rd30;  we dont want to keep old details if it is end of year 5/17/78
+   if(fla2.eq.1)go to rd30;           added...(1/22/80 kag)
+   if(?oacct.eq.0)go to rd20; first pass
+   if(?oacct.eq.?last)go to rd30;  end of input
+   if(?oacct.gt.?acct)go to rd30;  new record goes infront of this one
+   if(ojdte.ne.0)go to rd10;       not in new format yet
+   ldate(integer,odate)
+   sdate(string,xdate)
+   decode(xdate,f10a)mm,yy
+   ojdte=yy*100+mm
+rd10:
+   if(fla2.eq.3)go to rd15;       save all
+   if(post.eq.3)go to rd15;       save all
+   if(xcdate.eq.month) go to rd15;       save em anyway
+   if(ojdte.ne.cdate)go to rd20;  not the right month
+;
+rd15:
+   if(?oacct.lt.?acct)go to rd18;  this one should be entered here
+   if(ojdte.gt.jdte)go to rd30;  put the new one first
+rd18:
+   writeb(new,old)
+   call stat(2)
+;
+rd20:
+   readb(gofil,old)
+   if(status.eq.0)go to rdold;     see if it is time to write this one
+   ?oacct=?last
+;
+rd30:
+return
+;
+;
+subroutine iset
+;===============
+   i=i-1
+   if(i.gt.0)go to is20
+   i=12
+   j=j-1;   year
+;
+is20:
+return
+;
+;================
+subroutine add
+;================
+;
+direct
+  lda- x+
+  bnz  *+3
+  rsr
+  sta  ad10+3
+  sta  ad10+13
+cpl
+;
+   call iset
+;
+   if(mm.ne.i)go to add
+   if(yy.ne.j)go to add
+;
+ad10:
+zero=zero+amt
+flg=1
+   go to add
+;
+;==================
+subroutine reverse
+;==================
+;
+direct
+   lda- x+
+   bnz  *+3
+   rsr
+   sta  re10+13
+   sta  re10+8
+cpl
+;
+re10:
+;
+zero=zero-zero
+   go to reverse;    cbal=0-cbal etc
+;
+;
+;===================
+;============= w o r k i n g   s t o r a g e =============
+;
+set  i:0,j:0,fla2:0,mm:0,cmm:0,cyy:0,cdd:0,yy:0,dd:0,twot:2000,?two:2,flg:0,v4:0
+set ?1bil:1000000000,?999bl:999000000000 ; used to check for branch numbers
+set i6000:6000,?retain:0
+set ?last:999999999999;   last account
+set  ?zero:0,cdate:0,xx:0,xcdate:0
+set rejsw:0,pjdte:0
+string null(0),xdate(8)
+string acct(18)
+;
+define astk:'********************'
+define  xgl538:'xgl538'
+define zer4:'0000',zer6:'000000'
+;
+define m02:'xgl538 is not in proper directory.  call your dealer'
+define m10:'adding account number  not in accounts master file.'
+define m11:'see error report on printer.'
+define m12:'new account would not fit - detail is in posted file'
+define rejhd1:'error report'
+define rejhd2:'      account         sub   ref    date  emp      amount'
+;
+format f08:n4
+format f09:n6
+format f10:n2
+format f10a:n2x4n2; mm/dd/yy
+format f20:c46d12
+format f21:c52n-10.2,x1c10n2x1n2
+format f22:d12x1d12x1n6x1n6x1n5x1n-12.2
+end;  gl537
+;
+
+

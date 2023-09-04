@@ -1,0 +1,344 @@
+title 'gl560--subaccount master file maintenance '
+system
+;
+define m01:'gl560 (chart of subaccounts) 12/29/81'
+;
+;  notes:
+;   6/21/76...written...ns
+;   7/30/76...changed sub to a 6 byte integer..ns
+;   9/12/76...changed messages and some processing, especially
+;             adding gmst access and use of h4 in getting subaccount
+;             numbers..glg
+;   3/31/77...adding delete option, changing display and adding not on file
+;             do you wish to add?....ns
+;   9/22/77...print option doesn't acknowledge deletes.
+;   11/1/77...adding colon to m01a:'gl560 date' changed to m01a:'gl560:date'..ns
+;   07/21/78...cosmetic changes...ns
+;   06/19/79...cosmetic changes..ns
+;  06/25/79...format changes on report...ns
+;   08/02/79...signon mess changed..ns
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;  this program creates a master file for giving descriptions to sub accounts
+;   it is not required to have this run, but it will make the g/l by sub
+;   accounts easier to use and read.
+;
+;
+record  recs(43)
+set     ?msub:0;      master file sub number
+string  mname(30);   master file sub account name
+endrec
+;
+copy recg
+;
+file   sfil:sys1,class=2,rnd,recsiz=43,key=rel0
+;
+file list:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+record listb(10)
+set    ?lsub:0
+set rel0:0
+endrec
+;
+;
+file  crt:sysipt
+file prt:syslst,class=1,seq
+entrypoint crt
+external msg,cget,ioerr,stat,?gkey,?nkey,clrec,pupsi,lfeed,gupsi,ynget,gjp
+;
+entry
+;
+open io (crt,sfil,gmst,list), output prt
+;
+a1:
+call ?gkey(gmst,?zero)
+go to (a10,ioerr) on status
+readb(gmst,headb)
+call stat(1)
+'acct'='zer2'
+encode (acct,f18) hh
+decode (acct,f17) h1,h2,h3,h4
+go to b10
+;
+a10:
+call msg(m11)
+close crt,sfil,list,prt
+stop 50
+;
+b10:
+call msg(eject)
+call gupsi(print)
+call msg(m01)
+if(print.eq.3)go to b100
+go to b20f
+;
+b20:
+call msg(eject)
+call msg(m01)
+;
+b20f:
+go to (g1,g2,g3,g4,g5,g6,g7,g8) on h4
+go to g9
+g1:
+call cget(m02,f07,?lsub)
+go to b21
+g2:
+call cget (m02,f08,?lsub)
+go to b21
+g3:
+call cget (m02,f09,?lsub)
+go to b21
+g4:
+call cget (m02,f10,?lsub)
+go to b21
+g5:
+call cget (m01,f12,?lsub)
+go to b21
+g6:
+call cget (m02,f12,?lsub)
+go to b21
+g7:
+call cget (m02,f13,?lsub)
+go to b21
+g8:
+call cget (m02,f14,?lsub)
+go to b21
+g9:
+call cget (m02,f15,?lsub)
+b21:
+if (status.ne.zero) go to b20
+;
+b22:
+if(?lsub.eq.0)go to b90
+?msub=?lsub
+call ?gkey(sfil,?lsub)
+go to (b40,ioerr)on status
+readb(sfil,recs)
+call stat(1)
+if(?msub.ne.?lsub)go to b60
+;
+b25:
+call lfeed(crt,2)
+write(crt,f02)?msub, m03,mname
+call lfeed(crt,2)
+call cget(m10,f16,str)  ;  change, delete, or next (c/d/n)?
+if (status.ne.zero) go to b25
+ifs(str.eq.c)go to b50
+ifs(str.eq.d)go to b28
+ifs(str.eq.n)goto b30;   write this one
+go to b25
+;
+b28:;  delete
+call clrec(recs)
+b30:
+writeb(sfil,recs)
+call stat(1)
+go to b20
+b40:
+call ynget(m04);  not on file ... is this an add
+if(status.eq.0)go to b20; not an add
+call ?nkey(sfil,?msub)
+go to (noroom,ioerr)on status
+sort=1
+call clrec(recs)
+b45:
+?msub=?lsub
+;
+b50:
+call cget (m09,f03,mname)  ;  description
+if (status.ne.zero) go to b50
+go to b25
+;
+b60:
+call ynget(m04); not on file...is this an add?
+if(status.eq.0)go to b20
+?msub=?lsub
+go to b25
+;
+noroom:
+call msg(m08);   expanding file
+stop 110
+;
+b90:
+call pupsi(sort)
+close  crt,sfil
+stop 0
+;
+b100:
+call crq
+;
+b110:
+readb(list,listb)
+if(status.ne.0)go to b90
+readb(sfil,recs)
+call stat(1)
+if(?msub.eq.0)go to b110;   deleted record 9/22/77
+call crq
+write(prt,f04)?msub,mname
+;
+go to b110
+;
+;
+subroutine crq
+;
+lcr=lcr+1
+if(lcr.ge.55)go to cr10
+return
+;
+cr10:
+go to (cr12)on flg
+flg=1
+call bltrun(client)
+call cent80(client,fmt1)
+call msg(m07c); date
+call cget(null,fc77,date)
+call bltrun(date)
+call cent80(date,fmt2)
+call gjp(0,key)
+ 
+cr12:
+write(prt,f01)eject
+write(prt,fmt1)client
+write(prt,fmt3)acnt,sl,key,title,m12,page
+page=page+1
+write(prt,fmt2)date
+write(prt,fmt2)
+write(prt,fmt4)m07,m07,m07a
+write(prt,fmt4)m07b
+write(prt,fmt4)
+lcr=7
+return
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;
+;
+;
+;==========================
+;   constants
+;==========================
+;
+set  sort:0,lcr:60,print:0,h1:0,h2:0,h3:0,h4:0,?zero:0,flg:0,page:1
+;
+string str(1),acct(2),key(6),null(0)
+;
+define zer2:'00', n:'n',d:'d',c:'c'
+;
+define sl:'/'
+define m02:'enter subaccount number'
+define m03:'desc:'
+define m04:'not on file.  is this an add?'
+define m07:'subaccount'
+define m07a:'description'
+define m07b:'  number'
+define m07c:'enter report date'
+define m08:'subaccount file is full'
+define m09:'enter subaccount description'
+define m10:'change, delete, or next (c/d/n)'
+define m11:'user record does not exist'
+define m12:'page'
+ 
+define title:'chart of subaccounts'
+format f01:c90
+format f02:d9x1c8c30
+format f03:c30
+format f04:x5 d9 x32 c35
+format f06:c20c21c19c19
+format f07:d1
+format f08:d2
+format f09:d3
+format f10:d4
+format f11:d5
+format f12:d6
+format f13:d7
+format f14:d8
+format f15:d9
+format f16:c1
+format f17:n1
+format f18:n5
+;
+format fc77:c77
+format fmt1:x100 c100
+format fmt2:x100 c100
+format fmt3: n3 c1 c26 c42 c5 n4
+format fmt4:x5 c45 c11 c15
+ 
+string date(77)
+end ;   gl560  (subaccount file service)
+
+
+

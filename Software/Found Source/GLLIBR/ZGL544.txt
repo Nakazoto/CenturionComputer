@@ -1,0 +1,170 @@
+title: 'gl544 (printing the cover letter)'
+system
+;
+define m01:'gl544 (printing the cover letter) 12/29/81'
+;
+; notes:
+;
+;  1/6/77...deleted paper option and made it load xgl545 direct..glg
+;  1/12/77...deleted load so that it drops back into jobstream to do fins..glg
+;  9/16/77...adding client name and date to the letter
+;  7/21/78...cosmetic changes & indented letter 20 instead of 10 spaces...ns
+;   7/17/79...only skip 4 lines before beginning letter (letter is now 50 lines long)..ns
+;   8/02/79...added firm name to printout & allowed centering..ns
+;  08/30/79...changed method of centering firm name...jwb
+;
+;  12/29/81...recompile to have a common date base...dl
+;
+file letter:sys3,class=2,seq,filtyp=a,buffer=400,buf3
+buffer buf3(400)
+;
+file prt:syslst,class=1,seq
+copy headb
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+set rel0:0
+file crt:sysipt
+entrypoint crt
+;
+external lfeed,msg,?gkey,ioerr,stat,cget,ynget
+entry
+open io (crt,gmst,letter), output prt
+;
+call msg(m01) ; hi there
+call cget(m02,f01,line);   get date for cover letter
+call ynget(m03);  is your firm name in letter? (y/n)
+go to (a0020)on status
+firm=0;  no firm name
+ 
+a0010:
+call ynget(m04);  do you want to center the firm name? (y/n)
+go to (a0020)on status
+cent=0;   dont center it
+ 
+a0020:
+write(prt,f01)eject
+call lfeed(prt,5)
+if(firm. ne. 0)go to b01
+ 
+ 
+call ?gkey(gmst,?zero)
+goto (b01,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+b01:
+write(prt,f02)line;date
+call lfeed(prt,2)
+if (firm. ne. 0) goto b10
+if (cent. eq. 0) goto b05
+call bltrun (client)
+call cent80 (client, f03)
+write (prt, f03) client
+goto b06
+;
+b05:
+;
+write (prt, f02) client
+;
+b06:
+;
+write(prt,f02)
+;
+b10:
+read(letter,f01)lin1
+if(status.ne.0)go to b20
+write(prt,f02)lin1
+go to b10
+;
+b20:
+stop 0
+;
+;=======================
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+string line(50), lin1(50)
+define m02:'enter date for cover letter'
+define m03:'is your firm name in letter file? (y/n)'
+define m04:'do you wish to center your firm name? (y/n)'
+ 
+set ?zero:0,i:0,firm:1,cent:1
+;
+integer prog
+;
+;
+format f01:c50
+format f02:x20c50
+format f03:x100c100; variable
+end ;  gl544
+
+

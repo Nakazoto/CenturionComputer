@@ -1,0 +1,1183 @@
+title 'gl554 - print financial comparison report  - narrow '
+system
+define m01:'gl554 (printing the financial comparison report - narrow) 12/29/81'
+;
+;  notes:
+;    1/16/76...written...ns
+;    1/26/76...gl10 i was reading into gdet instead of recg...ns
+;    1/03/76...the level 6 of the income statement puts out l and p depending on whether the total is profit or loss.
+;    3/02/76...there seems to be a problem with printing the income statement..ns
+;              correction in c50 - on pass for sheduled accts i wasnt going back
+;              to b15..ns
+;    4/08/76...chng in gl30 lacct checking for le instead of eq...ns
+;    5/06/76...correcting overflow proble in crq (top5 and line count )...ns
+;    6/17/76...conversion from  g930 to g530...ns
+;    6/18/76...finishing conv...ns
+;    6/21/76...moved call sign in subr. sttype...ns
+;    6/21/76...conv. from g530 to g535...ns
+;    6/24/76....changing maj so that it will not print leading zeros on branches...ns
+;    7/08/76...new master file layout...ns
+;    7/08/76...adding new option - comp. any two months, any two quarters..ns
+;    7/09/76...master file is now 131 bytes long & has 2 headers...ns
+;    7/29/76...chng in glread - scheduled items were not using correct income
+;              total for figuring percentages..ns
+;    8/18/76...program incorporated into standard general ledger application
+;              with name change, by g.l. gillette.  at the
+;              same time, certain cosmetic changes to formats and messages,
+;              plus minor program modifications, were made.
+;    9/15/76...a2 (format options ) changed - only allowing 0=standard, 1=no %...ns
+;    9/20/76...changing from 8 1/2 x 14 7/8 to 11 x 14 7/8 paper...ns
+;   10/12/76...operating statement changes - levels 4,5, & 6 are reversed,
+;              sfl was being switched off in tl too soon, ...ns
+;   11/01/76...reversing sign only when income is included, fixed problem on branches
+;              when they aren't printing branches...ns
+;   12/16/76...adding edpc, combining gl550 & 551, resetting page #...ns
+;    1/06/77...not everything was being reset between comparison options, so i
+;              reset everything at b01..glg
+;   02/07/77...changing to reduce memory required...ns
+;    3/15/77...changes for new release - 1. removed work1,
+;              2. sign is reversed only on indicated records
+;              3.pulled all lfeeds (only way to get lfeed is 'b' rec. with blank desc)
+;    7/20/77...changing line count on page overflow to 57 lines; moved crq's
+;              to check for page-room before print...ns
+;    9/13/77...formats f30 and f33 printing  only 2 digit branch number...ns
+;   10/31/77..reducing memory..ns
+;    05/05/78...changed headers to be any account less than 100...ns
+;    07/21/78...cosmetic changes...ns
+;    10/03/78...adding control, & h accounts...ns
+;    06/19/79...adding total 0 & 7, changing heading, adding a accounts, non-printing
+;              of specified schedules, centering headers...ns
+;   06/22/79...adding variance to wide report
+;   06/27/79...changing formats to conform to report layouts..ns
+;   7/05/79..breaking into 2 programs became 9 1/2 k..ns
+;    08/02/79...signon mess..ns
+;    8/29/79...changed line counting in e crq
+;              sw2=1 we are in the scheduled accounts so
+;                                 dont do any underlining or spacing until
+;                                 we're out of this section..
+;
+;    05/21/80...modified to accept retained earnings acct #. from input file,
+;                 and to calculate retained earnings amounts correctly..kag
+;
+;
+;    02/10/81...modified subroutine ''ckamt'' from statement ''ck80'' thru
+;               end of subroutine to calculate prior retained earnings correctly.
+;               added ''yrend'' field to control file...dl
+;
+;    07/09/81...correct the retained earnings amount when updating ''year end''...dl
+;
+;    12/29/81...recompile to have a common date base...dl
+;
+;
+;=============================================================================
+;
+copy recg
+;
+;
+copy list
+;
+record aux(67)
+set ?hid:0,hff:0,hvv:0
+string hdesc(30)
+string dec(10)
+set    cur:0,?a9:0
+endrec
+;
+;
+file control:sys2,class=2,seq
+;
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+external stat,msg,ioerr,gupsi,pupsi,lfeed,cget,?edit,ynget,bltrun
+entrypoint crt
+;
+;======================
+;   program logic
+;======================
+entry
+open io (crt,gmst,control), input list, output prt
+;
+read(control,f01)client,inc,popt,h0,actopt,a2,ans,opt1,vopt
+read(control,f01a)stdate,mo,tmm,tyy,cmm,cyy,tmo,nmm,nyy,aa,acnt,?bsea,key,bans
+read(control,f01b)topcom1,topcom2
+read(control,f01b)coment,bs
+read(control,f01d) ?reta, mnum, endyr  ; retains earning acct #...2/10/81...dl
+a010:
+readb(list,listb)
+if(status.ne.1)go to a020
+call msg(m26);   recreating list file will return
+stop 100
+;
+a020:
+curp(crt,1,1)
+curb(crt,79)
+call msg(m01)
+curp(crt,1,23)
+a30:
+;
+call bltrun(client)
+call bltrun(stdate)
+call bltrun(topcom1)
+call bltrun(topcom2)
+call bltrun(coment)
+call bltrun(inc)
+call bltrun(bs)
+call cent80(client,fmt1)
+call cent80(inc,fmt2)
+call cent80(bs,fmt2b)
+call cent80(stdate,fmt3)
+call cent80(topcom1,fmt4)
+call cent80(topcom2,fmt5)
+call cent80(coment,fmt6)
+;
+a100:
+;
+if(a2.ne.1)go to b10
+'m14'='null';  %
+ 
+;traceon
+ 
+b10:
+call glread
+if(nmin.eq.nines)go to a100;    end of report
+;
+if(?lid.le.?bsea)go to c60
+go to c55
+b20:;  titled account
+call bltrun(desc)
+call cent80(desc,f240)
+go to b20g
+ 
+b20f:
+b20g:
+go to (b22,b21)on l4
+call crq
+go to b23
+ 
+b21:
+topflg=1
+lsw=0
+call top
+topflg=0
+go to b10
+ 
+b22:
+call top
+ 
+b23:
+if(l3.eq.2)go to b25
+ 
+write(prt,f01b)desc; narrow
+go to b10
+ 
+ 
+b25:
+write(prt,f240)desc;   format has been adjusted to center either wide or narrow
+ 
+go to b10
+b30:;   l1=1  -  d acct (precedes scheduled accounts
+?sgid=?gid
+nrel=rel0
+sl2=l2
+go to b10
+;
+b40:;    money accounts
+call typest;               write account
+go to b10
+;
+;=================
+;==================    sheduled accounts=====================
+;
+;
+c10:
+call ?clear(?b6,?curamo,0)
+a3=1;         this is a flag that indicates that there are scheduled accounts
+;
+c15:
+sw2=1
+if(sl2.eq.4)go to c16
+if(l1.eq.5)go to c16
+if(l1.ne.2)go to c15f
+if(l4.eq.7)go to c16;  j&i not added to totals (includes d totals)
+;
+c15f:
+;
+call ?add(?curamo,?cmo,?b6,?tamt,0)
+c16:
+call glread
+if(nmin.eq.nines)go to a100
+if(l2.eq.2)go to c15
+?lid=?gid
+nmo=rel0
+rel0=nrel;  saved at same time sgid was saved (rel key of the first d account
+if(sl2.eq.4)go to c26
+if(rel0.eq.0)go to c25
+readb(gmst,recg)
+call stat(1)
+'dol1'='null'
+call setvv
+if(l1.le.3)go to c22
+if(l1.eq.6)go to c22
+readb(gmst,aux)
+call stat(1)
+;
+c22:
+call gl60
+ 
+c25:
+ 
+?tamt=?b6
+?cmo=?curamo
+call typest
+ 
+c26:
+;
+rel0=nmo;  rel. key saved from before calling back the d account
+readb(gmst,recg)
+call stat(1)
+sw2=0
+call gl60;   entry point in glread
+go to c60
+;
+c55:
+go to (c60) on a4
+call ?clear(?x1,?x2,?x3,?x4,?x5,?x6,?x7,?y1,?y2,?y3,?y4,?y5,?y6,?y7,0)
+if(l1.ne.0)go to c56
+if(l4.ne.0)go to c57
+ 
+c55f:
+c56:
+call top
+line=line-1;  this will not print a line so the count is 1 too many
+ 
+c57:
+a4=1
+c58:
+ 
+c60:
+go to (c70)on pass
+if(l2.eq.2)go to c10;   sheduled account
+c70:
+if(l1.eq.0)go to b20;   titled account
+go to (b30,b40,d15,b40,b40,b40)on l1
+d15:
+;
+;traceoff
+;
+;
+d20:;     determine total level
+;
+yrend=l4-1
+call tget(?tx,yrend,?x1,6)
+call tget(?ty,yrend,?y1,6)
+call tl
+go to (d26,d31,d36,d41,d45,d41)on yrend
+;
+d24:
+call ?clear(?x1,?y1,0)
+go to b10
+;
+d26:
+call ?clear(?x2,?y2,0)
+go to d24
+;
+d30:
+d31:
+call ?clear(?x3,?y3,0)
+go to d26
+;
+d36:
+call ?clear(?x4,?y4,0)
+go to d31
+;
+d41:
+call ?clear(?x5,?y5,0)
+go to d36
+;
+d45:;    level 6
+call ?clear(?x6,?y6,?x7,?y7,0)
+dfl=0;    restart baseline calculation
+go to d41
+;
+;
+;=============================================================================
+;=============== s u b r o u t i n e s =======================================
+;=============================================================================
+;            subroutine directory
+;                glread  -   reads g/l master file
+;                typest-   prints details for balance sheet
+;                sttype-   prints details for comparative statement
+;                tl    -   total lines for comparative statement
+;                ckamt -   determines which month is current for finan. statement
+;                crq   -   increases line counter
+;                  (top)-  part of crq (top of form and heads it)
+;                sign  -   checks to see if sign should be reversed and edits
+;                         into num1.
+;============================================================================p
+;
+;
+;========================
+subroutine glread
+;========================
+gl30:
+if(?gid.gt.?bsea)go to gl30a
+if(l4.ne.6)go to gl30a;  not total level 6
+if(l1.ne.3)go to gl30a; not a total account
+flg6=1;  into liabilities
+ 
+gl30a:
+readb(list,listb)
+go to (gl70)on status
+if(?lid.le.100)go to gl30a;        headers
+if(?lid.gt.?bsea)go to gl30c
+ifs(bans.eq.no)go to gl30a;  not printing balance sheet
+go to gl30c5
+gl30c:
+ifs(bans.eq.b)go to gl70;  printing balance sheet only
+ 
+gl30c5:
+readb(gmst,recg)
+call stat(1)
+if(?gid.le.0)go to gl30a;       deleted accounts
+call setvv
+if(l4.gt.7)goto gl30a; l4=8 says dont print this account
+if(l1.eq.6)go to gl30f;  inventory account
+if(l1.lt.4)go to gl30f; not a calc. account if l1 less than 4
+readb(gmst,aux)
+call stat(1)
+ 
+gl30f:
+;
+if(?lid.le.?bsea)go to gl60
+go to (gl35,gl60)on dfl
+;
+gl31:
+dfl=1;                             first income account
+note(list,newpnt)
+call ?clear(?inytd,?incur,0)
+;
+'lbrn'='brn'
+gl35:
+call dacct
+ifs(lbrn.ne.brn)goto gl40;  branch had no totals within it
+call ckamt
+if(l1.eq.5)go to gl37;   j account
+if(l1.ne.2)go to gl36
+if(l4.eq.7)go to gl37; i & j account do not total
+;
+gl36:
+call  ?add(?inytd,?tamt,?incur,?cmo,0)
+;
+gl37:
+;
+if(l1.ne.3)go to gl30a;           not to end of income
+if(l2.eq.2)go to gl30a;scheduled
+if(l4.lt.2)go to gl30a;           not to end of income
+;
+gl40:
+;
+if(aa.ne.1)go to gl41
+page=0
+ 
+gl41:
+?inytd=0-?inytd; reverse sign of income
+?incur=0-?incur;   reverse the sign of the income
+dfl=2;                           beyond income accts in income statement
+point(list,newpnt)
+go to gl30a;   start reading income again
+;
+;
+gl50:;  scheduled info
+if(l1.ne.1)go to gl52
+ssw=l2;     if l2=0/1 print the schedule, if l2=3 dont print it
+ 
+gl52:
+if(l2.ne.2)go to gl30;   printing only schedule items
+if(ssw.eq.3)go to gl30;  don't print this schedule flag has been set
+go to gl61g
+ 
+;
+gl60:
+call dacct
+call setvv
+go to (gl61)on sw2
+ifs(brn.ne.lbrn)go to gl31
+;
+gl61:
+;
+go to (gl50)on pass
+ 
+gl61g:
+call ckamt
+go to (gl61f)on sw2;  in schedule
+'lbrn'='brn'
+ 
+gl61f:
+ifstring(actopt.eq.yes)go to gl62;   dont write account numbers
+'brn'='null'
+'maj'='null'
+'min'='null'
+go to gl65
+;
+gl62:
+'maj'='bl6'
+encode(maj,f06)nmaj
+if(nmin.ne.0)go to gl64
+'min'='null'
+go to gl65
+;
+gl64:
+'min'='bl3'
+if(nmin.eq.0)go to gl65
+encode(min,f09a)nmin
+;
+gl65:
+go to (gl65f)on pass
+if(l2.eq.2)go to gl69
+gl65f:
+'acct'='zer3'
+encode(acct,f09a)ff;    f1=$ or not
+decode(acct,f10)f0,f1,f2; f2=lines of underlining
+xx=f2/2*2
+if(f1.ne.1)go to gl66
+'dol1'='dol';         puts $ in next money printout
+gl66:
+goto (gl69)on sw2
+if(f2.eq.0)go to gl69
+if(xx.ne.f2)go to gl67; 1,3,5,or 7
+'mss'='m17'
+go to gl67g
+;
+gl67:
+'mss'='m19+dash1+dash2'
+;
+gl67g:;   determine which format - if this item is an f or g 1 0r 2 use f14a
+call addline
+if(?gid.le.?bsea)go to gl67h
+write(prt,f13n)mss,mss;narrow income statement
+goto gl69
+ 
+gl67h:
+write(prt,f13bn)mss,mss; narrow b/s
+ 
+gl69:
+if(?gid.gt.?bsea)go to gl69f
+revf=0
+if(flg6.ne.1)go to gl69g
+revf=1;  must be in liabilities
+go to gl69g
+ 
+gl69f:
+if(l1.eq.6)go to gl69ff
+if(l1.ge.4)go to gl69q
+ 
+gl69ff:
+ 
+revf=usef/10
+gl69g:
+usef=usef-(usef/10*10)
+return
+;
+gl69q:; calculation accounts
+revf=f0
+usef=0
+return
+;
+gl70:;      finished with master now go back and list scheduled info
+;
+go to (gl40)on dfl;  hit endof file while totaling baseline-print those guys befor end
+pass=pass+1
+if(pass.gt.1)go to gl85;    pass=0, reg.; pass=1 scheduled,  pass=2 finished
+if(a3.eq.0)go to gl85;   there was no scheduled info
+call clear(a3,dfl,a4,flg6,0)
+if(aa.ne.1)goto gl75
+page=0
+ 
+gl75:
+rewind list
+?gid=0
+go to gl30a
+;
+gl85:
+line=60-line
+if(line.le.0)go to gl88
+call lfeed(prt,line)
+ 
+gl88:
+write(prt,fmt6)coment
+call pupsi(2)
+;       load (xgl551,0,0)   ;       (removed...5/21/80..kg)
+stop 0
+;
+;==========================
+subroutine setvv
+;==========================
+;
+'acct'='zer4'
+encode(acct,f04)vv
+decode(acct,f10)l1,l2,l3,l4
+return
+;
+subroutine dacct
+;============================
+;
+'acct'='zer12'
+encode(acct,f07)?gid
+decode(acct,f08)brn,nmaj,nmin
+return
+;
+;
+;
+;
+;=====================
+subroutine typest    ;     writes money details for balance sheet
+;=====================
+;
+ifstring(ans.eq.yes)go to ty10;  print all
+if(?tamt.ne.0)go to ty10;   may be a d acct from scheduled
+if(?cmo.ne.0)go to ty10
+ 
+ty05:
+if(usef.ne.1)go to ty130;  0 balance
+ 
+;
+ty10:
+?tx=?tamt
+?ty=?cmo
+ 
+ty52:
+call cksn
+call crq
+if(?lid.le.?bsea)go to ty200
+go to (ty100)on a2; no percents
+ 
+ty55:
+write(prt,f30n)desc,dol1,num2+1,num3+1,dol1,num2a+1,num4+1; income narrow
+go to ty120
+ty100:;   a2=1,   no %
+'num3'='spc10'
+'num4'='spc10'
+go to ty55
+ty120:
+'dol1'='null'
+if(l1.eq.5)go to ty130
+if(l1.ne.2)go to ty125
+if(l4.eq.7)go to ty130; i account isnt added
+ 
+ty125:
+if(l1.eq.3)go to ty130;   total line
+call ?add(?x1,?tamt,?x2,?tamt,?x3,?tamt,?x4,?tamt,?x5,?tamt,?x6,?tamt,?x7,?tamt,0)
+;
+call ?add(?y1,?cmo,?y2,?cmo,?y3,?cmo,?y4,?cmo,?y5,?cmo,?y6,?cmo,?y7,?cmo,0)
+;
+ty130:
+;
+;
+return
+ 
+ty200:; balance sheet
+write(prt,ft1n)desc,dol1,num2+1,dol1,num2a+1; bal.sheet narrow
+go to ty120
+ 
+;=====================
+subroutine tl;      total line for comparative statement
+;=====================
+;
+'brn'='null'
+'maj'='null'
+'min'='null'
+go to ty52
+;========================
+subroutine cksn
+;========================
+if(?ty.lt.0)go to cks10
+if(?incur.lt.0)go to cks15
+cks08:
+fiv=5
+goto cks16
+;
+cks10:
+if(?incur.lt.0)go to cks08
+;
+cks15:
+fiv=-5
+cks16:
+?pccur=?ty*hthou/?incur+fiv/10
+if(?tx.lt.0)go to cks20
+if(?inytd.lt.0)go to cks25
+cks18:
+fiv=5
+goto cks26
+;
+cks20:
+if(?inytd.lt.0)go to cks18
+cks25:
+;
+fiv=-5
+;
+cks26:
+?pcytd=?tx*hthou/?inytd+fiv/10
+call sign(?ty)
+'num2'='num1'
+call sign(?tx)
+;
+'num2a'='num1'
+?ty=?ty-?tx
+?tx=?ty*hthou/?tx;  ?ty is variance by this point & now ?tx is % of variance
+fiv=5
+if(?ty.ge.0)goto cks28
+fiv=-5
+if(?tx.ge.0)go to cks29
+; both are neg.
+fiv=-5
+cks27:
+?tx=?tx+fiv/10
+go to cks30
+ 
+cks28:; variance is +
+if(?tx.ge.0)go to cks27; both are positive
+cks29:
+?tx=0-?tx; signs are revsersed
+go to cks27
+cks30:
+call sign(?ty); variance is in num1
+call edpc
+;
+return
+;
+;========================
+subroutine ckamt;      determines what months values are to be used
+;=====================
+;       this is the main difference bet. g530 and g535
+;
+if(l1.eq.2)go to ck05
+if(l4.eq.7)go to ck30;  laccount and other non-h accounts fall through
+;
+ck05:
+goto (ck10,ck80,ck40,ck10)on opt1;   compared 0=month, 1=quarter,  2=year
+?cmo=cmo
+?tamt=mond
+return
+;
+ck10:
+?cmo=cmo+mon2+mon3  ;           this quarter
+if(opt1.eq.4)go to ck15
+?tamt=mond+mone+monf;           this quarter last year
+return
+ck15:
+if(tmo.lt.12)go to ck20
+call ?clear(?tamt,0)
+return
+;
+ck20:
+call tget(acnt,tmo,cmo,4)
+?tamt=acnt
+hh=tmo+1
+call tget(acnt,hh,cmo,4)
+?tamt=?tamt+acnt
+hh=hh+1
+call tget(acnt,hh,cmo,4)
+?tamt=?tamt+acnt
+return
+;
+ck30:;  j & k accounts
+if(l1.eq.6)goto ck35
+;
+?tamt=?a9
+?cmo=cur
+return
+ 
+ck35:
+?cmo=?inv
+?tamt=?pbal
+return
+ 
+;
+ck40:
+;
+call tget(acnt,mo,cmo,4)
+?cmo=acnt
+ck60:
+call tget(acnt,tmo,cmo,4)
+?tamt=acnt
+return
+;
+ck80:  ;retain earning acct..2/6/81...dl
+?cmo=?cbal                     ;year to date
+if(?lid.eq.?reta) goto ck85
+?tamt=?pbal+mond+mone+monf;   year to date of last year
+return
+;
+ck85:
+if(endyr.lt.12)go to ck86         ;add 1 to yrend equal fmfy
+if(endyr.eq.12)go to ck87         ;set fmfy to 1
+return
+;
+ck86:
+fmfy = endyr + 1                  ;calculate first month fiscal year
+go to ck88
+;
+ck87:
+fmfy = 1                          ;set first month fiscal year to 1
+;
+ck88:
+rnum = cmm - fmfy               ;compute no. months
+if(rnum.eq.0)go to ck89           ;add ?inv + mond = ?tamt
+if(rnum.eq.1)go to ck90           ;add ?inv + mond +mone = ?tamt
+if (rnum.eq.-11)go to ck90        ;add ?inv + mond + mone = ?tamt
+go to ck91
+;
+ck89:
+?tamt = ?inv + mond               ;beg. bal. prior yr. + cur. mo. last yr.
+return
+;
+ck90:
+?tamt = ?inv + mond + mone        ;beg. bal. prior yr. + prior mo. last yr.
+return
+;
+ck91:
+?tamt = ?inv +mond +mone +monf  ;beg. bal. prior yr.;(changed 07-09-81)...dl
+return
+;
+    ;    added...2/6/81...dl
+;========================
+subroutine crq
+;========================
+if(line.ge.99)go to top7
+if(line.ge.58)go to top
+call addline
+lsw=0;   at lease 1 line has been writtn since the header
+return
+ 
+top:
+if(line.ge.99)go to top7
+go to (top73)on lsw;   want to top of form but nothing has been written still have good header
+ 
+line=60-line
+if(line.le.0)go to top5
+call lfeed(prt,line)
+ 
+top5:
+write(prt,fmt6)coment
+ 
+top7:
+write(prt,f110)eject
+write(prt,fmt1)client
+'mss'='spc10'
+if(aa.eq.2)go to top11
+page=page+1
+encode(mss,f110)m20,page
+ 
+top11:
+'head1'='head2'
+if(?gid.le.?bsea)go to top11f
+encode(head1,fmt2)inc
+go to top11g
+ 
+top11f:
+encode(head1,fmt2b)bs; balance sheet
+ 
+top11g:
+write(prt,f270n)head1,mss
+top13:
+write(prt,fmt3)stdate
+line=4
+ 
+write(prt,f270)
+ifs(topcom1.eq.null)go to top14
+write(prt,fmt4)topcom1
+call addline
+go to top15
+ 
+top14:
+ifs(topcom2.eq.null)go to top16f
+ 
+top15:
+ifs(topcom2.eq.null)go to top16
+write(prt,fmt5)topcom2
+call addline
+ 
+top16:
+write(prt,fmt5)
+call addline
+ 
+top16f:
+if(topflg.eq.0)go to top40
+write(prt,f240)desc
+;  dont add this line here
+write(prt,f240)
+call addline
+ 
+top40:
+if(?gid.le.?bsea)go to top60
+go to (top41,top42,top43,top43q)on opt1; 0=month,1=qtr/2=yr,3 & 4 others
+write(prt,f300n)m19,m19,m13,m13a,m19,m19; narrow
+go to top44
+;
+top41:;  quarter
+write(prt,f301n)m19,m13,m13b,m19; current qtr
+go to top44
+ 
+top42:;  year
+write(prt,f302n)m19,m19,m13c,m19,m19
+go to top44
+ 
+top43:
+'mss2'='spcs'
+call tget(mon,nmm,tbl1,4)
+encode(mss2,f05a)mon,a19,nyy
+call tget(mon,tmm,tbl1,4)
+'mss3'='spcs'
+encode(mss3,f05a)mon,a19,tyy
+;
+write(prt,f303n)mss2,m14,mss3,m14; narrow
+'mss2'='spcs'
+go to top43r
+ 
+top43q:
+'mss2'='spcs'
+call tget(mon,tmm,tbl1,4)
+encode(mss2,f05a)mon,a19,tyy
+write(prt,f304n)m15e,m15d,m14,m13e,m14
+top43r:
+write(prt,f305n)mss2
+go to top70
+ 
+ 
+top44:
+write(prt,f306n)m15,m15b,m14,m15c,m15b,m14
+go to top70
+ 
+top60:
+write(prt,f307n)m15,m15b,m15c,m15b
+go to top71
+ 
+top70:
+call addline
+top71:
+call addline
+call lfeed(prt,1)
+call addline
+call addline;  this is for the record that is about to be written
+ 
+top73:
+lsw=1
+return
+subroutine addline
+;=======================
+line=line+1
+return
+;
+;====================
+subroutine sign
+;=========================
+;
+direct
+ lda-  x+
+ sta   s10+3
+cpl
+;
+s10:
+?new=?gid; variable ?gid
+if(revf.ne.1)go to s13;  dont reverse sign
+?new=0-?new
+;
+s13:
+if(?new.ge.0)go to s13f
+go to (s15)on h0
+if(f1.eq.2)go to s15
+s13f:
+call ?edit(?new,num1,mask01)
+return
+ 
+s15:
+call ?edit(?new,num1,mask02)
+return
+;
+;
+;======================
+subroutine edpc
+;======================
+if(revf.ne.1)go to ed12
+?pccur=0-?pccur
+?pcytd=0-?pcytd
+?tx=0-?tx
+ed12:
+call ?edit(?pccur,num3,mask03)
+call ?edit(?pcytd,num4,mask03)
+call ?edit(?tx,num5,mask03)
+go to (ed15)on h0
+if(f1.eq.2)go to ed15
+return
+ 
+ed15:
+if(?pccur.ge.0)go to ed16
+call ?edit(?pccur,num3,mask04)
+ed16:
+if(?pcytd.ge.0)go to ed17
+call ?edit(?pcytd,num4,mask04)
+ 
+ed17:
+if(?tx.ge.0)goto ed18
+call ?edit(?tx,num5,mask04)
+ 
+ed18:
+return
+;================================
+;
+subroutine ?clear
+;=======================
+direct
+  lda- x+
+  bnz  *+3
+  rsr
+  sta  cl10+8
+cpl
+;
+cl10:
+?gid=0; variable ?gid
+goto ?clear
+;
+;================
+subroutine clear
+;================
+direct
+  lda- x+
+  bnz  *+3
+  rsr
+  sta  cl20+8
+cpl
+;
+cl20:
+zero=0
+go to clear
+;
+;====================
+subroutine ?add
+;====================
+;
+direct
+   lda- x+
+   bnz  *+3
+   rsr
+   sta  ad?10+3
+   sta  ad?10+13
+   lda- x+
+   sta  ad?10+8
+cpl
+;
+ad?10:
+?x1=?x1+?tamt
+goto ?add
+;
+;=========================
+subroutine tget
+;=========================
+;
+;       to remove data from the nth item in a list of items
+;
+;       calling sequence:
+;
+;       call tget (target-address, index-integer, table-start-address, table-unit-byte-length)
+;
+direct
+ lda- x+ get target address
+ sta tga
+ lda- x+ get index address
+ ina ,2
+ lda- a
+ xay save it for later
+ ldb- x+ get table start address
+ lda- x+ get table unit byte length
+ stx- s-
+ sta- s-
+tg01 add y,b mpy index * unit-byte-length
+ dca
+ bnz tg01
+ ldx= *-*
+tga equ *-2
+ lda- s+
+ xay move xfr count to y
+tg02 ldab- b+
+ stab- x+
+ dcr y decr xfr count
+ bnz tg02
+ ldx- s+
+cpl
+return
+ 
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;=========================================================================
+;================ w o r k i n g   s t o r a g e ==========================
+;=========================================================================
+;
+set  ?inytd:0,?incur:0,?zero:0,?new:0,popt:0,xx:0,pnt:0,newpnt:0,nrel:0,?two:2
+set  f0:0,f1:0,f2:0,revf:0,sw2:0,vopt:0,sl2:0,i100:100
+set  ?sgid:0,?pcytd:0,?pccur:0,line:99,page:0,?reta:0
+set  ?tx:0,?ty:0,hthou:100000,lsw:0,topflg:0
+set  opt1:0;     0=all posted, 1=all entered, 2=for a previous month
+set nmaj:0,nmin:0,nines:9999;    nines in nmin indicates eoj
+set  cmm:0,cyy:0;            actual current month postings
+set  ?b6:0,?tamt:0,?curamo:0,?cmo:0
+set  h0:0,l1:0,l2:0,l3:0,l4:0,pass:0;  pass is 0 when reading master, 1 when reading for scheduled only
+set  a3:0;           =1 means there are scheduled accounts
+set  a4:0;           =1 into income portion
+set  a2:0;            what we are printing in comparative statement
+set flg6:0;         if 1 we are in liabilities - reverse sign
+set  dfl:0;          0=havent gotten into income section
+;                     1=reading income records,   2=past income accts
+set mo:0;  sfl=says reverse sign on income items
+set nmo:0,nmm:0,nyy:0,tmo:0,tmm:0,tyy:0,twomo:0,aa:0,ssw:0
+set rnum:0,cmcfy:0,fmfy:0,int0:0,endyr:0
+;
+integer  fiv
+;
+;
+string null(0),brn(3),maj(6),min(3),acct(12);  do you still want to go even though income will be messed up
+string stdate(80),key(6),bans(1);   comparative statement date
+define actopt:'n';  print account numbers?
+define ans:'n';     print inactive accounts
+;
+define a19:'19',mon:'   ',tbl1:'   ',jan:'jan',feb:'feb',mar:'mar',apr:'apr',may:'may',jun:'jun'
+define jul:'jul',aug:'aug',sep:'sep',oct:'oct',nov:'nov',dec1:'dec',zed:'13 '
+define xgl551:'     1'
+;
+string topcom1(64),topcom2(64),bs(64),inc(64)
+;
+define zer3:'000',zer4:'0000',zer6:'000000',zer12:'      000000',bl3:'   ',bl6:'      '
+;
+define spcs:'                  ';   18 spaces,
+define spc10:'          '
+define head1:'                                                                                                    '
+define head2:'                                                                                                    '
+define sl:'/'
+define lbrn:'   '
+define mask01:'  ###,###,###@.##-'
+define mask02:' (###,###,###@.##)'
+define mask03:'  ####@.##-'
+define mask04:' (####@.##)'
+define num3:'            ',num4:'            ',num5:'            '
+define num1  :'                 '
+define dol:'$'
+define dol1:' '
+define num2  :'                 '
+define num2a :'                 '
+string mss(17);   holds either m17 or m19 for underlining
+string   mss2(20), mss3(20)
+;
+define yes:'y', no:'n', b:'b'
+;
+define m10:'end of job'
+define m12:'comparative '
+define m13:'c u r r e n t'
+define m13a:'m o n t h '
+define m13b:'q u a r t e r '
+define m13c:'y e a r  t o  d a t e'
+define m13e:'quarter ending'
+define m14:'%'
+define m15:'this '
+definem15b:'year'
+define m15c:'last'
+define m15d:'quarter'
+define m15e:'current'
+define m17:'============='
+define m19:'----------'
+;
+;
+define dash1:'-', dash2:'--'
+define m20:'page '
+define m26:'error - correction will be made momentarily'
+;
+format f01:c40c64,n1n1,c1,n1c1,n1n1
+format f01a:c77,n2,n2,n2,n2,n2,n2,n2,n2 n2 n3 d12 c6 c1
+format f01b:c64,c64
+format f01d: d12, n4, n4
+ 
+format f04:n4
+format f05a:x3 c4 c2n2
+format f05b:c11n2c1n2
+format f06:n6
+format f07:d12
+format f08:c3n6n3
+format f09a:n3
+format f10:n1
+format ften:n10
+;
+;
+format f13n: x35 c24 c13
+format f13bn:x41 c26 c13
+format f30n:x2 c31 c1 c15 c8 c1 c15 c9; income statment narrow
+ 
+format ft1n:x2 c37 c1 c25 c1 c16; bal sheet no accounts
+format f110: c5 n4
+format f240:x62c30;   varible format
+format f250:x16 c30;   both wide balance sheets desc
+;
+format f270:c123c9
+format f270n:c72 c9
+ 
+;   narrow
+format f300n: x33 c10 c2 c16 c9 c10 c1; current month
+format f301n: x33 c9 c16 c13 c10; current qtr
+format f302n: x33 c10 c3 c21 c10 c3; year to date
+format f303n: x35 c18 c7 c18 c1;   various months
+format f304n: x33 c8 c12 c5 c19 c1; various qtr
+format f305n: x58 c15;    ending qtr
+format f306n: x37 c5 c11 c9 c5 c10 c1;this year % last year %
+format f307n: x45 c5 c21 c5 c4;   bal sheet heading
+ 
+format fmt1: x100 c100
+ 
+format fmt2:x100 c100
+format fmt2b:x100 c100
+format fmt3:x100 c100
+format fmt4:x100 c100
+format fmt5:x100 c100
+format fmt6:x100 c100
+format fmt7: n3 c1 c6
+;********* table of totals
+set ?x1:0,?x2:0,?x3:0,?x4:0,?x5:0,?x6:0,?x7:0
+set ?y1:0,?y2:0,?y3:0,?y4:0,?y5:0,?y6:0,?y7:0
+;
+;
+end   ; gl550
+
+

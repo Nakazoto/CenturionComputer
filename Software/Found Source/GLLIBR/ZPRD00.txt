@@ -1,0 +1,163 @@
+title 'prd00 - paper tape input routine for p03 add/punch'
+;
+system prd00 (subpgm)
+;
+;
+;  j mcghee
+;
+;  09-14-76
+;
+;
+; load (prd00,hicore,1) (file name, main string, main string length, code string c1)
+;
+; call hicore (file name, main string, main string length, code string c1)
+;
+;
+; 10-19-76...removed coding to make first entrance a dummy entrance   jim
+; 10-21-76...added coding to read from liton   jim
+;  12/29/81...recompile to have a common date base...dl
+;
+;
+;
+external mvssf
+;
+direct
+*
+prbeg equ *
+ lda/ x'5a'
+ lda- a,3 a=curtb
+ lda- a,x'19' tbuw0 word zero of calling program
+ ldb= 6
+ aab b=addr of @if (status byte)
+ stb stat set addr of @if
+ lda- x+
+ sta pr20+3 set file name in read
+ ldb- x+ b=string addr
+ lda- x+ a=string length
+ stx- s- save x
+ xfr b,x x=char output area
+ jsr/ mvssf clear string
+ db ' ' blank
+ clab
+ stab- b store terminator in field
+ stab/ ssw clear status switch
+ stab minsw clear minus switch
+cpl
+pr20:
+read (0,xf01)xtmp1 ;file name will be replaced
+direct
+ ldab/ *-* status ok??
+stat equ *-2
+ bz pr22 yes, continue
+ stab/ ssw no, set status and exit
+ jmp/ pr99
+pr22 equ *
+ ldab/ xtmp1+2 al=character
+ ldbb= c' '
+ sabb space??
+ bnz pr22a no, continue
+ ldab= c'0'
+pr22a equ *
+ ldbb= c'-'
+ sabb neg number??
+ bnz pr23 no, continue
+ stab= 0
+minsw equ *-1 minus switch
+pr23 equ *
+ ldbb= c'?' legal character??
+ sabb
+ bz pr30 no, must be code or error
+pr24 equ *
+ ldbb- x end of string??
+ bz pr70 yes, error
+pr25 equ *
+ stab- x+ store character in string
+ jmp pr20
+pr30 equ *
+ lda/ xtmp1 a=hex character value
+ ldb= c'7f'
+ sab feed char??
+ bz pr20 yes, ignore
+ ldb= c'2a' ic start code
+ sab
+ bz pr20 yes, ignore
+ ldb= c'1a' dc start code
+ sab
+ bz pr20 yes, ignore
+ ldb= c'83'
+ sab
+ bz pr20 ignore
+ ldb= c'5d' index
+ sab
+ bz pr32 same as c/r
+ ldb= c'80' c/r??
+ sab
+ bnz pr35 no
+pr32 equ *
+ clab yes, make code null
+ jmp pr80
+pr35 equ *
+ ldb= c'2c' litton non-add  i
+ sab
+ bz pr37
+ ldb= c'3e' other litton non-add i
+ sab
+ bz pr37
+ ldb= c'6d' adds non-add i
+ sab
+ bz pr37 yes
+ ldb= c'3e' non add i
+ sab
+ bnz pr40 no
+pr37 equ *
+ ldab= c'1'
+ jmp pr80
+pr40 equ *
+ ldb= c'3d'
+ sab non add ii ??
+ bnz pr45 no
+ ldab= c'2'
+ jmp pr80
+pr45 equ *
+ ldb= c'2f' non add iiii ??
+ sab
+ bnz pr70 no, error
+ ldab= c'4'
+ jmp pr80
+pr70 equ *
+ ldab= 2
+ stab= 0
+ssw equ *-1 status switch
+ jmp/ pr20
+pr80 equ *
+ ldbb minsw is there a minus in this string??
+ bnz pr85 yes, continue
+ ldbb- x no, is this end on string??
+ bz pr90 yes, error
+ clrb b
+ stbb- x+ set terminator
+pr85 equ *
+ ldbb- x terminator??
+ bz pr95 yes, ok
+pr90 equ *
+ ldbb= 2 no, set status
+ stbb/ ssw
+pr95 equ *
+pr99 equ *
+ ldx- s+ restore x
+ ldb- x+
+ stab- b set code
+ ldab ssw no, set status
+ stab$ stat set status
+ rsr return
+cpl
+;
+;
+format xf01:c3
+string xtmp1(3)
+;
+;
+end
+
+
+

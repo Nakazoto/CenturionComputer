@@ -1,0 +1,78 @@
+.job glfins
+.use crt#v for syslst
+.seta upsi=2
+.skip to ok if #2 eq crt
+.use prt#2 for syslst
+.seta upsi=3
+=ok
+.run s.xeject
+.seta cc=0
+=ask
+.log
+*   do you want to print a cover letter? (y/n)
+.nolog
+.enter 5
+.skip to financ if n eq #5
+.log
+*   which key number's cover letter do you want?
+.nolog
+.enter 5
+.skip 1 if 0 lt #5
+.setc 5=#0
+.seta 6=1
+.seta 3=#1
+.skip to rechk1
+=rechk
+.seta 6=0
+=rechk1
+.fspec gl#5 on #3 7=size, 8=type
+.skip to ok1 if #7 eq 0
+.skip to ok1 if #8 ne a
+.fspec gl#5l on #3 7=size, 8=type
+.skip to ok0 if #7 ne 0
+.nam gl#5 on #3 gl#5l
+.skip to ok4
+=ok0
+.skip to ok3 if #8 ne a
+.del gl#5 on #3
+=ok1
+.fspec gl#5l on #3 7=size, 8=type
+.skip to ok4 if #7 ne 0
+.skip to nolet
+=ok3
+.del gl#5l on #3
+=nolet
+.skip to fnolet if 0 eq #6
+.log
+*   enter disk number for letter
+.nolog
+.seta 9=#u
+.enter upsi
+.setc 3=#u
+.seta upsi=#9
+.skipr to rechk
+*
+=fnolet
+.log
+*   that cover letter is not on file
+.nolog
+.skipr to ask
+=ok4
+.use gl#5l on #3 for sys3
+.use gl#0a on #1 for sys0 shar
+.run gl.xgl544
+=financ
+.use gl#0a on #1 for sys0 shar
+.use gl#0j on #1 for sys1 shar
+.use @scr#i on #s for sys2
+.run gl.xgl545
+.skip to fin if #c ne 0
+.skip 1 if glrepo ne #4
+glmenu
+=fin
+.end
+s.con
+*   7/18/78...cleanup..ns
+*   5/24/78...took out gl#0m..ns
+*   5/04/81...add the modifications in..dl
+

@@ -1,0 +1,1160 @@
+title: ' gl501: individual account master file maintenance '
+system
+ ;
+define m01:'gl501 (general ledger master file service) 12/29/81'
+;
+external cget,msg,?nkey,?gkey,ioerr,stat,clrec,gupsi,pupsi,ynget,pjp
+;   notes:
+;   12/6/75...conversion to os2..ns
+;   1/16/76...adding usef and yrend fields...ns
+;   1/23/76...stopped using month in vv, vv was being created wrong..ns
+;             g/l master file   'c' type indexed
+;   3/12/76...giving an option on the chart of accounts to only indicate
+;             the account number on money amonts,...ns
+;   3/12/76...also no longer allowing changes to totals unless e or f type..ns
+;   3/17/76...pulled disply in w26:.....ns
+;   4/08/76...adding holds and frees...ns
+;   4/22/76...chng to e glread, and option 3 on chng detail..ns
+;   6/08/76...reading header before doing print routine...ns
+;   6/14/76...added ?pbal to recg - there are no more bytes left in recg..ns
+;   6/14/76...converting g900 to g500...ns
+;   6/16/76...chnged format f04 so that coment would print all 60 char..ns
+;   6/17/76...change - ff was not being handled correctly...ns
+;   6/21/76...adding h0 - option for all neg. on financial statement to print
+;             in parenthesis..ns
+;   6/22/76...adding branches...ns
+;   6/29/76...formats clean up - f02 and f22...ns
+;   7/02/76...changing master file layout - not compatible with previous copies....ns
+;   7/09/76...changing a couple of comments...ns
+;   7/09/76...changing record size again ( to 131 bytes from 395)..ns
+;   7/12/76...adding f3 - ff= f3,f1,f2...(f3 is source and appl. of funds)..
+;             f3=1 is net income  ( level 6 of income section)
+;             f3=2 is depreciation
+;             f3=3 is sourse and appl of funds
+;             f3=4 is working capital
+;   7/12/76...split g500 into 3 programs (g500, g500p, g500b)..ns
+;   7/15/76...split copy into 2 things - recg and list (hence pulled list out of here for more room)...ns
+;   7/26/76...wasnt clearing entire 60 character on coment..ns
+;   7/26/76...breaking master service into 2 programs - header and master..ns
+;   8/18/76...program incorporated into standard general ledger application
+;            with name change, by g.l. gillette.  at the
+;            same time, certain cosmetic changes to formats and messages,
+;            plus minor program modifications, were made.
+;
+;   12-11-76...added check for all 15 months on attempt to delete a record,
+;             made other minor changes marked by n.s. --- jwb
+;
+;   3/10/77...in june nothing could be changed...ns
+;    3/14/77...adding option to usef where usef/10 = 0 is standard, 1=reverse sign
+;             in financial statement, and underline (1/2 underline column a,
+;             3/4 underline column b, 5/6 underline column c, 7/8 underlines
+;             a & b...ns
+;    5/26/77...schedule status was being lost on a type change
+;              now allowing change to e or f if the account has money in it..ns
+;    9/15/77...adding ability to change pos - if the change money accts. option is activated...ns
+;    11/15/77...adding total of bal and unposted...ns
+;    07/26/78....changed cc from 110 to 100 if expand is needed(new stnds)
+;                added getit..ns
+;    09/11/78...adding h account-loads gl508 (uses parm5 for rel0 on pass)...ns
+;   09/29/78...i & l accounts are being moved from gl508 back to this program..ns
+;   10/03/78...final cleanup & qc changes..ns
+;   06/19/79...added total level 7, non-printing schedules, column designation on
+;             type d,e,f&g accounts, added type a.. ns
+;    6/28/79...adding no print option on d account..ns
+;   7/19/79...changed in w40 - added if statement..ns
+;   8/22/79...changed i account so that you could change whether it prints..ns
+;   10/08/79...added check for monthly balances when deleting an account...jwb
+;   05/15/80...added ability to modified retained earnings amount ...kag
+;   05/30/80...re-added some coding that got lost somehow!!...kag
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;
+;     g/l master file
+copy recg
+;
+set  rel0:0;   this used to be part of list - arent using list in this prog.ns
+;
+copy hd3
+;
+;
+record chrb(1)
+string chr(1)
+endrec
+;
+;
+;
+;
+;
+;
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+entry
+;
+open io (crt,gmst)
+;
+call msg(eject)
+;
+call msg(m01)
+ ;
+call ?gkey(gmst,?zero)
+go to (b20af,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+?gid=2
+call ?gkey(gmst,?gid)
+go to (b20af,ioerr)on status
+readb(gmst,hd3)
+call stat(1)
+?gid=0
+'acct'='zer9'
+encode(acct,fn9)hh
+decode(acct,f17)numon,h1,h2,h3
+if(numon.ne.13)go to a10;  reg. program
+load(xgl515,0,0)
+call cget(m56,f91,numon)
+load(xgl500,0,0);recall heading program so they can change option
+stop 20
+ 
+a10:
+call msg(client)  ;  display user name
+call msg(null)
+;
+goto b20af
+;
+b10:
+;
+   call msg(m05);   account is currently active.  please re-enter
+   go to b20af
+;
+;
+;
+b20:
+free (gmst)
+;
+b20af:
+;
+;
+'z1'='blank'
+'z2'='blank'
+'z3'='blank'
+'z4'='blank'
+'z5'='no'
+;
+call msg(m49)
+b20a:
+if (h1.eq.zero) go to geta2             ;  no  branch numbers
+call getit(m50,f10,brn)  ;  get branch number
+if (brn.ne.zero) go to geta1  ;  new branch nbr or killd entered
+brn=sbrn
+go to geta3
+;
+geta1:
+if (brn.gt.zero) go to geta3  ;  new branch nbr
+;
+geta2:
+brn=0
+;
+geta3:
+maj=min=0
+go to (g4,g5,g6,g7,g8) on h2  ;  get major account numbers
+go to g9                      ;  takes care of max case and anything else
+g4:
+call getit(m60,f87,maj)           ;  get one-digit major number
+go to geta4
+g5:
+call getit(m60,f27,maj)           ;  get two-digit major number
+go to geta4
+g6:
+call getit(m60,f10,maj)           ;  get three-digit major number
+go to geta4
+g7:
+call getit(m60,f11,maj)           ;  get four-digit major number
+go to geta4
+g8:
+call getit(m60,f89,maj)           ;  get five-digit major number
+go to geta4
+g9:
+call getit(m60,f92,maj)           ;  get six-digit major number
+geta4:
+if (maj.le.zero) go to q0900  ; terminate program
+;
+geta5:
+go to (g10,g11,g12) on h3  ;  get minor account numbers
+go to geta7                ;  no  minor account numbers
+g10:
+call getit(m61,f87,min)     ;  get one-digit minor number
+go to geta6
+g11:
+call getit(m61,f27,min)     ;  get two-digit minor number
+go to geta6
+g12:
+call getit(m61,f10,min)     ;  get three-digit minor number
+geta6:
+;
+geta7:
+call msg(null)
+'acct'='zer12'
+encode(acct,f10)brn,maj,min
+decode(acct,f09)?new1
+;
+;
+;
+call ?gkey(gmst,?new1)
+go to (b29,ioerr)on status
+b27:
+hold(gmst)
+if(status.ne.0)go to b10
+call glread
+   if(?new1.lt.-1)go to b27q; this is an h type account
+   if(?gid.ne.0)go to b28;  it has been deleted previously ; was .eq. & b30 12-11-76.jwb
+   if(?new1.eq.-1)go to b20
+b27f:
+   call ynget(m13)
+   if(status.eq.0)go to b20;     no not a new account
+   goto b30                    ; added 12-11-76...jwb
+;
+b27q:
+;
+;
+   writeb(gmst,recg)
+   call stat(1)
+   'parm5'='zer6'
+   encode(parm5,f92)rel0;   pass rel0 to gl508
+   call pjp(5,parm5)
+   free(gmst)
+   if(sort.eq.0)go to b27r
+   call pupsi(sort)
+;
+b27r:
+;
+   load(xgl508,0,0)
+   call msg(m08);   module not found.  newline to continue
+   readb(crt,chrb)
+   go to b20af;   get another account
+;
+b28:
+;
+b28af:
+if(?cbal.ne.0)go to b99;   cant delete it if it has a balance
+if(pos.ne.0)go to b99;   cant delete it has new postings on file
+if (cmo. ne. 0) goto b99
+if (mon2. ne. 0) goto b99
+if (mon3. ne. 0) goto b99
+if (mon4. ne. 0) goto b99
+if (mon5. ne. 0) goto b99
+if (mon6. ne. 0) goto b99
+if (mon7. ne. 0) goto b99
+if (mon8. ne. 0) goto b99
+if (mon9. ne. 0) goto b99
+if (mona. ne. 0) goto b99
+if (monb. ne. 0) goto b99
+if (monc. ne. 0) goto b99
+if (mond. ne. 0) goto b99
+if (mone. ne. 0) goto b99
+if (monf. ne. 0) goto b99
+;
+;
+call msg(desc)        ;   prints field name
+;
+b28a:
+;
+b28b:
+call msg(m36);   enter option: 1 change
+write(crt,fopt)m36a;2=next
+write(crt,fopt)m36b;9=delete
+call getit(null,f87,opt)
+go to (b99,b20)on opt
+if(opt.eq.9)go to b28f
+call msg(beep)
+go to b28b
+;
+;
+b28f:
+?gid=0
+writeb(gmst,recg);     delete it
+call stat(1)
+go to b20
+;
+b29:
+call ynget(m13)
+;
+if(status.eq.0)go to b20af
+;
+;
+;
+;
+;
+call ?nkey(gmst,?new1)
+go to (noroom,ioerr)on status
+sort=1;  flag that tells jcl that an account has been added so sort index
+b29f:
+hold(gmst)
+if(status.ne.0)go to b29f
+;
+b30:
+revf=v2=f1=f2=f3=0
+ch=1
+call clrec(recg)
+?gid=?new1
+ ;********** adding accts **********
+b30a:
+call getit(m26,f16,desc)  ;  get description here (30 char)
+go to (b100)on int
+b30b1:
+    call clrv
+   if(?cbal.eq.0)go to b30b;   change it to any account
+   call getit(m07,f91,z1);   ty
+   ifs(z1.eq.e)go to b56;ok e type
+   ifs(z1.eq.i)goto b57;  ok
+   ifs(z1.eq.l)goto b58;  ok
+   ifs(z1.eq.f)go to b54
+   go to b30q; improper
+;
+;
+b30b:
+call getit(m07,f91,z1); type of acct
+ifs(z1.eq.a)go to b43
+if string(z1.eq.b) go to b46; b type
+if string(z1.eq.c) go to b44; ctype
+if string(z1.eq.d) go to b50; dtype
+b30f:
+if string(z1.eq.e) go to b56; etype
+if string (z1.eq.f) go to b54; ftype
+ifs(z1.eq.i)go to b57; itype
+ifs(z1.eq.l)go to b58; inventory l accounts
+if string (z1.eq.g) go to b62; gtype
+   if(ch.ne.1)go to b30q;   only can enter this type of account on an add
+   ?gid=0-?new1;     the neg ?gid will indicate that this is a new record to the h acct module
+vv=i4007
+ifs(z1.eq.k)goto b27q
+vv=i5007
+ifs(z1.eq.j)go to b27q
+vv=vv+1
+ifs(z1.eq.h)goto b27q
+;
+b30q:
+;
+call msg(m38);improper code
+go to b30b1
+ ;
+ ;
+q0900:
+if(sort.eq.0)go to q0950
+call pupsi(sort);   says sort this file (but with overlays it gets reset)
+;
+q0950:
+close gmst,crt
+stop 0
+;
+b43:; a type
+v4=2
+go to b49
+;
+;
+b44: ; c type
+v4=1
+;
+;
+b46:;   b&c
+;
+v3=0
+;
+call ynget(m24);  center desc??
+if(status.eq.0)go to b49;  dont center
+v3=2 ;center account
+;
+b49:
+   if (int.ne.zero) go to b100
+   call setup ;sets up des & t/w # and column
+   go to b74; proces
+ ;
+ ;
+b50:; d type
+v1=1
+   call column  ;   get column and source & application category
+;
+    go to b112c
+ ;
+ ;
+b54:; f type
+v4=1
+b56:; e type
+v1=2
+   call column ;  get column and source & application category
+   if (int.eq.4) go to b100
+   call setup
+go to b74
+ ;
+b57:;  i type
+;
+v1=2
+v4=7;  printing
+f3=0;   change in financial position (no i accounts in it)
+call ynget(m55);  do you want to print on financial statement?
+go to (b56)on status;   get rest of print info
+v4=8
+v2=0
+go to b74
+;
+b58:
+;
+?id=?gid-(?gid/bil*bil);  get rid of the brn number
+v4=8;  dont print
+v1=6
+if(?id.eq.?invcon)go to b74;ok
+v4=7
+if(?id.eq.?binv)go to b74;ok
+if(?id.ne.?einv)go to b30b1;not ok
+go to b74
+ ;
+b62: ; g type
+   v1=3
+ 
+b63:
+   ifs (z1.eq.i) go to b57; i account
+   ifs (z1.ne.g)go to b135;  for g account only
+   call getit(m25,f87,v4); total level
+   if(v4.gt.7) go to b63; gtype
+   if(v4.le.0) go to b63
+   f3=0;  not in change in financ. report
+   if(int.eq.7)go to b100; change total level only
+   call column
+   call setup
+   go to b74; proces
+ ;
+b74: ; process
+   if(int.eq.2)go to b100
+   ?gid=?new1
+   call calcvv;   vv=v1,v2,v3,v4
+   go to b99;  see if they want to change anything else
+;
+b75:
+int=0
+'acct'='zer12'
+encode(acct,f10)brn,maj,min
+decode(acct,f09)?gid
+call calcvv
+ff=f3*10+f1*10+f2;   f3=sourse and appl of funds, f1= $ or (,  f2 is underlines..
+usef=revf*10+usef
+writeb(gmst,recg)
+call stat(1)
+go to b20
+;
+b99:
+call monther  ; set up month/year for previous balances and display
+   go to (b131)on ch
+;
+b100:
+ch=0
+call determ
+if(ch.eq.10)go to b30b1; error in type was encountered
+ch=0
+call msg(eject)
+b101:
+write (crt,f01) m98,brn,maj,min
+call msg (null)
+write(crt,f02)m66,desc
+write(crt,f03)m62,z1,m64,z3,m65,v4,m63,z4
+write(crt,f03a)m65a,z2,m65c,usef,m65b,f2,m99,z5
+write(crt,f03b)m69,f3,m69a,revf,m69c,z6
+call msg(null)
+if(v1.eq.6)go to b100f
+if (v1.ne.2) go to b102
+;
+b100f:
+write (crt,f01) m100
+?tot=?cbal+pos;    11/15/77
+call msg(null)
+write(crt,f05)m68,?cbal,c1,m113,cmo,c9,m113,mon9
+write (crt,f05a) m67,pos,c2,m113,mon2,c10,m113,mona
+write (crt,f05) m68a,?tot,c3,m113,mon3,c11,m113,monb; 11/15/77
+write (crt,f06) c4,m113,mon4,c12,m113,monc
+write (crt,f06) c5,m113,mon5,c13,m113,mond
+write (crt,f06) c6,m113,mon6,c14,m113,mone
+write (crt,f06) c7,m113,mon7,c15,m113,monf
+write (crt,f07) c8,m113,mon8,m70,m113,?pbal
+b102:
+call msg(null)
+call ynget(m86);   change??
+if(status.eq.0)go to b75;  no change
+;
+b103:
+call getit(m85,f27,int)  ;  enter field number
+go to (b30a,b30b1,b113a,b133,b112,b131,b63,b113b,b112a,b112b,b109,b112c) on int
+ifs(xa.ne.yes)go to b101
+int=int-12
+go to (b110,b114,b116,b117,b118,b119,b120,b121,b122,b123,b124,b125,b126,b127,b128)on int
+int=int-15
+go to (b129,b130,b132,b132a) on int
+go to b101
+;
+b109:
+if(?gid.le.?bsea)go to b135;  not applicable to balance sheet accounts
+call getit(m69b,f87,revf);  1=reverse sign
+go to b100
+;
+;
+;
+b110:
+call getit(m110b,f15,?cbal);   d15.2  current balance of account
+go to b100
+;
+;
+;
+b112:
+if(v1.eq.0)go to b135; cant enter column on desc line
+call column
+go to b100
+;
+b112a:
+ifs (z1.eq.d) go to b135
+call setup
+go to b100
+;
+b112b:
+ifs(z1.eq.b)go to b46
+ifs(z1.eq.c)go to b46
+goto b135
+ 
+b112c:
+if(v1.ne.1)go to b100; only applicable on d accounts
+v2=0
+call msg(m57); 0= print d account & schedule
+write(crt,fopt)m57a; 1=dont print schedule
+write(crt,fopt)m57b; 2=dont print d account
+call getit(null,f87,v2)
+if(v2.eq.0)go to b74
+go to (b112d,b112d)on v2
+go to b112c
+ 
+b112d:
+v2=v2+2
+go to b74
+ 
+;
+b113a:
+call getit(m03,f91,z2)  ;  enter character type
+ifs(z2.eq.dol)go to b113af
+ifs(z2.eq.paren)go to b113ag
+ifs(z2.ne.blank)go to b113a
+f1=0
+go to b100
+;
+b113af:
+f1=1;   1= $
+go to b100
+;
+b113ag:
+f1=2;   2= (
+go to b100
+;
+b113b:
+call msg(m92b)
+call getit(m92c,f87,f2); number underlines
+if(f2.lt.0)go to b113b
+go to b100
+;
+b114: ;   change unposted amount
+call dget(m54,m67,pos)
+go to b100
+;
+;
+;
+;
+;
+b116:
+call dget (m54,c1,cmo)
+go to b100
+;
+;
+b117:
+call dget (m54,c2,mon2)
+go to b100
+;
+b118:
+call dget (m54,c3,mon3)
+go to b100
+;
+b119:
+call dget (m54,c4,mon4)
+go to b100
+;
+b120:
+call dget (m54,c5,mon5)
+go to b100
+;
+b121:
+call dget (m54,c6,mon6)
+go to b100
+;
+b122:
+call dget(m54,c7,mon7)
+go to b100
+;
+b123:
+call dget (m54,c8,mon8)
+go to b100
+;
+b124:
+call dget (m54,c9,mon9)
+go to b100
+;
+b125:
+call dget (m54,c10,mona)
+go to b100
+;
+b126:
+call dget (m54,c11,monb)
+go to b100
+;
+b127:
+call dget (m54,c12,monc)
+go to b100
+;
+b128:
+call dget (m54,c13,mond)
+go to b100
+;
+b129:
+call dget (m54,c14,mone)
+go to b100
+;
+;
+b130:
+call dget (m54,c15,monf)
+go to b100
+;
+;
+b131:
+if (v1.ne.2) go to b134
+call getit(m110a,f87,usef) ;posting status (called use flagor usef)
+if(usef.gt.2) goto b131
+if(usef.ne.0) goto b100;  ok to chg
+if(?cbal.eq.0) goto b100; ok to chg
+usef=1;   cant say it is inactive if it has a balance
+go to b135
+;
+b132:
+write (crt,f14) m110c,c15
+read (crt,f15) ?pbal
+go to b100
+;
+b132a:               ;retained earnings amount..5/15/80..kg
+if(?gid.ne.?ret)goto b100 ;  not retained earnings acct..
+write (crt,f20) m120,?inv
+call ynget(m86)
+if(status.ne.1) goto b100;  no change..
+writen (crt,f21) m110c, m120
+read (crt,f15) ?inv
+goto b132a ;  review it
+;
+b133:
+call getit(m04,f87,f3)  ; financial change category
+go to b100
+;
+b134:
+if (int.ne.6) go to b100
+;
+b135:
+call msg(m02)
+go to b102
+;
+;
+noroom:
+call msg(m53);   no room must expand
+close crt,gmst
+stop 100
+;
+;===========================
+;====   subroutines  =======
+;===========================
+subroutine clrv
+;==========================
+;
+v1=v3=v4=0
+return
+;
+;
+;========================
+subroutine determ
+; ===============
+'z6'='blank'
+;
+;
+go to (d100,d200,d300,d0a,d0a,d50f)on v1
+ 
+if(v1.eq.0)go to d00
+ 
+d0a:
+ 
+call msg(m114); error in type has been incountered please re-enter type
+write(crt,f87)v1,v2,v3,v4
+ch=10
+return
+;
+d00:
+;
+go to (d01,d02)on v4
+'z1'='b'                    ;  v3 is col or cen (0=col-a/noncen,1=col-b,2=cen)
+go to d600                    ;  v4 is total lvl (f & g accts) or c-type acct
+d01:
+'z1'='c'
+go to d600
+ 
+d02:
+'z1'='a'
+go to d600
+d100:
+'z1'='d'                    ;  z1-z4 hold characters for display (b100)
+go to d600                    ;  z1 = acct type
+d200:                         ;  z2 = character type ($ or ()
+goto (d500)on v4;              z3 = column a or b
+if(v4.ge.7)go to d50i
+'z1'='e'                    ;  z4 = scheduled? (y/n)
+go to d600                   ;  z5 = centered? (y/n)
+;                               z6 = print schedule(y/n)
+d300:
+'z1'='g'
+go to d600
+d500:
+'z1'='f'
+go to d600
+;
+d50i:
+;
+'z1'='i'
+go to d600
+;
+d50f:
+'z1'='l'
+;
+d600:
+;
+go to (d700,d800,d850,d855) on v2;  schedule
+d700:
+'z4'='no'
+go to d900
+d800:
+'z4'='yes'
+go to d900
+ 
+d850:
+'z6'='no'
+go to d900
+ 
+d855:
+'z6'='s';  print only schedule
+d900:
+'z5'='no'
+go to (d1000,d1100)on v3
+'z3'='a'
+go to d1300
+;
+d1000:
+;
+'z3'='b'
+go to d1300
+d1100:
+if(v1.ne.0)go to d1200
+'z5'='yes'
+go to d1300
+ 
+d1200:
+'z3'='c'
+d1300:
+go to (d1400,d1500) on f1
+return
+d1400:
+'z2'='dol'
+return
+d1500:
+'z2'='paren'
+return
+;
+;
+; =====================
+subroutine dget
+;======================
+direct
+   lda- x+
+   sta  dg10+7
+   lda- x+
+   sta dg10+9
+   lda- x+
+   sta  dg15+7
+cpl
+;
+dg10:
+write (crt,f14) zero,zero
+;
+dg15:
+call getit(null,f08,zero)
+return
+;
+;====================
+subroutine getit
+;====================
+;
+direct
+   lda- x+
+   sta ge10+3
+   lda- x+
+   sta ge10+5
+   lda- x+
+   sta  ge10+7
+cpl
+;
+ge10:
+;
+call cget(zero,zero,zero)
+if(status.eq.0)go to ge15
+call msg(beep)
+go to ge10
+;
+ge15:
+;
+return
+;
+ ;
+; ========================
+;========================================
+ ;
+subroutine setup  ;  parts of this subroutine are used during change of account record
+;=========================
+w24:
+    go to (w26)on int
+   ifs(z1.eq.d)goto w26;no schedules on d accounts
+;
+   v2=1
+w24a:
+call ynget(m27);   scheduled??
+if(status.eq.0)go to w25
+v2=2;  scheduled
+w25:
+w26:
+return
+ ;
+ ;
+;========================================
+subroutine glread
+;========================================
+readb(gmst,recg)
+call stat(1)
+if(?gid.eq.0)goto w33
+if(?gid.ne.?new1)go to w34
+'acct'='zer12'
+encode(acct,f09)?gid
+decode(acct,f10)brn,maj,min
+'acct'='zer4'
+encode(acct,f11)vv
+decode(acct,f87)v1,v2,v3,v4
+go to (gr10,gr10,gr10,w40,w40)on v1
+; v1=0 is title, v1=6 is inv. they stay here
+;
+gr10:
+'acct'='zer3'
+encode(acct,f10)ff
+decode(acct,f87)f3,f1,f2
+revf=usef/10
+usef=usef-(revf*10)
+return
+w33:
+f1=f2=f3=0
+return
+w34:
+call clrec(recg)
+writeb(gmst,recg)
+call stat(1)
+call msg(m30);   error in record - please reenter
+?new1=-1
+return
+;
+w40:; h account
+;
+   if(v4.lt.7)go to gr10; this is in error it will be stopped in determ
+?new1=0-?new1
+return
+;
+;======================
+subroutine calcvv
+;======================
+;
+'acct'='zer4'
+encode(acct,f87)v1,v2,v3,v4
+decode(acct,f11)vv
+return
+;
+;
+ ;
+ ;
+ ;==========================================
+; ============================
+subroutine monther
+; ============================
+;
+'acct'='zer4'
+encode (acct,f11) month
+decode (acct,f27) fa1,cm2   ; get current month for comparison
+;
+monther1:
+if (ma.eq.fa1) go to monther2
+'m0'='m1'
+'m1'='m12'
+'m12'='m11'
+'m11'='m10'
+'m10'='m9'
+'m9'='m8'
+'m8'='m7'
+'m7'='m6'
+'m6'='m5'
+'m5'='m4'
+'m4'='m3'
+'m3'='m2'
+'m2'='m0'
+ma=ma + 1
+go to monther1
+;
+monther2:
+call coder (c1,m1)
+call coder (c2,m2)
+call coder (c3,m3)
+call coder (c4,m4)
+call coder (c5,m5)
+call coder (c6,m6)
+call coder (c7,m7)
+call coder (c8,m8)
+call coder (c9,m9)
+call coder (c10,m10)
+call coder (c11,m11)
+call coder (c12,m12)
+call coder (c13,m1)
+call coder (c14,m2)
+call coder (c15,m3)
+return
+;
+; =====================
+subroutine coder
+; =====================
+direct
+ lda- x+
+ sta  x1+3
+ lda- x+
+ sta  x1+7
+ sta  x2+3
+cpl
+;
+x1:
+encode (zero,f24) zero,cm2
+;
+x2:
+ifs (zero.eq.m71) call chmonth
+return
+;
+; ======================
+subroutine chmonth
+; ======================
+;
+cm2 = cm2 - 1
+return
+;
+; ======================
+subroutine column
+; ===============
+;
+if (?new1.gt.?bsea) go to col3  ;  not on balance sheet
+;
+call getit(m32,f91,str)  ;  balance column a-b
+ifs (str.eq.a) go to col1
+ifs(str.eq.c)go to col4
+ifs (str.ne.b) go to column
+v3=1
+goto col2
+;
+col1:
+;
+;
+v3=0                  ;   added 12-11-76...jwb
+;
+if(v1.ne.3)go to col2
+v3=3
+col2:
+if (int.eq.5) go to col3
+if(v1.eq.3)go to col3; total level
+call getit(m04,f87,f3)  ;  source & application category
+;
+col3:
+return
+;
+col4:
+go to (column)on v4; f cant have column c
+v3=2
+go to (column)on v4;   f cant be column c
+go to  col2
+;
+ ;*****************************
+ ;********  constants  ********
+ ;*****************************
+ ;
+ ;
+define m02:'field cannot be changed'
+define m03:'enter character type'
+define m04:'enter source & application category'
+define m05:'account is busy at this time. '
+define m07: 'enter type of account'
+define m08:'h account module not found.  newline to acknowledge'
+define m13:'is this a new account? (y/n)'
+define m24:'do you want account descriptions centered? (y/n)'
+define m25: 'enter total level (1-7)'
+define m26: 'enter description'
+define m27:'scheduled?  (y/n)'
+define m32: 'enter balance statement column for amount'
+define m30:'error in record - please re-enter'
+define m36:'enter option:  1  change'
+define m36a:'2  next'
+define m36b:'9  delete'
+;
+define m38: 'improper code entered'
+define m49:'enter account number'
+define m50:'branch:'
+define m53:'account file is full'
+define m54:'enter amount for'
+define m55:'print account on financial statements? (y/n)'
+define m56:'13 month option not initialized on file set. newline to continue'
+define m57:'enter option:  0  print the d account and schedule'
+define m57a:'1  dont print schedule'
+define m57b:'2  dont print the d account'
+;
+;
+define m60:' major:'
+define m61:' minor:'
+define m62:'(02) type:'
+define m63:'(09)scheduled?'
+define m64:'(05)colmn:'
+define m65:'(07)total levl:'
+define m65a:'(03) char:'
+define m65b:'(08)underlines:'
+define m65c:'(06) post:'
+define m66:'(01)'
+define m67:'unpostd:'
+define m68:'balance:'
+define m68a:'total  :';  11/15/77
+define m69:'(04)categ:'
+define m69a:'(11) revs:'
+define m69b:'1=reverse true sign in financial statement'
+define m69c:'(12)print sch :'
+define m70:'prior'
+define m71:'jan'
+define m1:'jan'
+define m12:'feb'
+define m11:'mar'
+define m10:'apr'
+define m9:'may'
+define m8:'jun'
+define m7:'jul'
+define m6:'aug'
+define m5:'sep'
+define m4:'oct'
+define m3:'nov'
+define m2:'dec'
+define m85:'enter field number'
+define m86:'change? (y/n)'
+define m92b:'enter underlines  1-2  column a; 3-4 column b; 5-6 column c; '
+define m92c:'                  7-8  column a & b;           9   column b & c'
+define m95:'enter current unposted amount'
+define m98:'account:'
+define m99:'(10) centered?'
+define m100:'amounts:'
+define m110a:'enter posting status'
+define m110b:'enter general ledger posted balance'
+define m110c:'enter total prior to'
+define m113:':'
+define m114:'error in type has been incountered please re-enter type'
+define m115:'do you have balances to enter? (y/n)'
+define m120:'retained earnings - prior year  /'
+ ;
+define beep:''
+define xgl515:'xgl515'
+define xgl500:'xgl500'
+define parm5:'000000',a:'a',b:'b',c:'c',d:'d',e:'e',f:'f',g:'g'
+define h:'h', i:'i', j:'j', k:'k', l:'l', s:'s'
+define yes:'y',no:'n',blank:' ',dol:'$', paren:'('
+define zer3:'000',zer4:'0000',zer9:'000000000',zer6:'000000',zer12:'   000000000'
+;
+;
+;
+;
+;
+;
+format f01:c9n3n6n3
+format f02:c5c30
+format f03:c11c9c11c9c16n1x6c15c1
+format f03a:c11c9c11n1x8c16n1x6c15c1
+format f03b:c11n1x8 c11n1x8 c16c1
+format f05:c12d-15.2x5c5c1n-15.2x5c5c1n-15.2
+format f05a:c12n-15.2x5c5c1n-15.2x5c5c1n-15.2
+format f06:x28x4c5c1n-15.2x5c5c1n-15.2
+format f07:x28x4c5c1n-15.2x5c5c1d-15.2
+format f08:n10.2
+format f09:d12
+format f10:n3n6n3
+format f11:n4
+format f14:c21c5
+format f15:d13.2
+format f16:c30c19c15c14
+format f17:n2 x2 n1n1n1
+format f20: c30,x1,d13.2
+format f21: c6,x1,c30
+format f24:c3n2
+;
+format f27:n2
+format f87: n1
+format f89: n5
+format f91: c1
+format f92: n6
+format fn9:n9
+ ;
+format fopt:x15c40
+;
+define xgl508:'     8'; load parameter
+;
+string op2(1)
+string c1(5),c2(5),c3(5),c4(5),c5(5),c6(5),c7(5),c8(5),c9(5),c10(5),c11(5),c12(5),c13(5),c14(5),c15(5)
+string acct(12)
+string null(0)
+string z1(1), z2(1), z4(1),z3(1), z6(1)
+;    z1,z2,z3 = v1,v2,v3 only in character form,   str= change or delete??
+string z5(1); centered? (y/n)
+string str(1),m0(3)
+ ;
+ ;
+set one:1,brn:0,revf:0,?tot:0;11/15
+set bil:1000000000,?id:0,opt:0,numon:12
+;
+set sbrn:0,i4007:4007,i5007:5007
+set h1:0,h2:0,h3:0
+set ?zero:0
+set sort:0;   flag that says call gsort if new accounts are added
+set int:0
+set fa1:0
+set f3:0
+set f2:0
+set f1:0
+set ch:0
+set maj:0
+set min:0
+set ma:1
+;
+ ;
+integer cm2
+integer v1,v2,v3,v4
+integer ?new1
+ ;
+ ;
+;
+end;    gl501
+
+

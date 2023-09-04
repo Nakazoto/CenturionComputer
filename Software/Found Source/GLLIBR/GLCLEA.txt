@@ -1,0 +1,36 @@
+.job clean
+.fspec #0a on #1 7=size, 8=type
+.skip to done if #7 eq 0
+.skip to done if #8 ne c
+.use #0a on #1 sys0 shar
+.use crt#v syslst
+.skip to ok if #2 eq crt
+.use prt#2 syslst
+=ok
+.setc 3=#3
+.run gl.xgl588
+.fspec #0k on #1 7=size
+.skip 1 if #7 eq 0
+.del #0k on #1
+.fspec #0i on #1 7=size
+.skip 1 if #7 eq 0
+.del #0i on #1
+.fspec #0m on #1 7=size
+.skip 1 if #7 eq 0
+.del #0m on #1
+.fspec #0h on #1 7=size
+.skip 1 if #7 eq 0
+.del #0h on #1
+.fspec #0g on #1 7=size
+.skip 1 if #7 eq 0
+.del #0g on #1
+=done
+.seta 3=#3+1
+@scr#i on #s
+.end
+s.con
+*  06/11/79...written..ns
+*  11/16/81...modified to print all clients on one page..dl
+
+
+

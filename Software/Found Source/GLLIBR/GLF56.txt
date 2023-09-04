@@ -1,0 +1,230 @@
+.job glfcvt memory=wait abort=cancel
+.nolog
+/   enter key set number  >>>
+.enter 0
+/   enter source disk number >>>
+.enter 1
+/   enter target disk number >>>
+.enter 2
+.seta upsi=0
+.seta cc=0
+.fspec gl#0a on #2 8=size
+.skip to ok if 0 eq #8
+/
+/   chart of account files are already initialized for client #0
+/
+.skip to eoj
+=ok
+/
+/
+/    convert gl dataset #0 from #1 to #2
+/
+/    ready? (y/n)
+.enter 9
+.skip to eoj if y ne #9
+.use disk#1 for sys#1
+.run cvt.xaloc5
+*fspec gl#0a on #1 8=size
+*fspec gl#0b on #1 7=size
+*fspec gl#0e on #1 6=size
+*fspec gl#0d on #1 5=size
+*fspec gl#0j on #1 4=size
+*fspec gl#0l on #1 3=size
+/*
+.skip to err if #c ne 0
+.skip to ok if #8 ne 0
+/
+/    gl dataset #0 not present on disk #1
+/
+.skip to eoj
+=ok
+.seta upsi=8
+.run s.xnew
+.skip to err if #c ne 0
+.seta upsi=0
+=aa
+.new gl#0a on #2 'c' #8s fsi=#9s
+.use gl#0a on #2 for sys0
+.run s.x?rint
+recsiz=131,paddng=25
+/*
+.use disk#1 for sys0
+.use gl#0a on #2 sys1
+.run cvt.xcop6sc
+input=gl#0a
+recsiz=131
+/*
+.skip to err if #c ne 0
+=bb
+.fspec gl#0b on #2 9=size
+.skip to ok if 0 eq #9
+/
+/   budget files are already converted for client #0
+/
+.skip to next
+=ok
+.skip to next if #7 eq 0
+.seta upsi=7
+.run s.xnew
+.skip to err if #c ne 0
+.seta upsi=0
+.new gl#0b on #2 'c' #7s fsi=#8s
+.use gl#0b on #2 for sys0
+.run s.x?rint
+recsiz=131,paddng=25
+/*
+.skip to err if #c ne 0
+.use disk#1 for sys0
+.use gl#0b on #2 sys1
+.run cvt.xcop6sc
+input=gl#0b
+recsiz=131
+/*
+.skip to err if #c ne 0
+=ee
+=next
+.skip to next if 0 eq #6
+.seta upsi=6
+.run s.xnew
+.skip to err if #c ne 0
+.new gl#0e on #2 'c' #6s fsi=#7s
+.seta upsi=0
+.use disk#1 for sys0
+.use gl#0e on #2 sys1
+.run cvt.xcopcsc
+input=gl#0e
+recsiz=77
+/*
+.skip to err if #c ne 0
+=next
+.skip to next if 0 eq #5
+.seta upsi=5
+.run s.xnew
+.skip to err if #c ne 0
+.new gl#0d on #2 'b' #5s fsi=#6s
+.seta upsi=0
+.use disk#1 for sys0
+.use gl#0d on #2 sys1
+.run cvt.xcopsc
+input=gl#0d,/*
+.skip to err if #c ne 0
+=next
+.skip to next if 0 eq #4
+.seta upsi=4
+.run s.xnew
+.skip to err if #c ne 0
+.new gl#0j on #2 'b' #4s fsi=#5s
+.seta upsi=0
+.use disk#1 for sys0
+.use gl#0j on #2 sys1
+.run cvt.xcopsc
+input=gl#0j,/*
+.skip to err if #c ne 0
+=sort
+.use gl#0a on #2 sys0
+.use gl#0j on #2 sys1
+.seta upsi=0
+.run s.x?wtag
+.use gl#0j on #2 for sys0 shar
+.use gl#0j on #2 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=10
+work=4,output=inp,key=(1,6,bi)
+/*
+*
+=next
+.skip to next if 0 eq #3
+.seta upsi=3
+.run s.xnew
+.skip to err if #c ne 0
+.new gl#0l on #2 'a' #3s fsi=#4s
+.seta upsi=0
+.use disk#1 for sys0
+.use gl#0l on #2 sys1
+.run cvt.xcopsc
+input=gl#0l,/*
+.skip to err if #c ne 0
+=next
+=more
+.seta upsi=0 cc=0
+.use disk#1 for sys#1
+.run cvt.xaloc5
+*fspec gl#0f on #1 8=size
+*fspec glaa  on #1 7=size
+*fspec gl#0c on #1 6=size
+/*
+.skip to err if #c ne 0
+=next
+.skip to next if #8 eq 0
+.seta upsi=8
+.run s.xnew
+.skip to err if #c ne 0
+.new gl#0f on #2 'b' #8s fsi=#9s
+.seta upsi=0
+.use disk#1 for sys0
+.use gl#0f on #2 sys1
+.run cvt.xcopsc
+input=gl#0f,/*
+.skip to err if #c ne 0
+=next
+.skip to next if #7 eq 0
+.fspec glaa on #2 9=size
+.skip to next if 0 ne #9
+.seta upsi=7
+.run s.xnew
+.skip to err if #c ne 0
+.new glaa on #2 'c' #7s fsi=#8s
+.seta upsi=0
+.use glaa on #2 sys0
+.run s.x?rint
+recsiz=131,paddng=25
+/*
+.skip to err if #c ne 0
+.seta upsi=0 cc=0
+.use disk#1 for sys0
+.use glaa on #2 sys1
+.run cvt.xcop6sc
+input=glaa
+recsiz=131
+/*
+.skip to err if #c ne 0
+=next
+.skip to next if #6 eq 0
+.seta upsi=6
+.run s.xnew
+.skip to err if #c ne 0
+.seta upsi=0
+.new gl#0c on #2 'c' #6s fsi=#7s
+.use gl#0c on #2 sys0
+.run s.x?rint
+recsiz=43,paddng=25
+/*
+.skip to err if #c ne 0
+.use disk#1 for sys0
+.use gl#0c on #2 sys1
+.run cvt.xcop6sc
+input=gl#0c
+recsiz=43
+/*
+.skip to err if #c ne 0
+*
+=next
+.skip to eoj
+*
+=err
+.end
+/ ****   error  during conversion  *****  cc=#c ..
+=eoj
+.end
+/  conversion now finished...
+.log
+.use crt#v for sysrdr
+s.con
+*  12/07/79...created for cpu-6....kag
+*  04/10/80...added fspec on glaa...kag
+
+

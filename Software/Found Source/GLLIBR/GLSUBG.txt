@@ -1,0 +1,59 @@
+.job subgl
+.log
+*
+*   are you rerunning the subaccount general ledger? (y/n)
+*
+.nolog
+.enter 5
+.skip to subl if y = #5
+=cksub
+.fspec gl#0f on #1 7=use
+.skip to go if 1 eq #7
+.log
+*
+*   subaccount detail file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.skipr to cksub
+=go
+.seta upsi=0
+.log
+*   standby while subaccount detail file is sorted
+.nolog
+.use gl#0f on #1 sys1 shar
+.use gl#0f on #1 sys0 shar
+.use sort1#i on #s sys2
+.use sort2#i on #s sys3
+.use sort3#i on #s sys4
+.use sort4#i on #s sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=77
+work=4,output=inp,key=(7,6,bi,1,6,bi,25,4,bi)
+/*
+.log
+*   end subaccount detail file sort
+.nolog
+=subl
+.use dummy syslst
+.skip to ok if no eq #2
+.use crt#v syslst
+.skip to ok if crt eq #2
+.use prt#2 syslst
+=ok
+.use gl#0a on #1 sys0 shar
+.use gl#0c on #1 sys1 shar
+.use gl#0f on #1 sys2 shar
+.run gl.xgl570
+.skip to fin if #c ne 0
+.skip 1 if glrepo eq #4
+.skip 1 if glmenu ne #4
+glmenu
+=fin
+.end
+s.con
+*   7/7/78...cleanup...ns
+*   6/19/79...change so that either menu will work..ns
+
+

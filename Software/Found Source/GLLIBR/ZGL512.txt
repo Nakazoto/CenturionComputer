@@ -1,0 +1,129 @@
+title ' gl512 - count the valid records in an accounts file '
+system (exp=b)
+;
+define m01:'gl512 (counting valid accounts) 12/29/81'
+;  notes:
+;      program will enlarge billable master ....dad
+;      conversion to 900 series 12/1/75...ns
+;      conversion to general expand masters..ns
+;      expand g/l master files....6/15/76...ns
+;      7/2/76...new g/l file layout in the 500 series..ns
+;      7/9/76...new format again - 131 bytes...ns
+;      7/15/76...chng in library construction..ns
+;            error termination if run out of room..glg
+;      program incorporated into standard general ledger application
+;      with name change on august 6, 1976, by g.l. gillette.  at the
+;      same time, certain cosmetic changes to formats and messages,
+;      plus minor program modifications, were made.
+;      1/3/77...after conversion to count valid records in master file,
+;               added new algorithm for calculating new file size..glg
+;      11/22/76...fixed loop in b10..glg
+;      12/2/76..copied from gl511..glg
+;     10/25/77...corrected file size algorithm (per aja) and clean up...ns
+;     7/06/78...putting tract size into parm 9 instead of upsi...ns
+;     7/18/78...cosmetic changes...ns
+;     9/01/78...changed for h accounts..ns
+;     8/02/79..changed signon message..ns
+;
+;    12/29/81...recompile to have a common date base...dl
+external ?nkey,?gkey,msg,ioerr,stat,pupsi,pjp
+;
+record recg(131)
+set    ?gid:0
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+record listb(10)
+set ?lid:0,rel0:0
+endrec
+;
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+;********************************
+;
+entry
+;
+open io (gmst,crt,list)
+call msg(eject)
+;
+call msg(m01);     hi there
+;
+b10:
+readb(list,listb)
+if(status.eq.1) go to dun
+call stat(list)
+if(?lid.lt.100)go to b13; headers
+readb(gmst,recg);    rel key was setup in the list file
+goto (b10,b10)on status
+b12:
+if(?gid.eq.0)go to b10;    deleted
+;
+b13:
+ctr=ctr+1 ; add one to the counter
+curp(crt,1,4)
+write (crt,fn4)ctr
+go to b10 ; go get another record
+;
+dun:
+; ctr = number of records for new file
+; rpt = records per track; see definition below
+; fs  = file size
+;  fts=file track size
+;  fsec file sectors in file to be created
+;  pdg - padding plus 100, i.e., 1.25
+;  fsz = number of data records infile
+;  kps = keys per sector
+;  rps = records per sector
+;
+;
+; algorithm:  fsec =fsz * (kps + (rps + pdg)) / (rps*kps)
+;  or:
+;            fsec=fsz * (39 + (3 + 1.25)/ (39*3)
+;            fsec=fsz * 42.75 / 117
+;
+fsz=ctr + 2 ;     number of good records +  2 fudge for padding error in ?rint
+;    note: 1 track =42 but 43 calc. to 1 track and 15 tracks=654, but 656 calcs
+;              to 15 tracks.  even number of tracks needs fudge of 1, and odd
+;              seems to need fudge of 2 except on 1 track files. ..ns
+fsec = fsz * factor / 117 /100 ;  factor is 4275/100 or 42.75
+fts=fsec/16+1;   per track is number of sectors/16 + 1 track fudge
+;
+;
+encode(trac,fn6)fts
+call pjp(9,trac)
+write(crt,ffs)m03, fts ;new file size is
+call msg(m02)
+close gmst,list,crt
+stop 0
+;
+;****************************************
+;         constants
+;****************************************
+;
+;
+set ctr:0
+set fts:0 ;  file size in tracks
+set fsz:0;  number of data records
+set   fsec:0;  number of file sectors needed
+set   factor:4275;   42.75 = 39 + (3 + 1.25)
+define m02:'end of program'
+define m03:'new file size is'
+format fn4:n4
+format ffs:c17n3
+format fn6:n6
+;
+;
+;
+define trac:'      '
+;
+end ; gl512 (count valid records in accounts file)
+
+
+

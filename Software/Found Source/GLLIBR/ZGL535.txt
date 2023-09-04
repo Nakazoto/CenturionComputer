@@ -1,0 +1,1108 @@
+title 'gl535--review transactions and print audit report'
+system
+define m01:'gl535 (printing journal entry report) 12/29/81'
+;
+;notes:
+;  11/7/76...written....ns
+;  12/3/76...added new header - includes total meals and tips..ns
+;  12/10/76...adding subtotal on ref. if more than 1 detail for a ref number..ns
+;  12/22/76...1) moved call ckref before subemp
+;             2) changed f14/f14a to displace employee and ref totals
+;             3) changed f14/f14a to f14b/nftbal when write m11
+;                so that a zero (.00) balance is written
+;             4) changed aget to ynget
+;             5) changed jrnamt and j2 to six-byte integers to support totals
+;                allowed by gl530
+;             to set off totals..glg
+;  1/4/77...1) fixed balance messages so numbers print out
+;           2) added 'current earnings account' msg to that line on report..glg
+; 2/14/77...ljrn starts out as -1 instead of 0 (also changed if ljrn.eq.0 to if
+;          ljrn.eq.-1...ns
+;   3/1/77...adding option to get audit options from gl.tran..ns
+;  3/10/77...adding the ability to post more than 1 month at a time (on all but
+;            first run of the year...ns
+;    4/22/77...using jdate as current posting month in jrn. 99...ns
+;    5/25/77...header stuff wasnt working right if they entered the options in
+;             the program....ns
+;    6/6/77...on new jrn. last ref.total was printed after the jrn total
+;            change to subr. newjrn and ckref (s62 added)...ns
+;    6/9/77...error in if(m2.ge.13) changed to m2.gt.13...ns
+;    6/12/77...moved writeb of pnt from a09 to a09c....ns
+;   11/7/77...recompiled for new gdet..ns
+;   07/19/78...multiple current earnings details, cosmetic changes...ns
+;   09/01/78...changing to flag i accounts and not add them into the p&l amounts...ns
+;    10/06/78...cleanup on i accounts...ns
+;   05/10/79...changing report layout..ns
+;   06/23/79...adding 3 more current earning total fields..ns
+;   07/03/79...changing some formats..ns
+;    07/06/79...changed current earnings account to amount..ns
+;    07/27/79...changed  m10b..ns
+;    08/02/79...changed signon..ns
+ ;    8/29/79...changed so that all info on date etc has to be entered every time..ns
+;    9/19/79...changed so that all info on date, etc has to be entered...jwb
+;   11/27/79...added buffer to detail input file...dle
+;   01/22/80...modified to print separate page on different jrn dates...kag
+;   02/05/80...modified to handle quarterly posting correctly...kag
+;   04/15/80...added earned income credit (eic) ...kag
+;   05/21/80...corrected error in printing heading...kag
+;   09/24/80...print correct balance information on journals beyond current
+;              posting period, changed in balance and out of balance message
+;              to be preceeded by the word "future" if the journal is beyond
+;              the current posting period, added a question to eliminate
+;              the printing of audits of "future" journals, corrected
+;              reference total on last journal...aja
+;
+;   05/14/81...modified to combine journal 99 entries on single page...dl
+;
+;   09/28/81...set up the current running date...dl
+;   12/29/81...recompile to have a common date base...dl
+;
+file list:sys1,class=2,rnd,recsiz=395,key=rel1
+set rel1:0
+ 
+record listb(125)
+string key(6),client(50)
+set form:0
+string m31(3); brn
+string m33(7)
+string m34(4)
+set date1:0,?plact:0,?mea:0,?tips:0,month:0
+set acnt:0,mnum:0,?bsea:0
+endrec
+;
+record headb(131)
+string hclient(40)
+string hcommt (50)
+set    hmonth:0
+endrec
+;
+copy hd3
+;
+;
+copy gdet
+record gckref(24);   same as gdet used to check for dup. ref. number to know how to print
+string dum5(19); contains ?acct, ?sub, jrn,sorpnt
+set nexref:0;  next records reference number
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+set rel0:0
+;
+file detail:sys2,class=2,rnd,filtyp=c,recsiz=77,key=rel4,buffer=400,buf0;  input details
+set rel4:0
+file newdet:sys3,class=2,seq,lsr=4,filtyp=b,buffer=400,buf3;   details to be posted
+file reject:sys4,class=2,seq,lsr=4,filtyp=b,buffer=400,buf4;  details to be returned to input file
+;
+buffer buf3(400),buf4(400),buf0(400)
+;
+record pnt(24)
+set    point:0
+set opt:0
+set cdate:0
+set curt:0,datein:0
+endrec
+ 
+record dates(77)
+string repdate(77)
+endrec
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+external stat,msg,gupsi,pupsi,cget,lfeed,gjp,ynget,?edit,?gkey,bltrun
+entrypoint crt
+;
+;======= program logic ========
+;
+entry
+;
+open io(crt,list,gmst)
+readb(list,listb)
+call stat(1)
+'ddesc'='key'
+open io detail, output (newdet,reject,prt)
+;
+;
+call msg(null)
+call msg(m01);   hi there
+call msg(client)
+call msg(null)
+   call equ0(rel4)
+readb(detail,pnt)
+call stat(1)
+rel4=point+1
+; if(rel4.ne.datein)go to a02;  not the same details
+; readb(detail,dates)
+; if(status.ne.0)go to a03
+; go to a03f
+;
+call ?gkey (gmst,?zero)
+if (status.ne.0) call stat
+readb(gmst,headb)
+if (status.ne.0) call stat
+;
+?eic=2     ; just to pr info
+call ?gkey(gmst,?eic);   temporary key
+if(status.ne.0) call stat
+readb (gmst,hd3)
+if(status.ne.0) call stat
+;
+call equ0(tmeal)
+call equ0(ttips)
+call equ0(teic)
+;
+;
+a02:
+;
+   call msg(m03)
+   writen(crt,f02)m03a
+    call cget(null,fn1,opt); paper option 1=wide, 2=narrow
+   go to (a03,a03)on opt
+   go to a02
+;
+a03:
+;
+   call equ0(datein)
+    call msg(m04);  report date (77 char)
+    call cget(null,fc77,repdate)
+   if(status.ne.0)go to a03
+a03f:
+ 
+   call bltrun(repdate)
+   opt=opt-1;   wide =0, narrow = 1
+   call bltrun(client)
+   go to (a04)on opt;  opt is now 0=wide/1=narrow
+   call cent132(repdate,fhd2)
+   call cent132(client,fhd1)
+   go to a05
+ 
+a04:
+   call cent80(repdate,fhd2)
+   call cent80(client,fhd1)
+;
+a05:
+;
+    encode(head1,f100)acnt,sl,key
+    encode(head1,fhd1)client
+    encode(head3,fhd2)repdate
+;
+    if(datein.ne.0)go to a06
+   encode(m06,fn4)month;  xxxx is current month
+   call cget(m06,fn4,cdate)
+   if(cdate.ge.date1)go to a05;  date1=1300
+   if(cdate.lt.100)go to a05;
+a06:
+   encode(m06,fn4)month
+;
+a08:
+   'acct'='zer4'
+   encode(acct,fn4)cdate
+   decode(acct,fn2)cmm,cyy
+   if(cdate.eq.month)go to a09c;  no change
+   'acct'='zer4'
+   encode(acct,fn4)month
+   decode(acct,fn2)m1,y1
+;
+   if(y1.eq.cyy)go to a08c
+   if(y1.gt.cyy)go to a08f
+;  posted year is less that current year - only one good one
+   m2=cyy-y1;   this can only be next year
+   if(m2.gt.1)go to a05; crosses 2 or more years
+   m2=cmm+12-m1;  new month +12(for the one year change)-posted month
+call add(m2,mnum); # of months from current+number into fiscal yr
+   if(m2.gt.13)go to a05;  crosses fiscal year end
+   goto a09;  ok
+;
+a08c:;   same year
+   m2=m1+1
+   if(m1.ge.cmm)go to a09;  same month ok
+   go to a09;     next month
+;
+a08f: ;last year
+   m2=12+m1-cmm
+   if(m2.ge.mnum)goto a05;  too far back
+;
+;
+a09:
+   if(datein.ne.0)go to a09c
+    write(crt,fc28)m06
+   call ynget(m15a);   changing date ok?
+   if(status.eq.0)go to a05
+;
+a09c:
+ 
+   call equ0(rel4)
+   writeb(detail,pnt)
+   call stat(1)
+   xcdate=cyy*100+cmm
+   date=xcdate*100;   send this to post
+   ref=hmonth
+   call wrtnewdet
+;
+;
+   call equ0(count)
+   call equate(y1,cyy)
+    call equate(m1,cmm)
+;
+a15:
+;
+    call add(count,one)
+   if(count.gt.15)go to b10
+   m1=m1-1
+   if(m1.gt.0)go to a20
+   m1=12
+   y1=y1-1
+;
+a20:
+;
+   amt=y1*100+m1
+   call tput(amt,count,xcdate,4);  0 was set earlier
+   goto a15
+;
+b10:
+   hold(detail)
+   if(status.ne.0)go to b10
+   readb(detail,pnt)
+   call stat(1);     rel4 should be 0
+   call equate(emp,point)
+   writeb(reject,gdet)
+   call stat(2)
+   free(detail)
+   call ynget(m19) ; list only journals within posting period?
+   go to (b100) on status ; yes
+   futsw=0 ; flag to print future journals
+;
+b100:;     start of main processing
+    call add(rel4,one)
+   if(rel4.gt.point)goto b900
+   readb(detail,gdet)
+   call stat(1)
+go to b107 ; re-arrange logic to determine "future" period befor compare
+;
+b103: ; rearrange logic
+   if(emp.ne.lemp)call subemp;   subtotal on employee number
+   if(jrn.ne.ljrn)call newjrn
+   if(jrn.ne.99)goto b105;              added..1/22/80 kag
+   ldate(grin,date)
+   sdate(string,rdate);                 added..1/22/80 kag
+   decode (rdate,f10) mm,yy
+   jdte=yy*100+mm        ;               this date is temporary
+ ;  if(jdte.ne.ljdte) call equ0(ljrn);deteled..5/14/81 dl
+b105:
+   if(jrn.eq.99)go to b106   ;added..5/14/81 dl
+   if(jdte.ne.ljdte)call newjrn
+b106:
+   call ckref
+go to b130 ; logic rearrangement
+;
+b107:
+ldate(grin,date)
+sdate(string,rdate)
+if(jrn.eq.99)go to b110;  use current month as jdate
+   'acct'='zer4'
+   encode(acct,fn4)jdte
+   decode(acct,fn2)mm,yy
+   go to b120
+;
+b110:
+    decode(rdate,f10)mm,yy
+b120:
+   yymm=yy*100+mm
+   'acct'='zer12'
+   encode(acct,fd12)?acct
+   decode(acct,f08)brn,maj,min
+   if(yymm.le.xcdate)go to b103;   not a reject
+   if(futsw.eq.1)go to b200 ; reject immediately without printing
+   go to b103 ; rearrange logic
+;
+b130:
+   'chr'='null'
+   if(yymm.le.xcdate)go to b133 ; check for future date again
+   'chr'='astk' ; mark detail as future entry
+;
+b133:
+    ldate(grin,date)
+    sdate(string,rdate)
+    'csub'='blk9'
+    if(?sub.le.0)go to b135
+    encode(csub,fd9)?sub
+ 
+b135:
+    'cemp'='blk9'
+    if(emp.eq.0)go to b140
+     encode(cemp,fn9)emp
+ 
+b140:
+   'cmin'='blk3'
+    if(min.eq.0)go to b145
+    encode(cmin,f100)min
+ 
+b145:
+   call add(rel4,one)
+    readb(detail,gckref)
+    rel4=rel4-1
+ 
+   call edit(amt,amt01,mask01)
+    go to (b160)on opt; 1 isnarrow (subtracted 1 from opt in a03f
+    if(ref.eq.nexref)go to b151
+    if(ref.ne.pref)go to b152
+ 
+b151:
+ 
+    call wrtit(f04d)
+    go to b170
+ 
+b151c:
+b152:
+   if(amt.lt.0)go to b153
+b152a:
+ 
+    call wrtit(f04)
+   go to b170
+ 
+b153:
+ 
+b153a:
+    call wrtit(f04cr)
+   go to b170
+ 
+b160:
+    decode(csub,f09)acct
+    'csub'='acct';
+;
+   if(pref.eq.ref)go to b161; same ref#
+    if(ref.eq.nexref)go to b161; same ref as next record
+    if(form.eq.3)go to b160d
+    call wrtit(f04a); amt in col 2
+    go to b170
+ 
+b160d:;no sub/no min
+    call wrtit(f06a)
+    go to b170
+ 
+b161:
+    if(form.eq.3)go to b161d
+    call wrtit(f04b)
+    go to b170
+ 
+b161b:; no sub
+ 
+b161d: ;no sub/min
+    call wrtit(f06b)
+;
+b170:
+    call equate(pref,ref)
+   if(?acct.ne.?mea)go to b170a
+    call add(tmeal,amt)
+b170a:
+    if(?acct.ne.?eic) goto b171
+     call add(teic,amt)
+b171:
+   if(?acct.ne.?tips)go to b172
+    call add(ttips,amt)
+b172:
+   ifs(chr.eq.astk)go to b195
+   ldate(grin,date)
+   sdate(integer,date)
+    call equate(jdte,yymm)
+   call wrtnewdet
+    ifs(brn.ne.null)call branch
+   if(?sub.eq.-10)go to b100
+   if(?acct.le.?bsea)go to b180
+   call curearn
+b180:
+   if(xcdate.eq.yymm)go to b185
+   ?j2=?j2+amt
+   goto b190
+;
+b185:
+   ?jrnamt=?jrnamt+amt
+b190:
+   if(emp.eq.0)go to b100
+   call add(empamt,amt)
+   go to b100
+;
+b195:
+?j1=?j1+amt ; talley future journal balance
+;
+b200:
+   writeb(reject,gdet)
+   call stat(1)
+   go to b100
+;
+b900:;   eoj
+   flg=2;   dont page eject on newjrn
+   if(lemp.ne.0)call subemp
+   call newjrn
+   rel4=0
+   datein=0
+   writeb(detail,pnt)
+   call stat(1)
+   ?acct=?plact
+   'ddesc'='null'
+;
+   ?sub=0
+    call equ0(jrn)
+    call equ0(rel)
+    call equ0(ref)
+    call equ0(count)
+b903:
+;
+   call tget(amt,count,plamt,4)
+   if(amt.eq.0)goto b910
+   call tget(jdte,count,xcdate,4)
+   yy=jdte/100
+   mm=jdte-(yy*100)
+   date=mm*100+1*100+yy
+   ldate(grin,date)
+sdate(integer,date)
+   call wrtnewdet
+;
+;
+;     wrote current earnings to posting file
+   call edit(amt,amt01,mask01)
+    go to (b905)on opt; narrow
+   if(amt.lt.0)go to b904f
+    call wrtcur(wftce)
+   goto b910
+ 
+b904f:
+ 
+    call wrtcur(wftcecr)
+   go to b910
+ 
+;
+b905:
+ 
+   call wrtcur(nftce);  current earnings
+ 
+ 
+;
+b910:
+    call add(count,one)
+   if(count.le.15)go to b903
+   call pupsi(outbal);  if outof balance this =1 and cals in gltran
+   if(tmeal.ne.0)goto b911
+   if(teic.ne.0)goto b911
+   if(ttips.eq.0)go to b912
+b911:
+   write(prt,f16)m07,tmeal,m08,ttips,m09,teic
+b912:
+    go to (b950)on outbal
+    call equ0(rel4)
+    call equ0(opt)
+   writeb(detail,pnt)
+   call stat(1)
+    go to b955
+;
+b950:;   at least one journal was out of balance - dont let them post
+   rewind newdet,reject
+ 
+b955:
+   endfile reject,newdet;   this wipes out all details entered
+   stop 0
+;
+b980:
+   call msg(m14);   there is no user record
+   stop 2
+;
+;=========== s u b r o u t i n e s ===============
+;
+;=================
+subroutine curearn
+;=================
+;
+    call equ0(count)
+;
+ce10:
+;
+call tget(xdate,count,xcdate,4)
+if(xdate.eq.yymm)go to ce30
+    call add(count,one)
+if(count.lt.15)goto ce10
+;   throw all others to last bucket
+;
+ce30:
+;
+call tget(xamt,count,plamt,4)
+    call add(xamt,amt)
+call tput(xamt,count,plamt,4)
+return
+;
+;=================
+subroutine add
+;=================
+direct
+   lda- x+
+   sta  ad10+3
+   sta  ad10+13
+   lda- x+
+   sta  ad10+8
+cpl
+ 
+ad10:
+rel4=rel4+one;  all variable fields
+return
+;
+;=================
+subroutine newjrn
+;=================
+if(ljrn.eq.-1)go to s50
+s10:
+call s62;   entry point in ckref (even if ref. number is the same give
+;           total on change in jrn. number
+;
+s13:
+'futstr'='null' ; set "future" message to null
+ifs(chr.ne.astk)go to s15 ; last detail read not marked as "future" entry
+'futstr'='m18' ; set "future" message in place
+if(?j1.eq.0)go to s15 ; not out of balance "future" entry
+jcnt=1 ; set routing for out of balance "future" entry
+?jrnamt=?j1 ; substitute balance amount for "future" journal
+;
+s15:
+call ?edit(?jrnamt,amt01,mask01)
+if(?jrnamt.eq.0)go to s40
+'balmsg'='futstr+m10' ; concatinate future message if any
+    go to (s30)on opt
+    call wrttot(f22,balmsg)
+s20:
+go to (s50) on jcnt ; exit if future journal balance
+if(jcnt.eq.2)go to s25
+call ?edit(?j2,amt01,mask01)
+if(?j2.eq.0)go to s25 ; no prior month
+    go to (s21)on opt
+    call wrttot(f22,m10b)
+goto s22
+;
+s21:
+    call wrttot(nftbal,m10b); journal total for prev. months
+;
+s22:
+;
+s25:
+outbal=1
+?jrnamt=?j2=0
+call equ0(jcnt)
+go to s50
+;
+s30:
+    call wrttot(nftbal,balmsg); jrn is out of bal. by amount
+go to s20
+;
+s40:
+if(jcnt.eq.2)go to s41
+?jrnamt=?j2
+jcnt=2
+go to s15
+;
+s41:
+    call equ0(jcnt)
+'balmsg'='futstr+m11' ; concatinate "future" message if any
+    go to (s45)on opt
+    call wrttot(f22,balmsg); jrn in bal by .00
+;
+go to s50
+;
+s45:
+    call wrttot(nftbal,balmsg) ; jrn in balance by .00
+;
+s50:
+if(flg.eq.2)go to s55
+lcr=60;  force top of form next record
+;
+s55:
+   if (jrn.ne.99) goto s60;
+   ldate(grin,date)
+   sdate(string,rdate)
+   decode (rdate,f10) mm,yy
+   jdte=yy*100+mm         ;               this date is temporary
+s60:
+    call equate(ljrn,jrn)
+    call equate(ljdte,jdte)
+?j1=?j2=?jrnamt=0
+    call equ0(jcnt)
+return
+;===================
+subroutine ckref
+;==================
+;
+if(pref.eq.ref)go to s68
+s62:;           6/6/77
+pref=-1 ; clear previous reference
+if(rcnt.le.1)go to s64
+call edit(ramt,amt01,mask01)
+    go to (s63)on opt
+if(ramt.lt.0)go to s62f
+   call wrttot(f21,m10a)
+go to s64
+ 
+s62f:
+    call wrttot(f20,m10a); ref total
+go to s64
+;
+s63:
+    call wrttot(f14a,m10a); ref total
+s64:
+;
+s67:
+    call equ0(rcnt)
+    call equ0(ramt)
+if(ljrn.ne.jrn)goto s69;  6/6/77
+;
+s68:
+    call add(ramt,amt)
+    call add(rcnt,one)
+;
+s69:;   6/6
+return
+;
+subroutine subemp
+;===================
+;
+if(lemp.ne.0)go to s75
+    call equate(lemp,emp)
+return
+;
+s75:
+if(empamt.eq.0)go to s80
+call edit(empamt,amt01,mask01)
+    go to (s78)on opt
+    call wrttot(f22,m13)
+s76:
+   call equ0(empamt)
+   call equate(lemp,emp)
+return
+;
+s78:
+    call wrttot(f14b,m13)
+go to s76
+;
+s80:
+    call equate(lemp,emp)
+return
+;
+;
+;==================
+subroutine wrtit
+;================
+call crq
+direct
+  lda- x+
+  sta wr10+5
+cpl
+ 
+wr10:
+write(prt,f04)rel4,brn,maj,cmin,csub,cemp+4,rdate,ref,ddesc,amt01+2,chr
+return
+ 
+subroutine wrtcur
+;=================
+call crq
+direct
+   lda- x+
+   sta wc10+5
+cpl
+wc10:
+write(prt,wftce)?plact,mm,sl,yy,m17,amt01+2
+return
+ 
+;==================
+subroutine wrttot
+;==================
+call crq
+direct
+   lda- x+
+   sta wt10+5
+   lda- x+
+   sta wt10+7
+cpl
+ 
+wt10:
+write(prt,nftbal)m10,amt01+2;   nftbal & m10 are variable
+return
+;
+;================
+subroutine equate
+;================
+ 
+direct
+   lda- x+
+   sta  eq10+8
+   lda- x+
+   sta  eq10+3
+cpl
+ 
+eq10:
+  zero=zero;   call equate(x,y)   x=y
+return
+ 
+;==============
+subroutine equ0
+;==============
+direct
+   lda- x+
+   sta eq20+3
+cpl
+ 
+eq20:
+call equate(count,zero);  count is variable
+return
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;=========================
+subroutine cent132
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent132 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+subroutine branch
+;==================
+ifs (brn.ne.i999)go to s100
+return
+;
+s100:
+;
+'acct'='zer12'
+encode(acct,f08)i999,maj,min
+decode(acct,fd12)?acct
+call wrtnewdet
+return
+;
+;=================
+subroutine crq
+;==================
+call add(lcr,one)
+if(lcr.lt.58)go to s200
+if (jrn.ne.99) goto s105;  need to chg date for printing...2/5/80..kag
+mm=cmm                  ;  current month
+yy=cyy                  ;  current year
+;
+s105:
+;
+encode(head3,fc10) blk9  ; clear out first 9 bytes...kag
+encode(head3,f103)m35,mm,sl,yy
+write(prt,f01)eject
+write(prt,f01)head1
+go to (s110)on opt; narrow=1/ wide=0
+write(prt,f101w)m40,jrn,m21,m22,page
+go to s115
+ 
+s110:
+write(prt,f101n)m40,jrn,m21,m22,page
+ 
+s115:
+write(prt,f01)head3
+write(prt,f01); lfeed
+call add(page,one)
+go to (s120)on opt
+ 
+s116:
+call wrthd(f102w)
+go to s125
+ 
+ 
+s120:
+'m37'='null'
+'m38'='null'
+if(form.eq.3)go to s123
+ 
+call wrthd(f102n)
+go to s125
+ 
+s121:
+s123:
+write(prt,f105n)m30,m31,m32,m34,m35,m36,m24b,m25
+ 
+s125:
+write(prt,f01)
+lcr=6
+;
+if (jrn.ne.99) goto s200;  need to chg date back ...2/5/80.kag
+decode (rdate,f10) mm,yy
+s200:
+return
+;
+;=================
+subroutine wrthd
+;=================
+direct
+  lda- x+
+  sta  wh10+5
+cpl
+ 
+wh10:
+write(prt,f102n)m30,m31,m32,m33,m34,m35,m36,m24b,m25,m37,m38
+return
+ 
+;==================
+subroutine wrtnewdet
+;===================
+;
+writeb(newdet,gdet)
+call stat(1)
+return
+;====================
+subroutine tget
+;==================
+;
+;=========================
+;
+;       to remove data from the nth item in a list of items
+;
+;       calling sequence:
+;
+;       call tget (target-address, index-integer, table-start-address, table-unit-byte-length)
+;
+direct
+ lda- x+ get target address
+ sta tga
+ lda- x+ get index address
+ ina ,2
+ lda- a
+ xay save it for later
+ ldb- x+ get table start address
+ lda- x+ get table unit byte length
+ stx- s-
+ sta- s-
+tg01 add y,b mpy index * unit-byte-length
+ dca
+ bnz tg01
+ ldx= *-*
+tga equ *-2
+ lda- s+
+ xay move xfr count to y
+tg02 ldab- b+
+ stab- x+
+ dcr y decr xfr count
+ bnz tg02
+ ldx- s+
+cpl
+return
+;
+;===============
+subroutine tput
+;=========================
+;
+;       to move data to the nth item in a list of items
+;
+;       calling sequence:
+;
+;       call tput (source-address, index-integer, table-start-address, table-unit-byte-length)
+;
+direct
+ lda- x+ get source address
+ sta tpa
+ lda- x+ get index address
+ ina ,2
+ lda- a
+ xay save it for later
+ ldb- x+ get table start address
+ lda- x+ get table unit byte length
+ stx- s-
+ sta- s-
+tp01 add y,b mpy index * unit-length
+ dca
+ bnz tp01
+ ldx= *-*
+tpa equ *-2
+ lda- s+
+ xay save byte xfr count
+tp02 ldab- x+
+ stab- b+
+ dcr y decr xfr count
+ bnz tp02
+ ldx- s+
+cpl
+return
+;=================================
+;  w o r k i n g    s t o r a g e
+;=================================
+;
+set lcr:51,ljrn:-1,ljdte:0,lemp:0,cyy:0,cmm:0,yy:0,mm:0,lyymm:0
+set yymm:0,maj:0,min:0,flg:0,outbal:0,one:1,two:2,hund:100
+set y1:0,m1:0,m2:0,?zero:0
+set ?j2:0,jcnt:0,rcnt:0,ramt:0,pref:0
+set page:1,empamt:0,?jrnamt:0,?j1:0,futsw:1
+;
+ 
+string acct(14),brn(3),chr(1),csub(14),cmin(3),cemp(10)
+string null(0),rdate(8),spc4(4),futstr(7),balmsg(35)
+;
+define zer9:'000000000',astk:'*',i999:'999'
+define blk3:'   ', blk9:'         ',sl:'/'
+define head1:'                                                                                             '
+define head3:'                                                                                                           '
+define zer12:'   000000000'
+define zer4:'0000'
+define mask01:'  ##,###,###@.##-'
+define amt01 :'                 '
+;
+define m03:'enter option:  1  11 x 14 7/8"'
+define m03a:'2  11 x  8 1/2"'
+define m04:'enter report date'
+define m06:'0000 is the old current date, enter new current date'
+define m07:'total meals'
+define m08:' tips'
+define m09:'  eic'
+define m10:'journal is out of balance by'
+define m10a:'reference total '
+define m10b:'total for previous months is'
+define m11:'journal is in balance'
+define m13:' employee total '
+define m14:'there is no user record'
+define m15a:'is your new current month entry ok?'
+define m17:'current earnings amount'
+define m18:'future '
+define m19:'do you wish to print only those journals within posting period? (y or n):'
+;
+define m21:'journal entries'
+define m22:'page '
+define m24b:'description'
+define m25:'amount'
+ 
+define m30:'item '
+; in listb nowdefine m31:'brn'
+define m32:'account'
+; in listb now define m33:'subacct'
+; in listb nowdefine m34:'empl'
+define m35:'date'
+define m36:'ref '
+define m37:'debit'
+define m38:'credit'
+;
+define m40:'jnl'
+;
+format f01:c130
+format f02:x15 c50
+format f04: n5 x2 c4 n-7 c5 c10 c7 c9 n-7 c31 x16 c14 x14 c1;  debit
+format f04a: n-6 c4 n-7 c4 c6 x1 c5 x1 c9 n-7 c10 x7 c13 c1; narrow
+format f04b: n-6 c4 n-7 c4 c6 x1 c5 x1 c9 n-7 c10 c13 x7 c1
+format f04cr: n5 x2 c4 n-7 c5 c10 c7 c9 n-7 c62 c13 c1
+format f04d: n5 x2 c4 n-7 c5 c10 c7 c9 n-7 c32 c14 x29 c1
+;   no subs/ no min
+format f06a: n-6 c4 n6 c1 c1 c5 x1 c9 n-7 c19 x8 c13 c1
+format f06b: n-6 c4 n6 c1 c1 c5 x1 c9 n-7 c20 c13 x7 c1
+ 
+format f08:c3 n6 n3
+format f09:x3c6
+format f10:n2x4n2
+format f11:n2 x2 n1 n1 n1 n1 n1
+format f14a: x44 c23 c14
+format f14b: x41 c19 c13
+format nftbal:x32 c35 c14; in & out of bal msg
+format f16:c12,n-10.2,x2,c6,n-10.2,x2,c6,n-10.2
+;
+format f20:x62 c56 c14
+format f21:x62 c41 c14
+format f22:x52 c35 c15
+format wftce:d21,n22 c1 n2 x10 c46 c15; wide current earnings debit
+format wftcecr:d21 n22 c1 n2 x10 c61 c14
+format nftce:d19 n17 c1 n2 x3 c25c14
+;
+format f100:n3 c1 c6
+;
+format fn1:n1
+format fn2:n2
+format fn4:n4
+format fn9:n9
+ 
+format fd9:d9
+format fd12:d12
+ 
+format fc28: c28
+format fc10: c10
+format fc77:c77
+ 
+format fhd1:x100 c100
+format fhd2:x100 c100
+format f101n:c4 n-3 x25 c40 c5 n4; page number (second title line)
+format f101w: c4 n-3 x51 c65 c5 n4; second title - page numberx
+format f102n: c6 c6 c11 c3 x3 c7 c9 c5 c22 c6;min & sub narrow
+format f102w:c7 c6 c11 c10 c8 c9 c13 c28 c16 c14;wide
+format f103: c4 n3 c1 n2
+format f105n: c6 c4 c8 c8 c8 c10 c28 c10; narrow - no minor/sub
+; --------tables-------
+set count:0
+;
+set xdate:0,xamt:0
+set plamt:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,p7:0,p8:0,p9:0,p10:0,p11:0,p12:0,p13:0,p14:0,p15:0
+set xcdate:0,d1:0,d2:0,d3:0,d4:0,d5:0,d6:0,d7:0,d8:0,d9:0,d10:0,d11:0,d12:0,d13:0,d14:0,d15:0
+;
+end;  gl535 (audit only)
+;
+;
+
+set plamt:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0,p7:0,p8:0,p9:0,p10:0,p11:0,p12:0,p13:0,p14:0,p15:0
+set xcdate:0,d1:0,d2:0,d3:0,d4:0,d5:0,d6:0,d7:0,d8:0,d9:0,d10:0,d11:0,d12:0,d13:0,d14:0,d15:0
+;
+end;  gl535 (audit only)
+;
+;
+

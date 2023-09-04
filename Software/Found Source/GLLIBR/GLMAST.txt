@@ -1,0 +1,54 @@
+.job glmast
+.seta cc=0,  8=#u, 3=0
+.setc 9=mast
+.use gl#0a on #1 for sys0 shar
+.use gl#0j on #1 for sys1 shar
+.seta upsi=0
+.run gl.xgl500
+.seta 5=0
+.skip to sort if #c eq 0
+.skip to sort if #c eq 55
+.skip to fin if #c lt 100
+=expand
+gl.acc1
+=sort
+.skip to recall if #u eq 0
+.fspec gl#0a on #1 7=use
+.skip to go if 1 eq #7
+.log
+*
+*   accounts master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+=go
+.seta upsi=0
+.log
+*   standby while account file is sorted
+.nolog
+.use gl#0a on #1 for sys0
+.use gl#0j on #1 for sys1
+.run s.x?wtag
+.use gl#0j on #1 for sys1
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=10
+work=4,output=inp,key=(1,6,bi)
+/*
+=recall
+.skip 1 if #c ne 55
+gl.brn
+.skip  1 if glmenu ne #4
+glmenu
+=fin
+.end
+s.con
+*   7/03/79...added calling the add a branch program..ns
+*   8/10/79...changed cc to accept ge 100 for expansion of file..ns
+*   11/05/79...modified for cpu-6...kag
+
+

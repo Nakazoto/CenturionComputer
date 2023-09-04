@@ -1,0 +1,610 @@
+title 'gl581--budget file maintenance '
+system
+;
+define m01:'gl581 (automatic creation of budget file) 12/29/81'
+;
+;  notes:
+;    7/16/76...written...n
+;   7/20/76...still testing..ns
+;     1/20/77...conversion to gl581 from gl580...ns
+;    3/17/77...adding display of account number ..ns
+;    3/30/77...changing clear table, adding ability to stop, & change to m15a..ns
+;   9/22/77...adding option on new to enter month amounts separately...ns
+;   7/24/78...cosmetic change(m01)...ns
+;   9/06/78...changing to keep from generating h,i,j,k, or l accounts...ns
+;   10/06/78...adding  k & l accounts back into report...ns
+;   11/15/78...added update of consolidated accts if branches used...jwb
+;   06/05/79...adding i & j accts, & amounts to the d accounts..ns
+;   07/27/79...excluding l accts except for net change..ns
+;
+;   12/29/81...recompile to have a common date base...dl
+;       this program will setup budget accounts for all account numbers in chart
+;       or all income accounts, or all income consolidated branch only.
+;
+;
+;
+;=========
+;
+copy headb
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+;
+copy brec
+;   brec is the budget record
+;
+record listb(10)
+set    ?lid:0
+set    rel0:0
+endrec
+;
+file list:sys3,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1;  in this program list is list of chart of accounts not budget
+buffer buf1(400)
+;
+file bmst:sys1,class=2,rnd,recsiz=131,key=rel1
+set rel1:0
+;
+record recg(50)
+set  ?id:0
+set  xx:0
+set  vv:0
+string desc(30)
+endrec
+;
+;============================
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+external cget,msg,?nkey,?gkey,ioerr,stat,lfeed,pupsi,mvssf,ynget
+;
+entry
+;
+open io (crt,gmst,bmst)
+open input list
+call msg(m01)
+;
+b05:
+call ?gkey(gmst,?zero)
+go to (b08,ioerr) on status
+readb(gmst,headb)
+call stat(1)
+call ?gkey(bmst,?zero);   call header
+goto(b06,ioerr)on status
+readb(bmst,budh)
+call stat(1)
+b05a:
+;   if there is already a header it should not go through this section
+go to b10
+;
+b06:
+i=13-yrend;
+j=1
+;
+b07:
+'mon'='jan'
+call iset
+'mon'='feb'
+call iset
+'mon'='mar'
+call iset
+'mon'='apr'
+call iset
+'mon'='may'
+call iset
+'mon'='jun'
+call iset
+'mon'='jul'
+call iset
+'mon'='aug'
+call iset
+'mon'='sep'
+call iset
+'mon'='oct'
+call iset
+'mon'='nov'
+call iset
+'mon'='dec'
+call iset
+;
+call ?nkey(bmst,?zero)
+go to (noroom,ioerr)on status
+sort=1
+writeb(bmst,budh)
+call stat(1)
+;
+go to b10
+;
+b08:
+call msg(m03);    g/l master is not setup yet
+stop 50
+;
+b10:
+call msg(m16);   enter: 1=setup all income accounts
+write(crt,f15)m17;      2=setup all consolidated branch accounts only
+writen(crt,f15)m18;      3=setup all accounts
+call cget(null,f03,opt)
+go to (b15,b15,b15)on opt
+go to b10
+;
+b15:
+;
+'acct'='zer6'
+encode(acct,f02)hh
+decode(acct,f03)h1,h2,h3
+if(h1.ne.0)go to b20
+if(opt.ne.2)go to b20
+call msg(m19);   not applicable
+go to b10
+;
+;
+b20:
+readb(list,listb)
+if(status.ne.0)go to b900
+if(?lid.le.100)go to b20;  these are headers
+readb(gmst,recg)
+call stat(1)
+if(?id.eq.0)go to b20
+go to (b25,b21,b30)on opt
+;
+b21:
+br=?id/bil;  1,000,000,000
+if(br.ne.i999)go to b20; not consolidated branch
+go to b30
+;
+b25:
+if(?id.lt.?bsea)go to b20;  not an income statement item
+;
+b30:
+'acct'='zer12'
+encode(acct,f01a)?id
+decode(acct,f01b)br,maj,min
+?nid=?id
+'acct'='zer4'
+encode(acct,f07)vv;
+decode(acct,f03)v1,v2,v3,v4;   v1=2 is money account
+if(v1.ne.6)go to b32; ok
+if(v4.ne.8)go to b20
+b31:
+b32:
+;
+call ?gkey(bmst,?nid)
+go to (b40,ioerr)on status
+readb(bmst,brec)
+call stat(1)
+if(?bid.eq.0)go to b45
+go to b20;   already on file - this builds entire file only - no changes
+;
+;
+b40:
+call ?nkey(bmst,?nid)
+go to (noroom,ioerr)on status
+sort=1
+;
+b45:
+direct
+  ldb= bud+5     beginning address of table
+  lda= (edbud)-(bud+6)  length of table
+  jsr/ mvssf     move filler
+  db   0         filler chr.
+  ldab= 4
+  stab/ bud-1  set up tabel length in case they did a control-c to end last time
+cpl
+ch=1
+?bid=?nid
+;
+b100:
+call ?gkey(gmst,?nid)
+b108:
+qtr1=qtr2=qtr3=qtr4=0
+;
+b108f:
+call msg(eject)
+write(crt,f04a)m12a,br,maj,min
+fa1=0
+write(crt,f04)m12,desc
+call msg(null)
+go to (b109,b109,b145,b147,b147,b109)on v1; b109-k & l are handeled like e accounts
+go to b143
+;
+b109:
+go to (b170)on ch
+write(crt,f01)m13
+b110:
+ tblget bud(1)
+qtr1=bud
+ tblget mon(1)
+curp(crt,1,5)
+curb(crt,79)
+writen(crt,f05)one,mon,bud
+ tblget bud(2)
+qtr1=qtr1+bud
+ tblget mon(2)
+writen(crt,f05)two,mon,bud
+ tblget bud(3)
+ tblget mon(3)
+qtr1=qtr1+bud
+write(crt,f05)thr,mon,bud
+if(fa1.ne.0)go to b120
+;
+b111:
+ curp(crt,1,7)
+ curb(crt,79)
+ tblget bud(4)
+qtr2=bud
+;
+ tblget mon(4)
+writen(crt,f05)four,mon,bud
+ tblget bud(5)
+qtr2=qtr2+bud
+ tblget mon(5)
+writen(crt,f05)five,mon,bud
+ tblget bud(6)
+ tblget mon(6)
+qtr2=qtr2+bud
+write(crt,f05)six,mon,bud
+if(fa1.ne.0)go to b120
+;
+b112:
+curp(crt,1,9)
+curb(crt,79)
+;
+ tblget bud(7)
+qtr3=bud
+ tblget mon(7)
+writen(crt,f05)sev,mon,bud
+ tblget mon(8)
+ tblget bud(8)
+qtr3=qtr3+bud
+writen(crt,f05)ate,mon,bud
+ tblget bud(9)
+ tblget mon(9)
+qtr3=qtr3+bud
+write(crt,f05)nine,mon,bud
+if(fa1.ne.0)go to b120
+;
+b113:
+curp(crt,1,11)
+curb(crt,79)
+;
+ tblget bud(10)
+qtr4=bud
+ tblget mon(10)
+writen(crt,f05)ten,mon,bud
+ tblget bud(11)
+qtr4=qtr4+bud
+ tblget mon(11)
+writen(crt,f05)elev,mon,bud
+ tblget mon(12)
+ tblget bud(12)
+qtr4=qtr4+bud
+write(crt,f05)twel,mon,bud
+b120:
+curp(crt,1,14)
+curb(crt,60)
+?yr=qtr1+qtr2+qtr3+qtr4
+write(crt,f08)m08,?yr
+call msg(m22);   13 to change all months
+call msg(m22a); 14 to end
+curp(crt,1,17)
+curb(crt,41)
+curp(crt,1,18)
+curb(crt,41)
+curp(crt,1,19)
+curb(crt,41)
+curp(crt,1,20)
+curb(crt,16)
+fa1=0
+curp(crt,1,17)
+call ynget(m14a); do you want to change?
+if(status.eq.0)go to b140;  no changes
+curp(crt,1,17)
+curb(crt,41)
+;
+;       last year will go here if need be
+ call cget(m14,f11,fa1);  enter field number
+if(fa1.eq.14)go to b140;  stop processing
+if(fa1.eq.13)go to b160;    all months are the same
+if(fa1.gt.12)go to b120
+if(fa1.lt.1)go to b120;  out of range
+tblget mon(fa1)  ;get month's name
+'mss'='m15+mon'
+if (br. eq. cons) goto b121
+if (br. eq. 0) goto b121
+tblget bud (fa1)
+savamt=bud
+;
+b121:
+;
+call cget (mss, f06, bud)
+if (status. ne. 0) goto b121
+work=bud-savamt
+tblput bud (fa1)
+if (br. eq. cons) goto b130
+if (br. eq. 0) goto b130
+writeb (bmst, brec)
+call stat (1)
+?work=cons*mil+maj*thou+min
+call ?gkey (gmst, ?work)
+goto (b130, ioerr) on status
+call ?gkey (bmst, ?work)
+goto (b122, ioerr) on status
+readb (bmst, brec)
+call stat (1)
+goto b123
+;
+b122:
+;
+call ?nkey (bmst, ?work)
+goto (noroom, ioerr) on status
+sort = 1
+direct
+ ldb= bud+5
+ lda= (edbud)-(bud+6)
+ jsr/ mvssf
+ db 0
+ ldab= 4
+ stab/ bud-1
+cpl
+;
+b123:
+;
+?bid=?work
+tblget bud (fa1)
+bud=bud+work
+tblput bud (fa1)
+writeb (bmst, brec)
+call stat (1)
+call ?gkey (bmst, ?nid)
+goto (ioerr, ioerr) on status
+readb (bmst, brec)
+call stat (1)
+;
+b130:
+;
+go to (b110,b110,b110,b111,b111,b111,b112,b112,b112,b113,b113,b113)on fa1
+go to b100;   error
+;
+b140:
+writeb(bmst,brec)
+call stat(1)
+if(fa1.eq.14)go to b900;   end of job (writes the last one)
+go to b20
+;
+b160:
+ch=0
+call cget(m15a,f06,bud);   enter budget amount
+if (status. ne. 0) goto b160
+savamt=bud
+fa1=1
+;
+b165:
+;
+if (br. eq. cons) goto b166
+if (br. eq. 0) goto b166
+tblget bud (fa1)
+work=savamt-bud
+;
+b166:
+;
+bud=savamt
+tblput bud (fa1)
+if (br. eq. cons) goto b169
+if (br. eq. 0) goto b169
+writeb (bmst, brec)
+call stat (1)
+?work=cons*mil+maj*thou+min
+call ?gkey (gmst, ?work)
+goto (b169, ioerr) on status
+call ?gkey (bmst, ?work)
+goto (b167, ioerr) on status
+readb (bmst, brec)
+call stat (1)
+goto b168
+;
+b167:
+;
+call ?nkey (bmst, ?work)
+goto (noroom, ioerr) on status
+sort=1
+direct
+ ldb= bud+5
+ lda= (edbud)-(bud+6)
+ jsr/ mvssf
+ db 0
+ ldab= 4
+ stab/ bud-1
+cpl
+;
+b168:
+;
+?bid=?work
+tblget bud (fa1)
+bud=bud+work
+tblput bud (fa1)
+writeb (bmst, brec)
+call stat (1)
+call ?gkey (bmst, ?nid)
+goto (ioerr, ioerr) on status
+readb (bmst, brec)
+call stat (1)
+;
+b169:
+;
+fa1=fa1+1
+if (fa1. lt. 13) goto b165
+fa1=0
+goto b108f
+;
+;
+b170:
+curp(crt,1,5)
+call msg(m22b);  13 to change all to the same
+call msg(m22);   newline to enter all months
+call cget(m22a,f11,fa1);  enter 14 if you wish to end
+if(fa1.eq.13)go to b160
+if(fa1.eq.14)go to b140;  write this one and exit
+if(fa1.ne.0)go to b170;  got a problem here
+;
+;
+b175:
+fa1=fa1+1
+if(fa1.gt.12)go to b179
+tblget mon(fa1);   get month name
+'mss'='m15+mon'
+call cget(mss,f06,bud)
+tblput bud(fa1)
+go to b175
+;
+b179:
+ch=0
+fa1=0
+go to b108
+;
+;
+b143:
+call msg(m35)
+b144:
+go to b140
+;
+b145:
+call msg(m36)
+go to b140
+;
+b147:
+call msg(m36a);  calculation account
+go to b140
+ 
+b900:
+call msg(m20);   eoj
+close bmst,crt,gmst
+call pupsi(sort)
+stop 0
+;
+noroom:
+call msg(m21);   no room going to expand the master file
+close bmst,crt,gmst,list
+stop 111
+;
+;
+;=======================
+subroutine iset
+;=======================
+ tblput mon(i)
+i=i+1
+if(i.lt.13)go to is10
+i=1
+is10:
+return
+;
+;====================
+;
+;====================
+;   constants
+;====================
+;
+define jan:'jan',feb:'feb ',mar:'mar ',apr:'apr ',may:'may ',jun:'june',jul:'july'
+define aug:'aug ',sep:'sept',oct:'oct ',nov:'nov ',dec:'dec '
+define d:'d', k:'k', no:'n'
+;
+define m03:'user record does not exist'
+define m08:'years budget total for this account is:'
+define m11:'ok? (y/n)'
+define m12:'description:'
+define m12a:'account number:'
+define m13:'*****    current years budget    *****'
+define m14:'enter month number'
+define m14a:'change (y/n)'
+define m15:'enter amount budgeted for '
+define m15a:'enter amount budgeted for each month in year'
+define m16:'enter: 1  budget all accounts in income statement'
+define m17:'2  budget all accounts in consolidated branch only'
+define m18:'3  budget all accounts'
+define m19:'consolidated option is not applicable'
+define m20:'end budget maintenance program'
+define m21:'budget file is full'
+define m22:'      13 to enter the same amount for each month'
+define m22b:'enter newline to enter all months separately'
+define m22a:'      14 to end program'
+define m35:'****   title account   **** '
+define m36:'****   total account   **** '
+define m36a:'****   calculation account   **** '
+;
+;
+define zer6:'000000'
+;
+define zer4:'0000'
+;
+set cons:999, savamt:0, work:0, ?work:0
+set  fa1:0,i:0,j:0,br:0,opt:0,ch:0
+set  bil:1000000000,i999:999
+set  ?yr:0,qtr1:0,qtr2:0,qtr3:0,qtr4:0
+set ?nid:0,?zero:0
+set mil:1000000,thou:1000,h1:0,h2:0,h3:0,h4:0
+set sort:0,v1:0,v2:0,v3:0,v4:0
+define one:'(1)'
+define two:'(2)'
+define thr:'(3)'
+define four:'(4)'
+define five:'(5)'
+define six:'(6)'
+define sev:'(7)'
+define ate:'(8)'
+define nine:'(9)'
+define ten:'(10)'
+define elev:'(11)'
+define twel:'(12)'
+;
+set  maj:0,min:0
+define zer12:'      000000'
+;
+;
+string acct(12),null(0),mss(30)
+string str(1)
+;
+;
+;
+format f01:c41c40
+format f01a:d12
+format f01b:n3n6n3
+format f02:n5
+format f03:n1
+format f04:c13c30
+format f04a:c15n4n7n4
+format f05:x4c4c6n-12.2
+format f06:n10.2
+format f07:n4
+format f08:c40x1d-14.2
+format f09:c34c11c34
+format f10:c1
+format f11:n2
+format f12:n3
+format f13:n6
+format f14:c26c3
+format f15:x7c60
+;
+;
+end;   gl581
+;
+
+format f03:n1
+format f04:c13c30
+format f04a:c15n4n7n4
+format f05:x4c4c6n-12.2
+format f06:n10.2
+format f07:n4
+format f08:c40x1d-14.2
+format f09:c34c11c34
+format f10:c1
+format f11:n2
+format f12:n3
+format f13:n6
+format f14:c26c3
+format f15:x7c60
+;
+;
+end;   gl581
+;
+
+

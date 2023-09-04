@@ -1,0 +1,298 @@
+title 'gl502--adding a branch to the chart of accounts '
+system
+ ;
+define m01:'gl502  (adding branches to chart of accounts)  12/29/81'
+;
+;  program incorporated into standard general ledger application
+;  with name change on august 6, 1976, by g.l. gillette.  at the
+;  same time, certain cosmetic changes to formats and messages,
+;  plus minor program modifications, were made.
+;
+;
+external cget,msg,?nkey,?gkey,ioerr,stat,clrec,gupsi,pupsi,ynget
+;   notes:
+;    12/6/75...conversion to os2..ns
+;     1/16/76...adding usef and yrend fields...ns
+ ;     1/23/76...stopped using month in vv, vv was being created wrong..ns
+;      g/l master file   'c' type indexed
+;      3/12/76...giving an option on the chart of accounts to only indicate
+;               the account number on money amonts,...ns
+;     3/12/76...also no longer allowing changes to totals unless e or f type..ns
+;      3/17/76...pulled disply in w26:.....ns
+;    4/8/76...adding holds and frees...ns
+;   4/22/76...chng to e glread, and option 3 on chng detail..ns
+;    6/8/76...reading header before doing print routine...ns
+;   6/14/76...added ?pbal to recg - there are no more bytes left in recg..ns
+;   6/14/76...converting g900 to g500...ns
+;   6/16/76...chnged format f04 so that coment would print all 60 char..ns
+;   6/17/76...change - ff was not being handled correctly...ns
+;   6/21/76...adding h0 - option for all neg. on financial statement to print
+;            in parenthesis..ns
+;   6/22/76...adding branches...ns
+;    6/29/76...formats clean up - f02 and f22...ns
+;    7/2/76...changing master file layout - not compatible with previous copies....ns
+;      7/9/76...changing a couple of comments...ns
+;   7/9/76...changing record size again ( to 131 bytes from 395)..ns
+;     7/12/76....adding f3 - ff= f3,f1,f2...(f3 is source and appl. of funds)..
+;                f3=1 is net income  ( level 6 of income section)
+;                f3=2 is depreciation
+;                  =3 is sourse and appl of funds
+;                   4 is working capital
+;       7/12/76...spliting g500 into g500, g500p, & g500b...ns
+;    7/15/76....splitting recg and listb into 2 copy statements (so we dont have the extra buffer area for sys1 when we arent
+;          ....using it...ns (7/15/76)
+;     10/8/76...adding check for deleted records...ns
+;
+;     5/26/76...on a new one the reverse flag wasnt getting moved right..ns
+;
+;    07/18/78...changed cc to 100 instead of 110 for noroom condition..ns
+;    09/13/78...adding changes for h accounts & changing to yngets...ns
+;
+;    5/02/79...changing so that any branch can create another branch...ns
+;    8/02/79...changing signon mess.ns
+;
+;   12/29/81...recompile to have a common date base...dl
+;     g/l master file
+copy recg
+copy head2
+;
+record listb(10)
+set    ?lid:0
+set    rel0:0
+endrec
+;
+record hrec(131);  h account records
+set    ?hid:0
+set    hff:0
+set    hvv:0
+endrec;      the whole record will copy into this area and should be ok
+;
+;
+record nrec(131);   this is for adding branches
+set    ?nid:0
+set    nff:0
+set    nvv:0
+string ndesc(30)
+set   mpos:0,m1:0,m2:0,m3:0,m4:0,m5:0,m6:0,m7:0,m8:0,m9:0,m10:0
+set   m11:0,m12:0,m13:0,m14:0,m15:0,?mbal:0,?npbal:0,nrev:0
+endrec
+;
+;
+;
+;
+;
+file  ilist:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+buffer buf2(400)
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+entry
+;
+open io(crt,gmst,ilist)
+;
+call msg(m01);    salutation
+;
+ ;
+;
+ ;
+ ;
+call ?gkey(gmst,?zero)
+go to (b04a,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+call ?gkey(gmst,?one)
+go to (b04a,ioerr)on status
+readb(gmst,head2)
+call stat(1)
+'acct'='zer6'
+encode(acct,f92)hh
+decode(acct,f12)h0,h1,h2,h3,h4,h5;  h1=number of digits in branch
+if(h1.ne.0)go to d10  ;  using branch numbers
+;
+b04:
+call msg(m24)
+go to b05
+;
+b04a:
+call msg(m23)  ;  user record does not exist
+b05:
+call pupsi(0)
+stop 0
+;
+;                             h2=number of digits in major
+;                             h3=                    minor
+;                             h4=                    sub
+;                            h5= 1=posting payroll from g/l
+;
+;
+ ;********** adding accts **********
+;   adding a branch
+;==========================
+d10:
+call cget(m49,f10,brn)  ;  get branch number (3-digit to cover all bases)
+if (status.ne.zero) go to d10
+if(brn.eq.0)go to b900;     eoj
+ 
+d12:
+call cget(m50,f10,br);   create from branch number
+if(status.ne.0)go to d12
+if(br.le.0)go to d12
+?cons=br*bil
+?lcon=br+1*bil
+d15:
+readb(ilist,listb)
+if(status.eq.1)go to d95;    eoj no consolidated account
+if(?lid.lt.?cons)go to d15;  cons= branch with 0 account number
+if(?lid.gt.?lcon)go to d95; finished with that branch but it wasnt there
+d18:
+'ans'='y'
+call ynget(m25);  all accounts? (y/n)
+if(status.ne.0)go to d21
+'ans'='n'
+;
+;
+go to d21
+;
+d20:
+readb(ilist,listb);     reads income list file
+ ;
+go to (d90)on status
+d21:
+'acct'='zer12'
+encode(acct,f09)?lid
+decode(acct,f10)br,maj,min;    br is the old branch,   brn is the new branch
+if(lbr.eq.0)go to d25
+if(br.ne.lbr)go to d90;      finished one branch
+d25:
+lbr=br
+if(br.eq.0)go to d20;        no branches in this
+readb(gmst,recg);    rel key should be set in ilist
+call stat(1)
+if(?gid.eq.0)go to d20;   deleted record
+savrel=rel0;   save this (if we have h accounts we'll need this)
+;
+'acct'='zer12'  ;  set it back to zero
+encode(acct,f10)brn,maj,min
+decode(acct,f09)?lid
+call ?gkey(gmst,?lid)
+go to (d30,ioerr)on status
+go to d20;                  already on file
+;
+d30:
+ifs(ans.eq.y)go to d40;   create all
+go to (d31)on ch
+write (crt,f08)
+call msg(m26)  ; do you want this branch to contain the following accounts:
+ch=1
+d31:
+'mss'='desc+m27'
+;
+d35:
+;
+call ynget(mss);  description - add this one??
+if(status.eq.0)go to d20
+d40:
+call ?nkey(gmst,?lid)
+go to (noroom,ioerr)on status
+sort=1
+;
+d50:
+;
+if(vv.gt.i6000)go to d60
+if(vv.ge.i4000)go to d80
+;
+d60:
+call clrec(nrec)
+'ndesc'='desc'
+?nid=?lid
+nvv=vv
+nff=ff
+nrev=usef/10*10
+writeb(gmst,nrec)
+call stat(1)
+go to d20
+;
+d80:
+;
+    v4=rel0
+    rel0=savrel;   original record
+    readb(gmst,hrec)
+    call stat(1)
+    ?hid=?lid
+    rel0=v4
+    writeb(gmst,hrec);   new record h/j/k same as old except for the account number
+    call stat(1)
+    go to d20
+;
+d90:
+rewind ilist
+lbr=0
+write (crt,f08) m03,brn,m04
+go to d10
+;
+d95:
+call msg(m28);   branch is not in the list file
+go to d10
+;
+b900:
+call pupsi(sort)
+stop 0
+;
+noroom:
+call msg(m53)
+close crt,ilist,gmst
+stop 100
+;
+;
+ ;
+ ;*********************************
+ ;***    subroutines   ************
+ ;********  constants  ********
+ ;*****************************
+ ;
+ ;
+;define m02:'end of program'
+define m03:'all accounts for branch'
+define m04:'have been added'
+define m23:'user record does not exist'
+define m24:'user record does not allow branches in this chart of accounts'
+define m25:'do you want standard accounts placed under this branch? (y/n)'
+define m26:'do you want this branch to contain the following accounts:'
+define m27:'? (y/n)'
+define m28:'source branch is not in the list file'
+define m49:'enter branch number'
+define m50:'enter the source branch number (1-999)'
+define m53:'account file is full'
+;
+;
+format f08:c24n3x1c16
+format f07:c1
+format f09:d12
+format f10:n3n6n3
+format f12:n1
+;
+format f92: n6
+string ans(1),mss(80)
+define no: 'n'
+define y:'y',n:'n'
+define zer12:'   000000000'
+define zer6:'000000'
+string a5(1)
+string a8(1)
+string acct(12)
+set br:0,lbr:0,brn:0,?one:1,save:0
+set savrel:0,i4000:4000,i5000:5000, i6000:6000, v4:0
+set ch:0
+set h0:0,h1:0,h2:0,h3:0,h4:0,h5:0
+set  ?zero:0,?tot:0,?cons:999 000 000 000,?lcon:0,bil:1 000 000 000
+set  sort:0;   flag that says call gsort if new accounts are added
+;
+ ;
+integer b2
+integer maj,min,?new1
+ ;
+end;    gl502
+
+

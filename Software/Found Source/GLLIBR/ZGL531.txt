@@ -1,0 +1,1143 @@
+title : '   wragle transaction entry - module 2 (gl531) '
+system
+;
+define m01:'gl531  (transaction entry)  12/29/81'
+;
+;
+; notes:
+;   6/16/76...conversion from g205 to g505...ns
+;   6/17/76...adding hh to header and using it to determine what questions to
+;             ask the operator ie:branches, major, min, sub, emp...ns
+;   7/2/76...changing g/l master layout, 3 dig. brn, sub is now ?sub..ns
+;   7/9/76...changing g/l master layout - 131 bytes - budget will be in another master...ns
+;            also (7/9/76)  consolidated branch is 999 no matter how big the
+;            hh indicator says - this is to allow expansion without too much
+;            trouble...ns
+;  7/15/76...changed libr. in copy of recg..ns
+;  7/26/76...this program sends details to the seq. payroll and g/l...ns
+;  10/12/76...adding city tax field..ns
+;  program incorporated into standard general ledger application
+;  with name change on august 6, 1976, by g.l. gillette.  at the
+;  same time, certain cosmetic changes to formats and messages,
+;  plus minor program modifications, were made.
+;  10/27/76...adding totaling posted details and allowing them to put in
+;             beginning balance on journal  and adding sorpnt to gdet..ns
+;   11/8/76..incrementing check # on 0 ref #, allowing date change within a journal
+;  11/19/76..revised ref nbr:  0 keeps it same, 1 increments by one
+;  11/20/76..added check on payroll accts so it won't ask for entry if acct
+;            nbr is zero; also enabled operator to enter 'fff' (disregard)
+;            then newline gross pay to gracefully exit payroll transaction
+;            all in the pay subroutine...glg
+;   12/9/76...changed order of p/r questions and other cosmetics for cinn...ns
+;  12/22/76....deleted all aget calls and replaced with ynget calls...pap
+;              changed payroll message m28 to a more understandable msg..pap
+;              deleted code for duplicate call for msg m08.....pap
+;              deleted code for call of msg m12b.....pap
+;   12-23-76...mod to pass check date to payroll; cosmetic internals...klf
+;  1-3-77..changed subroutine pay so that it writes tips contra record
+;         also revised calculation of bal2..glg
+;     1/20/77 ... moved m28b from a10 to a24 so that headers would always be
+;                read...ns
+;    3/15/77...horizontal display..ns
+;    3/18/77...changing horizontal display..ns
+;    4/04/77...not  working right if there are no min accounts...ns
+;   4/07/77...allow them to not have prnet on file, 2.changed display some.
+;             3. at expand it tells them that is happening..ns
+;   4/22/77...changing the handling of jrn 99/changed it back again - returned to 4/12 date..ns
+;   5/23/77...posted field in payroll header was reset on each payroll entry;
+;             all details were therefore lost if expand occurred at end
+;             per sa 77021...glg
+;   5/27/77...removing horizontal display...ns
+;    6/30/77...fica was not going out - (pay15:)...ns
+;   8/15/77...clearing pos on  delete.  adding list...ns
+;    9/27/77...breaking this into 2 modules to reduce memory required...ns
+;   10/18/77...changing so that file is held and pointer is not reset during
+;             payroll until all is written..ns
+;    11/8/77..recompiling for m01 date...ns
+;    11/14/77...allowing 9 p/r gross accounts for each branch...ns
+;    11/15/77...change so that amt=0 can be sent to g/l...ns
+;   12/02/77...change so that if other 1 & 2 have a branch the branch for gross
+;              will be used in the generated detail..ns
+;   5/26/78...restricting use of current earnings account & fixing beg. bal. problem..ns
+;            balance condition into g/l)...ns
+;    7/26/78...put checks into audit questions...ns
+;    9/12/78...if account is an i account ?sub is -10, allows inv. contra...ns
+;     5/04/79...allowing posting to current earnings, check for neg. ref #, dont
+;             inc. ref# on rejection...hold/free problem;            &  rdate passed to next program is now in point+1 rel key...ns
+;    8/02/79...changed signon mess..ns
+;    9/19/79...removed questions about paper size, date, etc...jwb
+;    04/15/80...added earned income credit stuff...kag
+;    06/19/80...corrected hold/free problem...kag
+;
+;    12/29/81...recompile to have a common date base...dl
+;
+external msg,lfeed,stat,ioerr,gdate,?gkey,?nkey,cget,pupsi,gjp,clrec,ynget
+file crt:sysipt
+entrypoint crt
+;
+copy recg
+record cons(6);   checks consolidated to see if account is valid
+set    ?cons:0
+endrec
+set rel0:0
+;
+copy head2
+copy hd3
+;
+;
+copy gdet
+;
+record ptranb (65);                   payroll record
+   set pemp:   0
+   set pref:   0
+   set pgr:    0
+   set fica:   0
+   set fwt:    0
+   set oth:    0;                     other 1
+   set oth2:   0;                     other 2
+   set swt:    0;                     state withholding tax
+   set cwt:    0;                     city withholding tax
+   set meal:   0;                     meals
+   set tips:   0
+   set mtded:  0
+   set prdate: 0;                     payroll check date
+   set deic:   0;  eic
+    string pdes   (7)
+endrec
+;
+record dethdr (65)
+   set detnul: 0;                     null for sorting detail file
+   set ppoint: 0;                     pointer to last record in file
+   set staflg: 0;                     state accounting flag      (1=yes, 0=no)
+   set citflg: 0;                     city accounting flag       (1=yes, 0=no)
+   set combff: 0;                     combined fica/fwt          (1=yes, 0=no)
+   set othflg: 0;                     other deduction flag       (1=yes, 0=no)
+   set perend: 0;                     period ending date         (mmddyy)
+   set lastin: 0;                     date last data entered     (mmddyy)
+   set posted: 0;                     data posted flag (0=posted, 1=not posted)
+   set postop: 0;                     posting option (1,2,3,4)
+   set eicflg: 0;
+endrec
+;
+;
+file pcfil:sys3,class=2,rnd,recsiz=65,key=rel3
+;
+set rel3:0
+;
+;
+file trans:sys2,class=2,rnd,recsiz=77,key=rel2
+set   rel2:0
+;
+record pnt(20)
+set    point:0
+set   opt:0
+set   cdat:0
+set curt:0
+set datein:0
+endrec
+record dates(77)
+string rdate(77)
+endrec
+;
+;==============================================================================
+;                               l o g i c
+;==============================================================================
+   ;
+entry
+   ;
+   open io (crt,gmst,trans)
+   ;
+   readb(trans,pnt)
+   call stat(1)
+   net=cnet=opt
+ 
+   curp(crt,1,1)
+   call msg(m01) ; hi there
+   curp(crt,1,20)
+   ;
+   call ?gkey(gmst,?gid);   ?gid is zero at this point
+   go to(b80,ioerr)on status;  no payroll
+   ;
+   readb(gmst,headb)
+   call stat(1)
+   ;
+   'client'='zer5';   client is used as a variable here to save room
+   encode(client,f08)hh
+   decode(client,f03)h1,h2,h3,h4;  h1=# of br, 2=maj, h3=min,h4=sub,5=payroll flg
+   h5=cdat;       from 1st module of tran. entry
+   if(h5.eq.0)go to a30
+   ;
+   open io pcfil
+;
+   ?gid=1
+   ;
+   ;
+   call ?gkey(gmst,?gid)
+   go to (a30,ioerr)on status
+   ;
+   readb(gmst,head2)
+   call stat(1)
+   ;
+;
+   ?gid=2
+   call ?gkey(gmst,?gid)
+   go to(a30,ioerr)on status
+   ;
+   readb(gmst,hd3)
+   call stat(1)
+   ;
+   if(posted.ne.0)go to a30;   there are unposted details
+call clear(tmeal,ttips,tmtded,teic,0)
+   ;
+a30:
+   ;
+   'client'='null'
+   'ddesc'='null'
+   ;
+   ;
+   ;
+   ;
+b10:
+   ;
+call clrec(gdet)
+   rel2=0
+   'ddesc'='null'
+call clear(lemp,emp,lcr,0)
+   call lfeed(crt,2)
+   ;
+b11:
+'lprint1'='spc80'
+'coment'='null'
+   ;
+   call cget(m05,f09,jrn);  journal #
+if(jrn.eq.0)go to b90;  eoj
+if(jrn.eq.99)go to b14;  journal 99 uses current posting month from audit
+jdte=0
+call cget(m05a,f05,jdte); journal month/year
+if(status.ne.0)go to b11;   date is too many digits
+if(jdte.lt.100)go to b11;  date too small
+if(jdte.ge.dtest)go to b11; date too large (1300)
+   ;
+b14:
+   ;
+   call cget(m10a,f06a,?nwor);   enter beginning balance (newline if 0)
+   if (status.ne.0) go to b14
+   ?clib=?nwor
+call  clear(date,ref,lref,oldref,0)
+   ;
+b20:
+  ;
+ 
+call head;   ejects, writes bal/net and last detail line
+call clear(brn,maj,min,emp,0)
+   ;
+getacct:
+call cur;   positions cursor
+   if (h1.eq.zero) go to geta3 ;  no branch numbers
+   call cget (m30,f04,brn)     ;  get branch number consolidated is 999
+   if(status.ne.0)go to getacct
+   call inci
+   ;
+   ;
+geta3:
+   ;
+   go to (g6,g6,g6,g7,g8) on h2  ; get major account numbers
+   go to g9;                          takes care of max case and anything else
+   ;
+g6:
+   ;
+   call cget (m31,f04,maj)  ;  get three-digit major nbr (1 & 2 digits would be weird)
+   go to geta4
+   ;
+g7:
+   ;
+   call cget (m31,f05,maj)  ;  get four-digit major nbr
+   go to geta4
+   ;
+g8:
+   ;
+   call cget (m31,f08,maj)  ;  get five-digit major nbr
+   go to geta4
+   ;
+g9:
+   ;
+   call cget (m31,f22,maj)  ;  get six-digit major nbr
+   ;
+geta4:
+   ;
+   if(status.eq.0)go to geta5
+    call cur
+   go to geta3;   ask for major again
+;
+   ;
+geta5:
+   call inci;  increments i
+;
+ge5:
+   go to (ge10,ge11,ge12) on h3;      get minor account numbers
+   go to geta7                ; no minor account numbers
+   ;
+ge10:
+   ;
+   call cget (m32,f03,min)  ;  get one-digit minor nbr
+   go to geta6
+   ;
+ge11:
+   ;
+   call cget (m32,f09,min)  ;  get two-digit minor nbr
+   go to geta6
+   ;
+ge12:
+   ;
+   call cget (m32,f04,min)  ;  get three-digit minor nbr
+   ;
+geta6:
+   ;
+   if (status.eq.zero) go to ge15
+   ;
+   call cur
+   go to ge5
+;
+ge15:
+   call inci;   increments i
+;
+geta7:
+   ;
+   ?acct2=maj*thou+min
+   ?acct=brn*bil+?acct2
+   if(?acct.eq.0)go to b22;   might be trying to end
+   call ?gkey(gmst,?acct)
+   go to (b21,ioerr)on status
+   readb(gmst,recg)
+   call stat(1)
+   if(?gid.eq.0)go to b21;   deleted account
+   post=yrend-1;   back up one line post and yrend are used here because they are available - saves room
+;                  they are in headb
+   curp(crt,20,post);  writes desc. beside either maj. or min.
+  write(crt,f11)desc,pos
+rel=rel0
+if(brn.eq.0)go to geta20;   checking consolidated
+if(brn.eq.thr9)go to geta20  ;4/6/77
+?cons=thr9*mil+maj*thou+min
+call ?gkey(gmst,?cons); 4/6/77
+goto(b21c,ioerr)on  status; 4/6/77
+readb(gmst,cons); 4/6/77
+call stat(1); 4/6/77
+if(?cons.eq.0)go to b21c; 4/6/77
+crel=rel0;   save this relative key to update unposted
+;
+geta20:;  4/6/77
+rel0=rel;        the master rec. will be rewritten not cons
+hh=vv/thou
+v4=vv-(vv/10*10)
+   if(hh.eq.2)go to b23;        hh=2 is a money account hh from the header has been decoded and to
+   if(hh.ne.6)go to b21
+   if(v4.eq.8)go to b23;       inventory contra account
+;                               save room this field is now a variable
+   ;
+b21:;                                 reject no match
+   ;
+call msg(m15);  invalid
+go to b20e
+   ;
+b21c:
+call msg(m21);   no consolidated
+;
+b20e:
+call cget(m38,f03,maj);   newline to continue
+go to b20;4/6/77
+;
+;
+b22:
+   ;
+   if(?nwor.eq.0)go to b10;    may have error in date or jrn and want to go back
+   call ynget(m20);   jrn not in bal.  ok?
+   if(status.ne.0)go to b10
+go to b20
+   ;
+b23:
+   ;
+   lref=oldref
+ 
+    call cur
+ 
+   call cget(m33,f22,ref);  new ref#
+   go to (b23f) on ref; increment ref nbr
+   if(ref.lt.0)go to b23
+   if(ref.eq.0)go to b23b ; keep ref nbr
+   ;
+   ;
+   lref=ref;                          wont allow ref to be 0
+go to sb0
+   ;
+b23b:
+   ;
+   if(lref.eq.0)goto b23 ; have to put in ref nbr when starting jrn
+   ref=lref
+   go to sb0
+   ;
+b23f:
+   ;
+   lref=ref=lref+1
+   ;
+   go to sb0
+   ;
+b23q:
+   ;
+   call inci;       inc. for sub #
+;
+b24:
+   call getdate
+;
+  call inci;       inc. for date
+   if(h5.eq.0)go to b26c;  no payroll this time (or ever)
+   if(?acct2.eq.?g1)go to b24c
+   if(?acct.eq.?g1)go to b24c
+   if(?acct2.eq.?g2)go to b24c
+   if(?acct.eq.?g2)go to b24c
+   if(?acct2.eq.?g3)go to b24c
+   if(?acct.eq.?g3)go to b24c
+   if(?acct2.eq.?g4)go to b24c
+   if(?acct.eq.?g4)go to b24c
+   if(?acct2.eq.?g5)go to b24c
+   if(?acct.eq.?g5)go to b24c
+   if(?acct2.eq.?g6)go to b24c
+   if(?acct.eq.?g6)go to b24c
+   if(?acct2.eq.?g7)go to b24c
+   if(?acct.eq.?g7)go to b24c
+   if(?acct2.eq.?g8)go to b24c
+   if(?acct.eq.?g8)go to b24c
+   if(?acct2.eq.?g9)go to b24c
+   if(?acct.ne.?g9)go to b26c
+   ;
+b24c:
+   ;
+call cget(m36,f22,emp)
+   if(emp.ge.0)go to b24d
+   call cur;   positions the cursor
+   go to b24c
+;
+   ;
+b24d:
+   ;
+   prdate = date;                     set-up check date for pr trans     (klf)
+   call inci;   inc. for emp. #
+   if(emp.eq.0)go to b26c;    no employee number - no payroll detail
+   lemp = pemp = emp
+   go to b26e
+   ;
+sb0:
+   call inci;   inc. for ref.#
+   ?sub=-10
+   if(hh.ne.2)go to sb05
+   if(v4.ge.7)go to b24;   ?sub is flag to indicate to the audit that this is going to an "i" account..
+;
+sb05:
+;
+   ;
+   ?sub=0
+   if(h4.eq.0)go to b24
+sb0f:
+;
+   go to (sb1,sb2,sb3,sb4,sb5,sb6,sb7,sb8) on h4  ; get sub
+   go to sb9  ;  takes care of max case and anything else
+   ;
+sb1:
+   ;
+   call cget (m34,f14,?sub)   ; get one-digit subaccount number
+   go to sb10
+   ;
+sb2:
+   ;
+   call cget (m34,f15,?sub)   ; get two-digit subaccount number
+   go to sb10
+   ;
+sb3:
+   ;
+   call cget (m34,f16,?sub)   ; get three-digit subaccount number
+   go to sb10
+   ;
+sb4:
+   ;
+   call cget (m34,f17,?sub)   ; get four-digit subaccount number
+   go to sb10
+   ;
+sb5:
+   ;
+   call cget (m34,f18,?sub)   ; get five-digit subaccount number
+   go to sb10
+   ;
+sb6:
+   ;
+   call cget (m34,f27,?sub)   ; get six-digit subaccount number
+   go to sb10
+   ;
+sb7:
+   ;
+   call cget (m34,f10,?sub)   ; get seven-digit subaccount number
+   go to sb10
+   ;
+sb8:
+   ;
+   call cget (m34,f12,?sub)   ; get eight-digit subaccount number
+   go to sb10
+   ;
+sb9:
+   ;
+   call cget (m34,f13,?sub)   ; get nine-digit subaccount number
+   ;
+sb10:
+   ;
+   if(status.ne.0)goto sb12
+   if(?sub.lt.0)goto sb05
+   go to b23q
+;
+sb12:
+;
+   call cur;    position cursor and reask
+   go to sb0f
+   ;
+b26c:
+   call cur
+   ;
+   call cget(m37,f06,amt);   will accept 5. as 500
+   if(status.ne.0)goto b26c
+   call inci;   increase for amt
+   if(?sub.eq.-10)goto b26cf; i account not added to total
+   ?clib=?nwor+amt;   using ?clib & ?nwor for header to save space in prog.
+;
+b26cf:
+;
+   call msg(null)
+   call msg(m17)
+   write(crt,f41)brn,maj,min,ref,?sub,rdte,emp,amt,?clib
+b26e:
+   call cget(m39,f11,client);  desc
+   decode(client,f21)xa
+   ifs(xa.eq.null)go to b27; keep old description
+   ifs(xa.eq.plus)go to b27;  keep old desc.
+   decode(client,f21a)chr3
+   ifs(chr3.eq.error)go to b20;   fff may be fff+
+   ifs(xa.eq.killd)go to b26f; ':' entered so kill old description, leaving blanks
+   'ddesc'='client'
+   go to b27
+   ;
+b26f:
+   ;
+   'ddesc'='null'
+   ;
+b27:
+ 
+    oldref=ref
+   ;
+   ?nwor=?clib;   figured this earlier
+   if(emp.eq.0)go to b60
+   call pay
+   go to b20
+;
+   ;
+   ;
+   ;
+b60:
+call display;   sets up display line
+   ;
+   call wrtout;   writes out the gl detail
+   ;
+   ;
+go to b20
+   ;
+   ;
+b80:
+   ;
+   call msg(m22);   no header on the master file
+stop
+   ;
+b90:
+   ;
+   call msg(null)
+   if(h5.eq.0)go to b95;  no payroll stuff
+   write(crt,f35)m17h,tmeal,m17i,ttips,m17k,teic
+   ?gid=2
+   call ?gkey(gmst,?gid)
+   go to (b95,ioerr)on status
+   writeb(gmst,hd3)
+   call stat(2)
+   ;
+b95:
+amt=net-cnet;  new current earnings entries
+   ?acct=?plact;    post unposted amount to current earnings
+   call wt10;     entry point in wrtout
+   ;
+call ynget(m45);  do you want to run audit now?
+if(status.eq.0)go to c300;  dont run audit
+sort=2;   yes run audit
+; rel2=0
+; b96:
+; hold(trans)
+; if(status.ne.0)go to b96
+; readb(trans,pnt)
+; call stat(1)
+;
+; c100:
+;
+; call msg(m46)
+; writen(crt,f01)m46a
+; read(crt,f03)opt
+; go to (c110,c110)on opt
+; go to c100
+;
+; c110:
+;
+; call msg(m47)
+; call cget(null,fc77,rdate)
+; if(status.ne.0)go to c110
+;
+; ldate(current)
+; sdate(grin,curt)
+; datein=point+1;   location of date record
+; c120:
+;
+; encode(m48,f05)month
+; call cget(m48,f05,cdat)
+; if(cdat.lt.100)go to c120;  must be at least 100(jan 2000)
+; if(cdat.ge.dtest)goto c120; must be less than 1300
+; writeb(trans,pnt)
+; call stat(1)
+; rel2=point+1
+; writeb(trans,dates)
+; rel2=0
+; free(trans)
+; go to c300
+;
+;
+; c200:
+;
+; call clear(rel2,sort,0)
+; acnt=point;  store pointer
+; call clrec(pnt)
+; point=acnt
+; writeb(trans,pnt)
+; call stat(1)
+;
+c300:
+   ;
+   close  crt,gmst,trans
+   call pupsi(sort)
+   stop 0
+   ;
+;==============================================================================
+;                         s u b r o u t i n e s
+;==============================================================================
+;============
+subroutine getdate
+;==========================
+call cget(m35,f22,post)
+if(post.eq.0)go to gd30
+date=post
+;
+gd30:
+ldate(grin,date)
+sdate(string,rdte)
+if(status.ne.0)go to gd31
+return
+;
+gd31:
+call cur
+go to getdate
+;
+;===========================
+subroutine cur
+;===========================
+;
+curp(crt,1,yrend); yrend is used as a variable
+return
+;
+;===========================
+subroutine inci ;    increment i (line counter for redisplay
+;==========================
+;
+yrend=yrend+1
+return
+;
+;
+;
+;==============
+subroutine pay
+;==============
+pref=ref
+if(prflg.ne.3)go to pay010;  10/18 no more room in the p/r file
+rel3=ppoint+1
+writeb(pcfil,ptranb)
+call stat(2);     this should cause an expand
+;
+pay010:
+sort=3
+call clear(pgr,fica,fwt,swt,cwt,oth,oth2,meal,tips,mtded,meal2,tip2,deic,0)
+call head
+call cur
+write(crt,f31)m33,ref,m36,emp;   give them a starting point on what they are doing
+call inci;   inc. for crt display
+;
+pa01b:
+call cget(m17a,f06,pgr);   p/r gross
+if(status.eq.0)go to pa20; get meals and tips next
+call cur;   position for reasking
+go to pa01b
+;
+;
+pa01f:
+;
+if(?fica.eq.0)go to pa02
+call inci
+;
+pa01f5:
+;
+call cget(m17b,f06,fica);              enter fica
+if(status.eq.0)goto pa02
+call cur
+go to pa01f5
+;
+;
+pa02:
+if(?fwt.eq.0)go to pa03
+call inci
+;
+pa025:
+;
+call cget(m17c,f06,fwt);               enter fwt
+if(status.eq.0)goto pa03
+call cur
+go to pa025
+pa03:
+;
+if(?swt.eq.0)go to pa05 ; not used
+call inci
+pa035:
+call cget(m17d,f06,swt);               enter swt
+if(status.eq.0)goto pa05
+call cur
+go to pa035
+;
+pa05:
+;
+if(?ctax.eq.0)go to pa11;  no city tax
+call inci
+;
+pa055:
+call cget(m17e,f06,cwt);  city tax
+if(status.eq.0)goto pa11
+call cur
+go to pa055
+pa11:
+if(?ot1.eq.0)go to pa15 ; not used
+call inci
+;
+pa115:
+call cget(m17f,f06,oth)
+if(status.eq.0)goto pa15
+call cur
+go to pa115
+pa15:
+;
+if(?ot2.eq.0)go to pa17 ; not used
+call inci
+;
+pa155:
+call cget(m17g,f06,oth2)
+if(status.eq.0)goto pa17
+call cur
+go to pa155
+;
+pa17:
+;
+if(?eic.eq.0) goto pa30;    not used
+call inci
+;
+pa175:
+call cget (m17k,f06,deic)
+if(status.eq.0) goto pa30
+call cur
+goto pa175
+;
+pa20:
+;
+if(?mea.eq.0)go to pa25 ; not used
+call inci
+;
+pa205:
+call cget(m17h,f06,meal);              enter meals
+if(status.eq.0)goto pa23
+call cur
+go to pa205
+;
+pa23:
+meal2=0
+if(?meal2.eq.0)go to pa25;   contra not here
+meal2=0-meal
+;
+pa25:
+if(?tips.eq.0)go to pa01f;  no tips
+call inci
+;
+pa255:
+call cget(m17i,f06,tips)
+if(status.eq.0)goto pa28
+call cur
+go to pa255
+;
+pa28:
+tip2=0
+if(?tips2.eq.0)go to pa01f
+tip2=0-tips
+go to pa01f
+;
+pa30:
+if(?mtded.eq.0)go to pa35 ; not used
+call inci
+;
+pa305:
+call cget(m17j,f06,mtded);   meals and tips contra
+if(status.eq.0)goto pa35
+call cur
+goto pa305
+;
+pa35:
+;
+obrn=brn
+bal1=pgr+fica+fwt+oth+oth2+swt+cwt+deic
+write(crt,f20a)m10,emp,m08a,bal1
+;
+call ynget(m44)
+if (status.eq.0) goto pay
+if(prbnk.eq.0)go to pay15
+?clib=?acct;  holds gross account number
+amt=0-bal1;   net check amount
+?acct=prbnk; payroll bank account maj/min only
+bal1=0
+;
+call wrtout;  puts out net check first
+?acct=?clib;  moves gross account back into account number
+call clear(brn,maj,min,0);  clears account number for dispay
+;
+pay15:
+?nwor=?nwor+bal1+meal+meal2+tips+tip2+mtded; bal2 & bal1 should be 0
+?clib=?nwor
+call display
+prflg=1;     says we are writing p/r - don't update pointer yet10/18/77
+rel2=0; 10/18/77
+;
+pay16:;10/18/77
+hold(trans);10/18/77
+if(status.ne.0)go to pay16;10/18/77
+readb(trans,pnt)
+call stat(1)
+call glwrt(pgr,?acct,fica,?fica,fwt,?fwt,swt,?swt,cwt,?ctax,meal,?mea,0); changed 6/30/77
+call glwrt(meal2,?meal2,tips,?tips,tip2,?tips2,mtded,?mtded,deic,?eic,0)
+call other;   12/02/77
+tmeal=tmeal+meal
+ttips=ttips+tips
+teic=teic+deic
+pay18:
+hold(pcfil)
+if(status.ne.0)go to pay18
+prflg=0;    no longer writing p/r to g/l
+readb(pcfil,dethdr)
+call stat(1)
+rel3=ppoint=ppoint+1
+writeb(pcfil,ptranb)
+call stat(2)
+rel3=0
+   posted=1 ; 5/23/77 per sa 77021..glg
+writeb(pcfil,dethdr)
+call stat(1)
+rel3=ppoint+1;10/18   checking to see if there is room for the next p/r det
+writeb(pcfil,ptranb)
+if(status.eq.0)go to pay30
+;  it is going to run out of room next time it sends a detail to p/r
+prflg=3
+pay30:
+;
+rel3=0
+free(pcfil)
+rel2=0;  10/18  write the gl pointer
+writeb(trans,pnt)
+call stat(1)
+free(trans);10/18
+return
+;
+;====================
+subroutine other
+;====================
+;
+?acct=?ot1;     if there is no branch number we'll use ?ot1
+brn=?ot1/bil
+if(brn.eq.0)go to ot10
+?acct=obrn*bil+?ot1-(brn*bil);  branch number from gross*1000000000+acct# for other-(other's branch*1000000000)
+;
+ot10:
+;
+amt=oth
+call wrtout
+;
+?acct=?ot2
+brn=?ot2/bil
+if(brn.eq.0)go to ot20
+?acct=obrn*bil+?ot2-(brn*bil)
+;
+ot20:
+amt=oth2
+call wrtout
+brn=0
+return
+;==================
+;======================
+subroutine wrtout
+;====================
+rel2=0
+if(?acct.eq.0)go to wt50;    return
+;if(amt.eq.0)go to wt50;  removed 11/15/77
+;
+wt05:
+go to (wt06) on prflg;   10/18 writing p/r stuff (dont update header till through
+hold(trans)
+if(status.ne.0)go to wt05
+readb(trans,pnt)
+call stat(1)
+;
+wt06:
+sorpnt=rel2=point=point+1
+writeb(trans,gdet)
+if(status.ne.0)go to wt80;  end of file
+call addnet
+;
+goto (wt08)on prflg
+rel2=0
+writeb(trans,pnt)
+call stat(1)
+free(trans)
+;
+wt08:
+;
+if(?acct.eq.?gid)goto wt20;  already have this rel key
+wt10:
+;
+call ?gkey(gmst,?acct)
+go to (wt65,ioerr)on status
+;
+wt20:
+hold(gmst)
+if(status.ne.0)go to wt20
+readb(gmst,recg)
+call stat(1)
+if(?gid.eq.0)go to wt60;   deleted account
+pos=pos+amt
+acnt=usef-(usef/10*10)
+go to (wt20s)on acnt
+usef=usef/10*10+2
+;
+wt20s:
+writeb(gmst,recg)
+call stat(1)
+free(gmst)
+if(?cons.eq.0)go to wt50;   this is consolidated branch (saved rel. key in crel)
+rel0=crel
+crel=?cons=0
+if(rel0.eq.0)go to wt50;   in case it wasnt found
+goto wt20;     just posting this one
+wt50:
+return
+;
+;
+wt60:
+free(gmst)
+wt65:
+write(crt,f25)m24,?acct,m25
+go to wt50
+;
+wt80:;  out of room
+?acct=?plact;      put the unposted current earnings amt on file
+amt=net-cnet
+call wt10;
+;                 this is a rare case - calling part of the subroutine
+call msg(m12a);  stand by for file expansion
+stop 3
+;
+;
+;===================
+subroutine display;   displays 3 lines of input at a time
+;===================
+'lprint1'='spc80'
+encode(lprint1,f41)brn,maj,min,ref,?sub,rdte,emp,amt,?clib
+'coment'='ddesc'
+return
+;
+; ==================
+subroutine addnet
+;==================
+;
+if(?acct.le.?bsea)go to an20
+if(?sub.eq.-10)goto an20
+net=net+amt
+an20:
+return
+;
+;================
+subroutine clear
+;================
+direct
+  lda- x+
+  bnz *+3
+  rsr
+  sta  cl10+8
+cpl
+;
+cl10:
+zero=0
+go to clear
+;
+;================
+subroutine glwrt;   this writes all of the payroll accounts
+;================
+;
+direct
+  lda- x+
+  bnz  *+3   not to end yet
+  rsr        return
+  sta  gl10+3 store amount
+  lda- x+
+  sta  gl20+3 story account number
+cpl
+;
+gl10:
+amt=pgr
+;
+gl20:
+?acct=?fwt
+if(amt.eq.0)go to glwrt;  11/15/77
+call wrtout;   writes the gl details
+goto glwrt
+;
+;=================
+subroutine head
+;=================
+;
+call msg(eject)
+write(crt,f20)m05,jrn,m08,?nwor,m08b,net,m35,jdte
+call lfeed(crt,2)
+call msg(m17)
+call msg(lprint1)
+call msg(coment);   saved description
+yrend=9;   this indicates the cursor position if an error in input occurs
+return
+;
+;===========================
+;   constants
+;===========================
+;
+set lcr:0,lref:0,lemp:0,sort:0,crel:0,prflg:0,?acct2:0,oldref:0
+set maj:0,min:0,thou:1000,bal1:0,obrn:0
+set  net:0,dtest:1300,meal2:0,tip2:0,cnet:0
+set  brn:0,h1:0,h2:0,h3:0,h4:0,h5:0,v4:0
+set  thr9:999,mil:1000000,bil:1000000000
+;
+string null(0),chr3(3),rdte(8)
+;
+define plus:'+',k:'k'
+define lprint1:'                                                                                '
+define spc80:'                                                                               '
+;
+define killd:':'
+define zer5:'00000'
+define error:'fff'
+;
+define m05:'journal number'
+define m05a:'journal date (mmyy)'
+define m08:'balance ='
+define m08a:'check total'
+define m08b:'cur. earnings ='
+define m10:'employee number'
+define m10a:'enter beginning balance (newline if 0)'
+define m12a:'stand by for file expansion'
+define m15:'invalid account number '
+define m17:'brn  major   min     ref       sub     date       emp   amount     bal.'
+define m17a:'gross'
+define m17b:'fica:'
+define m17c:'fwt :'
+define m17d:'swt :'
+define m17e:'c tax'
+define m17f:'oth 1'
+define m17g:'oth 2'
+define m17h:'meals'
+define m17i:'tips:'
+define m17j:'m&t c'
+define m17k:'eic :'
+define m20:'journal balance is not zero.  do you want to close it? (y/n)'
+define m21:'consolidated account not found'
+define m22:'account file does not contain user record'
+define m24:'account number'
+define m25:' is not on file'
+;
+define m30:'branch:'
+define m31:'major :'
+define m32:'minor :'
+define m33:'ref   :'
+define m34:'sub   :'
+define m35:'date  :'
+define m36:'empl  :'
+define m37:'amount:'
+define m38:'newline to continue'
+define m39:'desc  :'
+define m44:'ok? (y/n)'
+define m45:'do you want to run audit now? (y/n)'
+define m46:'paper option:  1  14 7/8" x 11"'
+define m46a:'2   8 1/2" x 11"'
+define m47:'report date'
+define m48:'0000  is the current date, enter current date'
+;
+format f01: x15, c60
+format f03:n1
+format f04:n3n6n3
+format f05:n4
+format f06:n10.2
+format f06a:d12.2
+format f08:n5
+format f09:n2
+format f10:d7
+format f11:c30,x2n-11.2
+format f12:d8
+format f13:d9
+format f14:d1
+format f15:d2
+format f16:d3
+format f17:d4
+format f18:d5
+format f20:c8n6x1c10d-14.2,x1c16,n-10.2,x1c5x1n5
+format f20a:c16n6x10c22n-12.2
+format f21:c1
+format f21a:c3
+format f22:n6x1n4x1n4x1c30x1n-12.2x1c20
+format f25:c15d12c18
+format f27:d6
+format f31:c12n8x2
+format f35:x1,c7,x2,n-10.2,x3,c5,x2,n-10.2,x3,c5,x2,n-10.2
+format f41:n3n7n4n11d10x1,c8,n9,n-11.2,d-11.2
+ 
+format fc77:c77
+ 
+end;  gl531 input module 2
+
+format f20:c8n6x1c10d-14.2,x1c16,n-10.2,x1c5x1n5
+format f20a:c16n6x10c22n-12.2
+format f21:c1
+format f21a:c3
+format f22:n6x1n4x1n4x1c30x1n-12.2x1c20
+format f25:c15d12c18
+format f27:d6
+format f31:c12n8x2
+format f35:x1,c7,x2,n-10.2,x3,c5,x2,n-10.2,x3,c5,x2,n-10.2
+format f41:n3n7n4n11d10x1,c8,n9,n-11.2,d-11.2
+ 
+format fc77:c77
+ 
+end;  gl531 input module 2
+

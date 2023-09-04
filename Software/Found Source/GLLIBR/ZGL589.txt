@@ -1,0 +1,108 @@
+title: 'gl589  add the program name & verify directory'
+ 
+system
+ 
+define m01:'gl589  (verify directory) 12/29/81'
+ 
+;note:
+;  6/11/79..written..ns
+;   6/16/79...adding recalling menu to scr..ns
+;   7/27/79...changed sign on message..rts
+;  11/28/79...fixed so that alpha client keys containina letter 'a'
+;             will print only once
+;
+;  12/29/81...recompile to have a common date base...dl
+file list:sys0,class=2,seq,buffer=400,buf1
+file scr:sys1,class=2,seq,buffer=400,buf2
+buffer buf1(400),buf2(400)
+file crt:sysipt
+entrypoint crt
+ 
+external cget,ynget,gjp,stat,ioerr,msg,pjp
+ 
+entry
+ 
+open io (crt,list,scr)
+call msg(eject)
+call msg(m01)
+call gjp(8,parm8)
+ 
+write(scr,f03)line
+b10:
+read(list,f01)gl,c1,c2,c3,c4;
+if(status.ne.0)go to q0900;end
+ifs(gl.ne.igl)go to b80; not valid
+ifs(c4.eq.a)go to b40
+ifs(c3.eq.a)go to b30
+ifs(c2.eq.a)go to b20
+ifs(c2.ne.a)go to b10
+ 
+b20:
+'c2'='null'
+ 
+b30:
+'c3'='null'
+ 
+b40:
+'c4'='null'
+;
+'name'='gl+c1+c2+c3'
+ifs (name.eq.lname) go to b10 ; already used this key once or more
+'lname'='name' ; store for comparison to next key to be read
+;
+write(scr,f02)igl,per,parm8,gl,c1,c2,c3,c4; c7 c2 c4
+call stat(scr)
+go to b10
+ 
+b80:
+'name'='gl+c1+c2+c3';
+ifs(name.ne.disk)go to b10
+note(list,noted)
+point(list,noted)
+read(list,f04)parm6
+call pjp(6,parm6)
+go to b10
+q0900:
+write(scr,f03)line2
+write(scr,f03)line3
+write(scr,f03)line3a
+write(scr,f03)line4
+write(scr,f03)line5
+write(scr,f03)line6
+endfile scr
+stop
+ 
+define parm8:'      ',gl:'gl',igl:'gl',c1:' ',c2:' ',c3:' ', c4:' ',a:'a',per:'.'
+define line:'.skip #3'
+define line2:'.fspec glmenu on #d 7=size'
+define line3:'.skip 2 if 0 eq #7'
+define line3a:'.setc 4=x'
+define line4:'glmenu'
+define line5:'.end'
+define line6:'s.con'
+ 
+define lname:'     ' ; 5 spaces
+;
+set noted:0
+string null(0),name(6)
+ 
+define disk:'disk',parm6:'      '
+ 
+format f01:c2 c1c1c1c1
+format f02:c2 c1 c7 c2 c1c1c1c1
+format f03:c30
+format f04:x8 c6
+ 
+end
+
+
+
+
+
+
+
+
+
+
+
+

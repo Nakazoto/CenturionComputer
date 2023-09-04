@@ -1,0 +1,232 @@
+title 'gl540--general ledger report '
+system
+;
+define m01:'gl540 (printing the general ledger - module 1) 12/29/81'
+;
+;  notes:
+;   06/23/79...first module of gl540/41 - printing g/l - new...ns
+;    07/06/79...going to print brn whether we have branches or not..ns
+;    07/25/79...changed signon message..ns
+copy hd3
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+set rel0:0
+copy headb
+;
+record heading(300)
+string gldate(77),nclient(40),key(6)
+define m06:'brn',m06a:'account',m06b:'subaccount'
+set popt:0,?ninvcon:0,nmonth:0,bmo:0,mo:0,form:0,print:0,all:0,fla2:0,pr:0,brnum:0,pdate:0
+set bopt:0,ydate:0
+set nacnt:0,?nplact:0
+set mmnum:0
+endrec
+copy gdet
+;
+file gfil:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2;   new details
+buffer buf2(400)
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+file temp:sys3,class=2,rnd,recsiz=300,key=rel1
+set rel1:0
+ 
+;
+external ?gkey,stat,msg,ioerr,gupsi,pupsi,lfeed,?edit,cget,gjp,ynget,f90
+entrypoint crt
+;
+;======================
+;   program logic
+;======================
+entry
+open io (crt,gmst,temp)
+call gjp(zero,key);     key number
+call gupsi(print)
+call msg(eject)
+call ?gkey(gmst,?zero)
+go to (ioerr,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+encode(acct,fn9)hh
+decode(acct,f01)numon,haflg,h0,h1,h2,h3,h4,h5
+if(numon.eq.13)go to a005
+numon=12
+ 
+a005:
+;   # of months in yr, h accts, neg in parent.,brn#, maj#, min#, sub#,p/r
+if(h1.ne.0)go to a010
+; took out 7/06/79'm06'='null';  no branches
+;
+;    12/29/81...recompile to have a common date base...dl
+ 
+a010:
+if(h3.ne.0)go to a020
+form = 1
+ 
+a020:
+if(h4.ne.0)go to a030
+form=form+2;  no sub or neither sub nor minor
+'m06b'='null'; sub
+ 
+a030:
+?zero=2
+call ?gkey(gmst,?zero); ?zero is 2 at this point
+call stat(1);     if the headers arent here we're in trouble
+readb(gmst,hd3)
+call stat(1)
+call msg(eject)
+call msg(m01)
+a050:
+;
+call msg (null)
+write (crt,f06) m11,client
+call msg (null)
+b10:
+popt=print
+if(popt.eq.2)go to b10c;  no option on paper size when upsi = 2
+call msg(m18) ; enter paper option: 1 = 14-7/8" x 11"
+write(crt,f09)m18a
+b10a:
+call cget(null,f03a,popt)
+if(status.ne.0)go to b10a
+goto (b10c, b10c) on popt
+goto b10
+b10c:
+;
+   if(h1.eq.0)go to b10d
+    call ynget(m17); each branch on separate page?
+   if(status.eq.0)goto b10d
+   bopt=1
+;
+b10d:
+;
+b10f:
+call msg(m08)
+call cget(null,fc77,gldate); date
+if(status.ne.0)go to b10f
+   call ynget(m07)
+   if(status.eq.0)goto b10g
+   all=1
+;
+   go to b10gh
+ 
+b10g:
+ 
+call ynget(m07a);  do you want to print specific accounts? (y/n)
+if(status.eq.0)goto b10gh
+all=2
+ 
+b10gh:
+;
+   write(crt,f05)m12,month;  current posted month is mmyy
+   call ynget(m05a)
+   if(status.eq.0)goto b10h
+   fla2=1
+;
+;
+   go to b11
+;
+b10h:
+;
+call cget(m05b,f20,bmo);  enter first month & year to be printed
+if(status.ne.0)go to b10h
+'acct'='zer4'
+encode(acct,f20)bmo
+decode(acct,f21)mm,yy
+bmo=yy*100+mm
+b11:
+   if(h5.eq.0)go to b11a; no payroll
+   call ynget(m20); do you want payroll info summarized?
+   if(status.eq.0)go to b11a
+   pr=1
+ 
+;
+b11a:
+;
+    if(h1.eq.0)go to b12;  no branches
+;
+   call cget(m20a,f08,brnum);branch number to be printed
+if(status.ne.0)go to b11a
+b12:
+'acct'='zer4'
+encode(acct,f20)month
+decode(acct,f21)mm,yy
+pdate=yy*100+mm;    month is posting date
+if(yrend.lt.mm)go to b012f
+ydate=yy-1*100+yrend;   this should be the last year end date
+go to b012h
+b012f:
+ydate=yy*100+yrend;   this should be the last year end date (fiscal year was this year)
+b012h:
+if(bmo.eq.0)go to b00b
+mo=pdate-bmo
+if(mo.le.numon)go to b00b
+mo=pdate-bmo-100+numon
+;
+b00b:
+go to (b050)on popt
+go to (b050,b050,b040)on form; unless both sub & min are off print full account
+go to b050
+ 
+b040:
+'m06a'='m09';   instead of account it is now acct
+ 
+b050:
+'nclient'='client'
+?ninvcon=?invcon
+nmonth=month
+nacnt=acnt
+?nplact=?plact
+mmnum=mnum; number of months into year
+writeb(temp,heading)
+call stat(1)
+load(xgl541,0,0)
+stop 2
+ 
+;=================
+;w o r k i n g  s t o r a g e
+set ?zero:0,mm:0,yy:0,mm1:0,yy1:0,thr9:999,hmil: 100 000 000
+set haflg:0,h0:0,h1:0,h2:0,h3:0,h4:0,h5:0,numon:0
+ 
+define acct:'000000000',zer4:'0000',xgl541:'xgl541'
+ 
+define m05a:'do you want to print details for the current month only? (y/n)'
+define m05b:'enter beginning month for prior ledger (mmyy)'
+define m07:'do you want to print all accounts? (y/n)'
+define m08:'enter date for general ledger'
+define m07a:'do you want to print a specific group of accounts? (y/n)'
+define m09:'acct'
+define m11:'users name is:'
+define m12:'current posted month and year is '
+define m17:'do you want each branch on a separate page? (y/n)'
+define m18:'enter paper option:  1  14 7/8 x 11"'
+define m18a:'2   8 1/2 x 11"'
+define m20:'do you want payroll entries summarized? (y/n)'
+define m20a:'enter branch number to be printed (0=all)'
+ 
+string null(0)
+format f01: n2 n1 n1 n1 n1 n1 n1 n1
+format f03a: n1 x3
+format f05: c35 n5
+format f06: c15 c40
+format f08: n3
+format f09: x21 c30
+ 
+format f20: n4
+format f21: n2 n2 c2
+ 
+format fn9:n9
+format fc77: c77
+ 
+end
+
+format f09: x21 c30
+ 
+format f20: n4
+format f21: n2 n2 c2
+ 
+format fn9:n9
+format fc77: c77
+ 
+end
+
+

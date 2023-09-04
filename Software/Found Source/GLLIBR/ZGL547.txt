@@ -1,0 +1,566 @@
+title: 'gl547   (pre-financial statement h-acct calculation program) '
+system  (exp=b)
+;
+define m01:'gl547 (pre-financial statement h-acct calculation program) 12/29/81'
+;
+;notes:
+;   9/18/78...written...ns
+;   5/25/79...adding load of either xgl546 or xgl549 based on p1 & making list the standard list file...ns
+;   8/02/79...changed ck03 for l accounts..ns
+;    8/06/79..change in beg/end inv...ns
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+;
+file control:sys2,class=2,seq
+;
+;
+record aux(131)
+;
+set ?hid:0,hff:0,hvv:0
+string hdesc(30),hdec(10)
+set cur:0,?a9:0,?a0:0,?a1:0,?a2:0,?a3:0,?a4:0,?a5:0,?a6:0,?a7:0,?a8:0
+string hfun(10)
+endrec
+;
+buffer buf1(400)
+record aux2(76)
+set   ?id:0,ff2:0,vv2:0
+string desc2(30),dec2(10)
+set   cur2:0,?a92:0
+endrec
+;
+;
+record recg(131)
+set    ?gid:0;     6 byte integer - br/maj/min  2 digits, 6 digits, 3 digits
+set   ff:0;     f1=blank - no leading char, $= if money acct print $,
+;                  if title account $= print $ on next money account.
+;                  ( = enclose in parent. if neg.
+;               f2= # of lines of overlining. (0,1,2)
+;
+set    vv:0;       v1=type acct (title,money,total,etc.)
+;                  v2=scheduled or not
+;                  v3=center title or which col. a or b
+;                  v4=total level or indicates 'c' type title
+string desc(30);   description
+set    pos:0;      entered but not posted amounts
+set    cmo:0;      current month
+set    mon2:0;     last month
+set    mon3:0;      2 months ago
+set    mon4:0;     3 months ago
+set    mon5:0;     4 months ago
+set    mon6:0
+set    mon7:0
+set    mon8:0
+set    mon9:0
+set    mona:0
+set    monb:0
+set    monc:0
+set    mond:0;     this month last year
+set    mone:0;     last month last year
+set    monf:0;     2 months ago - last year
+;
+set    ?cbal:0;    current balance (does not include post)
+set    ?pbal:0;    last years total prior to monf
+;                  (ie. if cmo is 6/76 - mond=6/75, mone=5/75, mond=4/75,
+;                   and ?pbal is total as of 3/75)
+set     usef:0;    0=no postings, 1=print whether postings or not, 2=postings
+;
+set    ?inv:0;   inventory current amount(used only in type 6 accounts)
+endrec
+ 
+record netchg(131)
+set ?iid:0,iff:0,ivv:0
+string idesc(30)
+integer ppos,pcmo,pmon2,pmon3,pmon4,pmon5,pmon6,pmon7,pmon8,pmon9,pmona,pmonb
+integer pmonc,pmond,pmone,pmonf,?pcbal,?ppbal
+endrec
+;
+record headb(131)
+string client(40);   clients name
+string coment(50); disclaimer
+set    month:0;      current postings are (yymm) (date of cmo)
+set    yrend:0;      month of fiscal year end (mm)
+set    post:0;       if post=3 retain all details to end of year.
+set    ?bsea:0;       balance sheet ending account #
+set    ?plact:0;      profit loss accout #
+set  hh:0; haflg=h accts?, h0=neg in paren, h1=dig.in brn, h2=maj, h3=min, h4=sub, h5=posting to p/r
+set  mnum:0;         # of months of postings in current year
+set acnt:0; accountant
+string xa(1); special sw
+endrec
+;
+;
+copy hd3
+;
+;
+record listb(10)
+set    ?lid:0,rel0:0
+endrec
+;
+record pnt(4)
+set    point:0
+endrec
+;
+;
+external ?gkey,stat,ioerr,msg,cget,ynget,clrec
+;
+file crt:sysipt
+entrypoint crt
+;
+entry
+;
+open io (crt,list,gmst,control)
+;traceon
+;
+read(control,f01);   dont need the first record
+  curp(crt,1,1)
+  call msg(m01)
+;
+   read(control,f01)p1,opt1,cmm,cyy,mm,mo
+   call stat(control)
+;
+?id=0
+call ?gkey(gmst,?id)
+call stat(1)
+readb(gmst,headb)
+call stat(1)
+;
+;
+   ?id=2
+   call ?gkey(gmst,?id)
+   call stat(1);   it had better be here
+   readb(gmst,hd3)
+   call stat(1)
+;
+;
+b010:
+;
+   readb(list,listb)
+   if(status.ne.0)go to q0900
+   if(?lid.le.100)go to b010
+   nrel=rel0
+;
+   readb(gmst,aux)
+   call stat(1)
+   if(?hid.eq.0)goto b010
+;
+   if(hvv.lt.i4000)go to b010;  not a calcuation account, (anymore)
+   if(hvv.ge.i6000)goto c010;  inventory account
+ 
+   cur=?a9=i=0;   counter for tget, ytd and cur period amounts
+   'fun'='plus';   the first field is always an add  because amount is 0 at this point
+;
+b020:
+;
+   call tget(?id,i,?a0,6);
+   call tget(dec0,i,hdec,1);  within dec - every byte there is a # of decimal places code
+   call tget(d1,i,hfun,1)
+   ifs(d1.eq.pc)goto b050
+;
+   if(?id.eq.0)go to b090;   last record was it for this account
+   call ?gkey(gmst,?id)
+   go to (b080,ioerr)on status
+   readb(gmst,recg)
+   call stat(1)
+   if(?gid.eq.0)go to b080;  deleted account - probably will be a problem
+   v1=vv/thou
+   if(v1.eq.2)goto b040;   got the right one
+   if(v1.eq.6)go to b040;   got the right account layout
+   readb(gmst,aux2)
+   call stat(1)
+;
+b040:
+;
+   call ckamt;  totals the amoun field
+;
+;
+   go to b080
+;
+b050:;   integer - must be last in record
+;
+  ?cmo=?tamt=?id;   amount
+  call ck50
+  goto b090;  finished
+b080:
+;
+   call tget(fun,i,hfun,1);   this has the function of what to do with the next account
+   incr i
+   if(i.le.8)goto b020
+;
+b090:;   finished so write it out
+;
+    rel0=nrel;   go back to the address of the h account
+   writeb(gmst,aux)
+   call stat(1)
+   go to b010; get the next one
+;
+c010:;  inventory accounts
+;
+   readb(gmst,recg);    inventory records use standard format
+   call stat(1)
+?brn=?hid/bil*bil;
+amt=rel0
+call clrec(netchg)
+?id=?brn+?invcon
+call ?gkey(gmst,?id)
+go to (c010f,ioerr)on status
+readb(gmst,netchg)
+call stat(1)
+ 
+c010f:
+rel0=amt
+?id=?hid-?brn
+if(?id.eq.?binv)go to c020;   beginning inv.
+if(?id.ne.?einv)goto b010;     must be the contra account
+go to (c011,c018)on opt1
+ 
+ 
+?pbal=?inv=?cbal;    ending inv. is = to current balance (current mo & qtr)
+go to c015
+ 
+c011:
+;
+?pbal=?inv=?cbal+ppos;   this report asks for unposted amount to be part of balance
+;     unposted amount has to come from the netchange record
+;
+c015:
+;
+;
+writeb(gmst,recg)
+call stat(1)
+goto b010
+;
+c018:;   beginning & ending inv. accounts are like the b.s. accounts
+ff2=mo;   ending inv. when using prior month
+?pbal=?inv=?cbal
+if(ff2.ne.0)go to c018f
+ff2=cmm-mm
+c018f:
+ff2=ff2-1
+if(ff2.lt.0)go to c015
+call tget(cur2,ff2,cmo,4)
+?pbal=?inv=?pbal-cur2;   back out to current month
+go to c018f
+ 
+c020:
+;
+;beginning inventory
+;
+; y-t-d remains the same throughout the fiscal year
+; current is cur balance less the current periods amount
+;
+?pbal=?inv=?cbal
+if(opt1.ne.1)goto c023
+;   current is ok if using unposted as current period
+;           ytd is right because ?cbal doesnt include pos to begin with.
+   go to c041;    find the beginning of the fiscal year
+;
+c023:
+;
+;
+i=mo;   beginning
+if(i.ne.0)goto c030;   if it is 0 then it crossed year end and we have a problem
+i=cmm-mm;   if mo is 0 then it crosses year end and we are in a world of trouble
+;
+c030:
+;
+if(i.lt.0)goto c040
+call tget(amt,i,cmo,4)
+?inv=?inv-amt;     back out all of the current period in beg. inventory ytd
+i=i-1
+go to c030
+;
+c040:
+if(opt1.ne.2)go to c041;  opt1=2 should be only way to cross yrend
+if(mo.ne.0)go to c041
+i=15;   back out all 15 months
+?pbal=?pbal+?ppbal;         (?ppbal is added because beginning inv. has its sign reversed.)
+;    gets rid of prior months & since we have crossed yr end we need the beginning of last year
+ 
+c040f:
+go to c045
+ 
+c041:
+;
+i=mnum; back out to first of current year
+;
+c045:
+;
+i=i-1
+if(i.lt.0)go to c015
+call tget(amt,i,cmo,4)
+?pbal=?pbal-amt;    beginning of the year balance
+go to c045
+;
+;
+;
+q0900:;end
+;
+go to (q0910) on p1
+load(xgl549,0,0)
+call msg(m02);    fins statement main module not found
+stop 50
+ 
+q0910:
+load(xgl546,0,0)
+call msg(m02); fins statement
+stop 50
+;
+;=========================================================
+;  s u b r o u t i n e s
+;=========================================================
+;
+;=================
+subroutine ckamt
+;=================
+;
+if(v1.ne.2)go to ck40;  must be an h to k type acct
+ck03:
+ 
+go to (ck10,ck20,ck20)on opt1; 0=stnd(this month), 1=incl. unposted, 2=prior month
+;
+ck05:
+;
+;standard
+;
+?tamt=?cbal
+?cmo=cmo
+go to ck50
+;
+ck10:
+;
+;
+?tamt=?cbal+pos
+?cmo=pos
+go to ck50;
+;
+ck20:
+?tamt=?cbal
+;
+ff2=mo
+?cmo=0
+if(ff2.ne.0)goto ck21
+ff2=cmm-mm;   this crosses year end boundary
+;
+ck21:
+;
+ff2=ff2-1
+if(ff2.ge.0)go to ck22
+if(ff2.gt.14)go to ck21;  this is too far
+ff2=mo
+call tget(cur2,ff2,cmo,4)
+if(opt1.eq.3)goto ck21f
+?cmo=cur2
+goto ck50
+;
+ck21f:;   multiple current
+;
+?cmo=?cmo+cur2
+go to ck50
+;
+ck22:
+;
+if(ff2.gt.14)go to ck21; too far
+call tget(cur2,ff2,cmo,4)
+if(opt1.eq.3)goto ck25;more than 1 month in current
+if(mo.eq.0)go to ck30
+;
+ck23:
+;
+?tamt=?tamt-cur2;using other than current as current month
+goto ck21
+;
+ck25:
+;
+?cmo=?cmo+cur2
+goto ck21
+;
+ck30:
+if(?gid.gt.?bsea)go to ck31
+if(?gid.ne.?plact)go to ck23
+ 
+ck31:
+ff2=ff2+1;  income adds fields instead of subtracting
+call tget(cur2,ff2,cmo,4)
+?cmo=cur2
+?tamt=?pbal+cur2
+ 
+ck35:
+ff2=ff2+1
+if(ff2.gt.14)go to ck50
+call tget(cur2,ff2,cmo,4)
+?tamt=?tamt+cur2
+go to ck35
+ 
+ck40:
+;
+   if(v1.eq.6)goto ck45
+;  must be h/j/ or k account
+;
+   ?tamt=?a92;     this should have already been calculated - must pull from lower account #s
+   ?cmo=cur2;       should have been calculated
+   go to ck50
+;
+ck45:
+;
+   v4=vv-(vv/10*10)
+   if(v4.eq.8)go to ck03;   net change is just like an e, f or i account..
+   ?tamt=?pbal;   should have been calculated by now
+   ?cmo=?inv;     current bal
+;
+ck50:
+;
+ 
+;
+   decode(dec0,fn1)decmil
+   ifs(fun.eq.plus)goto ck51
+   ifs(fun.eq.subt) go to ck51
+   ifs(fun.eq.null)goto ck90;return no function
+   goto ck60
+;
+ck51:;  on add or subtract we reduce everything to 2 decmil places
+;
+   go to (ck51a,ck51q)on decmil
+   if(decmil.ne.0)goto ck51b
+;
+   ?cmo=?cmo*100;   add 2 dec. places
+   ?tamt=?tamt*100
+   go to ck51q;ok
+;
+ck51a:
+;
+   ?cmo=?cmo*10;  add 1 dec. place
+   ?tamt=?tamt*10
+   go to ck51q
+;
+ck51b:;   subt 1 dec place
+;
+   decmil=decmil-2
+;
+   if(decmil.lt.1)goto ck51q
+;
+ck51c:
+;
+;
+   call divide
+   go to (ck51q)on decmil;ok
+   goto ck51c
+;
+ck51q:
+;
+   ifs(fun.eq.plus)goto ck51add
+;
+   cur=cur-?cmo
+   ?a9=?a9-?tamt
+   return;     ?a9 &cur will always be 2 dec. places
+;
+ck51add:
+;
+   cur=cur+?cmo
+   ?a9=?a9+?tamt
+   return
+;
+;
+ck60:;mult/divide/
+;
+   num=1;    divide by to round
+   num1=decmil
+;
+ck61:
+;
+   if(num1.eq.0)goto ck62
+   num=num*10
+   num1=num1-1
+;
+   go to ck61
+;
+ck62:
+;
+   ifs(fun.ne.mult)goto ck65
+;
+ck63:
+;
+   cur=cur*?cmo/num;  num=1,10,100 etc
+   ?a9=?a9*?tamt/num
+   return
+;
+ck65:
+;
+   ifs(fun.ne.div) goto ck90;  seems to be a problem here
+;
+   cur=cur*num/?cmo
+   ?a9=?a9*num/?tamt
+;
+ck90:
+;
+   return
+;
+;
+;traceoff
+;==================
+subroutine divide
+;==================
+;
+?cmo=?cmo/10
+?tamt=?tamt/10
+decmil=decmil-1
+return
+;
+;=================
+subroutine tget
+;==================
+;
+direct
+   lda- x+  target
+   sta  tga
+   lda-  x+   index
+   ina   ,2
+   lda-  a
+   xay
+   ldb-  x+   get table start
+   lda-  x+   unit byte lenth
+   stx-  s-
+   sta-  s-
+tg01    add  y,b  mpy index * unit lenght
+  dca
+   bnz  tg01
+   ldx=  *-*
+tga equ  *-2
+   lda-  s+
+   xay   move xfr count to y
+tg02  ldab-  b+
+   stab- x+
+   dcr   y
+   bnz   tg02
+   ldx-  s+
+cpl
+return
+;
+;====================================================================
+;   w o r k i n g    s t o r a g e
+;====================================================================
+;
+define div:'/', mult:'*', pc:'i', subt:'-'
+define plus:'+',xgl546:'xgl546',xgl549:'xgl549'
+;
+define m02:'xgl546 or xgl549 is not on file.  please call you dealer to get a copy'
+;
+;
+format f01:n1 x2,n1,x3,n2,n2,n2,n2
+;
+;
+format fn1:n1
+;
+set   ?cmo:0,?tamt:0,bil:1000000000,cmm:0, cyy:0, decmil:0,i:0, i4000:4000, i6000:6000, mm:0
+set   mo:0,num:0,num1:0, opt1:0,thou:1000, v1:0,v4:0,p1:0, nrel:0, amt:0, ?brn:0
+;
+string d1(1),dec0(1),fun(1),null(0)
+;
+end
+
+
+

@@ -1,0 +1,339 @@
+system
+;
+define m01:'gl506  (enter comparitive monthly balances)  12-29-81'
+;
+;notes:
+;  7/21/77....written...ns
+;   11/7/77...recompile for new ap lib...ns
+;    07/18/78..cosmetic change..ns
+;   07/27/79...added net change inventory to accounts which can be changed..ns
+;   08/02/79...changing sign on mess.ns
+;   10/05/79...modified to allow for previous and account balance to be input
+;              for beginning and ending inventory...jwb
+;   this program is written to allow the accountant to enter
+;   prior month balances for comparitive reporting.
+;   it is totally their responsiblity that it works correctly.
+;   it has no self auditing feature within it (per jerry coolidge's
+;   instructions)...ns
+;
+;   08-13-81...make the correction when the balance for the displayed month
+;              and year is not correct...dl
+;   12-29-81...recomplile to have a common date base...dl
+;
+copy recg
+copy list
+file crt:sysipt
+entrypoint crt
+;
+external cget,msg,?gkey,ioerr,stat,ynget
+;
+entry
+open io (crt,gmst), input list
+;
+call msg(eject)
+call msg(m01)
+call msg(null)
+;
+call cget(m02,f02,first);   change months beginning
+call cget(m03,f03,num);     number of months to be changed
+;
+call ?gkey(gmst,?gid);  this is 0 at this point
+go to (ioerr,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+encode(zer5,f05)hh
+'acct'='zer4'
+encode(acct,f02)first
+decode(acct,f03)fmm,fyy
+decode(zer5,f04)h1,h2,h3
+encode(zer4,f02)month;    posting month
+decode(zer4,f03)cmm,cyy
+b05:
+call msg(m04);  enter 1 to change all money accounts
+write(crt,f18)m05;  2=to change specific accounts only
+read(crt,f04)opt
+;
+if(fyy.eq.cyy)go to b06
+count=13-fmm;    if first month is 12 count is 1 (1 month before jan.)
+count=cmm+count;     current month is number of months into new calandar year
+;                    + number of months into last year.
+gotob08
+;
+b06:
+count=cmm-fmm+1;    current - the month i want to start on + 1 because if cmm and
+;                 and fmm are the same we are starting on the 1st month.
+;
+b08:
+call setdes;   sets up each months description
+num=count+num-1;   -1 because count is inflated by 1
+b10:
+go to (b20,b30)on opt
+goto b05
+;
+b20:
+readb(list,listb)
+if(status.ne.0)goto b900
+go to b40
+;
+b30:
+if(h1.eq.0)go to b31;  no branch
+call cget(m06,f06,brn);  n3
+b31:
+call cget(m06a,f07,maj);  n6
+if(h3.eq.0)go to b32;   no minor
+call cget(m06b,f06,min);
+;
+b32:
+?lid=brn*mil+maj*thou+min
+if(?lid.eq.0)go to b900;  end
+call ?gkey(gmst,?lid)
+go to (b43,ioerr)on status
+;
+b40:
+readb(gmst,recg)
+call stat(1)
+'acct'='zer12'
+encode(acct,f16)?gid
+decode(acct,f17)cbrn,maj,min
+if(?gid.ne.0)go to b45
+;   deleted
+b43:
+if(opt.eq.1)go to b20
+call msg(m07);     not a money account
+go to b30
+;
+b45:
+v=vv/thou
+if(v.eq.2)go to b45f
+if(v.ne.6)go to b43
+v=vv-(vv/10*10)
+; if(v.ne.8)go to b43;  onlynet change can be entered
+ 
+b45f:
+call msg(eject)
+write(crt,f10)cbrn,maj,min,desc
+write(crt,f11)m08,?cbal
+b50:
+write(crt,f12)des1,cmo,des6,mon6,desb,monb
+write(crt,f12)des2,mon2,des7,mon7,des12,monc
+write(crt,f12)des3,mon3,des8,mon8,desd,mond
+write(crt,f12)des4,mon4,des9,mon9,dese,mone
+write(crt,f12)des5,mon5,desa,mona,desf,monf
+write(crt,f11)m09,?pbal
+;
+b299:
+curp(crt,1,10)
+curb(crt,70)
+call ynget(m10);  do you want to make changes??
+if(status.eq.0)go to b10;
+;
+;
+go to (b300,b302,b304,b306,b308,b310,b312,b314,b316,b318,b320,b322,b324,b326,b328,b330)on count
+if (v. eq. 7) goto b299a
+if (v. ne. 8) goto b08
+;
+b299a:
+;
+decr count,10
+goto (b340a) on count
+;
+go to b10
+;
+b300:
+call cget(des1,f13,cmo)
+if(num.le.1)goto b332
+;
+b302:
+call cget(des2,f13,mon2)
+if(num.le.2)go to b332
+;
+b304:
+call cget(des3,f13,mon3)
+if(num.le.3)go to b332
+;
+b306:
+call cget(des4,f13,mon4)
+if(num.le.4)go to b332
+;
+b308:
+call cget(des5,f13,mon5)
+if(num.le.5)goto b332
+;
+b310:
+call cget(des6,f13,mon6)
+if(num.le.6)go to b332
+;
+b312:
+call cget(des7,f13,mon7)
+if(num.le.7)go to b332
+;
+b314:
+call cget(des8,f13,mon8)
+if(num.le.8)go to b332
+;
+b316:
+call cget(des9,f13,mon9)
+if(num.le.9)go to b332
+;
+b318:
+call cget(desa,f13,mona)
+if(num.le.10)go to b332
+;
+b320:
+call cget(desb,f13,monb)
+if(num.le.11)go to b332
+;
+b322:
+call cget(des12,f13,monc)
+if(num.le.12)go to b332
+;
+b324:
+call cget(desd,f13,mond)
+if(num.le.13)go to b332
+;
+b326:
+call cget(dese,f13,mone)
+if(num.le.14)go to b332
+;
+b328:
+call cget(desf,f13,monf)
+if(num.le.15)go to b332
+;
+b330:
+call cget(m09,f14,?pbal)
+if (num. le. 16) goto b332
+;
+b340a:
+;
+if (v. eq. 7) goto b340b
+if (v. ne. 8) goto b332
+;
+b340b:
+;
+call cget (m08, f14, ?cbal)
+;
+b332:
+call ynget(m12);  ok?
+if(status.eq.0)go to b40; branch to read the original record (changed 08-13-81)...dl
+;
+;
+writeb(gmst,recg)
+call stat(1)
+go to b10
+;
+b900:;  end of job
+callmsg(m13); end of job
+stop 0
+;
+;
+;================
+subroutine setdes
+;================
+;
+if(ma.eq.cmm)go to s120
+'d0'='d1'
+'d1'='d12'
+'d12'='d11'
+'d11'='d10'
+'d10'='d9'
+'d9'='d8'
+'d8'='d7'
+'d7'='d6'
+'d6'='d5'
+'d5'='d4'
+'d4'='d3'
+'d3'='d2'
+'d2'='d0'
+ma=ma+1
+go to setdes
+;
+s120:
+call coder(des1,d1,des2,d2,des3,d3,des4,d4,des5,d5,des6,d6,des7,d7,des8,d8,0)
+call coder(des9,d9,desa,d10,desb,d11,des12,d12,desd,d1,dese,d2,desf,d3,0)
+return
+;
+;================
+subroutine coder
+;================
+;
+direct
+ lda- x+
+ bnz  *+3
+ rsr
+ sta  s220+3
+ lda- x+
+ sta  s220+7
+ sta  s230+3
+cpl
+;
+s220:
+encode(des1,f15)d1,cyy
+;
+s230:
+ifs(d1.ne.d13)go to coder
+cyy=cyy-1
+goto coder
+;
+;============ w o r k i n g   s t o r a g e =================
+set first:0,num:0,h1:0,h2:0,h3:0,cyy:0,cmm:0,fyy:0,fmm:0,count:0
+set opt:0,brn:0,maj:0,min:0,mil:1000000,thou:1000,v:0,ma:0
+;
+define des1:'       ';   month and year
+define des2:'       ' ;   month and year
+define des3:'       ' ;   month and year
+define des4:'       ' ;   month and year
+define des5:'       ' ;   month and year
+define des6:'       ' ;   month and year
+define des7:'       ' ;   month and year
+define des8:'       ' ;   month and year
+define des9:'       ' ;   month and year
+define desa:'       ' ;   month and year
+define desb:'       ' ;   month and year
+define des12:'       ' ;   month and year
+define desd:'       ' ;   month and year
+define dese:'       ' ;   month and year
+define desf:'       ';   month and year
+define d0:'    ',d1:'dec ',d2:'nov ',d3:'oct ',d4:'sept', d5:'aug ',d6:'july'
+define d7:'june',d8:'may ',d9:'apr ',d10:'mar ',d11:'feb ',d12:'jan ',d13:'jan '
+;
+define m02:'enter first month to be changed (mmyy)'
+define m03:'enter number of months you want to change'
+define m04:'enter option:  1 to change all money accounts'
+define m05:' 2 to change specific accounts'
+define m06:'branch'
+define m06a:'major'
+define m06b:'minor'
+define m07:'account is not a money account'
+define m08:'current balance'
+define m09:'prior months'
+define m10:'do you want to make changes to this account?'
+define m12:'ok?'
+define m13:'end of job'
+;
+;
+define zer4:'0000',zer5:'00000',zer12:'    000000    '
+string acct(12),null(0),cbrn(3)
+;
+format f02:n4
+format f03:n2
+format f04:n1
+format f05:n5
+format f06:n3
+format f07:n6
+format f10:c3x1n6x1n3x2c30
+format f11:c15d-15.2
+format f12:c8n-11.2x1
+format f13:n11.2
+format f14:d15.2
+format f15:c5n2
+format f16:d12
+format f17:c3n6n3
+format f18:x14c70
+;
+end
+;
+;
+;
+;
+
+

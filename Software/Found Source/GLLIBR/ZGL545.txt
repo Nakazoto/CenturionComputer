@@ -1,0 +1,344 @@
+title 'gl545--financial statement print (module 1)'
+system  (exp=b)
+;
+;
+define m01:'gl545 (financial statement) 12/29/81'
+;
+;  notes:
+;  1/16/76...written...ns
+;  1/26/76... gl10 i was reading into gdet instead of recg..ns
+;  1/3/76... the level 6 of the income statement puts out l and p depending on whether the total is profit or loss.
+;  3/02/76... there seems to be a problem with printing the income statement..ns
+;             correction in c50 - on pass for scheduled accts i wasnt going back
+;             to b15..ns
+;  4/8/76....chng in gl30 lacct checking for le instead of eq...ns
+;  5/6/76...correcting overflow proble in crq (top5 and line count )...ns
+;  6/17/76....conversion from  g930 to g530...ns
+;  6/18/76...finishing conv...ns
+;  6/21/76...moved call sign in subr. sttype...ns
+;  6/22/76...corrected f30 and rounding error on division of opposite signs..ns
+;  6/23/76...adding branches - page eject on new branch (change to gl65)..ns
+;  7/2/76...chng..master layout, brn is now 3 digits...ns
+;  7/7/76...lbrn wasnt initialized..ns
+;  7/9/76...new master 131 bytes - 2 headers...ns
+;  7/15/76...change in library..ns
+;  7/28/76... change in typest - 'f' prints as an 'e' if amount and total are the same..ns
+;   8/17/76...program incorporated into standard general ledger application
+;             with name change, by g.l. gillette.  at the
+;             same time, certain cosmetic changes to formats and messages,
+;             plus minor program modifications, were made.
+;    9/15/76... change in underline at gl67r..ns
+;    9/20/76...change in paper size to 11 x 14 7/8...and stack heading (changes crq)
+;             added option to not print page and number, and ft2 - same indent as ft3...ns
+;    10/12/76...in income statement : 4,5, &6 totals are reversed,  &
+;              level one was turning off - sfl switch.(fixed in sub. tl)..ns
+;  10/21/76...fixed subr. sign and added option in case they dont have carriage
+;            tape with vtab. and changing subr. sign to reverse anytime the total includes 100% of
+; base income...ns
+;   11/1/76...cleaning up glread..ns
+;    11/4/76...added check in ckamt to see if it is a money account..ns
+;  10/27/76...changed bsdate and stdate to 40 characters..glg
+;  11/19/76..changed edpc to put parens around negs at same time as sign...glg
+; 11/19/76..added two line feeds after income statement date and check for line=7 right after top..glg
+; 11/19/76..lengthened f16 to allow for 40-char client name and recompiled with new record format...glg
+;   12/6/76...changes for titus co. income statement - doesnt tof on each branch,
+;           accumulates totals beypnd one branch....also fixed scheduled dol1
+;           showing up in d account...ns
+;    12/11/76...merging gl545 and gl546...ns
+;    12/16/76...fixing ft2..ns
+;  12/22/76..cosmetic changes in option msgs; changed ckbal so tested balance
+;            balance correctly; no-opt'd ckbal in schedules because it didn't
+;            work right..glg&pp
+;   1/16/77...adding option to allow income statement more than one month in
+;          current month column..ns
+;    1/24/77...took out work1..ns
+;    3/15/77...new options (revf - reverse sign, underlines changed)..ns
+;    3/23/77...changing glread so that if there is a branch without any totals
+;             it will not totally overlook the next branch...ns
+;    4/15/77...adding clear and ?clr..ns
+;  2/26/77...reversing m06b/c,  only printing $ on d account if d has the indicator,
+;           3. page count on option 1 reset not right,  4.format wrong in ty91
+;          5. page ejection on first line (cover letter doesnt eject)..ns
+;   4/18/77...edpc is backward on sign reversal and adding 1 char. to mask03..ns
+;   5/03/77...accounts whose sign was reversed printed on financial statements
+;             even if they had no activity and suppression was selected:  this
+;             is now fixed..per sa 77016..glg
+;    6/6/77...tof problem when there are 4 lines in last page of bal. sheet
+;             the income statment will not print...ns
+;    7/20/77...1. problem on blank page bet. on bs and p&l if they hit just right,
+;              2. schedule on p&l only showed first header as bal. sheet...ns
+;    8/5/77...unposted option change...ns
+;    9/12/77...problem with paging and page numbering on wide paper...ns
+;    10/26/77...schedule (if only income statement scheduled no top of form
+;              also if last account is a schedule it prints no schedules...ns
+;    10/27/77...breaking program into 2 modules..ns
+;    04/26/78...crt is no longer closed.  (a message tried to go out after the
+;              close if xgl546 was not present)..ns
+;    07/20/78...cosmetic changes..ns
+;   09/14/78...loading xgl547 if they are running h account calculation...ns
+;    5/23/79...adding key to control file, changing questions to conform to standards...ns
+;   8/02/79...changing signon mess..ns
+;   9/11/79...added an error message if the current earnings account is not
+;
+;  12/29/81...recompile to have a common date base...dl
+;             established in the chart of accounts...jwb
+;
+;
+;switches
+;                         sw2 =0 not on
+;                             1   says we are in the scheduled accounts so
+;                                 dont do any underlining or spacing until
+;                                 we're out of this section..
+;
+;
+;
+;
+;=============================================================================
+;
+copy recg
+;  copy uses library "g"
+;
+;
+;
+file crt:sysipt
+file control:sys2,class=2,seq,filtyp=a
+file prt:syslst,class=1,seq
+;
+copy hd3
+external stat,msg,ioerr,gupsi,pupsi,lfeed,cget,?edit,?gkey,ynget,gjp
+entrypoint crt
+;
+;======================
+;   program logic
+;======================
+entry
+open io(crt,gmst), output(prt,control)
+call gjp(0,key)
+call ?gkey(gmst,?gid);  ?gid is 0 at this point
+call stat(1);    the header should always be here
+readb(gmst,headb)
+call stat(1)
+?gid=2
+call ?gkey(gmst,?gid)
+call stat(1)
+readb(gmst,hd3)
+ 
+encode(zer7,f06)hh
+decode(zer7,f10)haflg,h0
+call msg(eject)
+call msg(m01)
+call lfeed(crt,1)
+write (crt,f16) m09,client
+call lfeed(crt,1)
+mo=0
+call msg(m04) ; balance sheet date
+call cget(null,f02,bsdate) ; get the date
+call msg(m05) ; income statement date
+call cget(null,f02,stdate) ; get the date
+ifs (stdate.ne.null) go to bb
+'stdate'='bsdate'
+bb:
+'ms5'='m13+m13a'
+call msg(m22)
+writen(crt,optfmt)m22a
+call cget(null,f10,p1); 1=wide, 2=narrow
+if(p1.lt.1)go to bb
+if(p1.gt.2)go to bb
+   call msg(m06)
+   write(crt,optfmt)m06a ; 1=no current
+   write(crt,optfmt)m06b ; 2=ytd no %
+   writen(crt,optfmt)m06c; 3=no current, no %
+   call cget(null,f10,a2) ; get answer
+if(a2.lt.2)go to bd;  3/15
+'m14'='null';3/15
+;
+bd:
+   call msg(m21a)
+   write(crt,optfmt)m21a1 ; 1=restart numbering with each report
+   writen(crt,optfmt)m21a2; 2=no numbering
+   call cget(null,f10,aa) ; get answer
+;
+   call msg(m02) ; enter transaction option  0 current posted balances
+   write(crt,optfmt)m02a ; current unposted balances
+  write(crt,optfmt)m02b ; 2=for previous month
+writen(crt,optfmt)m02c;  3=more than one month income statement
+   call cget(null,f10,opt1) ; get answer
+;
+   if(p1.ne.1)goto bh ; don't ask for account numbers on narrow paper
+   call ynget(m18);  print account numbers?
+   if(status.eq.0)goto a200
+   'actopt'='yes'
+;
+a200:
+;
+bh:
+   call ynget(m21);print inactive accounts?
+   if(status.eq.0)goto a210
+   'ans'='yes'
+;
+a210:
+;
+;
+   call ynget(m21b);  do you have a special carriage tape?
+   if(status.eq.0)goto a220
+;
+   'tape'='yes'
+;
+a220:
+;
+;
+   if(opt1.lt.2)goto b09
+   call cget(m03,f04,mmyy);   enter mmyy of financial statement
+'acct'='zer4'
+encode(acct,f04)mmyy
+decode(acct,f05)mm,yy
+'acct'='zer4'
+encode(acct,f04)month
+decode(acct,f05)cmm,cyy
+if(cyy.eq.yy)go to b02
+cmm=cmm+12
+cyy=cyy-1
+if(cyy.ne.yy)go to b04;  error in date
+b02:
+mo=cmm-mm
+if(mo.gt.12)go to b04;    too far for income statement
+if(mo.lt.0)go to b04;   cant give info
+if(mo.ge.mnum)goto b04;   crossed yr end
+if(cmm.gt.yrend)go to b03
+if(mm.ge.yrend)go to b04;    both are gt yrend month (cmm=cmm+12 if cmm and mm are in different years)
+go to b09;    ok
+;
+b03:
+if(mm.gt.yrend)go to b09;  ok
+b04:
+call msg(m07);    the income statement wont be right because you crossed an end of year
+call cget(m08,f37,opt);  do you wish to continue anyway??
+ifs(opt.eq.yes)go to b05
+stop
+b05:
+mo=0;   this will give current amounts on income statement
+;
+;
+b09:
+if(opt1.ne.3)go to b10
+encode(m13b,f38)mm,yy
+'ms5'='m13b+m13'
+;
+b10:
+call ?gkey(gmst,?plact)
+goto (b100, ioerr) on status ; 09/11/79...jwb
+write(control,f20)h0,bsdate,key,?ret,rel0;   rel0=current earnings rel key
+write(control,f20a)p1,a2,aa,opt1,actopt,ans,tape,cmm,cyy,mm,mo,stdate,ms5,mnum
+endfile control
+close control,prt
+goto (b11)on haflg;  if this is 1 we are running h accounts so go calculate them
+;
+b10f:
+;
+go to (b10g)on p1
+load(xgl549,0,0)
+call msg(m25); module is missing
+stop 50
+ 
+b100:
+   ;
+   call msg (m30) ; curr erngs acct missing
+   stop 51
+   ;
+b10g:
+load(xgl546,0,0)
+call msg(m25)
+stop 50
+;
+b11:
+;
+load(xgl547,0,0)
+call msg(m25a);h-acct module is missing
+call ynget(m25b); do you wish to continue anyway? (y/n)
+if(status.ne.0)go to b10f
+stop 50
+;
+;================ w o r k i n g   s t o r a g e ==========================
+;=========================================================================
+;
+set p1:0,rel0:0
+set aa:0
+set  sw2:0
+set  opt1:0;     0=all posted, 1=all entered, 2=for a previous month
+set  mmyy:0,mm:0,yy:0;       month to be consided current for financial stat
+set haflg:0
+set  cmm:0,cyy:0;            actual current month postings
+set h0:0
+set a2:0;  what type of income statement
+set mo:0,mo1:0
+;
+string null(0),opt(1);  do you still want to go even though income will be messed up
+string acct(12)
+string bsdate(80),ms5(20);   bal sheet date
+string stdate(80);   income statement date
+define actopt:'n',ans:'n',tape:'n';  print acct #
+define key:'      '
+;
+;
+integer fiv
+;
+define zer7:'0000000',zer4:'0000'
+define lbrn:'   '
+define no:'n',yes:'y'
+;
+define m02:'enter option:  0  current posted balances'
+define m02a:'1  current unposted balances'
+define m02b:'2  specific prior month'
+define m02c:'3  more than one month income statement'
+define m03:'enter month/year of transactions to be used'
+define m04:'balance sheet date'
+define m05:'income statement date'
+define m06:'enter option:  0  standard (current/ytd with percentages)'
+define m06a:'1  ytd only with percentages'
+define m06c:'3  current/ytd, no percentages'
+define m06b:'2  ytd only, no percentages'
+define m07:'this date crosses year end'
+define m08:'do you want to continue? (y/n)'
+define m09:'user name is'
+define m13:'current '
+define m13a:'period'
+define m13b: ' 0-00 - '
+define m14:'%'
+define m18:'do you want to print account numbers? (y/n)'
+define m21:'do you want to print inactive accounts? (y/n)'
+define m21a:'enter option:  0  number all pages consecutively'
+define m21a1:'1  restart numbering with each report'
+define m21a2:'2  no numbering'
+define m21b:'are you using a special printer tape? (y/n)'
+define m22:'enter option:  1  14-7/8 x 11'
+define m22a:'2   8-1/2 x 11'
+define m25:'module xgl546/49 is not on file'
+define m25a:'module to calculate h-accounts is missing'
+define m25b:'do you wish to continue anyway? (y/n)'
+;
+define m30: 'current earnings account number is not established in chart of accounts'
+;
+define xgl546:'xgl546'
+define xgl547:'xgl547'
+define xgl549:'xgl549'
+;
+format optfmt:x15c60
+;
+format f02:c77
+format f04:n4
+format f05:n2
+format f06:n7
+format f10:n1
+;
+format f16:c13c40
+format f20:n1,c80 c6, d12, n8
+format f20a:n1n1n1n1c1c1c1n2n2n2n2c80c20 n2
+;
+format f37:c1
+;
+format f38:n2x1
+;
+end   ; gl545
+
+
+

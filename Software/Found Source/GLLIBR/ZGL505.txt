@@ -1,0 +1,645 @@
+title ' gl505 - reviewing transaction files '
+system  (exp=b)
+;
+define m01:'gl505 (reviewing transaction files) 12/29/81'
+;
+;  notes:
+;    1/20/76...written...ns
+;    4/1/76...altered it so that changing pointer would also change g/l amount..ns
+;    6/16/76...conv. from g901 to g501 ... ns
+;    6/23/76...adding branch ...  i  am not backing out consolidated - this must
+;              be done by the operator manually..ns
+;    7/2/76...new record layouts..ns
+;    7/8/76...?sub was asked for with a nget instead of an cget..ns
+;    7/9/76....changing rec. size again - now 131..ns
+;    7/15/76...change to master file..ns
+;    9/20/76...changing asking for pointer to asking for item and displaying
+;              item number on print...ns
+;    10/28/76..recompiling because of new gdet..ns
+;  program incorporated into standard general ledger application
+;  with name change on august 6, 1976, by g.l. gillette.  at the
+;  same time, certain cosmetic changes to formats and messages,
+;  plus minor program modifications, were made.
+;    12/10/76...display change...ns
+;    12/23/76...cosmetic changes..glg
+;    1/04/77...reset cursor on option request in subroutine display if opt=1..glg
+;    1/10/77...cleaning up what glen did in display...ns
+;    3/10/77...changing to century date in posted and adding journal date..ns
+;    4/21/77...pulling the 0 from item number entry...ns
+;    9/15/77...if changing amt or acct affects a branch - added feature that
+;              will change amount of pos in the consolidated account when a
+;              branch is changed
+;              also changed it so that the current earnings account would be
+;              updated on a change...ns
+;
+;    1/9/78...adjusting line count...kam
+;    3/02/78...notes date should have been 1/10/78 instead of 1/9/78
+;              changed section d30-d30c...ns
+;     5/4/78...change so that program would recall itself..ns
+;     5/19/78...restricting use of current earnings account...ns
+;     9/01/78...allowing posting to v1=2 and v1=6 if it is the contra account...ns
+;     5/04/79...adding scrolling option & allowing current earnings postings back into system...ns
+;    8/02 /79...changing signon mess.ns
+;    12/19/79...modified to accept only valid  reference date ...kag
+;    01/17/80...modified to accept only valid journal date...kag
+;
+;    12/29/81...recompile to have a common date base...dl
+;
+copy recg
+set  rel0:0
+copy gdet
+file gfil:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2;   new detaild
+file gcfil:sys3,class=2,rnd,filtyp=c,recsiz=77,key=rel3;     these are records not in the right month
+file  wfil:sys4,class=2,seq,lsr=4,filtyp=b,buffer=400,buf4
+buffer buf2(400),buf4(400)
+set   rel3:0
+;
+record  pnt(4)
+set    point:0
+endrec
+;
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+external ?gkey,stat,msg,ioerr,gupsi,pupsi,cget,lfeed,ynget
+entrypoint crt
+;
+;======================
+;   program logic
+;======================
+entry
+   open io (crt,gcfil,gmst)
+   call ?gkey(gmst,?zero)
+   call stat(1);       no header
+   readb(gmst,headb)
+   call stat(1)
+   open input gfil
+   open output prt
+   open input wfil
+b001:
+;
+   call msg(eject)
+   call msg(null)
+   call msg(m01)
+   call lfeed(crt,1)
+   call msg(m02) ; enter transaction file option:  1  unposted transction
+   write(crt,optft1)m02a ; 2  posted transactions
+   write(crt,optft1)m02b; 3  subaccount transactions
+   write(crt,optft1)m02c; 9  to end
+   read(crt,fmtn1)opt;  get answer
+   call gupsi(print)
+   flg=0
+   go to (b10,d10,e10)on opt
+   if(opt.ne.9)go to b001
+q0900:;   end of jon
+   call msg(m07)
+   close prt,crt,gfil,gcfil,wfil,gmst
+   stop 0
+;
+a15:
+;
+   load(spc6,0,0);  reloads itself
+   stop 0
+;
+;    'c' type file
+b10:
+rel3=0
+readb(gcfil,pnt)
+call stat(1)
+write(crt,f04)m08,point
+call ynget(m03);    do you want to change pointer??
+if(status.eq.0)goto b15 ; didnt change item count
+call cget(m04,fmtn4,npoint);   new pointer number
+if(npoint.lt.point)go to b40
+if(point.lt.npoint)go to b50
+point=npoint
+;
+writeb(gcfil,pnt)
+call stat(1)
+b15:
+if(point.eq.0)go to a15
+;
+b20:
+if(print.ne.2)go to b20f
+'scroll'='y'
+call ynget(m23);  do you want to scroll records
+go to (b20f)on status
+'scroll'='n'
+ 
+b20f:
+call cget(m06,fmtn4,xrel);     enter pointer number or 0 to continue conseq.
+if(xrel.eq.0)go to b21
+rel3=xrel
+go to b22
+;
+b21:
+rel3=rel3+1
+b22:
+if(rel3.gt.point)go to a15
+readb(gcfil,gdet)
+call stat(1)
+call display
+if(rdy.eq.2)goto b25 ; change
+if(rdy.eq.1)goto a15 ; quit
+go to b20f
+;
+b25:
+writeb(gcfil,gdet)
+call stat(1)
+go to b20
+;
+b40:
+flg=1
+num=0
+b43:
+rel3=npoint
+;
+b45:
+rel3=rel3+1
+if(rel3.gt.point)go to b70
+readb(gcfil,gdet)
+call stat(1)
+call display
+go to b45
+;
+b50:
+flg=2
+rel3=point;   i am increasing the length of the file
+b55:
+rel3=rel3+1
+if(rel3.gt.npoint)go to b70
+readb(gcfil,gdet)
+call stat(1)
+call display
+go to b55
+;
+b70:
+point=npoint
+rel3=0
+writeb(gcfil,pnt)
+call stat(2)
+;
+go to b001
+;
+d10:;    posted details gtxxxa
+'scroll'='n'
+if(print.ne.2)go to d20
+'scroll'='y'
+ 
+d20:
+call cget(m19,fmtn3,brn);  brancy
+call cget(m20,fmtn6,maj)
+call cget(m21,fmtn3,min)
+?nggl=brn*mil+maj*thou+min
+ 
+d70:
+readb(gfil,gdet)
+if(status.ne.0)go to d80
+if(?acct.lt.?nggl)go to d70; not there yet
+ldate(integer,date)
+sdate(grin,date)
+call display
+if(rdy.eq.1)goto a15 ; quit
+go to d70
+ 
+d80:
+ifs(scroll.ne.y)go to a15
+call cget(m25,f11,brn); dummy halt
+go to a15
+;
+;================
+e10:;    details with sub accounts
+'scroll'='n'
+if(print.ne.2)go to e12
+'scroll'='y'
+ 
+e12:
+call cget(m13+5,fmtn6,brn)
+?lsub=brn
+ 
+e14:
+readb(wfil,gdet)
+if(status.ne.0)go to d80
+if(?sub.lt.?lsub)go to e14
+ldate(integer,date)
+sdate(grin,date)
+if (print.eq.2) goto e15
+if(?lsub.eq.?sub)go to e15
+write(prt,f01)eject
+write(prt,f01)recmsg
+lcr=1
+e15:
+?lsub=?sub
+call display
+if(rdy.eq.1)goto a15 ; quit
+go to e14
+;
+;===================
+subroutine display
+;================
+'acct'='zer12'
+encode(acct,f41)?acct
+decode(acct,f40)brn,maj,min
+if(flg.eq.1)go to d35e;     changing pointer number
+if(flg.eq.2)go to d35f;   changing pointer number
+if(print.ne.2)go to dis100
+ifs(scroll.eq.y)go to dis100
+if(opt.ne.1)go to d03
+call msg(eject)
+write(crt,f11a)m06a,rel3
+go to d03f
+d03:
+   call msg(eject)
+d03f:
+   call msg(recmsg) ; header
+   write(crt,recfmt)?acct,?sub,jrn,ref,jdte,date,emp,amt
+   write(crt,f01)ddesc
+   call msg(null)
+   call msg(m05) ; enter option  0 to continue review
+   writen(crt,optft2)m05a ; 1 to terminate review
+   if(opt.ne.1)goto d03a ; dont ask for change on opts 2 and 3
+call msg(null);  this moves it to the next line because of writen in previous line
+   writen(crt,optft2)m05b ; 2 to change this item
+d03a:
+   call cget(null,fmtn1,rdy) ; get answer
+   if(rdy.eq.1)goto dis10 ; quit
+   if(opt.ne.1)go to dis10
+   if(rdy.eq.2)goto dis20 ; change
+dis10:
+return
+;
+dis20:
+if(flg.ge.1)go to d40
+call msg(eject)
+;
+dis21:
+   write(crt,chgft1)m12,?acct
+   write(crt,chgft1)m13,?sub
+   write(crt,chgft2)m14,jrn
+   write(crt,chgft2)m15,ref
+   write(crt,chgft2)m15a,jdte
+   write(crt,chgft2)m16,date
+   write(crt,chgft2)m16a,emp
+   write(crt,chgft3)m17,amt
+   write(crt,chgft4)m18,ddesc
+call lfeed(crt,2)
+call cget(m22,fmtn1,num)
+go to (d30,d31,d32,d33,d33d,d34,d34f,d35,d36)on num
+if(num.eq.0)go to d40
+go to dis20
+;
+dis25:
+?nggl=?acct
+go to d30d
+;
+;
+d30:
+call cget(m19,fmtn3,brn) ; get new branch number
+call cget(m20,fmtn6,maj) ; get new major number
+call cget(m21,fmtn3,min) ; get new minor number
+'acct'='zer12'
+encode(acct,f40)brn,maj,min
+decode(acct,f41)?nggl
+d30d:
+if(?nggl.eq.0)go to d30g
+call ?gkey(gmst,?nggl)
+go to(d30g,ioerr)on status
+call rdmst
+if(?gid.eq.0)go to d30g
+v1=vv/thou
+if(v1.eq.2)go to d30d5
+if(v1.ne.6)goto d30g;   not a money accout
+;
+v1=vv-(vv/10*10)
+if(v1.ne.8)go to d30g
+go to d30d8
+;
+;
+d30d5:
+;
+v1=vv-(vv/10*10)
+if(v1.lt.7)go to d30d8
+;  this is an i account - this is a flag to indicate that fact - cant change it
+?sub=-10;   neg number in sub says hey im going to an i account dont count me
+;              in the audit for current earnings info
+;
+go to d30d9
+;
+d30d8:
+;
+if(?sub.ne.-10)go to d30d9
+?sub=0
+;
+d30d9:
+;
+;
+;
+pos=pos +amt
+call wrmst
+rel=rel0
+x=amt
+call ckbrn
+if(?acct.eq.0)go to d30c;  change 3/2/78 don't need to back out amount
+if(flg.eq.2)go to d40
+;
+call ?gkey(gmst,?acct)
+go to(d30c,ioerr)on status;   change 3/2/78 don't need to back out amount if acct not on file
+call rdmst
+if(?gid.eq.0)go to d30c;   deleted so don't have to back out amount 3/2/78
+pos=pos-amt
+call wrmst
+x=0-amt
+call ckbrn
+;
+;
+d30c:
+?acct=?nggl
+go to dis20
+;
+d30g:
+call msg(eject)
+call msg(m12a)
+go to dis21
+d30e:
+call ?gkey(gmst,?nggl)
+go to (d30g,ioerr)on status
+call rdmst
+if(?gid.eq.0)go to d30g;   deleted
+pos=pos-amt
+call wrmst
+x=0-amt
+call ckbrn
+call msg(eject)
+call msg(m12a)
+go to dis21
+;
+;
+d31:
+if(?sub.ne.-10)go to d31f;   it must be ok - not flagged as an i account
+call ?gkey(gmst,?acct)
+go to (d31f,ioerr)on status
+call rdmst
+v1=vv/thou
+if(v1.ne.2)go to d31f; must be contra account
+v1=vv-(vv/10*10)
+if(v1.lt.7)go to d31f; not an i account
+call msg(m09);sub indicates that record is going to an i account you cant change it
+call msg(m10);newline to acknowledge
+read(crt,f01)
+go to dis20
+;
+d31f:
+;
+call cget(m13,f10,?sub)
+go to dis20
+;
+d32:
+call cget(m14,fmtn2,jrn) ; get new journal number
+go to dis20
+;
+d33:
+call cget(m15,fmtn6,ref) ; get new reference number
+go to dis20
+;
+d33d:
+call cget(m15a,fmtn4,jdte)
+if (status.ne.0) go to d33d;      added (1/19/80...kag)
+if (jdte.lt.100) go to d33d;      date to small...
+if (jdte.ge.dtst) goto d33d;      dtst=1300   to large...
+go to dis20
+;
+d34:
+call cget(m16,fmtn6,date) ; get new date
+if (status.ne.0) go to d34;             added kag..(12/19/79) *
+ldate (grin,date)
+sdate (grin,date)
+if (status.ne.0) go to d34;             added kag..(12/19/79) ^^*
+;
+go to dis20
+;
+d34f:
+call cget(m16a,fmtn6,emp) ; get new employee number
+go to dis20
+;
+;
+d35:
+call cget(m17,fmtn12,num) ; get new amount with n12.2 fmt
+d35e:
+if(?acct.eq.0)go to d35g
+call ?gkey(gmst,?acct)
+go to (d35g,ioerr)on status
+call rdmst
+if(?gid.eq.0)goto d35g
+pos=pos-amt+num
+call wrmst
+x=num-amt
+call ckbrn
+amt=num
+go to dis20
+;
+;
+;
+d35f:;   changing pointer #
+if(?acct.eq.0)go to d35g
+call ?gkey(gmst,?acct)
+go to (d40,ioerr)on status
+call rdmst
+if(?gid.eq.0)go to d40
+pos=pos+amt;      adding it back in
+call wrmst
+x=amt
+call ckbrn
+;
+goto d40
+d35g:
+call msg(m17a);  cant change not on file
+go to dis20
+;
+go to dis20
+;
+d36:
+call cget(m18,f03,ddesc) ; get new description
+go to dis20
+;
+d40:
+return
+;
+;
+dis100:;   printing
+if(print.ne.2)go to dis101
+if(lcr.lt.20)go to dis102f
+call cget(m24,fmtn2,lcr)
+if(lcr.eq.99)go to dis110; end
+go to dis101f
+ 
+dis101:
+if(lcr.lt.58)go to dis102f
+dis101f:
+ 
+lcr=1
+write(prt,f01)eject
+write(prt,f01)recmsg
+dis102f:
+if(opt.ne.1)go to dis102h
+lcr=lcr+1
+write(prt,f11a)m06a,rel3
+;
+dis102h:
+lcr=lcr+2
+   write(prt,recfmt)?acct,?sub,jrn,ref,jdte,date,emp,amt
+   write(prt,f01)ddesc
+'ready'='spc'
+   write(prt,f01)
+   lcr=lcr+1
+if(opt.eq.1)go to dis104
+return
+;
+dis104:
+rel3=rel3+1
+if(rel3.gt.point)go to dis109
+readb(gcfil,gdet)
+call stat(1)
+goto dis100
+;
+dis109:
+ifs(scroll.ne.y)go to dis110
+call cget(m25,f11,brn); dummy halt at end
+dis110:
+'ready'='q'
+rdy=1
+return
+subroutine ckbrn ;    this checks to see if the amount changed is in a branch
+;===================== record
+;
+if(?gid.eq.0)go to ckb10
+if(?gid.le.?bsea)go to ckb10;   not an income or expense item
+'acct'='zer12'
+encode(acct,f41)?gid;   this should be the just read account record
+decode(acct,f40)brn;
+call ?gkey(gmst,?plact);   current earnings account (profit and loss acct)
+go to (ckb05,ioerr)on status
+call rdmst
+if(?gid.eq.0)go to ckb05
+pos=pos+x
+call wrmst
+;
+ckb05:
+if(brn.eq.0)go to ckb10;  this is not a branch record
+if(brn.eq.i999)go to ckb10; this is already a consolidated record
+encode(acct,f40)i999;    adds the consolidated branch to the front of the record
+decode(acct,f41)?gid
+call ?gkey(gmst,?gid);  consolidated record
+go to (ckb10,ioerr)on status;
+call rdmst;   read the maste record filer
+if(?gid.eq.0)go to ckb10
+pos=pos+x;   x is the amount to be added
+call wrmst
+;
+ckb10:
+return
+;
+;====================
+subroutine rdmst
+;====================
+;
+hold(gmst)
+if(status.ne.0)go to rdmst
+readb(gmst,recg)
+call stat(1)
+return
+;
+;====================
+subroutine wrmst
+;====================
+writeb(gmst,recg)
+call stat(1)
+free(gmst)
+return
+;
+;======================
+;  ==  constants   ===
+;======================
+;
+integer opt,print,num,?nggl,flg,npoint,xrel,maj,min
+;
+set  thou:1000,two9:99,nine:9,lcr:90,x:0,i999:999,?zero:0,mil:1000 000
+set rdy:0, ?lsub:0,v1:0, dtst:1300
+set   brn:0
+string ready(1),ans(1),acct(12)
+string null(0)
+;
+define m02:'enter transaction file option:  1  unposted transactions'
+define m02a:'2  posted transaction file'
+define m02b:'3  subaccount transaction file'
+define m02c:'9  to end program'
+define m03:'do you want to change item count? (y/n)'
+define m04:'enter new item count'
+define m05:'enter option:  0  to review next item'
+define m05a:'1  to terminate review'
+define m05b:'2  to change data in this item'
+define m06:'enter item number'
+define m06a:'item number ='
+define m07:'end transaction file review program'
+define m08:'current item count is'
+define m09:'sub indicates that this record is going to an "i" account'
+define m10:'you may not change it. newline to acknowledge'
+define m12:'( 1)acct nbr:'
+define m12a:'not able to change to that account number '
+define m17a:'no match on g/l cant change amount'
+define m13:'( 2) sub nbr:'
+define m14:'( 3) journal:'
+define m15:'( 4) ref nbr:'
+define m15a:'( 5) jrn date'
+define m16:'( 6)    date:'
+define m16a:'( 7) emp nbr:'
+define m17:'( 8)  amount:'
+define m18:'( 9)descript:'
+define m19:'branch'
+define m20:'maj  '
+define m21:'min  '
+define m22:'enter field number'
+define m23:'do you wish to scroll entries? (y/n)'
+define m24:'newline to continue  -  99 to terminate scrolling'
+define m25:'end of file - newline to recall option list'
+define spc:' ',spc6:'      '
+;
+define n:'n',y:'y',c:'c',q:'q'
+define scroll:'n'
+define zer12:'000000000000'
+;
+format f01:c132
+format f02:c1
+format f03:c30
+format f04:c19n6
+format f10:d12x5d12
+format f11:n2x1n6x1n6x1n6x1n-12.2x1c30
+format f11a:c13n6
+format f12:c15x1d12x2c15x1d12
+format f13:c9x1n2x1c9x1n6x1c9x1n6x1c9x1n6
+format f14:c9x1n-12.2x1c9x1c30
+;
+format optft1:x32,c40
+format optft2:x15,c40
+;
+format chgft1:x5c14d12
+format chgft2:x5c14n6
+format chgft3:x5c14n-12.2
+format chgft4:x5c14c30
+;
+format fmtn1:n1
+format fmtn2:n2
+format fmtn3:n3
+format fmtn4:n4
+format fmtn6:n6
+format fmtn12:n12.2
+;
+format f40:n3n6n3
+format f41:d12
+;
+format recfmt:d12,d10,n3,n7n7,n7,n7,n-13.2,c20
+define recmsg:'     account       sub jn    ref  jdate   date    emp       amount     '
+;
+end;    g501
+
+

@@ -1,0 +1,904 @@
+title 'gl514--user and payroll record standard header '
+system
+;
+define m01:'gl514 (geneal ledger creation of standard headers) 12/29/81'
+;
+external cget,ynget,msg,?nkey,?gkey,ioerr,stat,clrec,gjp,pupsi,gupsi,pjp,msgn
+;   notes:
+;   05/14/79...created from gl500...ns
+;   08/02/79...changed signon message.ns
+;   09/12/79...corrected computed goto on option for changing fields...jwb
+;   11/28/79...modified for cpu-6...kag
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;
+;     g/l master file
+copy headb
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+file newmst:sys1,class=2,rnd,recsiz=131,key=rel1
+;
+set  rel0:0,rel1:0;   this used to be part of list - arent using list in this prog.ns
+copy head2
+;
+copy hd3
+ 
+record hd4(131)
+string bs(64), inc(64)
+endrec
+record hd5(131)
+string topcom1(64), topcom2(64);  misc. heading lines on finst
+endrec
+ 
+record hd6(131)
+string subgl(64); alternate subaccount g/l title
+endrec
+ 
+;
+;
+;
+;
+;
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+entry
+;
+open io(crt,gmst)
+call msg(eject)
+call msg(m01)
+call gupsi(upsi)
+call ?gkey(gmst,?zero)
+go to (a15,ioerr)on status
+a10:
+hold(gmst)
+if(status.ne.0)go to a10
+readb(gmst,headb)
+call stat(1)
+'acct'='zer9'
+encode(acct,fn9)hh
+decode(acct,fopt)numon,haflg,h0,h1,h2,h3,h4,h5
+if(numon.eq.13)go to a005
+numon=12
+a005:
+call ?gkey(gmst,?one)
+go to (a20,ioerr)on status
+readb(gmst,head2)
+call stat(1)
+call ?gkey(gmst,?two)
+goto (a25,ioerr)on status
+readb(gmst,hd3)
+call stat(1)
+;
+call ?gkey(gmst,?thr)
+go to (a30,ioerr)on status
+readb(gmst,hd4)
+call stat(1)
+call ?gkey(gmst,?four)
+go to (a35,ioerr)on status
+readb(gmst,hd5)
+call ?gkey(gmst,?five)
+go to (a40,ioerr)on status
+readb(gmst,hd6)
+call stat(1)
+if(upsi.ne.1)go to b015;  must be changing existing standard header
+ 
+a1100:
+open io newmst
+call ?gkey(newmst,?zero)
+goto (a1110,ioerr)on status
+go to a1115
+ 
+a1110:
+call ?nkey(newmst,?zero)
+call stat(1)
+writeb(newmst,headb)
+call stat(1)
+ 
+a1115:
+call ?gkey(newmst,?one)
+go to (a1120,ioerr)on status
+go to a1125
+ 
+a1120:
+call ?nkey(newmst,?one)
+call stat(1)
+writeb(newmst,head2)
+call stat(1)
+ 
+a1125:
+ 
+call ?gkey(newmst,?two)
+go to (a1130,ioerr)on status
+ 
+go to a1135
+ 
+a1130:
+call ?nkey(newmst,?two)
+call stat(1)
+writeb(newmst,hd3)
+call stat(1)
+ 
+a1135:
+call ?gkey(newmst,?thr)
+goto (a1140,ioerr)on status
+go to a1145
+ 
+a1140:
+call ?nkey(newmst,?thr)
+call stat(1)
+writeb(newmst,hd4)
+call stat(1)
+ 
+a1145:
+call ?gkey(newmst,?four)
+go to (a1150,ioerr)on status
+ go to a1155
+ 
+a1150:
+call ?nkey(newmst,?four)
+call stat(1)
+writeb(newmst,hd5)
+call stat(1)
+ 
+a1155:
+call ?gkey(newmst,?five)
+go to (a1160,ioerr)on status
+go to a1165
+ 
+a1160:
+call ?nkey(newmst,?five)
+call stat(1)
+writeb(newmst,hd6)
+call stat(1)
+ 
+a1165:
+stop 0
+ ;
+a15: ; new client
+ch=1  ; set creating flag
+call ?nkey(gmst,?zero)
+go to (noroom,ioerr) on status
+call clrec(headb)
+;
+a20:
+call ?nkey(gmst,?one)
+go to (noroom,ioerr)on status
+call clrec(head2)
+;
+a25:
+call ?nkey(gmst,?two)
+go to (noroom,ioerr)on status
+call clrec(hd3)
+ 
+a30:
+call ?nkey(gmst,?thr)
+go to (noroom,ioerr)on status
+call clrec(hd4)
+ 
+a35:
+call ?nkey(gmst,?four)
+go to (noroom,ioerr)on status
+call clrec(hd5)
+ 
+a40:
+call ?nkey(gmst,?five)
+go to (noroom,ioerr)on status
+call clrec(hd6)
+a50:
+call ?gkey(gmst,?zero)
+a90:
+hold (gmst)
+if (status.ne.0) go to a90
+;
+go to (a1100)on upsi
+go to (b050)on ch
+go to b015
+ 
+b010:
+call cget(m10,fn1,opt)
+ 
+b015:
+call msg(eject)
+call msg(m01)
+write (crt,f04) fldn01,m15,client
+call msg(null)
+write (crt,f04b) m14,m14a,m14c
+call msg(null)
+write (crt,f02) fldn02,m23c,h1,fldn06,m17,month,fldn08,m19,post
+write (crt,f02) fldn03,m23d,h2,fldn07,m18,yrend,fldn09,m23g,h5
+write (crt,f02b) fldn04,m23e,h3,fldn10,m23h,h0
+write (crt,f02b) fldn05,m23f,h4,fldn11,m35,acnt
+write(crt,f02c) fldn12,m35a,haflg
+write(crt,f02c)fldn13,m35c,dolflg
+write(crt,f02d)m14b
+call msg(null)
+write (crt,f02a) fldn15,m20,?bsea, fldn18, m20a, ?invcon;  bal ending, inv contra
+write (crt,f02a) fldn16,m118,?plact , fldn19,m20b,?binv; current earnings account, beginning inv
+write(crt,f02a)fldn17,m118a,?ret, fldn20,m20c,?einv;retained earnings, ending inventory
+;
+b020:
+go to (b040)on opt
+call msg(null)
+b030:
+call msg(m86a);  enter option: 1 change field
+write(crt,f17)m87; 2 display descriptions
+write(crt,f17)m88; 3 modify p/r information
+writen(crt,f17)m90; 9 end of program
+call cget(null,fn1,opt)
+if(status.ne.0)go to b035;  redisplay whole page too far down on page
+go to (b040,c100,d100)on opt
+if(opt.eq.9)go to d110;eoj
+b035:
+call position
+go to b030
+ 
+b040:
+call position
+call getit (m85,fn2,fa1)  ;  enter field number
+if(fa1.eq.0)go to b015
+if(fa1.eq.97)go to b0260
+if(fa1.eq.99)go to b042
+go to (b050,b0140,b0160,b0170,b0180,b070,b080,b090,b0190,b0200)on fa1
+call sub10
+go to (b0130,b0210,b0220,b020,b0100,b0110,b0120,b0230,b0240,b0250)on fa1
+go to b020
+b042:
+opt=0
+go to b015
+;
+b050:
+call getpos(m112,fc40,client,16,2,40)  ;  enter user name
+go to (b0130)on ch
+go to b020
+;
+;
+b060:
+ch=4
+go to b015
+;
+b070:
+goto (b0705)on ch
+call msg(m38); warning! this field is critical to proper operation of the application
+call ynget(m38a) ; are you sure you want to change current month?
+if (status.eq.0) go to b020 ; go back to change
+b0705:
+curp(crt,1,19)
+call blank
+call getpos(m114,fn4,month,40,6,4); current month/year
+if(month.lt.175)go to b0705
+if(month.gt.date2)go to b0705
+if(numon.eq.13)go to b0708
+if(month.gt.date1)go to b0705
+ 
+b0708:
+goto (b080) on ch
+go to b020
+;
+b080:
+curp(crt,1,19)
+b081:
+call blank
+call getpos(m115,fn2,yrend,42,7,2);  yrend month
+if(yrend.gt.numon)go to b080
+if(yrend.lt.1)go to b080
+;
+goto (b090) on ch
+go to b020
+;
+b090:
+post=3
+call ynget(m116);    do you want to retain details to end of year?
+go to (b0901)on status
+post=1
+b0901:
+go to (b0190)on ch
+call curpos(post,f10,67,6)
+go to b020
+;
+b0100:
+write (crt,f05)m112,m117;   balance sheet ending account number
+call geta2(?bsea)
+if(?bsea.eq.0)go to b0100;   this cannot be!!!!!
+go to (b0110) on ch
+call ?curpos(?bsea,25,14)
+go to b020
+;
+b0110:
+write (crt,f05b)m112,m118,m118b ;   current earnings account number
+call geta2(?plact)
+if(?plact.eq.0)go to b0110;   must have this account number
+goto (b0120) on ch
+call ?curpos(?plact,25,15)
+go to b020
+;
+b0120:
+write(crt,f05b)m112,m118a,m118b ;   retained earnings account number
+call geta2(?ret)
+go to (c130)on ch
+call ?curpos(?ret,25,16)
+go to b020
+;
+b0130:
+call msgn(m08)
+call getpos(m35,f10,acnt,67,9,3)
+goto (b0140)on ch
+go to b020
+b0140:;   # of branches
+h1=3
+call ynget(m123a);  using branches?
+go to (b0141)on status
+h1=0
+ 
+b0141:
+goto (b0160) on ch
+call curpos(h1,f10,13,6)
+go to b020
+;
+b0160:;  # in major
+'mss'='m123 +  m124'
+call getpos(mss,fn1,h2,15,7,1)
+if(h2.le.0)go to b0160;  major must be 1 or greater
+go to (b0170)on ch
+go to b020
+;
+b0170:;  # in minor
+'mss'='m123 +  m125'
+call getpos(mss,fn1,h3,15,8,1)
+if(h3.gt.3)go to b0170
+go to (b0180)on ch
+go to b020
+;
+;
+b0180:
+'mss'='m123 +  m126'
+call getpos(mss,fn1,h4,15,9,1);    # in sub
+go to (b070) on ch
+go to b020
+;
+;
+b0190:;  1=posting seq. payroll from g/l,   2=posting wrap from g/l
+call getpos(m127,fn1,h5,69,7,1)
+goto (b0200) on ch
+go to b020
+;
+b0200:;  1=use () for all neg.
+h0=1
+call ynget(m128); negatives encosed in parentheses?
+go to (b0201)on status
+h0=0
+ 
+b0201:
+go to (b0100) on ch
+call curpos(h0,f10,67,8)
+go to b020
+;
+b0210:; are you using h accounts?
+haflg=0;no
+call ynget(m35b);are you using h accounts?
+if(status.eq.0)go to b02101
+haflg=1;yes
+;
+b02101:
+;
+call curpos(haflg,f10,67,10)
+go to b020
+;
+b0220:
+dolflg=1
+call ynget(m130);  $ & underln on change in fin. position
+go to (b0221)on status
+dolflg=0;no
+ 
+b0221:
+ 
+call curpos(dolflg,f10,67,11)
+go to b020
+ 
+b0230:;  inventory net change account
+;
+write(crt,f05b)m112,m20a,m118b
+call geta2(?invcon)
+call ?curpos(?invcon,64,14)
+go to b020
+;
+b0240:;beg. inventory
+;
+write(crt,f05b)m112,m20b,m118b
+call geta2(?binv)
+call ?curpos(?binv,64,15)
+go to b020
+;
+;
+b0250:;ending inventory
+write(crt,f05b)m112,m20c,m118b
+call geta2(?einv)
+call ?curpos(?einv,64,16)
+go to b020
+;
+b0260:
+call getit(null,fc1,xa)
+;   this option has to be a 'y' to change amounts
+go to b020
+;
+c100:
+call msg(eject)
+call msg(m01)
+call msg(null)
+write(crt,f04a)fldn01,m20+11,bs
+call msg(null)
+write(crt,f04a)fldn02,m03+1,inc
+call msg(null)
+write(crt,f04a)fldn03,m04+1,topcom1
+call msg(null)
+write(crt,f04a)fldn04,m05+1,topcom2
+call msg(null)
+write(crt,f04a)fldn05,m06+1,coment
+call msg(null)
+write(crt,f04a)fldn06,m07+1,subgl
+ 
+c120:
+call position
+call getit(m85,fn2,fa1)
+go to (c130,c135,c140,c145,c150,c155)on fa1
+if(fa1.eq.0)go to c100
+if(fa1.eq.99)go to b015
+go to c120
+ 
+c130:
+call msgn(m08)
+call msgn(m117+22)
+call msg(m09)
+ 
+call getpos(null,fc64,bs,16,3,64)
+go to (c135)on ch
+go to c120
+ 
+c135:
+call msgn(m08)
+call msgn(m03)
+call msg(m09)
+call getpos(null,fc64,inc,16,5,70)
+go to (c140)on ch
+go to c120
+ 
+c140:
+call msgn(m08)
+call msgn(m04)
+call msg(m09)
+call getpos(null,fc64,topcom1,16,7,70)
+go to (c145)on ch
+go to c120
+;
+c145:
+call msgn(m08)
+call msgn(m05)
+call msg(m09)
+call getpos(null,fc64,topcom2,16,9,70)
+go to (c150)on ch
+go to c120
+ 
+c150:
+call msgn(m08)
+call msgn(m06)
+call msg(m09)
+call getpos(null,fc50,coment,16,11,70)
+go to (c155)on ch
+go to  c120
+ 
+c155:
+call msgn(m08)
+call msgn(m07)
+call msg(m09)
+call getpos(null,fc64,subgl,16,13,70)
+go to (b060)on ch
+go to c120
+;
+;
+d100:
+if(h5.ne.1)go to b015; p/r not part of system
+d110:
+if(month.lt.100)go to b010
+if(month.gt.thirhun)go to b010; error
+'acct'='zer9'
+encode(acct,fopt)numon,haflg,h0,h1,h2,h3,h4,h5
+decode(acct,fn9)hh
+call ?gkey(gmst,?one)
+call stat(1)
+writeb(gmst,head2)
+call stat(1)
+mnum=month/100-yrend
+if(mnum.gt.0)go to d905
+mnum=12+mnum
+d905:
+call ?gkey(gmst,?two)
+call stat(1)
+writeb(gmst,hd3)
+call stat(1)
+call ?gkey(gmst,?thr)
+call stat(1)
+writeb(gmst,hd4)
+call stat(1)
+call ?gkey(gmst,?four)
+call stat(1)
+writeb(gmst,hd5)
+call stat(1)
+call ?gkey(gmst,?five)
+writeb(gmst,hd6)
+call stat(1)
+call ?gkey(gmst,?zero)
+writeb(gmst,headb)
+call stat(1)
+free(gmst)
+;
+if(opt.eq.3)go to q0980
+stop 0;               if it returns it is in error
+ 
+q0980:
+call pjp(3,xgl514)
+load (xgl507,0,0); payroll header
+go to b015
+;
+noroom:
+call msg(m53);   no room must expand
+close crt,gmst
+stop 110
+;
+;=====================
+;  subroutine
+;======================
+;
+subroutine geta2
+;=====================
+;
+brn=0
+;
+geta3:
+maj=min=0
+go to (g4,g5,g6,g7,g8,g9)on h2
+go to geta5
+g4:
+call major(fn1)
+go to geta5
+g5:
+call major(fn2)
+go to geta5
+g6:
+call major(f10)
+go to geta5
+g7:
+call major(fn4)
+go to geta5
+g8:
+call major(fn5)
+go to geta5
+g9:
+call major(fn6)
+;
+geta5:
+go to (g10,g11,g12) on h3
+go to geta7
+g10:
+call minor(fn1)
+go to geta7
+g11:
+call minor(fn2)
+go to geta7
+g12:
+call minor(f10)
+;
+geta7:
+'acct'='zer12'
+encode(acct,f10)brn,maj,min
+decode(acct,f09)?gg
+if(?gg.lt.0)go to geta2
+direct
+    lda- x+
+    sta   geta9+8
+cpl
+ 
+geta9:
+ 
+?g1=?gg
+return
+;
+;===============
+subroutine major
+;===============
+direct
+ lda- x+
+ sta  maj10+5
+cpl
+maj10:
+call getit(m23d,fn1,maj); fn1 is variable
+return
+ 
+;==============
+subroutine minor
+;==============
+direct
+ lda- x+
+ sta min10+5
+cpl
+min10:
+call getit(m23e,fn1,min)
+return
+;=================
+subroutine add10
+;=================
+;
+fa1=fa1+10
+return
+;
+;=================
+subroutine blank
+;=================
+curb(crt,79)
+return
+ 
+subroutine position
+;==================
+curp(crt,1,19)
+call blank
+curp(crt,1,20)
+call blank
+curp(crt,1,21)
+call blank
+curp(crt,1,22)
+call blank
+curp(crt,1,23)
+call blank
+curp(crt,1,18)
+call blank
+return
+subroutine getit
+;==================
+direct
+   lda- x+
+   sta gt10+3
+   lda- x+
+   sta gt10+5
+   lda- x+
+   sta gt10+7
+cpl
+ 
+gt10:
+call cget(m85,fn2,fa1); variable messages, formats, & ans.
+if(status.eq.0)go to gt20
+call msg(beep)
+go to gt10
+ 
+gt20:
+return
+ 
+subroutine getpos
+;=================
+direct
+  lda- x+
+  sta  gp10+3
+  lda- x+
+  sta gp10+5
+  sta gp30+5
+  lda- x+
+  sta gp10+7
+  sta gp30+7
+  lda- x+
+  sta gp20+5
+  lda- x+
+  sta gp20+7
+   lda- x+
+   sta gp25+5
+cpl
+ 
+printon
+gp10:
+call getit(m01,fn1,opt);variables
+ 
+go to (gp40)on ch
+ 
+gp20:
+curp(crt,1,1);  1 & 1 are variable
+gp25:
+curb(crt,30); 30 is variable
+ 
+gp30:
+write(crt,fn1)opt;fn1&opt variable
+gp40:
+return
+printoff
+;==============
+subroutine curpos
+;==============
+direct
+   lda- x+
+  sta  cu20+7
+  lda- x+
+  sta cu20+5
+  lda- x+
+  sta  cu10+5
+  lda- x+
+   sta cu10+7
+cpl
+ 
+   call cu10
+ 
+cu20:
+ 
+  write(crt,fn1)h1
+  return
+ 
+cu10:
+ 
+   curp(crt,1,1);  1,1 are variable
+   return
+ 
+;===============
+subroutine ?curpos
+;============
+direct
+   lda- x+
+   sta  cu30+7
+   lda- x+
+   sta  cu10+5
+   lda- x+
+   sta  cu10+7
+cpl
+ 
+call cu10
+ 
+cu30:
+   write(crt,f09)?bsea;  ?bsea is variable
+   return
+ 
+;=============
+subroutine sub10
+;==========
+fa1=fa1-10
+return
+ 
+;
+ ;*****************************
+ ;********  constants  ********
+ ;*****************************
+ ;
+define m03:' income statement'
+define m04:' header 1'
+define m05:' header 2'
+ define m06:' disclaimer'
+define m07:' subacct gl'
+define m08:'enter '
+define m09:' description'
+define m10:'current month is not valid.  newline to acknowledge'
+ ;
+define m14:'digits:'
+define m14a:'dates:'
+define m14b:'account numbers:'
+define m14c:'options:'
+define m15:'user name:'
+;define m16:'comment:'
+define m17:' current month:'
+define m18:'year end month:'
+define m19:'retain details:'
+define m20:'last nbr on bal sht'
+define m20a:'inv net change    :'
+define m20b:'begin inventory   :'
+define m20c:'ending inventory  :'
+define m23c:'branch:'
+define m23d:' major:'
+define m23e:' minor:'
+define m23f:'subacc:'
+define m23g:'payroll module:'
+define m23h:'negs in parens:'
+;;   payroll stuff
+define fldn01:'(01)'
+define fldn02:'(02)'
+define fldn03:'(03)'
+define fldn04:'(04)'
+define fldn05:'(05)'
+define fldn06:'(06)'
+define fldn07:'(07)'
+define fldn08:'(08)'
+define fldn09:'(09)'
+define fldn10:'(10)'
+define fldn11:'(11)'
+define fldn12:'(12)'
+define fldn13:'(13)'
+define fldn14:'(14)'
+define fldn15:'(15)'
+define fldn16:'(16)'
+define fldn17:'(17)'
+define fldn18:'(18)'
+define fldn19:'(19)'
+define fldn20:'(20)'
+define m35:'accountant nbr:'
+define m35a:'using h accounts'
+define m35b:'are you using calculation "h" accounts? (y/n)'
+define m35c:'$ flag'
+define m35d:'# months in yr'
+define m38:'warning! this field is critical to proper operation of the application'
+define m38a:'are you sure you want to change current month? (y/n)'
+;
+define m53:'account file is full'
+define m85:'enter field number  - 99 to redisplay first page'
+define m86a:'enter option:  1  change field on this page'
+define m87:'2  display/modify description page'
+define m88:'3  display/modify payroll page'
+define m90:'9  end program'
+define m112:'enter user name'
+define m114:'enter current month (moyr)'
+define m115:'enter ending month of users fiscal year (mo)'
+define m116:'do you want to retain details for the year? (y/n)'
+define m117:'last account number on balance sheet '
+define m118:' current earnings :'
+define m118a:'retained earnings :'
+define m118b:'account number'
+define m123:'enter number of digits in '
+define m123a:'are you using branch numbers? (y/n)'
+define m124:'major account numbers (1-6)'
+define m125:'minor account numbers (0-3)'
+define m126:'subaccount numbers (0-9)'
+define m127:'enter code for payroll posting module (0/1)'
+define m128:'do you want all negatives to be enclosed in parentheses? (y/n)'
+define m130:'print dollar signs and underlines on change in financial position? (y/n)'
+ ;
+define xgl507:'xgl507'
+define xgl514:'xgl514'
+define beep:' '
+;
+;
+;
+;
+;
+format f02:c4c8n3x3c4c16n5x3c4c16n3
+format f02a:c4c20d12x3
+format f02b:c4c8n3x31c4c16n3
+format f02c:x46c4c16n3
+format f02d:c46c4c16n3
+format f04:c4c12c40
+format f04a:c4c10x1c64
+format f04b:c19c28c9
+format f05:c6c50
+format f05b:c6c18c7
+format f09:d12
+format f10:n3n6n3
+format f17:x15 c70
+;
+;
+format fn1:n1
+format fn2:n2
+format fn4:n4
+format fn5:n5
+format fn6:n6
+format fn9:n9
+ 
+format fc1:c1
+format fc64:c64
+format fc40:c40
+format fc50:c50
+ ;
+format fopt:n2 n1n1n1n1n1n1n1
+define zer12:'   000000000'
+define zer9:'000000000'
+string null(0),acct(12)
+string mss(50)
+ ;
+ ;
+set brn:0,?one:1,?gg:0,?two:2,?thr:3,?four:4,?five:5,date1:1300,opt:0,date2:1400
+set numon:12,haflg:0,h0:0,h1:0,h2:0,h3:0,h4:0,h5:0
+set  ?zero:0
+set upsi:0
+set thirhun:1300
+set maj:000
+set min:000
+set ch:0
+;
+ ;
+integer fa1
+ ;
+ ;
+end;    gl500
+
+
+

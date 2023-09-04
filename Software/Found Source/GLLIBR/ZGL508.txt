@@ -1,0 +1,1289 @@
+title:  'gl508  (h type accounts master file service-stand alone)'
+system
+;
+define m01:'gl508  (master file service for calculation accounts)  12/29/81'
+;
+;notes:
+;   9/07/78...written...ns
+;   10/02/78...initial release...ns
+;    6/22/79...adding column c to available options..ns
+;    07/19/79...added ability to delete record from b44..ns
+;   08/02/79...changed signon..ns
+;
+;   12/29/81...recompile to have a common date base...dl
+ 
+record aux(131)
+set   ?hid:0, hff:0, hvv:0;  v1=2,v4=7/8 i account v4=7 print, v4=8 no print
+;                            v1=4, v4=7 k account
+;                            v1~5, v4~7 j account
+;                            v1=5, v4=8 h account
+;                            v1=6, v4=7 inventory (beg/end)
+;                            v1=6, v4=8 inventory contra account
+;
+string hdesc(30)
+string dec(10)
+set cur:0,?a9:0,?a0:0,?a1:0,?a2:0,?a3:0,?a4:0,?a5:0,?a6:0,?a7:0,?a8:0;  account numbers
+;   current amount calculated (?a9=ytd amount calculated)
+string func(10);  functions (0=add,1=subt,2=mult,3=divide,4=%)
+endrec
+;
+record newrec(50)
+;
+set ?na:0,nff:0 , nvv:0
+string ndesc(30)
+endrec
+;
+;@
+;
+;
+copy hd3
+copy recg
+;
+;
+file crt:sysipt
+entrypoint crt
+;
+;
+set    rel0:0
+set ?id:0
+;
+external ?gkey,?nkey,stat,ioerr,msg,msgn,cget,ynget,lfeed,clrec,pupsi,gjp,pjp
+;
+entry
+open io (gmst,crt)
+call equate(h5,1)
+call gjp(5,parm5)
+decode(parm5,fn6)hopt
+if(hopt.ne.0)go to a010;   this is an overlay program instead of stand alone
+call header;   salutation
+call ynget(m02); do you want to use your account number format
+go to (a010) on status
+call equate(h5,0)
+; allows these to have different numbering sequence
+;
+call getit(m03,fn1,h1); # in brn
+call getit(m04,fn1,h2); # in maj
+call getit(m05,fn1,h3); # in min
+;
+a010:
+;
+call ?gkey(gmst,?id)
+call stat(1);   either 1 or 2 is an ioerr in this program header shouldbe on file
+readb(gmst,headb)
+call stat(1)
+encode(acct,fn7)hh
+decode(acct,fn1)opt,h0,ha1,ha2,ha3
+if(opt.eq.0)go to q0875
+if(h5.eq.0)go to a50
+call equate(h1,ha1)
+call equate(h2,ha2)
+call equate(h3,ha3)
+goto a55;    h1 & ha1 etc are = (both the standard accounts and the h have same account #ing
+;
+;
+a50:
+;
+  if(h1.le.ha1)go to a51;   make ha1 the larger of the 2
+   call equate(ha1,1)
+;
+a51:
+;
+   if(h2.le.ha2)go to a52;  make ha2 the larger of the 2
+   call equate(ha2,h2)
+;
+a52:
+;
+   if(h3.le.ha3)go to a55;  make ha3 the larger of the 2
+   call equate(ha3,h3)
+;
+a55:
+;
+;
+b10:
+;
+   call equate(opt,0)
+   call equate(h0,h1)
+   call equate(h4,h2)
+   call equate(h5,h3)
+   if(hopt.ne.0)go to b41; hopt has rel key passed from 501
+   call acctnum(?id,null,two);  get account number
+;
+   call equate(h0,ha1)
+   call equate(h4,ha2)
+   call equate(h5,ha3)
+;
+b40:
+;
+   if(?id.le.0)go to q0900;end of job
+   call ?gkey(gmst,?id)
+   go to (b50,ioerr)on status
+   go to b42
+;
+b41:
+;
+   call equate(rel0,hopt)
+;
+;
+b42:
+;
+   hold(gmst)
+   if(status.ne.0)go to b42
+   readb(gmst,aux)
+   call stat(1)
+   if(?hid.eq.0)go to b60; deleted record
+   'acct'='zer4'
+   encode(acct,fn4)hvv
+   decode(acct,fn1)v1,v2,v3,v4
+   'acct'='zer3'
+   encode(acct,fn3)hff
+   decode(acct,fn1)f0,f1,f2
+   decode(func,fc1)fun0,fun1,fun2,fun3,fun4,fun5,fun6,fun7,fun8
+   decode(dec,fn1) dec0,dec1,dec2,dec3,dec4,dec5,dec6,dec7,dec8
+  if(?hid.lt.0)goto b70;   this means that the account is new and passed from 501
+;
+   if(v4.ge.7)goto b45
+;
+b44:
+;
+   write(crt,fn3)v1,v2,v3,v4
+   call msg(m50);   invalid
+   call getit(m06,fn1,opt);   dummy halt to allow time for reading message
+   call ynget(m07c);  do you wish to delete this record
+    go to (b49f)on status; 1=yes
+   go to b165;  frees and either returns to b10 or to gl501
+;
+b45:
+;
+   if(v1.eq.2)go to b44; not an i account
+   if(v1.eq.6)go to b44; an inventory account  not part of this any more
+;
+b47:
+;
+   call determin;    hvv still has info from i and l accounts  so ok
+   call equate(hrel,rel0)
+   call msg(hdesc)
+;
+b49:
+;
+   call msg(m07); 1=change
+   write(crt,fopt)m07a; 2=next
+   write(crt,fopt)m07b; 9=delete
+   call getit(null,fn1,oflg)
+   go to (b100,b165)on oflg
+   if(oflg.ne.9)go to b49
+;
+;   delete it
+b49f:
+;
+   call clrec(aux)
+   writeb(gmst,aux)
+   call stat(1)
+   go to b165;  free and either return to xgl501 or b10
+;
+;
+b50:
+;   new account?
+   call ynget(m38);  is this a new account? (y/n)
+   goto (b51)on status
+   go to b165
+   ;
+b51:
+   ;
+;
+   call ?nkey(gmst,?id)
+   go to (q0800,ioerr)on status
+;
+b52:
+;
+   hold(gmst)
+   if(status.ne.0)go to b52
+;
+   call equate(sort,1)
+   go to b65
+;
+b60:
+;
+   call ynget(m38); is this a new account? (y/n)
+   if(status.eq.0)go to b165
+;
+b65:
+;
+   call equate(hrel,rel0)
+   call clrec(aux)
+   call fundec
+   ?hid=?id
+   call clear(v1,v2,v3,v4,f0,f1,f2,0)
+   call equate(opt,1)
+   call equate(flg,opt)
+   go to b122; get the account type
+;
+b70:
+;
+   ?hid=?id=0-?hid;  reverses the account number - neg. account said this was an add
+   call equate(hrel,rel0);  holds the relkey
+   call equate(flg,1)
+   call equate(opt,1);  this will make it varify accounts names
+   call fundec;   fun0-9 are +, dec0-9 are 2
+   go to b125
+;
+b100:;   change this dude
+   go to (b121)on flg;    on a new account if the type is entered
+;
+   call determin
+   call header
+   write(crt,f02)m10,?hid
+   call msg(null)
+   write(crt,f03)m11,hdesc
+;
+   write(crt,f03a)m12,d1,m13,d2,m14,d3,m15,d4
+   ifs(d4.eq.n)go to b102
+   write(crt,f03a)m15a,d5,m15b,d6,m15c,d7
+;
+b102:
+;
+;
+   call msg(null)
+   write(crt,f04)m16,m16a,?a0,m17,m16b,fun0,m17a,m16c,dec0
+   write(crt,f04)m18,m16a,?a1,m19,m16b,fun1,m19a,m16c,dec1
+   write(crt,f04)m20,m16a,?a2,m21,m16b,fun2,m21a,m16c,dec2
+   write(crt,f04)m22,m16a,?a3,m23,m16b,fun3,m23a,m16c,dec3
+   write(crt,f04)m24,m16a,?a4,m25,m16b,fun4,m25a,m16c,dec4
+   write(crt,f04)m26,m16a,?a5,m27,m16b,fun5,m27a,m16c,dec5
+   write(crt,f04)m28,m16a,?a6,m29,m16b,fun6,m29a,m16c,dec6
+   write(crt,f04)m30,m16a,?a7,m31,m16b,fun7,m31a,m16c,dec7
+   write(crt,f04)m32,m16a,?a8,m33,m16b,fun8,m33a,m16c,dec8
+;
+;
+   call msg(null)
+;
+b110:
+;
+   call curpos
+   call ynget(m40);   change fields?
+   if(status.eq.0)go to b160
+   call curpos
+   call getit(m41,fn2,opt)
+   call curpos
+   if(opt.eq.0)go to b100;  redisplay
+   goto (b121,b122,b123,b124,b121f,b125,b126,b127,b128,b129)on opt
+   call opt10
+   go to (b130,b131,b133,b134,b135,b136,b137,b138,b139,b140)on opt
+   call opt10; reduces opt by 10
+   go to (b141,b142,b143,b144,b145,b146,b147,b148,b149,b150)on opt
+   call opt10
+   go to (b151,b152)on opt
+   ifs(d4.eq.n)goto b110;   others are applic.
+   goto (b151,b152,b153,b154,b155)on opt
+   go to b110
+;
+b121:
+;
+   call getit(m11,fc30,hdesc)
+   go to (b123,b100)on flg
+;
+;
+ 
+b121f:
+;
+;
+   call curpos
+   call msg(m39)
+   call getit(m06,fn1,opt);  dummy halt - not applicable - newline
+   go to b110
+;
+b122:
+;
+   call getd1
+;
+b122c:
+   call equate(v4,7)
+   ifs(d1.eq.h)go to b122h;  set description to null
+   ifs(d1.eq.j)go to b122j;
+   ifs(d1.eq.k)go to b122k
+   go to b122
+;
+b122h:;h acct
+;
+   call equate(v1,5)
+   call equate(v4,8)
+   call equate(v3,0)
+   call equate(v2,0)
+   go to b100
+;
+;
+b122j:;j account
+;
+   call equate(v1,5);v4 is already set
+   go to b100
+;
+b122k:;k account
+;
+   call equate(v1,4);v4 is already set
+   go to b100
+;
+b123:;  scheduled?
+;
+   call equate(v2,1)
+   if(v4.eq.8)go to b123g
+   call ynget(m44);   is account scheduled?
+   if(status.eq.0)go to b123f
+;
+   call equate(v2,2);scheduled
+;
+b123f:
+;
+   goto (b124,b100)on flg
+;
+b123g:
+;
+  go to (b124,b121f)on flg
+;
+b124:
+;
+   call getd3;   colunn a/b in d3
+;
+b124f:
+;
+   go to (b125,b100)on flg
+;
+b125:
+;
+   call msgn(m16);1st account
+   call acctnum(?a0,fun0,dec0)
+   go to (b126,b100)on flg
+;
+;
+b126:
+;
+   call funct(m17,fun0)
+   go to (b128,b100)on flg
+;
+b127:;  number of decimals carried in this one
+;
+  call decmil(m17a,dec0)
+   go to b100
+;
+b128:
+;
+   call msgn(m18)
+   call acctnum(?a1,fun1,dec1)
+   if(?a1.eq.0)go to b151f
+   go to (b129,b100)on flg
+;
+;
+b129:
+;
+   call funct(m19,fun1)
+   go to (b131,b100)on flg
+;
+b130:
+;
+   call decmil(m19a,dec1)
+   go to b100
+;
+b131:
+;
+   call msgn(m20)
+   call acctnum(?a2,fun2,dec2)
+   if(?a2.eq.0)go to b151f
+   go to (b133,b100)on flg
+;
+b133:
+;
+   call funct(m21,fun2)
+   go to (b135,b100)on flg
+;
+b134:
+;
+   call decmil(m21a,dec2)
+   go to b100
+;
+b135:
+;
+   call msgn(m22)
+   call acctnum(?a3,fun3,dec3)
+   if(?a3.eq.0)go to b151f
+   go to (b136,b100)on flg
+;
+b136:
+;
+   call funct(m23,fun3)
+   go to (b138,b100)on flg
+;
+b137:
+;
+   call decmil(m23a,dec3)
+   go to b100
+;@
+b138:
+;
+   call msgn(m24)
+   call acctnum(?a4,fun4,dec4)
+   if(?a4.eq.0)go to b151f
+   go to (b139,b100)on flg
+;
+b139:
+;
+   call funct(m25,fun4)
+   go to (b141,b100)on flg
+;
+b140:
+;
+   call decmil(m25a,dec4)
+   go to b100
+;
+b141:
+;
+   call msgn(m26)
+   call acctnum(?a5,fun5,dec5)
+   if(?a5.eq.0)go to b151f
+   go to (b142,b100)on flg
+;
+b142:
+;
+   call funct(m27,fun5)
+   go to (b144,b100)on flg
+   go to b100
+;
+b143:
+;
+   call decmil(m27a,dec5)
+   go to b100
+;
+b144:
+;
+   call msgn(m28)
+   call acctnum(?a6,fun6,dec6)
+   if(?a6.eq.0)go to b151f
+   go to (b145,b100)on flg
+;
+b145:
+;
+   call funct(m29,fun6)
+   go to (b147,b100)on flg
+;
+b146:
+;
+   call decmil(m29a,dec6)
+   go to b100
+;
+b147:
+;
+   call msgn(m30)
+   call acctnum(?a7,fun7,dec7)
+   if(?a7.eq.0)go to b151f
+   go to (b148,b100)on flg
+;
+b148:
+;
+   call funct(m31,fun7)
+   go to (b150,b100)on flg
+;
+b149:
+;
+   call decmil(m31a,dec7)
+   go to b100
+;
+b150:
+;
+   call msgn(m32)
+   call acctnum(?a8,fun8,dec8)
+   if(?a8.eq.0)go to b151f
+   go to (b152,b100)on flg
+;
+b151:
+;
+    call funct(m33,fun8)
+   ifs(fun8.eq.pc)goto b151f; ok
+   ifs(fun8.eq.null)go to b151f
+   call msg(m33b)
+   go to b151
+ 
+b151f:
+;
+;
+;
+   call equate(flg,2)
+   go to b100
+;
+b152:
+;
+   call decmil(m33a,dec8)
+    go to b151f
+;
+;
+;
+b153:
+;
+   call sign
+   go to b100
+;
+b154:
+;
+   call chrs
+   goto b100
+;
+b155:
+;
+   call under
+   go to b100
+;
+b160:
+;
+   call check
+   if(count.gt.1)go to b170; cant have more than 1 mult. or divide per line
+   call equate(rel0,hrel)
+   'acct'='zer4'
+   encode(acct,fn1)v1,v2,v3,v4
+ 
+   decode(acct,fn4)hvv
+   hff=f0*10+f1*10+f2
+   encode(func,fc1)fun0,fun1,fun2,fun3,fun4,fun5,fun6,fun7,fun8,null
+   encode(dec,fn1) dec0,dec1,dec2,dec3,dec4,dec5,dec6,dec7,dec8
+   writeb(gmst,aux)
+   call stat(1)
+;
+b165:
+;
+   free(gmst)
+   if(hopt.eq.0)go to b10;   not an overlay program
+   if(sort.eq.0)go to b168
+   call pupsi(sort)
+;
+b168:
+;
+   load(xgl501,0,0)
+   call equate(hopt,0)
+   call msg(m54);   xgl501 is missing
+   read(crt,fn1)
+   goto b10
+;
+;
+b170:
+;
+;
+   call getit(m53,fc1,copt); only 1 mult or divide can be in a single account
+;                              newline to acknowledge
+   go to b100
+;
+;
+ 
+q0800:
+;
+   call msg(m51);  no room
+   stop 100
+;
+q0875:
+;
+   call msg(m39);   not using h accounts, newline to end
+   read(crt,fn1); dummy halt
+;
+q0900:
+;
+;
+   call pupsi(sort)
+   call msg(m52); end of job
+   stop 0
+;
+;===================================================
+;subroutines
+;====================================================
+;
+;========================
+subroutine acctnum
+;========================
+;
+if(opt.eq.0)goto ac05
+call msg(m16a);acct #
+;
+ac05:
+;
+call clear(brn,maj,min,0)
+;
+direct
+   lda- x+
+   sta  ac10+8
+   lda- x+
+   sta ac20+3
+   lda- x+
+   sta  ac08+3
+cpl
+ac08:
+;
+   decimal=zero;    zero is variable
+;
+go to ac20
+;
+ac10:
+;
+   ?a0=?new
+   return
+ac20:
+;
+   ifs(zero.eq.pc)goto ac40;   integer instead of an account
+;
+   if(h0.eq.0)go to ac25
+   call getit(m08,fn3,brn)
+;
+ac25:
+;
+   go to (ac26,ac26,ac26,ac27,ac28,ac29,ac29,ac29,ac29)on h4
+;
+ac26:
+;
+call getit(m09,fn3,maj)
+go to ac30
+;
+ac27:
+call getit(m09,fn4,maj)
+goto ac30
+;
+ac28:
+call getit(m09,fn5,maj)
+go to ac30
+;
+ac29:
+call getit(m09,fn6,maj)
+;
+ac30:
+;
+   go to (ac31,ac32,ac33)on h5
+   if(h5.ne.0)go to ac33
+   go to ac35
+;
+ac31:
+;
+   call getit(m09a,fn1,min)
+   go to ac35
+;
+ac32:
+;
+   call getit(m09a,fn2,min)
+   goto ac35
+;
+ac33:
+;
+   call getit(m09a,fn3,min)
+;
+ac35:
+;
+;
+   ?new=brn*mil+maj*thou+min
+   if(opt.eq.0)go to ac10;   dont varify on ?id only varify on ?a0-?a9
+   call ?gkey(gmst,?new)
+   go to (ac50,ioerr)on status
+   if(?new.eq.0)go to ac10
+   readb(gmst,newrec)
+   call stat(1)
+   if(?na.eq.0)go to ac50
+   nvv=nvv/thou
+   if(nvv.eq.2)go to ac39
+   if(nvv.lt.4)go to ac50; must be title/d/or total account
+;
+ac39:
+;
+   call msg(ndesc)
+   call ynget(m34); ok?
+   if(status.eq.0)go to ac20;  ask for it again
+   go to ac10
+;
+ac40:
+go to (ac41,ac42,ac43,ac44,ac45,ac46,ac47,ac48,ac49)on decimal
+; 0 dec. places
+;
+   call getit(m62,fd12,?new)
+   go to ac10
+;
+ac41:
+;
+   call getit(m62,fd121,?new)
+   go to ac10
+;
+ac42:
+;
+   call getit(m62,fd122,?new)
+   go to ac10
+;
+ac43:
+;
+    call getit(m62,fd123,?new)
+   go to ac10
+;
+ac44:
+;
+    call getit(m62,fd124,?new)
+   go to ac10
+;
+ac45:
+;
+   call getit(m62,fd125,?new)
+   go to ac10
+;
+ac46:
+;
+   call getit(m62,fd126,?new)
+   go to ac10
+;
+ac47:
+;
+   call getit(m62,fd127,?new)
+   go to ac10
+;
+ac48:
+;
+   call getit(m62,fd128,?new)
+   go to ac10
+;
+ac49:
+;
+   call getit(m62,fd129,?new)
+   go to ac10
+;
+;
+ac50:
+;
+   call msg(m50)
+   go to ac20
+;
+;====================
+subroutine chrs
+;====================
+;
+call getit(m15b,fc1,d6)
+ifs(d6.eq.paren)goto chr10
+ifs(d6.eq.null)goto chr15
+ifs(d6.ne.dol)goto chrs
+call equate(f1,1)
+return
+;
+chr10:
+;
+call equate(f1,2)
+return
+;
+chr15:
+;
+call equate(f1,0)
+return
+;
+;
+;====================
+subroutine check
+;===================
+;
+call equate(int,0)
+call equate(count,0)
+ch10:
+call tget(copt,int,func,1)
+ifs(copt.eq.pc)go to ch40;  i is the last one in the record
+ifs(copt.eq.mult)goto ch20
+ifs(copt.ne.div)goto ch30
+;
+ch20:
+;
+   incr count
+;
+ch30:
+;
+   incr int
+   if(count.gt.1)go to ch40
+   if(int.lt.9)go to ch10
+;
+ch40:
+;
+return
+;
+;=============================
+subroutine decmil
+;======================
+;
+direct
+   lda- x+
+   sta  dc10+3
+   lda- x+
+   sta  dc20+7
+cpl
+;
+dc10:
+;
+   call msgn(zero)
+   call msg(m16c)
+;
+dc20:
+;
+   call getit(m49,fn1,zero)
+;
+;
+return
+;
+;=========================
+subroutine equate
+;=========================
+;
+;       to equate two four-byte integers (for reduced memory requirements)
+;
+;       calling sequence:
+;
+;       call equate (this, that)
+;
+direct
+@p1 set *+11
+@p2 set *+16
+ lda- x+ get target integer
+ sta @p2
+ lda- x+ get source integer
+ sta @p1
+cpl
+@p2 = @p1
+return
+;
+;
+;======================
+subroutine curpos
+;======================
+;
+;
+curp(crt,1,21)
+curb(crt,70)
+return
+;
+;=====================
+subroutine fundec
+;=====================
+;
+decode(pluses,fc1)fun0,fun1,fun2,fun3,fun4,fun5,fun6,fun7,fun8
+;dec0=dec1=dec2=dec3=dec4=dec5=dec6=dec7=dec8=2
+call clone(dec0,dec1,dec2,dec3,dec4,dec5,dec6,dec7,dec8,0)
+return
+;
+;=====================
+subroutine determin
+;=====================
+;
+'d1'='null'
+'d2'='n'
+'d3'='a'
+'d4'='null'
+'d5'='null'
+'d6'='null'
+'d7'='zer1'
+;
+if(v4.eq.7)go to dt10; 7=print
+'d4'='n'
+go to dt20
+;
+dt10:
+'d4'='y'
+;
+dt20:
+;
+if(v2.ne.2)goto dt30
+'d2'='s';scheduled
+;
+dt30:
+;
+if(v3.eq.0)goto dt40
+go to (dt35,dt36)on v3
+go to dt40; 3 & 0 are col. a
+ 
+dt35:
+'d3'='b'
+goto dt40
+;
+dt36:
+'d3'='c'
+;
+dt40:
+;
+ifs(d4.eq.n)goto dt48
+if(f0.eq.0)go to dt46
+'d5'='subt'
+;
+dt46:
+goto (dt47,dt47a)on f1
+goto dt47b
+;
+dt47:
+;
+'d6'='dol'
+goto dt47b
+;
+dt47a:
+;
+'d6'='paren'
+;
+dt47b:
+;
+encode(d7,fn1)f2;  underline option
+;
+dt48:
+;
+;
+if(v1.eq.2)goto dt50
+if(v1.eq.4)goto dt55
+if(v1.eq.5)goto dt60
+if(v1.ne.6)goto dt80
+'d1'='l'
+return
+;
+dt50:
+;
+'d1'='i'
+return
+;
+dt55:
+;
+'d1'='k'
+return
+;
+dt60:
+;
+if(v4.eq.7)goto dt65
+'d1'='h'
+return
+;
+dt65:
+;
+'d1'='j'
+dt80:
+return
+;
+;======================
+subroutine funct
+;======================
+;
+direct
+   lda- x+
+   sta fu05+3
+   lda- x+
+   sta  fu10+7
+   sta  fu20+5
+cpl
+;
+fu05:
+;
+   call msgn(zero)
+   call msg(m16b)
+;
+fu10:
+call getit(m47,fc1,zero)
+;
+;
+fu20:
+;
+'copt'='zero'
+ifs(copt.eq.plus)go to fu30
+ifs(copt.eq.subt)goto fu30
+ifs(copt.eq.mult)go to fu30
+ifs(copt.eq.div)go to fu30
+ifs(copt.eq.null)go to fu30
+ifs(copt.ne.pc)go to fu10
+;
+fu30:;ok
+goto(fu35,fu40)on flg
+;
+fu35:
+;
+call msg(null);   put linefeed between each group on a add
+;
+fu40:
+return
+;
+;==================
+subroutine getd1
+;====================
+;
+call getit(m42,fc1,d1)
+return
+;
+;===================
+subroutine getd3
+;===================
+;
+call equate(v3,0);   this starts it as column a
+if(?hid.gt.?bsea)go to gtd10
+if(v4.eq.8)goto gtd10;   non-print who cares which column
+call getit(m46,fc1,d3);  column a/b
+ifs(d3.eq.a)go to gtd10
+ifs(d3.eq.c)go to gtd09
+ifs(d3.ne.b)goto getd3
+;
+call equate(v3,1)
+go to gtd10
+ 
+gtd09:
+call equate(v3,2)
+;
+gtd10:
+;
+return
+;
+;===================
+subroutine getit
+;==================
+;
+direct
+   lda-  x+
+   sta gt10+3
+   lda-  x+
+   sta gt10+5
+   lda-  x+
+   sta gt10+7
+cpl
+;
+gt10:
+call cget(zero,zero,zero)
+if(status.eq.0)goto gt20
+call msg(m50);error
+go to gt10
+;
+gt20:
+return
+;
+;==================
+subroutine header
+;==================
+;
+call msg(eject)
+call msg(m01)
+curp(crt,1,3)
+return
+;
+;=================
+subroutine clear
+;=================
+;
+direct
+   lda- x+
+   bnz *+3
+   rsr
+   sta cl10+3
+cpl
+;
+cl10:
+;
+call equate(zero,0)
+go to clear
+;
+;===============
+subroutine clone
+;===============
+;
+direct
+  lda-   x+
+  bnz    *+3
+  rsr
+  sta    clone1+3
+cpl
+;
+clone1:
+;
+call equate(zero,2)
+goto clone
+;
+;=================
+subroutine opt10
+;=================
+;
+opt=opt-10
+return
+;
+;===================
+subroutine sign
+;===================
+;
+call getit(m60,fn1,f0);  reverse sign
+go to (sig10)on f0
+call equate(f0,0)
+;
+sig10:
+return
+;
+;
+;=================
+subroutine tget
+;=================
+direct
+   lda- x+ get target address
+   sta tga
+   lda- x+ get index
+   ina ,2
+   lda- a
+   xay save it for later
+   ldb- x+ get table start
+   lda- x+ get table unit byte length
+   stx- s-
+   sta- s-
+tg01 add y,b mpy index*unit-byte-length
+   dca
+   bnz tg01
+   ldx= *-*
+tga equ *-2
+   lda- s+
+   xay maove xfr count to y
+tg02 ldab- b+
+   stab- x+
+   dcr y decr xfr count to y
+   bnz tg02
+   ldx- s+
+cpl
+return
+;
+;====================
+subroutine under
+;====================
+;
+call getit(m61,fn1,f2)
+;
+if(f2.gt.8)goto under;   1-8 are acceptable (0 is no underlines)
+if(f2.lt.0)goto under
+return
+;
+;
+;==========================
+;  working storage
+;===========================
+;
+define m02:'using your standard account format? (y/n)'
+define m03:'number of digits in branch (0/3)'
+define m04:'number of digits in major (1/6)'
+define m05:'number of digits in minor (0/3)'
+define m06:'newline to acknowledge'
+define m07:'enter option:  1  change'
+define m07a:'2  next'
+define m07b:'9  delete'
+define m07c:'do you wish to delete this record? (y/n)'
+define m08:'branch number'
+define m09:'major number'
+define m09a:'minor number'
+define m10:'account number'
+define m11:'(01) desc'
+define m12:'(02) type'
+define m13:'(03) schedule'
+define m14:'(04) column'
+define m15:'(05) print?'
+define m15a:'(33) revs :'
+define m15b:'(34) char :'
+define m15c:'(35) under:'
+define m16:'(06)1st'
+define m16a:' acct'
+define m16b:' func'
+define m16c:' # of dec'
+define m17:'(07)1st'
+define m17a:'(08)'
+define m18:'(09)2nd'
+define m19:'(10)2nd'
+define m19a:'(11)'
+define m20:'(12)3rd'
+define m21:'(13)3rd'
+define m21a:'(14)'
+define m22:'(15)4th'
+define m23:'(16)4th'
+define m23a:'(17)'
+define m24:'(18)5th'
+define m25:'(19)5th'
+define m25a:'(20)'
+define m26:'(21)6th'
+define m27:'(22)6th'
+define m27a:'(23)'
+define m28:'(24)7th'
+define m29:'(25)7th'
+define m29a:'(26)'
+define m30:'(27)8th'
+define m31:'(28)8th'
+define m31a:'(29)'
+define m32:'(30)9th'
+define m33:'(31)9th'
+define m33a:'(32)'
+define m33b:'last accounts function must be blank or i'
+define m34:'ok? (y/n)'
+;
+define m35:'current month'
+define m36:'year to date'
+define m36a:'unposted'
+define m37:'h account'
+define m38:'is this a new account? (y/n)'
+define m39:'option not applicable. '
+define m40:'do you wish to change a field? (y/n)'
+define m41:'enter field number to be changed'
+define m42:'enter type (h, i, j, k, l)'
+;
+define m44:'scheduled? (y/n)'
+;
+define m46:'column (a/b/c)'
+define m47:'enter function (+, -, *, /, i)'
+define m48:'print account on financial statements? (y/n)'
+define m49:'number of decimal places in amount (0-9)'
+;
+define m50:'invalid'
+define m51:'no room in file, must expand'
+define m52:'end of program'
+define m53:'only 1 multiply and/or divide can be in a single account'
+define m54:'xgl501 is now missing. newline to continue'
+;
+;
+define m60:'1=reverse true sign in financial statement'
+define m61:'underline options:  1-2 column a; 3-4 column b; 5-6 column c; 7-8 column a & b'
+define m62:'amount'
+;
+define xgl501:'     1'
+;
+define zer4:'0000',acct:'0000000',zer1:'0',zer3:'000'
+define pluses:'++++++++++'
+;
+define a:'a',b:'b',c:'c',d:'d',h:'h',i:'i',j:'j',k:'k',l:'l',n:'n',s:'s',y:'y'
+define plus:'+',subt:'-',mult:'*',div:'/',pc:'i',dol:'$',paren:'('
+;
+format fn1:n1
+format fn2:n2
+format fn3:n3
+format fn4:n4
+format fn5:n5
+format fn6:n6
+format fn7:n7
+;
+format fd12:d12
+format fd121:d12.1
+format fd122:d12.2
+format fd123:d12.3
+format fd124:d12.4
+format fd125:d12.5
+format fd126:d12.6
+format fd127:d12.7
+format fd128:d12.8
+format fd129:d12.9
+;
+format fc1:c1
+format fc30:c30
+;
+format fopt:x15c40
+format f02:c20d12
+format f03:c12,c30
+format f03a:c15,c4;  raps around 3 times be careful changing
+format f03b:c4c11,c4;raps around 3 times
+format f04:c7,c6d13,x3,c7,c6,c4 ,c4,c9,n2; raps once
+format f04a:x46c13n2
+format f05:c13n-11.2,x3,c13,d-13.2x2
+ ;raps around
+;
+set v1:0,v2:0,v3:0,v4:0,h0:0,h1:0,h2:0,h3:0,h4:0,h5:0,opt:0,?new:0,sort:0
+set f0:0,f1:0,f2:0,hopt:0,decimal:0,two:2
+set ha1:0,ha2:0,ha3:0
+set mil:1000000,thou:1000,count:0,int:0,brn:0,maj:0,min:0,flg:2,hrel:0
+set hmil:1000000000,oflg:0
+;
+;
+set dec0:0,dec1:0,dec2:0,dec3:0,dec4:0,dec5:0,dec6:0,dec7:0,dec8:0
+;
+string fun0(1),fun1(1),fun2(1),fun3(1),fun4(1),fun5(1),fun6(1),fun7(1),fun8(1)
+string null(0),d1(1),d2(1),d3(1),d4(1),d5(1),d6(1),d7(1),copt(1)
+string parm5(6)
+;
+end
+
+string fun0(1),fun1(1),fun2(1),fun3(1),fun4(1),fun5(1),fun6(1),fun7(1),fun8(1)
+string null(0),d1(1),d2(1),d3(1),d4(1),d5(1),d6(1),d7(1),copt(1)
+string parm5(6)
+;
+end
+

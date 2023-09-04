@@ -1,0 +1,123 @@
+title: 'gl511  (purging file of deleted accounts)'
+system  (exp=b)
+;
+define m01:'gl511 (purging file of deleted accounts) 12/29/81'
+; notes:
+;      program will enlarge billable master ....dad
+;      conversion to 900 series 12/1/75...ns
+;      conversion to general expand masters..ns
+;      expand g/l master files....6/15/76...ns
+;      7/2/76...new g/l file layout in the 500 series..ns
+;      7/9/76...new format again - 131 bytes...ns
+;      7/15/76...chng in library construction..ns
+;            error termination if run out of room..glg
+;      program incorporated into standard general ledger application
+;      with name change on august 6, 1976, by g.l. gillette.  at the
+;      same time, certain cosmetic changes to formats and messages,
+;      plus minor program modifications, were made.
+;      12/2/76...copied from gl510 for glsrnk; put in copy statements to get
+;            current record format; changed messages to suit purpose..glg
+;      11/22/76...fixed loop in b10..glg
+;     10/25/77...wasnt copying all of the headers (0,1,2 are headers but only 0
+;                & 1 were being copied...ns
+;      07/18/78...cosmetic changes..ns
+;    09/12/78...changed record statement...ns
+;   08/02/79...changed signon message..ns
+;
+;   12/29/81...recompile to have a common date base...dl
+external ?nkey, ?gkey, msg,ioerr,stat
+;
+;
+file nmst:sys2,class=2,rnd,recsiz=131,key=rel2
+set rel2:0
+;
+record recg(131)
+set    ?gid:0
+set    ff:0
+set    vv:0
+string desc(30)
+endrec
+;
+record listb(10)
+set    ?lid:0
+set    rel0:0
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+;
+file crt:sysipt
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+entrypoint crt
+;
+;********************************
+;
+entry
+;
+open io (gmst,nmst,crt,list)
+;
+call msg(m01);     hi there
+;
+b10:
+readb(list,listb)
+if(status.ne.0) go to dun
+if(?lid.lt.0)go to b10
+readb(gmst,recg);    rel key was setup in the list file
+if(status.ne.0)go to b10;   bad record
+   if(?lid.lt.100)goto b14; 10/25
+;
+b12:
+if(?gid.ne.0)go to b14;    not deleted
+delctr=delctr+1 ; count them deleted records
+write (crt,frec)zero,?lid,mdel
+go to b10 ; get another record
+;
+b14:
+call ?gkey(nmst,?lid)
+go to (b20,ioerr) on status
+go to b10;                              skip if record already on file
+;
+b20:
+call ?nkey(nmst,?lid)
+go to (ioerr,ioerr) on status
+writeb(nmst,recg)
+call stat(2)
+;
+copctr=copctr+1
+if(?lid.lt.100)go to b30;  header record
+write (crt,frec)copctr,?gid,desc
+go to b10
+;
+b30:
+write(crt,frec)copctr,?lid,m06
+go to b10
+;
+;
+;
+dun:
+call msg(m02)
+write (crt,fend)m04,copctr
+write (crt,fend)m05,delctr
+close gmst,nmst,list,crt
+stop 0
+;
+;****************************************
+;
+set one:1
+set delctr:0
+set copctr:0
+format frec:n4,x1,d12,x1,c30,d12.2
+format fend:c26n4
+define mdel:'deleted'
+define m02:'end of program'
+define m04:'number of records copied: '
+define m05:'deleted records counted:  '
+define m06:'user record'
+;
+end
+
+
+

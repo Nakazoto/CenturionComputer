@@ -1,0 +1,756 @@
+title 'gl596 printing the change in financial position statement'
+system
+;
+define m01:'gl596 (change in financial postion statement) 12/29/81'
+;
+;  notes:
+;  7/29/76...written...ns
+;  8/18/76...program incorporated into standard general ledger application
+;            with name change, by g.l. gillette.  at the
+;            same time, certain cosmetic changes to formats and messages,
+;            plus minor program modifications, were made.
+;   12/16/76....minor modifications mades including reversing net income field ..ns
+;   12/19/76....reversed back..glg
+;  3/31/77... the total being reversed which was pulled in dec. was right but
+;             not until gl595 was changed in 3/31/77..ns
+;  11/18/77...page numbering began with 2...ns
+;  07/24/78...cosmetic changes...ns
+;   05/29/79..changed print format & added wide option...ns
+;   6/25/79...moved amount columns 1 place..ns
+;    07/02/79...changed wide to be indented 6 more spaces..ns
+;    07/27/79...depreciation $ field is off 1 character (f07w changed)..ns
+;    09/12/79...added printing of disclaimer lines and footnote line...jwb
+;    10/26/79...modified to bypass print of disclaimer line if there is not
+;               any records to be printed...jwb
+;     11/30/79...modified for cpu-6...kag
+;
+;     12/29/81...recompile to have a common date base...dl
+;
+file  work1:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+set  rel0:0
+;
+buffer buf2(400)
+;
+copy headb
+;
+record hd5 (131)
+ string topcom1 (64)
+ string topcom2 (64)
+ endrec
+ ;
+;
+record hwork(87)
+set ?xx:0
+set zx:0
+string date(77)
+endrec
+ 
+record head2(10)
+string dum(1)
+set dolflg:0
+endrec
+ 
+endrec
+record wrec(65)
+set    ?wid:0
+set     f3:0
+string  wdesc(30);  name or account or date of worksheet
+set    spec:0;   f3= 1=net income, 2=depreciation, 3=source/appl, 4=working capital
+set    ?camt:0;     current balance
+set    ?bamt:0;     beginning bal
+set    ?wamt:0;     diff
+endrec
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+entrypoint crt
+external lfeed,msg,?gkey,?edit,stat,ioerr,gjp,cget
+;
+;
+entry
+;
+open io (crt,gmst,work1), output prt
+call msg(m01)
+call msg(null)
+'topcom1'='null'
+'topcom2'='null'
+call ?gkey (gmst, ?four)
+goto (a001, ioerr) on status
+readb (gmst, hd5)
+call stat (1)
+;
+a001:
+;
+ 
+a003:
+call msg(m22); enter option:  1  14 7/8 x 11
+write(crt,fopt)m23; 2   8 7/8 x 11
+read(crt,fn1)popt
+go to (a005,a005)on popt
+go to a003
+ 
+a005:
+;
+call gjp(0,key)
+readb(work1,hwork);    get the date
+if(status.ne.0)go to b110;   no records at all
+call ?gkey(gmst,?zero)
+go to (ioerr,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+?wid=1
+call ?gkey(gmst,?wid)
+call stat(1)
+readb(gmst,head2)
+call stat(1)
+go to (a010)on dolflg
+'dol'='null'
+'mss'='null'
+'mss2'='null'
+ 
+a010:
+h0=hh/hthou
+h0=h0-(h0/10*10)
+'dol1'='dol'
+call bltrun(client)
+call bltrun(date)
+go to (a020)on popt
+call cent80(client,fmt1)
+call cent80(date,fmt3)
+call bltrun (coment)
+call cent80 (coment, fmt6)
+ifstring (topcom1. eq. null) goto a011
+call bltrun (topcom1)
+call cent80 (topcom1, fmt4)
+;
+a011:
+;
+ifstring (topcom2. eq. null) goto a030
+call bltrun (topcom2)
+call cent80 (topcom2, fmt5)
+;
+go to a030
+ 
+a020:
+call cent132(client,fmt1)
+call cent132(date,fmt3)
+call bltrun (coment)
+call cent132 (coment, fmt6)
+ifstring (topcom1. eq. null) goto a021
+call bltrun (topcom1)
+call cent132 (topcom1, fmt4)
+;
+a021:
+;
+ifstring (topcom2. eq. null) goto a030
+call bltrun (topcom2)
+call cent132 (topcom2, fmt5)
+;
+ 
+a030:
+;
+b10:
+readb(work1,wrec)
+if(status.ne.0)go to b90;   end of job
+pflg=1
+go to (c10)on popt
+go to (b20,b30,b40,b50,b60)on f3
+;
+go to b10
+;
+b20:
+t1=1
+call crq
+write(prt,f04c)m02;    source of financial resources:
+call crq
+call lfeed(prt,1)
+call crq
+write(prt,f04c)m03;      operations
+;   net income is profit and loss or current earnings - hence it
+;   needs to be reversed to show profit as a + and loss as a minus
+call ed(?wamt)
+;
+call crq
+write(prt,f02)wdesc,dol,num1+1;   year to date - net income
+b23:
+?g1=?g1+?wamt
+?g2=?g2+?wamt
+?g3=?g3+?wamt
+go to b10
+;
+b30:;     depreciation
+go to (b35)on dfl
+call crq
+write(prt,f02)m05
+call crq
+write(prt,f08)m05a
+dfl=1
+;
+b35:
+t1=1
+call ed(?wamt)
+call crq
+write(prt,f07)wdesc,null,num1+1
+b38:
+?g1=?g1+?wamt
+?g2=?g2+?wamt
+?g3=?g3+?wamt
+go to b10
+;
+b40:;   source
+go to (b45)on sfl
+if(t1.ne.1)go to b43
+;    first pass on source - total depreciation and income
+call ed(?g1)
+write(prt,f03)mss
+call crq
+write(prt,f04b)m06,dol,num1+1
+b42:
+call crq
+?g1=0
+write(prt,f03b)mss
+call crq
+b43:
+ 
+write(prt,f04)m07; exclusive of operations
+call crq
+;
+b45:
+call ed(?wamt)
+call crq
+write(prt,f02)wdesc,null,num1+1
+b47:
+?g1=?g1+?wamt
+?g2=?g2+?wamt
+?g3=?g3+?wamt
+sfl=1
+go to b10
+;
+b50:;   application of funds
+go to (b55)on afl
+if(sfl.ne.1)go to b53
+call ed(?g1)
+call crq
+write(prt,f03)mss
+call crq
+write(prt,f04b)m07a
+call crq
+write(prt,f04b)m07b,null,num1+1
+call crq
+write(prt,f03b)mss
+;     first pass on application of funds
+b53:
+ 
+call ed(?g2)
+write(prt,f04c)m10,dol,num1+1;      total source
+write(prt,f03c)mss
+b54:
+call crq
+lcr=lcr+1
+call lfeed(prt,1)
+write(prt,f04c)m08;   application of working capital
+?g2=?g1=0
+call lfeed(prt,1)
+lcr=lcr+3
+afl=1
+;
+;
+b55:
+call ed(?wamt)
+call crq
+write(prt,f02b)wdesc,null,num1+1
+b57:
+?g1=?g1+?wamt
+?g3=?g3-?wamt
+go to b10
+;
+b60:
+;      working capital
+if(lcr.ge.99)goto b70
+if(afl.ne.1)go to b65
+go to (b75)on wfl
+call ed(?g1)
+write(prt,f03b)mss
+write(prt,f04c)m09,null,num1+1
+write(prt,f03c)mss
+call crq
+call crq
+call crq
+b65:
+call ed(?g3)
+write(prt,f04c)m11,dol,num1+1
+write(prt,f03c)mss2
+call crq
+call crq
+b67:
+?g1=?g2=?g3=0
+ 
+b70:
+afl=wfl=1
+line = 59 - lcr
+call lfeed (prt, line)
+write (prt, fmt6) coment
+lcr=99
+;
+call crq
+;
+b75:;   working capital
+?g1=?g1+?wamt
+call ed(?wamt)
+call crq
+write(prt,f02b)wdesc,dol1,num1+1
+b82:
+'dol1'='null'
+go to b10
+;
+b90:;   eoj
+;
+if (pflg. eq. 0) goto b110
+call ed(?g1)
+go to (b94)on popt
+write(prt,f03b)mss
+write(prt,f04c)m11,dol,num1+1
+write(prt,f03c)mss2
+ 
+go to b100
+ 
+b94:
+write(prt,f03wb)mss
+write(prt,f04wc)m11,dol,num1+1
+write(prt,f03wc)mss2
+ 
+b100:
+;
+if (pflg. eq. 0) goto b110
+incr lcr, 3
+line = 60 - lcr
+call lfeed (prt, line)
+write (prt, fmt6) coment
+;
+b110:
+;
+call msg(m21)
+close work1,gmst,crt,prt
+stop 0
+ 
+c10:
+go to (c20,c30,c40,c50,c60)on f3
+go to b10
+ 
+c20:
+t1=1
+call crq
+write(prt,f04wc)m02
+call crq
+call lfeed(prt,1)
+call crq
+write(prt,f04wc)m03
+call ed(?wamt)
+call crq
+write(prt,f02w)wdesc,dol,num1+1
+ 
+go to b23
+ 
+c30:
+; depreciation
+go to (c35)on dfl
+call crq
+write(prt,f02w)m05
+call crq
+write(prt,f08w)m05a
+dfl=1
+ 
+c35:
+t1=1
+call ed(?wamt)
+call crq
+write(prt,f07w)wdesc,null,num1+1
+go to b38
+ 
+c40:; source
+go to (c45)on sfl
+if(t1.ne.1)go to c43
+call ed(?g1)
+ 
+c41:
+write(prt,f03w)mss
+call crq
+write(prt,f04wb)m06,dol,num1+1
+ 
+c42:
+call crq
+?g1=0
+write(prt,f03wb)mss
+call crq
+ 
+c43:
+ 
+write(prt,f04w)m07
+call crq
+ 
+c45:
+call ed(?wamt)
+call crq
+write(prt,f02w)wdesc,null,num1+1
+ 
+go to b47
+ 
+c50:
+go to (c55)on afl
+if(sfl.ne.1)go to c53
+call ed(?g1)
+call crq
+ 
+write(prt,f03w)mss
+call crq
+write(prt,f04wb)m07a
+call crq
+write(prt,f04wb)m07b,null,num1+1
+ 
+call crq
+write(prt,f03wb)mss
+c53:
+call ed(?g2)
+write(prt,f04wc)m10,dol,num1+1
+write(prt,f03wc)mss
+ 
+call crq
+lcr=lcr+1
+call lfeed(prt,1)
+write(prt,f04wc)m08
+?g2=?g1= 0
+call lfeed(prt,1)
+lcr=lcr+3
+afl=1
+ 
+c55:
+call ed(?wamt)
+call crq
+write(prt,f02wb)wdesc,null,num1+1
+ 
+go to b57
+ 
+c60:
+if(lcr.ge.99)go to c70
+if(afl.ne.1)go to c65
+go to (c75)on wfl
+call ed(?g1)
+write(prt,f03wb)mss
+write(prt,f04wc)m09,null,num1+1
+write(prt,f03wc)mss
+call crq
+call crq
+call crq
+ 
+c65:
+call ed(?g3)
+write(prt,f04wc)m11,dol,num1+1
+write(prt,f03wc)mss2
+incr lcr,2
+?g1=?g2=?g3=0
+ 
+c70:
+afl=wfl=1
+line = 59 - lcr
+call lfeed (prt, line)
+write (prt, fmt6) coment
+lcr=99
+call crq
+ 
+c75:; working capital
+?g1=?g1+?wamt
+call ed(?wamt)
+call crq
+write(prt,f02wb)wdesc,dol1,num1+1
+ 
+'dol1'='null'
+go to b10
+ 
+;
+;=================
+;======subroutines
+;=================
+;=========================
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+subroutine cent132
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 132-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent132 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;=================
+subroutine crq
+;=================
+if (lcr. ge. 99) goto cr10
+lcr=lcr+1
+if(lcr.ge.58)go to cr01
+return
+ 
+cr01:
+ 
+line = 59 - lcr
+call lfeed (prt, line)
+write (prt, fmt6) coment
+ 
+cr10:
+lcr=2
+write(prt,f04)eject
+write(prt,fmt1)client
+'ms1'='spc10'
+if(?xx.eq.0)go to cr11
+encode(ms1,f10)m20,pg
+ 
+cr11:
+if(wfl.eq.0)go to cr20
+go to (cr14)on popt
+write(prt,fmt2)m18,ms1
+ 
+go to cr25
+ 
+cr14:
+write(prt,fmt2w)m18,ms1
+go to cr25
+ 
+cr20:
+go to (cr21)on popt
+write(prt,fmt2)m15,ms1
+goto cr25
+ 
+cr21:
+write(prt,fmt2w)m15,ms1
+ 
+cr25:
+pg=pg+1
+write(prt,fmt3)date
+incr lcr,2
+call lfeed (prt, 1)
+ifstring (topcom1. eq. null) goto cr30
+incr lcr
+write (prt, fmt4) topcom1
+;
+cr30:
+;
+ifstring (topcom2. eq. null) goto cr40
+write (prt, fmt5) topcom2
+incr lcr
+call lfeed (prt, 1)
+incr lcr
+goto cr50
+;
+cr40:
+;
+ifstring (topcom1. eq. null) goto cr50
+call lfeed (prt, 1)
+incr lcr
+;
+cr50:
+;
+;
+return
+;=================
+subroutine ed
+;===================
+direct
+ lda- x+
+ sta ed10+3
+cpl
+ 
+ed10:
+ 
+?new=?wamt;  ?wamt is variable
+if(h0.eq.0)go to ed20
+if(?new.ge.0)go to ed20
+call ?edit(?new,num1,mask02)
+return
+ 
+ed20:
+call ?edit(?new,num1,mask01)
+return
+ 
+;=================
+;==== constants ==
+;=================
+;
+set  dfl:0,sfl:0,afl:0,wfl:0,pg:1,?zero:0,opt:0,popt:0,?new:0,h0:0,hthou:100 000
+set crqsw:0
+set  ?g1:0,?g2:0,?g3:0,t1:0
+set line:0, ?four:4, pflg:0
+;
+;
+set   lcr:99
+;
+define mask01:'  ##,###,###@.##-'
+define mask02:' (##,###,###@.##)'
+define num1:  '                 '
+;
+define mss:'-------------'
+define mss2:'============='
+define dol:'$',dol1:'$'
+define sl:'/',spc10:'          ', ms1:'          '
+define key:'      '
+ 
+string null(0)
+;
+define m02:'sources of working capital'
+define m03:'  from operations'
+define m05:'non working capital'
+define m05a:'expenditures'
+define m06:'  total sources from operations'
+define m07:'  exclusive of operations'
+define m07a:'  total sources exclusive'
+define m07b:'      of operations'
+define m08:'uses of working capital'
+define m09:'    total uses of working capital'
+define m10:'    total sources of working capital'
+define m11:'      net increase/(decrease) in working capital'
+define m15:'statement of changes in financial position'
+define m18:'schedule of net changes in working capital'
+define m20:'page'
+define m21:'end financial change statement program'
+define m22:'enter option:  1  14 7/8 x 11'
+define m23:'2   8 1/2 x 11'
+ 
+;
+format f02:x4 c27 c2 c14
+format f02b:x2 c46 c2 c14
+format f02w:x9 c41 c2 c28
+format f02wb: x7 c73 c2 c28
+format f03:x33 c13
+format f03b:x50 c13
+format f03c:x67 c13
+format f03w: x52 c13
+format f03wb:x82 c13
+format f03wc:x112 c13
+format f04:c31 c2 c14
+format f04b:c48 c2 c14
+format f04c:c65 c2 c14
+format f04w:x5 c45 c2 c14
+format f04wb:x5 c75 c2 c14
+format f04wc:x5c105 c2 c14
+ 
+format f07: x6 c25 c2 c14
+format f07w: x11 c39 c2 c14
+format f08: x7 c40
+format f08w: x12 c40
+ 
+;
+format f10:c5 n4
+;
+format fmt1:x100 c100
+format fmt2:x19 c53 c9
+format fmt3:x100 c100
+format fmt4: x100, c100
+format fmt5: x100, c100
+format fmt6: x100, c100
+ 
+format fmt2w:x45 c78 c9
+ 
+format fn1:n1
+format fopt:x15  c40
+ 
+end
+;
+
+
+

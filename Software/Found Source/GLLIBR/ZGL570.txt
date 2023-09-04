@@ -1,0 +1,622 @@
+title:'zgl570 (subaccount general ledger) '
+system
+;
+define m00:'gl570 (subaccount general ledger) 12/29/81'
+;
+;  notes:
+;    7/30/76..written..ns
+;    9/20/76...changing line count for 11 x 14 7/8 paper..ns
+;    4/21/77...new detail format and checking date on jdte instead of date..ns
+;
+;    1/9/78...adding ref and date to print...kam
+;  1/15/78...changing some of the formats..ns
+;   06/05/79..new formatting...ns
+;   06/25/79...moving page over 1 space..ns
+;    07/03/79...taking out optional report formats
+;    07/06/79...changed jrn to jnl..ns
+;   08/02/79...changed signon mess.ns
+;
+;   12/29/81...recompile to have a common date base...dl
+ 
+;                    f i l e s
+;============================================================================
+;
+;
+;
+file sfil:sys1,class=2,rnd,filtyp=c,recsiz=43,key=rel1
+set rel1:0
+;
+file dfil:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+buffer buf2(400)
+;
+file crt:sysipt
+;
+file prt:syslst,class=1,seq
+;
+entrypoint crt
+;
+external lfeed,?gkey,?nkey,stat,ioerr,msg,cget,ynget,gjp
+;
+;
+;============================================================================
+;                    r e c o r d s
+;=============================================================================
+copy recg
+record hd6(65)
+string subgl(64);  alternate title
+endrec
+;
+copy gdet
+;
+set  rel0:0
+record srec(43)
+set    ?msub:0
+string sdesc(30)
+endrec
+;
+;========================================================================
+;                p r o g r a m   l i n k a g e
+;==============================================================================
+;
+entry
+;
+open io (crt,sfil,gmst)
+open output prt
+open input dfil
+call msg(eject)
+call msg(m00)
+call msg(null)
+call gjp(zero,key);     key number
+;
+call ?gkey(gmst,?zero)
+goto(ioerr,ioerr)on status;   no header
+readb(gmst,headb)
+call stat(1)
+?gid=5
+call ?gkey(gmst,?gid)
+go to (a10,ioerr)on status
+readb(gmst,hd6)
+call stat(1)
+ifs(subgl.ne.null)go to a20
+ 
+a10:
+'subgl'='m06'; subaccount general ledger
+ 
+a20:
+call bltrun(client)
+call bltrun(subgl)
+;    get month to know which month is current
+call ynget(m02);  do you wish to run current month?
+go to (b10)on status
+call cget(m03,f02,month);   current month
+;
+b10:
+'acct'='zer6'
+encode(acct,fn6)hh
+decode(acct,fn1)h0,h1,h2,h3;neg in paren, h1=# branch, h2=# maj, h3*# in min
+'acct'='zer4'
+encode(acct,f02)month
+decode(acct,f03)cmm,cyy
+month=cyy*100+cmm
+;
+call msg(m04)
+call cget(null,f01,rdate); as of date
+call bltrun(rdate)
+ 
+b11:
+call msg(m09); enter option 1= 14 7/8 x 11
+write(crt,f23)m10; 2 8 1/2 x 11
+call cget(null,fn1,popt)
+go to (b12,b13)on popt
+go to b11
+ 
+b12:
+call cent132(client,fmt1)
+call cent132(subgl,fmt2)
+call cent132(rdate,fmt3)
+go to b14
+ 
+b13:
+call cent80(client,fmt1)
+call cent80(subgl,fmt2)
+call cent80(rdate,fmt3)
+ 
+b14:
+call ynget(m22); do you want each on a separate page?
+go to (b14g)on status
+sopt=0
+ 
+b14g:
+encode(head1,fmt5)acnt,sl,key
+encode(head1,fmt2)subgl
+ 
+b20:
+readb(dfil,gdet)
+if(status.ne.0)go to b90;  eoj
+'acct'='zer12'
+encode(acct,f05)?acct
+decode(acct,f06)brn,maj,min
+'cbrn'='blk'
+if(brn.eq.0)go to b21
+encode(cbrn,f06)brn
+b21:
+'cmin'='blk'
+if(min.eq.0)go to b23
+encode(cmin,f06)min
+;
+b23:
+if(?sub.eq.0)go to b20;  not a sub record
+if(?lsub.eq.?sub)go to b30
+x2=1
+if(x1.eq.1)call ck05
+call lev4
+call hd4
+x2=0
+go to b50
+;
+b30:
+;
+if(lbrn.eq.brn)go to b35
+x2=1
+if(x1.eq.1)call ck05
+x2=0
+call lev3
+go to b50
+;
+b35:
+if(lmaj.eq.maj)go to b40
+x2=1
+if(x1.eq.1)call ck05
+x2=0
+call lev2
+go to b50
+;
+b40:
+if(lmin.eq.min)go to b50
+x2=1
+if(x1.eq.1)call ck05
+x2=0
+call lev1
+go to b50
+;
+b50:
+call ckdate
+go to b20
+;
+;
+;
+b90:
+x2=1
+if(x1.eq.1)call ck05
+x2=0
+call lev4;   last totals
+call msg(m05);  eoj
+write(prt,fmt4)eject
+close crt,prt,sfil,gmst
+stop 0
+;
+;====================
+;=====subroutines ===
+;====================
+;
+subroutine lev1;      writes total for min account
+;====================
+if(bal1.eq.0)go to l105
+call edit(bal1,camt,mask01)
+'ask'='ask1'
+'mss'='null'
+call wrttot
+l105:
+bal1=0
+x1=1;   this switch says write the beginning bal
+lmin=min
+return
+;
+;=====================
+subroutine lev2
+;=====================;  change in major
+if(bal1.ne.bal2)call lev1
+if(bal2.eq.0)go to l205
+call edit(bal2,camt,mask01)
+'ask'='ask2'
+'mss'='null'
+call wrttot
+l205:
+x1=1
+bal2=bal1=0
+lmaj=maj
+lmin=min
+return
+;
+;====================
+subroutine lev3
+;====================
+if(bal2.ne.bal3)call lev2
+if(bal3.eq.0)go to l305
+call edit(bal3,camt,mask01)
+'ask'='ask3'
+'mss'='null'
+call wrttot
+l305:
+x1=1
+bal3=bal2=bal1=0
+lbrn=brn
+lmin=min
+lmaj=maj
+return
+;
+;====================
+subroutine lev4
+;====================
+if(bal4.eq.bal3)go to l401
+call lev3;           on a sub account break check branch and major  total
+go to l402
+;
+l401:
+;
+call lev2;        forces either a major or account total on a sub total break
+;
+l402:
+if(bal4.eq.0)go to l405
+call edit(bal4,camt,mask01)
+'ask'='ask4'
+'mss'='m13a'; total forward
+call wrttot
+call crq
+write(prt,f01)
+;
+l405:
+x1=1
+bal4=bal3=bal2=bal1=0
+?lsub=?sub
+lbrn=brn
+lmin=min
+lmaj=maj
+;
+return
+;
+;==================
+subroutine wrttot
+;==================
+call crq
+ 
+go to (wt10)on popt
+write(prt,f10)mss,camt+1,ask
+return
+ 
+wt10:
+write(prt,f10w)mss,camt+1,ask
+return
+;=====================
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;=========================
+subroutine cent132
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 132-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent132 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+subroutine ckdate
+;=====================
+?lacct=?acct
+if(jdte.lt.month)go to ck40;   total up beginning balance
+if(x1.eq.0)goto ck20;          already wrote beg. bal on this one
+ck05:;   this is entry point if there are no details in current month
+call ?gkey(gmst,?lacct)
+go to (ck10,ioerr)on status
+readb(gmst,recg)
+call stat(1)
+;
+if(?gid.ne.0)go to ck15
+;
+ck10:
+'desc'='null'
+;
+ck15:
+if(?gid.eq.?acct)go to ck18;   lacct and acct are the same
+'cbrn'='blk'
+if(lbrn.eq.0)go to ck16
+encode(cbrn,f06)lbrn
+ck16:
+'cmin'='blk'
+if(lmin.eq.0)go to ck18
+encode(cmin,f06)lmin
+;
+ck18:
+call crq
+call edit(beg,camt,mask01)
+go to (ck19)on popt
+write(prt,f11)cbrn,lmaj,cmin,desc,camt+1,astk
+goto ck19f
+ 
+ck19:
+write(prt,f11w)cbrn,lmaj,cmin,desc,camt+1,astk
+ 
+ck19f:
+beg=0
+x1=0;               beginning bal has been written
+if(x2.eq.1)go to ck30;   beginning bal but has no details
+;
+ck20:;  write current details
+;
+ldate(integer,date)
+sdate(string,pdate)
+call crq
+call edit(amt,camt,mask01)
+go to (ck21)on popt
+write(prt,f12)jrn,ref,pdate,ddesc,camt+1
+go to ck22
+ 
+ck21:
+write(prt,f12w)jrn,ref,pdate,ddesc,camt+1
+ 
+ck22:
+beg=0
+ck25:
+bal1=bal1+amt
+bal2=bal2+amt
+bal3=bal3+amt
+bal4=bal4+amt
+ck30:
+return
+;
+ck40:;   totaling beginning bal.
+beg=beg+amt
+go to ck25
+ 
+;
+;=====================
+subroutine hd4;         heading for new sub account
+;=====================
+if(?sub.eq.0)go to hd410
+call ?gkey(sfil,?sub)
+goto (hd405,ioerr)on status
+readb(sfil,srec)
+call stat(1)
+if(?msub.ne.0)go to hd406
+;
+hd405:
+'sdesc'='null';   no match
+;
+hd406:
+if(sopt.eq.0)go to hd407; continuous
+lcr=60;   each on separate page
+ 
+hd407:
+call crq
+go to (hd408)on popt
+write(prt,f15)?sub,sdesc
+go to hd409
+ 
+hd408:
+write(prt,f15w)?sub,sdesc
+ 
+hd409:
+call crq
+write(prt,f15)
+hd410:
+return
+;
+;========================
+subroutine crq
+;========================
+lcr=lcr+1
+if(lcr.gt.58)go to cr10
+return
+;
+cr10:
+lcr=0
+write(prt,fmt4)eject
+write(prt,fmt1)client
+go to (cr11)on popt
+write(prt,fmt4)head1,m07,pg
+go to cr12
+ 
+cr11:
+write(prt,fmt4w)head1,m07,pg
+ 
+cr12:
+pg=pg+1
+write(prt,fmt3)rdate
+write(prt,fmt3)
+write(prt,fmt4)m11; subaccount
+go to (cr15)on popt
+cr13:
+write(prt,fmt7)m16,m17,m13,m14,m15
+write(prt,fmt8)m18,m19,m20
+lcr=1
+go to cr20
+ 
+cr15:
+write(prt,fmt10)m16,m17,m21,m13,m14,m15
+write(prt,fmt11)m18,m19,m20
+lcr=1
+ 
+cr20:
+write(prt,fmt10)
+lcr=lcr+7
+return
+;==========================
+;====constants=============
+;==========================
+;
+set   bal1:0,bal2:0,bal3:0,bal4:0,beg:0,?zero:0,popt:0,sopt:1; (sopt=each on separate page)
+set   pg:1,lcr:90,x1:0,x2:0,cmm:0,cyy:0,h0:0,h1:0,h2:0,h3:0
+;
+string acct(15),rdate(77),null(0),cbrn(3),cmin(3),pdate(8)
+define blk:'   ',zer6:'000000'
+define sl:'/',key:'       '
+define head1:'   /                                                                                                          '
+define mask01:'  ##,###,###@.##-'
+define camt:  '                 '
+;
+define zer4:'0000',zer12:'000000000000'
+define ask1:' min',  ask2:' maj',   ask3:'acct',  ask4:' sub',ask:'    '
+define astk:'*'
+;
+integer  maj,min,brn
+set     lmaj:0,lmin:0,lbrn:0,?lsub:0,?lacct:0
+;
+;
+define m02:'do you wish to run current month only??'
+define m03:'enter beginning month  (mmyy)'
+define m04:'enter report date '
+define m05:'end of job'
+define m06:'subaccount general ledger'
+define m07:'page '
+define m09:'enter option:  1  14 7/8 x 11'
+define m10:'2   8 1/2 x 11'
+define m11:'subaccount'
+define m13:'description'
+define m13a:'total forward'
+define m14:'amount'
+define m15:'balance'
+define m16:'brn'
+define m17:'account'
+define m18:'jnl'
+define m19:'ref'
+define m20:'date'
+define m21:'number'
+define m22:'do you want each subaccount on a separate page? (y/n)'
+string mss(30)
+;
+format f01:c77
+format f02:n4
+format f03:n2n2
+format f05:d12
+format f06:n3n6n3
+format f10:x31 c32 c14 c4
+format f10w:x61 c52 c14 c4
+format f11:x1 c4 n-7 c4 c31 c15 c1
+format f11w:x7 c7 n6 x4 c14 c48 c16 c1
+format f12:x6 n-3 n-7 c9 c22 c15
+format f12w:x16 n2 n11 x5 c12 c40 c16
+format f15: d9 x5 c30
+format f15w: d9 x20 c30
+;
+format f23:x15 c45
+ 
+format fn1:n1
+format fn6:n6
+ 
+format fmt1: x100 c100
+format fmt2: x100 c100
+format fmt3: x100 c100
+format fmt4: c72 c5 n4
+format fmt4w: c123 c5 n4
+format fmt5: n3 c1 c6
+format fmt6: x6 c21 c26 c15 c10
+format fmt7: x1 c6 c20 c26 c15 c10
+format fmt8: x6 c5 c7 c10
+format fmt9: x14 c12 c10 c19 c37 c26 c10
+format fmt10: x7 c7 c8 c33 c37 c26 c10; wide brn/account/desc/amount
+format fmt11: x16 c9 c11  c4
+ 
+;
+end;       g545  (sub account general ledger)
+
+
+

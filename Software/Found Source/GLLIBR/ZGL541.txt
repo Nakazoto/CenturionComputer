@@ -1,0 +1,1149 @@
+title 'gl541--general ledger report '
+system
+;
+define m01:'gl541 (printing the general ledger - module 2) 12/29/81'
+;
+;  notes:
+;   1/19/76...written...ns
+;   3/8/76...displaying current year (m12)...ns
+;   4/8/76...changing lacct.eq.0 to lacct.le.0 (there are some neg. indexes in
+;            master)...ns
+;   5/12/76...inserting test data...ns
+;   5/24/76...adding edit...ns
+;   6/14/76....added ?pbal to master..ns
+;   6/17/76...conv from g920 to g520....ns
+;   6/23/76...adding branches...ns
+;   7/2/76....brn 3 digits, master file layout chng, sub is now ?sub..ns
+;   7/8/76....cleanup of 7/2 changes..ns
+;   7/9/76...master size change,  999 is consolidated...ns
+;   7/15/76...change to g library..ns
+;
+;  program incorporated into standard general ledger application
+;  with name change on august 6, 1976, by g.l. gillette.  at the
+;  same time, certain cosmetic changes to formats and messages,
+;  plus minor program modifications, were made.
+;   9/20/76...changes - added transaction and active accounts count, added total
+;             line and added accountant and key number to header, made pages
+;             66 line instead of 51..ns
+;    9/22/76...changing total to reverse ?plact out of the total (g/l would
+;               never be in balance.)
+;    10/12/76...changed add so that only adding 0 and 999 branches, and not adding
+;           current earnings to begin with, changing msg on total...ns
+;    10/20/76...adding option to summarize payroll details...ns
+;    11/12/76...changed date to yymmdd instead of mmyy...ns
+;    11/19/76..fixed in balance msg to write with fmt f102a, not f102...glg
+;    12/13/76...mo was calculated wrong. adding option to print each branch on a new page..ns
+;     1/10/77...on printing prior year details - prior year is printed but not
+;               posted to total (this is in case they adjust a month after
+;              year end closing..ns
+;     1/19/77... change in b00a - mo=pdate-bmo-100+12 from mo=pdate-bmo-100..ns
+;     3/10/77... details have new format (jdate is journal posting date (yymm) &
+;              rel contains the relative key in gmst...ns
+;     4/8/77... f102 changed..ns
+;     4/22/77...changing the way jrn. 99 is used...ns
+;     7/28/77...narrow g/l prints detail date instead of journal date...ns
+;     8/15/77...jrn 99 date on narrow option is in error...ns
+;     10/24/77...payroll summary on wide was out of alignment (format f102a)..ns
+;     10/28/77...reducing memory to 8k...ns
+;     3/02/78...added subroutine maybe and corrected problem on jour date...ns
+;     4/24/78...added subroutines addit and getit to reduce memory size...jwb
+;    07/20/78...cosmetics...ns
+;   09/18/78...modified for h-type accounts...ns
+;   06/23/79...date to 77 char, print 1 acct or from 1 to another, if more than one
+;            month add subtotal by months...ns
+;   07/02/79...changed f102 & m07 to move total forward on wide & moved sub 1 place to right on narrow report..ns
+;    07/25/79...payroll detail summary was truncated..ns
+;   08/02/79...changed signon mess..ns
+;   10/05/79...modified to allow postings for inventory accounts to print...jwb
+;   02/05/80...modified to print year to date total with month total...kag
+;   02/06/80...made some modification for handling quarterly posting transactions...kag
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;
+record recg(131)
+set    ?gid:0;     6 byte integer - br/maj/min  2 digits, 6 digits, 3 digits
+set   ff:0;     f1=blank - no leading char, $= if money acct print $,
+;                  if title account $= print $ on next money account.
+;                  ( = enclose in parent. if neg.
+;               f2= # of lines of overlining. (0,1,2)
+;
+set    vv:0;       v1=type acct (title,money,total,etc.)
+;                  v2=scheduled or not
+;                  v3=center title or which col. a or b
+;                  v4=total level or indicates 'c' type title
+string desc(30);   description
+set    pos:0;      entered but not posted amounts
+set    cmo:0;      current month
+set    mon2:0;     last month
+set    mon3:0;      2 months ago
+set    mon4:0;     3 months ago
+set    mon5:0;     4 months ago
+set    mon6:0
+set    mon7:0
+set    mon8:0
+set    mon9:0
+set    mona:0
+set    monb:0
+set    monc:0
+set    mond:0;     this month last year
+set    mone:0;     last month last year
+set    monf:0;     2 months ago - last year
+;
+set    ?cbal:0;    current balance (does not include post)
+set    ?pbal:0;    last years total prior to monf
+;                  (ie. if cmo is 6/76 - mond=6/75, mone=5/75, mond=4/75,
+;                   and ?pbal is total as of 3/75)
+set     usef:0;    0=no postings, 1=print whether postings or not, 2=postings
+;
+set    mong:0;    used in e account for 13th month processing & in l accounts
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+;
+copy list
+;
+record inven(131)
+set   ?inv:0
+set   iff:0,ivv:0
+string idesc(30)
+set   ipos:0,icmo:0,imon2:0,imon3:0,imon4:0,imon5:0,imon6:0,imon7:0
+set   imon8:0,imon9:0,imona:0,imonb:0,imonc:0,imond:0,imone:0,imonf:0
+set   ?icbal:0,?ipbal:0,iusef:0
+endrec
+ 
+record heading(300)
+string gldate(77),client(40),key(6)
+define m06:'brn',m06a:'account',m06b:'subaccount'
+set popt:0,?invcon:0,month:0,bmo:0,mo:0,form:0,print:0,all:0,fla2:0,pr:0,brnum:0
+set pdate:0,bopt:0,ydate:0
+set acnt:0,?plact:0,mnum:0
+endrec
+;
+copy gdet
+;
+file gfil:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2;   new details
+buffer buf2(400)
+file temp:sys3,class=2,rnd,recsiz=300,key=rel0
+ 
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+external ?gkey,stat,msg,ioerr,gupsi,pupsi,lfeed,?edit,cget,gjp,ynget,f90
+entrypoint crt
+;
+;======================
+;   program logic
+;======================
+entry
+open io (crt,gmst,temp), input (list, gfil), output prt
+readb(temp,heading)
+call stat(1)
+call bltrun(client)
+call bltrun(gldate)
+go to (a005)on popt; paper option 1=wide
+call cent80(client,f50)
+call cent80(gldate,f51)
+go to a008
+ 
+a005:
+call cent132(client,f50)
+call cent132(gldate,f51)
+ 
+a008:
+call msg(eject)
+call msg(m01)
+if(?invcon.eq.0)go to a20
+call ?gkey(gmst,?invcon)
+go to (a10,ioerr)on status
+go to a15
+;
+a10:
+?invcon=thr9*hmil+?invcon
+call ?gkey(gmst,?invcon)
+go to(a20,ioerr)on status
+;
+ 
+a15:
+;
+readb(gmst,inven)
+call stat(1)
+;
+a20:
+if(all.ne.2)go to a30
+call msg(m08)
+call getacct
+?first=?gid
+if(?gid.eq.0)go to q0900; end of job
+call msg(m09);  enter last account (0 to print only one account)
+call getacct
+?last=?gid
+rewind list,gfil
+?mamt=?xamt=?camt=?tamt=0
+a30:
+call crq
+sw=1;   only used to keep first header from printing desc.
+;
+b20:
+readb(gfil,gdet)
+goto (b95) on status    ;   end of details but may not be end of master
+if(all.lt.2)go to b20a
+if(?acct.lt.?first)go to b20
+if(?acct.eq.?first)go to b20a
+if(?acct.gt.?last)go to b30;   done print account totals and go
+ 
+b20a:
+; if(v4.ge.7)go to b20;  dont print the i account details (removed 10/05/79...jwb)
+'acct'='zer12'
+encode(acct,f10)?acct
+decode(acct,f12)brn,maj,num
+'min'='blk3'
+if(num.eq.0)go to b20d
+encode(min,f08)num
+ 
+b20d:
+if(brnum.eq.0)goto b21;  print all
+decode(acct,f08)br2
+if(brnum.eq.br2)go to b21;  good branch
+if(brnum.ne.thr9)go to b20;  getnext one
+if(br2.ne.0)go to b20;       get next detail
+;
+;
+b21:
+?amt=amt
+;
+if (bmo.ne.0) goto b22;      not 0 bypass decoding..2/6/80
+'acct'='zer4'
+encode(acct,f20) month;      turn current month into bmo
+decode(acct,f21) mm1,yy1
+bmo=yy1*100+mm1       ;        bmo=current month
+;
+b22:
+;
+if(jdte.lt.bmo)go to b20;  not printing this one
+if(bmo.ne.0)go to b23
+if(pdate.ne.jdte)go to b20;  not the processing date
+;
+;
+b23:
+ldate(integer,date)
+sdate(string,sdte)
+yy1=jdte/100                  ;
+mm1=jdte-(yy1*100)             ;
+b24:
+if(?acct.ne.?lgl)go to b30
+b25:
+if(jdte.le.ydate)go to b25n;    this is incase amount crosses end of year
+if(jrn.ne.99)go to b25f;   4/22
+decode(sdte,f22)mm,yy
+dte=yy*100+mm
+;
+if(dte.lt.bmo)go to b25c;   prior period posting amount not added
+'ddesc'='m23a';            prior period amount added msg
+if(bmo.ne.0)go to b25f;     prior period adjustment but that prior period is
+;                           part of the g/l being printed
+if(pdate.eq.dte)go to b25f;prior period adjustment but it is for current month
+;
+b25c:;   prior period not added to total
+'ddesc'='m23';     prior month posting   not added msg
+go to b26
+;
+b25f:
+;
+   if(pr.eq.0)go to b26
+if(emp.ne.0)go to b28;   this is a p/r detail
+go to b26;
+b25n:
+ 'ddesc'='m22';   prior year not added to total
+b26:
+if(ljdte.ne.jdte)call subtdt;   prints subtotal on date change
+ljdte=jdte
+'csub'='blk9'
+if(?sub.eq.0)go to b26c
+encode(csub,fd9)?sub
+ 
+b26c:
+;
+call ?edit(?amt,num2,mask02)
+go to (b26h) on popt
+go to (b26d,b26d,b26e)on form
+b26d:
+;
+call wrtdet(f100n0)
+go to b26p
+b26e:
+call wrtdet(f100n2)
+go to b26p
+ 
+;
+b26h:
+write(prt,f1000)csub,jrn,ddesc,ref,mm1,sl,yy1,sdte,num2+1
+b26p:
+call crq
+b27:
+call addit(tcnt)
+decode(brn,f08)br
+dflg=1
+;
+;  *ifs(ddesc.eq.m22)go to b27n              (removed 1/15/80...kag)
+;  *ifs(ddesc.eq.m23)go to b27n              (removed 1/15/80...kag)
+;
+b27a:
+;                                        this section added 1/15/80...kag
+if (jrn.ne.99) goto b27b;                 regular detail transaction
+if (bmo.eq.0) goto b27n;                 dont added em in
+if (dte.lt.bmo) goto b27n;               show it was posted but dont add it in
+;
+b27b:
+;
+call ?add(?camt,?amt)
+call ?add(?tamt,?amt)
+call ?add(?mamt,?amt);  months subtotal
+call ?add(?yamt,?amt);   ytd   subtotal
+b27n:
+?lgl=?acct
+go to b20
+;
+b28:
+call ?add(?xamt,?amt)
+go to b27
+;
+b30:;     read the master until we find the right account number
+if(?xamt.eq.0)go to b32
+call ?edit(?xamt,num2,mask02)
+go to (b30n)on popt
+write(prt,f102n)m21,blk3,num2+1
+go to b30p
+;
+b30n:
+write(prt,f102)m21,blk3,num2+1
+b30p:
+call crq
+?xamt=0
+dflg=1
+b32:
+   if(dflg.eq.0)go to b33
+if(?mamt.eq.0)go to b32f
+if(?mamt.eq.?camt)go to b32f
+call subtdt
+ 
+b32f:
+if(dflg.eq.zero)go to b33
+   call endbal
+   ?camt=?tamt=0
+;
+b33:
+ljdte=0
+   if(?final.eq.?nines)go to b50f;   no match or details out of order, end of file so dont re-read
+   readb(list,listb)
+   go to (b90)on status
+    if(?lid.le.100)go to b33;   read next list
+   readb(gmst,recg)
+   call stat(1)
+   if(?gid.eq.0)go to b33
+   if(all.ne.2)go to b33f
+    if(?gid.lt.?first)go to b33; not part of specific group
+    if(?gid.eq.?first)go to b33f
+    if(?gid.gt.?last)go to a20;  possibly no match
+ 
+b33f:
+   call encd
+;
+   if(v1.eq.2)goto b34
+;
+   if(v1.ne.6)goto b33;   not the inventory record
+   if(v4.ne.8)goto b33;   not the contra record
+;
+b34:
+;
+;
+   if(?gid.eq.0)go to b33;    deleted account
+   if(brnum.eq.0)go to b35
+br2=?gid/hmil
+   if(brnum.eq.br2)goto b35;  good branch number
+   if(brnum.ne.thr9)go to b33;get next account
+   if(br2.ne.0)go to b33;       brnum=999 says print 0 and consolidated
+;
+b35:
+if(?gid.eq.?acct)go to b36
+if(?gid.gt.?acct)go to b50;   must be no match
+if(usef.eq.0)go to b33
+   go to (b36)on all
+if(?cbal.eq.0)go to b33;    dont print all accounts
+b36:
+if(v1.ne.6)go to b36f
+call getinv
+go to b37
+;
+;
+;
+b36f:
+?tamt=?cbal-cmo
+   go to (b37)on fla2;processing this month only
+call alldet;   list all details
+b37:
+;
+b37d:
+;
+   if(bopt.eq.0)go to b38
+ifs(gbrn.eq.lbrn)go to b38
+sw=0
+if(print.ne.2)go to b37f
+call cget(null,f08,fa1)
+b37f:
+call cr15
+sw=1
+;
+'lbrn'='gbrn'
+b38:
+if(?gid.lt.?acct)go to b40
+   call begbalt;             get beginning bal with trans. in file..2/6/80
+;                                entrypoint in is begbal subr    ..2/6/80
+   call begbal
+;
+go to b25;   ;    write detail
+;
+b40:
+   call begbal
+dflg=1
+go to b30;   there are no details for this but write out total for g/l anyway
+;
+;
+;
+;
+b50:;    seems to be a no match on mstr - check it
+note(list,v1);  we have passed where we should be - this is an attempt to get
+point(list,v1); us back into line
+;
+b50f:
+v1=2
+call ?gkey(gmst,?acct)
+go to (b55,ioerr)on status
+readb(gmst,recg)
+call stat(1)
+if(?gid.eq.0)go to b55
+   call encd
+   if(v1.eq.6)go to b54
+?tamt=?cbal-cmo
+   go to (b51) on fla2
+call alldet
+b51:
+   call begbal
+dflg=1
+go to b25;   write the details
+ 
+b54:
+call getinv
+go to b51
+b55:;   no match
+?gid=?acct;so we dont get thrown into the wrong place later
+go to (b55n)on popt
+if(form.eq.3)go to b55b
+write(prt,f101n)brn,maj,min,null,m10
+go to b55p
+ 
+b55b:
+write(prt,f101n2)brn,maj,m10
+go to b55p
+;
+b55n:
+write(prt,f101)brn,maj,min,null,m10
+b55p:
+decode(brn,f08)br
+callcrq
+?tamt=0
+?camt=0
+dflg=1
+go to b25;     we are too far already so set flg to 1 (dont read next master record yet)
+;
+;
+b90:   ;end of master
+if(?acct.eq.?nines)go to b100
+;
+?final=?nines
+go to b25;   read rest of details
+;
+b95:;   end of details
+?acct=?nines
+if(?final.ne.?nines)go to b30 ; read rest of master
+;
+b100:   ;end of job
+if(dflg.eq.0)go to b105
+   call endbal
+b105:
+call msg(m02);  eoj
+write(prt,f102)
+call ?edit(?tbal,num2,mask02)
+if(?tbal.eq.0)go to b106
+go to (b105n)on popt
+write(prt,f102n)m13a,blk3,num2+1; out of balance
+go to b105p
+;
+b105n:
+write(prt,f102)m13a,null,num2+1; out of balance
+b105p:
+go to q0900
+;
+b106:
+go to (b106n)on popt
+write(prt,f102n)m13;      g/l in balance
+go to q0900
+;
+b106n:
+write(prt,f102)m13
+;
+q0900:
+?cbal=0
+;
+write(prt,f102bn)m14,bcnt
+write(prt,f102bn)m15,tcnt
+bcnt=bcnt+tcnt
+write(prt,f102bn)m16+6,bcnt
+close crt,prt,gfil,gmst
+stop
+;
+;
+;========================================================================
+;       s u b r o u t i n e s
+;===============================================================================
+;
+;
+;===========================
+subroutine addit
+;===========================
+;
+direct
+ lda- x+
+ sta add010+3
+ sta add010+13
+cpl
+add010:
+;
+zero=zero+1
+return
+;
+;
+;============================
+;=========================
+;
+subroutine crq
+;=======================
+call addit (line)
+if(line.ge.58)go to cr15
+if(print.eq.2)go to cr10
+return
+;
+cr10:
+if(line.gt.20)go to cr12
+return
+;
+cr12:
+call cget(null,f08,fa1)
+if(fa1.ne.9)go to cr15
+stop 0
+;
+cr15:
+if(line.le.7)go to cr25;   just wrote header
+write(prt,f01a)eject
+;
+call addit (page)
+write(prt,f50)client
+go to (cr16)on popt
+if(all.ne.2)go to cr15c
+write(prt,f52)acnt,sl,key,m05,m05a,m03,page
+go to cr17
+ 
+cr15c:
+write(prt,f52a)acnt,sl,key,m05,m03,page
+go to cr17
+ 
+cr16:
+if(all.ne.2)go to cr16c
+write(prt,f52w)acnt,sl,key,m05,m05a,m03,page
+go to cr17
+ 
+cr16c:
+write(prt,f52wa)acnt,sl,key,m05,m03,page
+ 
+cr17:
+write(prt,f51)gldate
+call lfeed (prt, 1)
+go to (cr18)on popt
+go to (cr17a,cr17a,cr17c)on form
+ 
+cr17a:
+write(prt,f01a)m06,m06a,m06b,m06c,m06d,m06e,m06g,m06h,m06i
+go to cr19
+ 
+cr17c:
+write(prt,f01b)m06,m06a,m06c,m06d,m06e,m06g,m06h,m06i
+go to cr19
+ 
+cr18:
+write(prt,f01c)m06,m06a,m06b,m06c,m06d,m06e,m06f,m06g,m06h,m06i
+;
+ 
+cr19:
+ 
+line=6
+write(prt,f01a)
+if(sw.eq.0)go to cr25
+if(?gid.ne.?acct)go to cr25
+go to (cr22)on popt
+write(prt,f101n)gbrn,gmaj,gmin,afld,desc
+go to cr24
+;
+cr22:
+write(prt,f101)gbrn,gmaj,gmin,afld,desc
+;
+cr24:
+;
+decode(gbrn,f08)br
+call addit (line)
+;
+cr25:
+return
+;====================;
+subroutine add1
+;=====================
+if(br.eq.0)go to ad10
+if(br.eq.thr9)go to ad12
+return
+;
+ad10:
+if(?gid.eq.?plact)go to ad14;   dont add in current earnings
+;
+ad12:
+ifs(afld.eq.astk2)goto ad14;i account
+call ?add(?tbal,?camt)
+;
+ad14:
+return
+;
+subroutine add2
+;====
+if(br.eq.0)go to ad20
+if(br.eq.thr9)go to ad20
+return
+;
+ad20:
+ifs(afld.eq.astk2)goto ad24;i accounts arent totaled
+if(?gid.eq.?plact)go to ad24
+call ?add(?tbal,?tamt)
+;
+ad24:
+return
+;
+;===================
+subroutine alldet
+;===================
+fa1=mo;      number of months back
+;
+al10:
+fa1=fa1-1;  starts with the highest and goes down
+if(fa1.lt.0)go to al20
+call tget(fa2,fa1,mon2,4); table starts with mon2
+?tamt=?tamt-fa2;      reducing the beginning bal. by each month that is going to be printed
+go to al10
+;
+al20:
+return
+ 
+;================
+subroutine getinv
+;================
+?tamt=0
+fa1=mnum;  number of months into yr
+ 
+gv10:
+fa1=fa1-1
+if(fa1.le.0)go to gv20; done (cmo is not in it)
+go to (gv15)on fla2; cmo only
+if(fa1.le.mo)go to gv20; mo isnt added
+ 
+gv15:
+call tget(fa2,fa1,cmo,4)
+?tamt=?tamt+fa2;   beginning balance of netchange can't include last year or out of balance will result.
+go to gv10
+ 
+gv20:
+return
+;
+;
+;===============
+subroutine wrtdet
+;==============
+direct
+ lda- x+
+ sta  wd10+5
+cpl
+ 
+wd10:
+write(prt,f100n0)csub,jrn,ddesc,ref,sdte,num2+1
+return
+ 
+;=========================
+subroutine tget
+;=========================
+;
+;       to remove data from the nth item in a list of items
+;
+;       calling sequence:
+;
+;       call tget (target-address, index-integer, table-start-address, table-unit-byte-length)
+;
+direct
+ lda- x+ get target address
+ sta tga
+ lda- x+ get index address
+ ina ,2
+ lda- a
+ xay save it for later
+ ldb- x+ get table start address
+ lda- x+ get table unit byte length
+ stx- s-
+ sta- s-
+tg01 add y,b mpy index * unit-byte-length
+ dca
+ bnz tg01
+ ldx= *-*
+tga equ *-2
+ lda- s+
+ xay move xfr count to y
+tg02 ldab- b+
+ stab- x+
+ dcr y decr xfr count
+ bnz tg02
+ ldx- s+
+cpl
+return
+;
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;=========================
+subroutine cent132
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent132 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;==================
+subroutine ?add
+;==================
+direct
+   lda-  x+
+   sta  ad?10+3
+   sta  ad?10+13
+   lda-  x+
+   sta  ad?10+8
+cpl
+;
+ad?10:
+?tbal=?tbal+?amt;      ad10+13=ad10+3 + ad10+8
+return
+;
+;
+;
+;================
+subroutine subtdt;   prints subtotal on date
+;=============
+if(ljdte.eq.0)go to std40;  not any before
+call ?edit(?yamt,num3,mask02)
+call ?edit(?mamt,num2,mask02)
+go to (std10)on popt
+write(prt,f102n)m16,null,num2+1,num3+1
+go to std30
+ 
+std10:
+write(prt,f102)m16,null,num2+1,num3+1
+ 
+std30:
+call crq
+ 
+std40:
+?mamt=0
+return
+;
+;===============
+subroutine endbal
+;================
+;
+call ?edit(?camt,num2,mask02)
+go to (en10)on popt
+;
+call ?edit(?tamt,num1,mask02)
+write(prt,f102n)m07,astk,num2+1,num1+1,astk2;narrow ending balance
+go to en20
+;
+en10:
+;
+call ?edit(?tamt,num1,mask02)
+write(prt,f102)m07,astk,num2+1,num1+1,astk2
+;
+en20:
+;
+call add1
+call crq
+dflg=0
+return
+;
+;=====================
+subroutine begbal;   beginning balance for this account number
+;=====================
+;
+call lfeed(prt,1)
+?yamt=?tamt
+go to (be10)on popt
+call ?edit(?tamt,num2,mask02)
+if(form.eq.3)go to be05
+write(prt,f101n)gbrn,gmaj,gmin,afld,desc,num2+1
+go to be20
+ 
+be05:
+write(prt,f101n2)gbrn,gmaj,desc,num2+1
+go to be20
+;
+be10:
+;
+call ?edit(?tamt,num1,mask02)
+write(prt,f101)gbrn,gmaj,gmin,afld,desc,num1+1
+;
+be20:
+;
+decode(gbrn,f08)br
+;   *call add2    ;    (removed...2/5/80...kag)
+call addit(bcnt)
+call addit(line)
+call crq
+dflg=0
+ifs(afld.eq.astk2)call wrti
+return
+;
+begbalt:
+;            this routine must check all detail for this account..2/6/80
+?hamt=0
+note (gfil,pnt);       keep this location
+goto bb15;
+bb10:
+readb (gfil,gdet)
+goto (bb90) on status;  if we reach the end
+if (?acct.ne.?gid) goto bb90;  that all for him..
+bb15:
+if (jrn.ne.99) goto bb20;     not ppa
+ldate (integer,date)
+sdate (string,xdte)
+decode(xdte,f22)mm,yy;
+dte=yy*100+mm        ;       make em a jrn date
+if (dte.ge.bmo) goto bb25;      need to sub em out begbal
+go to bb10;
+bb20:
+if (jdte.lt.bmo) goto bb10;    read next rec..
+bb25:
+?hamt=?hamt+amt
+goto bb10                 ;    check for more
+;
+bb90:
+point (gfil,pnt)
+readb (gfil,gdet);             set him back  as before
+?tamt=?cbal-?hamt;             new beg bal
+return
+;
+;
+;======================
+subroutine encd
+;======================
+;
+'acct'='zer12'
+encode(acct,f10)?gid
+decode(acct,f12)gbrn,gmaj,num
+'gmin'='blk3'
+if(num.eq.0)go to en05
+encode(gmin,f08)num
+ 
+en05:
+v1=vv/thou
+v4=vv-(vv/10*10)
+'afld'='null'
+;
+if(v1.ne.2)go to enc10
+if(v4.lt.6)goto enc10
+'afld'='astk2'
+;
+enc10:
+;
+return
+;
+;============
+subroutine getacct
+;============
+maj=gmaj=num=0
+ 
+ifs(m06.eq.null)go to gta10
+call cget(m06,f08,maj);  this is branch
+if(status.ne.0)go to getacct
+ 
+gta10:
+call cget(m04,fn6,gmaj); this is the major
+if(status.ne.0)go to gta10
+ 
+go to (gta20,gta12,gta20)on form; 1=no minor, 3=no minor/no sub
+ 
+gta12:
+call cget(m04a,f08,num); minor
+if(status.ne.0)go to gta12
+ 
+gta20:
+?gid=maj*mil+gmaj*thou+num
+return
+;
+;========================
+subroutine wrti;   writes dummy i acct beginning bal.
+;========================
+?camt=?cbal-?tamt;  ?tamt is beginning balance
+?tamt=?cbal;    new balance
+return
+;
+;======================
+;subroutine plinv
+;======================
+;
+;if(ldte.eq.jdte)go to pl40;   already reduced this month
+;fa1=0
+;iff=pdate
+;
+;pl10:
+;
+;if(jdte.eq.iff)goto pl20
+;iff=iff-1
+;call addit(fa1)
+;ivv=iff/10*10
+;if(iff.ne.ivv)go to pl10;  month isnt 0 yet
+;iff=iff-88;   -100+12 reduces year by 1 and changes month to 12
+;go to pl10
+;
+;pl20:
+;
+;ldte=jdte;   this is the proper month - back it out
+;call tget(fa2,fa1,icmo,4)
+;?amt=?amt-fa2;     remove invcon amount from current earnings
+;
+;pl40:
+;
+;return
+;
+;
+;============================================================================
+;
+set   page:0,line:66,?tamt:0,?camt:0,dflg:0,?lgl:0,?nines:999999999999,?final:0
+set ?tbal:0,bcnt:0,tcnt:0,thr9:999,br:0,?last:0,?first:0,br2:0,fa1:0,fa2:0,?mamt:0,ljdte:0
+;     ?nines shows 999 branch, 999999 maj, 999 min
+set ldte:0,?hamt:0,pnt:0
+set hmil:1 000 000 000,thou:1000,mil:1 000 000,sw:0;  hmil=1billion
+set dte:0,?amt:0,?yamt:0,?bamt:0
+set  ?zero:0,v1:0,v4:0,?xamt:0
+;
+;
+integer maj,num,gmaj,mm,yy,mm1,yy1
+;
+;
+string acct(15),sdte(8),null(0),afld(2),gmin(3),csub(9),xdte(8)
+define brn:'   ',gbrn:'   ',lbrn:'   ',min:'   '
+;
+;
+define m02:'end of program'
+define m03:'page'
+define m04:'maj'
+define m04a:'min'
+define m05:'general ledger'
+define m05a:'- selective accounts'
+define m06c:'jnl'
+define m06d:'description'
+define m06e:'ref'
+define m06f:'jdate'
+define m06g:'date'
+define m06h:'amount'
+define m06i:'balance'
+define m07:'total forward '
+define m08:'enter first account to be printed'
+define m09:'enter last account to be printed (newline to only print 1 account)'
+define m10:'*****************'
+define m13:'g/l in balance'
+define m13a:'out of balance '
+define m14:'number of active accounts'
+define m15:'number of transactions'
+define m16:'month total'
+define m21:'payroll detail'
+define m22:'**prior year: not added**';   on narrow only the first 7 characters
+define m22a:'**prior year-added *** '
+define m23:'*pri per adj-non-add*'
+define m23a:'*pri per adj-added**'
+;
+;
+;
+define blk3:'   ',zer12:'   000000000',blk9:'         '
+define sl:'/', zer4:'0000'
+;
+define astk:'*',astk2:'**'
+;
+format f01a: c6 c10 c3 x2 c6 c4 x6 c6 c13 c14c10
+format f01b: c4 c5 c9 c17 c8 c13 c14 c10
+format f01c: c7 c11 c12 c15 c24 c8 c10 c18 c16 c7
+format f08:n3
+ 
+format f50: x100 c100
+format f51: x100 c100
+format f52: n3 c1 c6 x12 c15 c35 c6n3
+format f52a: n3 c1 c6 x23 c39 c6n3
+format f52w: n3 c1 c6 x38 c15 c60 c6 n3
+format f52wa: n3 c1 c6 x49 c64 c6 n3
+format f1000:x18 c12 n2 x3 c33 n6 x3 n2 c1 n2 x3 c8 x6 c14
+format f100n0: x12 c10 n-3 c8 x1 n-7 c9 c14
+format f100n2: c9 n-3 c21 x1 n-7 c9 c14
+format f101: c5 n6 x2 c5 c19 c79 c14
+format f101n: c4 n-7 c5c2 c47 c14
+format f101n2: c4 n6 x4 c51 c14
+format f102: x78 c20c1 c17 c14 c2
+format f102n: x34 c15c1 c15 c14 c2
+format f102bn: x16 c30 n-10
+format f102b: x10 c30 n-10
+format f10:d12
+format f12:c3n6n3
+;
+format f20:n4
+format f21:n2,n2
+format f22:n2x4n2
+ 
+format fd9:d9
+ 
+format fn6:n6
+ 
+;
+define mask02:'  ##,###,###@.##-'
+define num2:  '                '
+define num1:   '                '
+define num3:   '                '
+;
+end   ;   gl540
+
+format f12:c3n6n3
+;
+format f20:n4
+format f21:n2,n2
+format f22:n2x4n2
+ 
+format fd9:d9
+ 
+format fn6:n6
+ 
+;
+define mask02:'  ##,###,###@.##-'
+define num2:  '                '
+define num1:   '                '
+define num3:   '                '
+;
+end   ;   gl540
+

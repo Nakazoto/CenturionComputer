@@ -1,0 +1,31 @@
+.nolog
+.skip to nolib if lib ne #2
+/ enter library name  
+.enter 6
+.setc 7='.'
+.skip to go
+=nolib
+.setc 6='' 7=''
+=go
+.use #6#7#0 on #1 sys0
+.seta upsi=2
+.run xfild
+.end
+.log
+.use crt#v for sysrdr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,82 @@
+title 'gl565--expand subaccount master file '
+system
+;
+define m01:'gl565 (expand subaccount master file) 12/29/81'
+;
+;
+;  notes
+;   6/21/76...written...ns
+;   9/22/77...changing to 6 byte subaccount (should have been done a year ago)..ns
+;    07/24/78...cosmetic change (m01)...ns
+;
+;    12/29/81...recompile to have a common date base...dl
+;
+;
+;
+;-
+;========
+;
+record listb(10)
+set    ?lsub:0
+set    rel0:0
+endrec
+;
+record recs(43)
+set  ?msub:0
+endrec
+;
+file   sfil:sys0,class=2,rnd,recsiz=43,key=rel0
+file   nfil:sys1,class=2,rnd,recsiz=43,key=rel1
+;
+file   list:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+buffer  buf2(400)
+set   rel1:0
+;
+file   crt:sysipt
+entrypoint crt
+;
+external ?gkey,?nkey,msg,stat,ioerr
+;
+entry
+;
+open io (crt,sfil,nfil)
+open input list
+;
+call msg(m01)
+;
+b10:
+readb(list,listb)
+if(status.eq.1)go to b90
+call stat(list)
+readb(sfil,recs)
+call stat(1)
+if(?lsub.eq.0)go to b12
+if(?msub.eq.0)go to b10;   deleted account
+;
+b12:
+call ?gkey(nfil,?lsub)
+go to (b20,ioerr)on status
+go to b10;  already posted
+;
+b20:;  add to file
+call ?nkey(nfil,?lsub)
+go to (ioerr,ioerr)on status;    it has expanded the file it cant run out of room unless it is an ioerr
+writeb(nfil,recs)
+call stat(1)
+go to b10
+;
+b90:
+call msg(m02);   end of job
+close crt,sfil,nfil,list
+stop 0
+;
+;
+;
+;========
+define m02:'subaccount file has been expanded'
+;
+end
+;     gl565 (sub accounts master file expansion)
+
+
+

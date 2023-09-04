@@ -1,0 +1,673 @@
+title 'gl532 (transaction entry from paper tape) '
+system gl532 (main)
+define m01:'gl532 (transaction entry from paper tape) 12/29/81'
+;
+;
+; notes:
+;   6/16/76...conversion from g205 to g505...ns
+;   6/17/76...adding hh to header and using it to determine what questions to
+;             ask the operator ie:branches, major, min, sub, emp...ns
+;     7/2/76...changing g/l master layout, 3 dig. brn, sub is now ?sub..ns
+;    7/9/76....changing g/l master layout - 131 bytes - budget will be in another master...ns
+;             also (7/9/76)  consolidated branch is 999 no matter how big the
+;             hh indicator says - this is to allow expansion without too much
+;             trouble...ns
+;    7/15/76...changed libr. in copy of recg..ns
+;      7/26/76...this program sends details to the seq. payroll and g/l...ns
+;     10/12/76...changing p/r record to add city tax..ns
+;  program incorporated into standard general ledger application
+;  with name change on august 6, 1976, by g.l. gillette.  at the
+;  same time, certain cosmetic changes to formats and messages,
+;  plus minor program modifications, were made.
+;    11/1/76...new gdet - includes sorpnt to allow for sorting into journal number.
+;  9-17-76...copied from gl530 and modified for paper tape transaction entry   jim
+;     10-18-76...corrected binary transaction record length fm (64) to (65)...klf
+;     12/6/76...added 3rd header which keeps track of total meals and tips
+;               also changing p/r to c type file and changing header ..ns
+;     12-15-76...corrected load and call hicore stmts...jwb per jm
+;     8/16/77...adding status check in gtape.  also incr. pos in ?plact...ns
+;     8/25/77...jdte correction...ns
+;      7/20/78...paper tape allows multiple input amount to 1 account, hence change
+;                made for updating unposted fields (8/16/77) sent all inc. &
+;                expenses for all but the first entry to ?plact...ns
+;     9/12/78...modified for i & l accounts (i accounts arent part of p&l total)...ns
+;    04/15/80...added earned income credit stuff...kag
+;
+;    12/29/81...recompile to have a common date base...dl
+;
+;
+external msg,lfeed,ynget,stat,ioerr,gdate,?gkey,?nkey,cget,pupsi,gjp,clrec,hicore,gupsi
+file crt:sysipt
+entrypoint crt
+;
+record xchr(1)
+string chr(1)
+endrec
+copy recg
+set  rel0:0,?lid:0
+copy head2
+copy hd3
+;
+;
+copy gdet
+;
+record  ptranb(65);      payroll record
+set     pemp:0
+set     pref:0
+set     pgr:0
+set     fica:0
+set     fwt:0
+set     oth:0;    other
+set     oth2:0;   other 2
+set     swt:0;     state withholding
+set     cwt:0;     city tax
+set     meal:0;   meals
+set     tips:0
+set     mtded:0
+set     prdate:0
+set     deic  :0
+string  pdes (7)
+endrec
+;
+file pcfil:sys3,class=2,rnd,recsiz=65,key=rel3
+set rel3:0
+record dethdr (65)
+   set detnul: 0;                     null for sorting detail file
+   set ppoint:  0;                     pointer to last record in file
+   set staflg: 0;                     state accounting flag      (1=yes, 0=no)
+   set citflg: 0;                     city accounting flag       (1=yes, 0=no)
+   set combff: 0;                     combined fica/fwt          (1=yes, 0=no)
+   set othflg: 0;                     other deduction flag       (1=yes, 0=no)
+   set perend: 0;                     period ending date         (mmddyy)
+   set lastin: 0;                     date last data entered     (mmddyy)
+   set posted: 0;                     data posted flag (0=posted, 1=not posted)
+   set postop: 0;                     posting option (1,2,3,4)
+endrec
+;
+;
+;
+file trans:sys2,class=2,rnd,recsiz=77,key=rel2
+set   rel2:0
+;
+record pnt(4)
+set    point:0
+endrec
+;
+;
+file ptape:sys4,class=2,seq,buffer=400,buf4
+buffer buf4(400)
+;
+;
+file err:syslst,class=1,seq
+;
+;
+entry
+call gjp(0,parm) ; get parm #0
+decode(parm,f04)keynum ; decode parm into client # to verify
+call gupsi(sort) ;pass upsi if already non-zero
+open io (crt,gmst,trans,ptape,pcfil)
+call msg(m01)
+call msg(null)
+open output (err)
+readb(pcfil,dethdr)
+call stat(1)
+if(posted.ne.0)go to a05;   not posted yet
+ppoint=0
+posted=1
+writeb(pcfil,dethdr)
+call stat(1)
+;
+a05:
+call msg(m18)
+call msg(m18a)
+call msg(m18b)
+call cget(m18c,f03,postop)
+call ?gkey(gmst,?zero)
+go to (b85,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+;
+call ?gkey(gmst,?one)
+go to (b85,ioerr)on status
+readb(gmst,head2)
+call stat(1)
+;
+call ?gkey(gmst,?two)
+go to (b85,ioerr)on status
+readb(gmst,hd3)
+call stat(1)
+;
+;
+'al1'='zer5'
+encode(al1,f08)hh
+decode(al1,f03)h1,h2,h3,h4,h5;  h1= # branches, h2= # maj, h3=#min, h4=# sub
+if(h5.ne.1)go to a40
+staflg=citflg=combff=othflg=0
+if(?swt.eq.0)go to a08
+staflg=1
+a08:
+if(?ctax.eq.0)go to a10
+citflg=1
+a10:
+if(?fica.ne.0)go to a15
+combff=1
+a15:
+if(?ot1.ne.0)go to a16
+if(?ot2.eq.0)go to a18
+a16:
+othflg=1
+a18:
+call cget(m39,f22,perend);  payroll ending date
+call cget(m40,f22,lastin);  todays date
+a40:
+writeb(pcfil,dethdr)
+call stat(1)
+;
+;                                h5 - 1 means posting to payroll
+;
+'al1'='null'
+'ddesc'='null'
+;
+b01:
+hold(trans)
+if(status.ne.0)go to b01
+;
+readb(trans,pnt);
+call stat(1)
+if(point.eq.0)go to b03
+b02:
+call mmsg(m02,m03,m03a,m03b,0)  ; 1 to add to details; 2 to delete
+call cget(null,f03,opt)
+call msg (null);cr
+go to (b03,b02)on opt
+encode(m03c,f02)point
+call ynget(m03c);  you have xxxxx records in file, do you still wish to delete?
+if(status.eq.0)go to b03
+point=0
+writeb(trans,pnt)
+call stat(1)
+b03:
+call mmsg (m44,m45,m46,0)
+call cget(null,f21,chr)
+call lfeed(crt,2)
+direct
+ ldab/ chr
+ stab/ tnam+5 set code entered into last char of load name
+cpl
+load (tnam,hicore,1) (ptape,tmp,11,code) ; load tape input program & read dummy first line
+if (status.ne.4) goto b03c ;load ok
+write (crt,f15) tnam,m50 ;xxxxxx not found in run directory
+goto b95 ;end job
+b03c:
+call hicore (ptape,tmp,11,code)  ; read client number
+if(status.ne.0) goto b03f
+decode (tmp,f04) num ;cvt string to binary; chged from f10 to f04 12/15/76...jwb
+ifs (code.eq.ii) goto b04 ;client number should be non-add ii
+b03f:
+write (crt,f16) tmp,code,m26 ;error, no client number
+ stop 100
+;
+b04:
+if(num.eq.keynum) goto b04a ;correct client??
+write (crt,f12) m29,num ;wrong client number: xxx
+stop 100
+;
+b04a:
+call gtape ;get jour
+goto b10 ;process file
+;
+b05:
+call hicore(ptape,tmp,11,code); read record
+if(status.eq.1) goto b90 ;eof
+if(status.eq.0) goto b06
+call errot (m28) ;field errot
+goto b05
+;
+b06:
+ifs(code.eq.ii) goto b10 ;jour/date
+ifs(code.eq.i) goto b20  ;ref/acct
+ifs(code.eq.null) goto b40 ;amt
+call errot (m27) ;invalid code
+goto b05
+;
+b10:
+'ddesc'='null'
+emp=0
+decode (tmp,f14) jrn,num ;set journ and date if new
+if (num.eq.0) goto b05 ;don't change dates
+date=num
+;  journal date is mmyy, date is mmddyy
+mm=date/tthou
+yy=date-(date/100*100)
+jdte=mm*100+yy
+goto b05
+;
+b20:
+decode (tmp,f13) fa1,num,?acct
+if (fa1.eq.0) goto b22 ;dupe??
+emp=fa1 ;yes
+;
+b22:
+if (num.eq.0) goto b25 ;don't change ref
+ref=num
+b25:
+?acct=?acct*thou
+call ?gkey(gmst,?acct)
+go to (b30,ioerr)on status
+rel=rel0
+readb(gmst,recg)
+v1=vv/thou
+v4=vv-(vv/10*10)
+if(v1.eq.2)go to b05;        v1=2 is a money account; get next
+if(v1.ne.6)go to b30;error
+if(v4.eq.8)go to b05;inventory contra account
+;
+b30:;   reject no match
+call errot (m15) ;invalid acct #
+;
+b32:
+call hicore(ptape,tmp,11,code) ;get next rec
+if (status.eq.1) goto b90 ;eof
+if (status.ne.0) call error (m28) ;field error
+ifs (code.eq.null) goto b32; scan for next acct or jour
+goto b06 ;go process next acct or jour
+;
+;
+b40:
+decode (tmp,f10) amt
+if (?acct.eq.?g1) goto b49 ;gross acct numbers??
+if (?acct.eq.?g2) goto b49
+if (?acct.eq.?g3) goto b49
+if (?acct.eq.?g4) goto b49
+if (?acct.eq.?g5) goto b49
+if (?acct.eq.?g6) goto b49
+if (?acct.eq.?g7) goto b49
+if (?acct.eq.?g8) goto b49
+if (?acct.eq.?g9) goto b49
+if(?acct.eq.?fica)go to b42
+if(?acct.eq.?fwt)go to b43
+if(?acct.eq.?swt)go to b44
+if(?acct.eq.?ctax)go to b44g;   city tax
+if(?acct.eq.?ot1)go to b45
+if(?acct.eq.?ot2)go to b46
+if(?acct.eq.?mea)go to b47
+if(?acct.eq.?tips)go to b48
+if(?acct.eq.?eic) goto b48a;    4/15/80...eic..kg
+if(?acct.ne.?mtded)go to b50 ;must not be payroll
+;
+call wrtout ;write g/l transacion
+mtded=amt
+goto b05
+;
+b42:
+call wrtout
+fica=amt
+goto b05
+;
+b43:
+call wrtout
+fwt=amt
+goto b05
+;
+b44:
+call wrtout
+swt=amt
+goto b05
+;
+b44g:
+call wrtout
+cwt=amt
+go to b05
+;
+b45:
+call wrtout
+oth=amt
+goto b05
+;
+b46:
+call wrtout
+oth2=amt
+goto b05
+;
+b47:
+call wrtout
+meal=amt
+tmeal=tmeal+amt
+goto b05
+;
+b48:
+call wrtout
+tips=amt
+ttips=ttips+amt
+goto b05
+;
+b48a:
+call wrtout
+deic=amt
+teic=teic+amt
+goto b05
+;
+b49:
+call wrtout
+call pay
+pref=ref
+pemp=emp
+pgr=amt
+go to b05
+;
+;
+b50:
+emp=0
+?sub=0
+call wrtout
+go to b05
+;
+;
+b85:
+call msg(m22);   no header on the master file
+;
+stop 100
+;
+;
+b90:
+call msg(null)
+close err
+call ynget(m43); do you wish to keep this run?
+if(status.eq.0)go to b95
+rel2=0
+writeb(trans,pnt) ;output pointer
+call stat(1)
+goto b97
+b95:
+cc=100
+;
+b97:
+free (trans)
+?acct=emp=0
+call pay ;force out last transaction if any
+call msg(m06)
+write(crt,f35)m41,tmeal,m42,ttips,m42a,teic
+call ?gkey(gmst,?two)
+go to (b85,ioerr)on status
+writeb(gmst,hd3)
+call stat(2)
+close  crt,gmst,trans,pcfil
+call pupsi(sort)
+stop cc
+;
+;
+;===========================
+;    subroutines
+;===========================
+;
+;==============
+subroutine pay
+;==============
+sort=3
+;
+if (lemp.eq.0) goto py10 ;first call, don't output empty record
+if (emp.ne.0) goto py05 ;is this call to flush out last record??
+if (pemp.eq.0) goto py20 ;yes, don't output if empty record
+;
+py05:
+rel3=0
+hold(pcfil)
+if(status.ne.0)go to py05
+readb(pcfil,dethdr)
+call stat(1)
+rel3=ppoint=ppoint+1
+writeb(pcfil,ptranb)
+call stat(2)
+rel3=0
+writeb(pcfil,dethdr)
+call stat(1)
+;
+py10:
+free(pcfil)
+call clrec(ptranb) ;clear record for next time
+lemp=emp
+;
+py20:
+return
+;
+;
+;=========================
+subroutine wrtout
+;====================
+rel2=0
+?sav=?acct;  5/19/78
+if(?acct.eq.0)go to wt51;    return
+;
+?sub=0
+if(v1.ne.2)go to wt10
+if(v4.lt.7)go to wt10
+?sub=-10;   i account (v4=7 or 8)
+wt10:
+point=point+1
+rel2=point
+sorpnt=point
+writeb(trans,gdet)
+call stat(2)
+;
+call ?gkey(gmst,?acct)
+go to (wt60,ioerr)on status
+;
+wt20:
+hold (gmst)
+if(status.ne.0)go to wt20
+readb(gmst,recg)
+call stat(1)
+pos=pos+amt
+xx=usef-(usef/10*10)
+if(xx.eq.1)go to wt25
+usef=usef/10*10+2
+wt25:
+writeb(gmst,recg)
+call stat(1)
+free(gmst)
+if(brn.eq.0)go to wt50
+if(brn.eq.thr9)go to wt50;   posting to consolidated
+'al1'='zer12'
+encode(al1,f04)thr9,maj,min
+decode(al1,f07)?acct
+;
+wt28:
+call ?gkey(gmst,?acct);     all i do here is add to pos - consolidated detail
+go to (wt55,ioerr)on status; goes out in audit
+wt30:
+hold(gmst)
+if(status.ne.0)go to wt30
+readb(gmst,recg)
+call stat(1)
+pos=pos+amt
+xx=usef-(usef/10*10)
+if(xx.eq.1)go to wt35s
+usef=usef/10*10+2
+wt35s:
+writeb(gmst,recg)
+call stat(1)
+free(gmst)
+;
+wt50:
+if(?acct.le.?bsea)go to wt51
+if(?sub.eq.-10)goto wt51;   i accounts aren't added into current earnings amount
+?acct=?plact
+go to wt28
+;
+wt51:
+?acct=?sav; 5/19/78
+return
+;
+wt55:
+call msg(m21)
+go to wt50
+wt60:
+call errot (m15) ;invalid acct #
+go to wt50
+;
+;
+;
+;======================
+subroutine gtape
+;-
+call hicore(ptape,tmp,11,code) ;read record from tape file
+if(status.gt.1)go to gt20
+decode (tmp,f10)num
+return
+;
+gt20:
+writen(crt,f10)num
+call msg(m30)
+stop 100
+;
+;
+;
+subroutine mmsg ;output multiple messages
+;
+direct
+ lda- x+
+ bnz *+3
+ rsr return on zero terminator
+ sta/ mm10
+ jsr/ msg
+mm10 dw 0 message addr
+ jmp mmsg
+cpl
+;
+;
+;====================
+subroutine errot
+;====================
+;
+direct
+ lda- x+
+ sta er50 set addr of message
+cpl
+incr lcr
+if (lcr.ge.55) call heading
+direct
+ jsr- z
+ db @wf write (err,f09) tmp,code,jrn,ref,?acct,message
+ dw err
+ dw f09
+ dw tmp
+ dw code
+ dw jrn
+ dw ref
+ dw ?acct
+er50 dw 0 message
+ dw 0 terminator
+ rsr
+cpl
+;
+;
+;===================
+subroutine heading
+;===================
+;
+write (err,f01)eject
+call lfeed(err,6)
+write (err,f01) m51 ;heading
+call lfeed(err,2)
+lcr=9
+return
+;
+;
+;
+;
+; ==================
+;===========================
+;   constants
+;===========================
+;
+set lcr:66,lref:0,num:0,fa1:0,two9:99,nine:9,sort:0,cc:0,lemp:0,keynum:0
+set ?zero:0,bal:0,maj:0,min:0,mm:0,yy:0,v1:0,v2:0,v3:0,v4:0,bal1:0,?one:1,?two:2
+set  mil:1000000,brn:0,h1:0,h2:0,h3:0,h4:0,h5:0,thou:1000,xx:0,tthou:10000,opt:0
+set  thr9:999,?sav:0
+;
+;
+string al1(30),null(0),ans(1),eopt(1),sopt(1),tmp(11),code(1)
+;
+set four9:9999,propt:0
+;
+define  zer4:'0000',zer12:'000000000000',d:'d',k:'k'
+define nmbr:'#'
+define killd:':'
+define zer5:'00000'
+define p:'+'
+define error:'fff'
+define no:'n',yes:'y'
+define i:'1'
+define ii:'2'
+define tnam:'xprd0@' ;name of paper tape read module
+define parm:'000000'
+;
+define spc4:'    '
+define m02:'file contains transactions'
+define m03:'enter one of the following:'
+define m03a:'1 = keep transactions in file and add to them'
+define m03b:'2 = delete transactions and begin new file'
+define m03c:'you have        records in the file. do you still wish to delete them??'
+define m06:'end transaction entry program'
+define m15:'invalid account number'
+define m18:'enter one of the following:'
+define m18a:'1 = clear all totals'
+define m18b:'3 = first run of the quarter'
+define m18c:'4 = standard transaction entry'
+define m21:'the consolidated branch does not have this account number'
+define m22:'account file does not contain user record'
+define m26:'expected key #'
+define m27:'invalid code'
+define m28:'field error'
+define m29:'tape is for key #'
+define m30:'  jrn date error'
+;
+define m39:'enter payroll period ending date (mmddyy)'
+define m40:'enter current date  (mmddyy)'
+define m41:'total meals'
+define m42:' tips'
+define m42a:' eic'
+define m43:'do you wish to keep this run??'
+define m44:'enter:'
+define m45:'0   =   p03, ap6, or ncr add/punch or litton computer'
+define m46:'1   =   friden add/punch'
+;
+define m50:' not found in run directory'
+define m51:'   field    code   jrn   ref      acct            error'
+define spcs:'               ';    15 spaces
+;
+;
+format f01:c85
+format f02:x9n6
+format f03:n1n1n1n1
+format f04:n3n6n3
+format f05:n4
+format f06:n12.2
+format f07:d12
+format f08:n5
+format f09: c11,x3,c1,x3,n4,n6,d10,x5,c40
+format f10:n11
+format f11:c30
+format f12:c20,n3
+format f13:n2,n5,d3
+format f14:n4,n6
+format f15: c6,c40
+format f16: c11,x3,c1,x5,c40
+;
+format f19:c19
+format f20:c18n-12.2x10c22n-12.2
+format f21:c1
+format f22:n6x1n4x1n4x1c30x1n-12.2x1c20
+format f23:c30x5c30x5c6n5
+;
+format f24:c15
+format f25:c10x3d12x3c15
+format f26:c1c1n1n1
+;
+format f40:d12x1d12x1n6x1n6x1n5x1n-12.2
+format f28:c15n4c12n-12.2
+format f35: c12,n-10.2,c6,n-10.2,c5,x1,n-10.2
+;
+end;  gl532 (tape input to wragle)
+
+

@@ -1,0 +1,357 @@
+system
+define m01:'gl509  (calculation account report)  12/29/81'
+ 
+;notes
+;   5/24/79...written...ns
+;   6/29/79...changed format some for marty..ns
+;   8/02/79...changed signon ..ns
+;
+;  12/29/81...recompile to have a common date base...dl
+ 
+ 
+record listb(10)
+set ?lid:0,rel0:0
+endrec
+ 
+record aux(131)
+set ?hid:0,hff:0,hvv:0;  hvv   h=v1=5,v4=8, j v1=5, v4=7, k v1=4, v4=7
+string hdesc(30)
+string dec(10)
+set cur:0,?a9:0,?a0:0,?a1:0,?a2:0,?a3:0,?a4:0,?a5:0,?a6:0,?a7:0,?a8:0
+string func(10)
+endrec
+ 
+copy hd3
+copy recg
+file crt:sysipt
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+entrypoint crt
+file prt:syslst,class=1
+set ?id:0
+external ?gkey,stat,ioerr,msg,msgn,cget,ynget,lfeed,clrec,pupsi,gjp
+entry
+ 
+open io(gmst,crt,list), output prt
+call msg(eject)
+call msg(m01)
+a01:
+call cget(m04,fc30,rdate)
+if(status.ne.0)go to a01
+call bltrun(rdate)
+call cent80(rdate,f04)
+call gjp(0,key)
+call ?gkey(gmst,?zero)
+call stat(1)
+readb(gmst,headb)
+call stat(1)
+'acct'='zer7'
+encode(acct,fn7)hh
+decode(acct,fn1)opt
+if(opt.ne.1)go to q0875
+call bltrun(client)
+call cent80(client,fhd2)
+ 
+b10:
+readb(list,listb)
+go to (q0900)on status
+if(?lid.le.100)go to b10
+readb(gmst,aux)
+call stat(1)
+if(?hid.eq.0)go to b10; deleted
+if(hvv.lt.i4007)go to b10;  not part of this group
+if(hvv.ge.i6000)go to b10; not this report
+v1=hvv/thou
+v4=hvv-(hvv/10*10)
+decode(dec,fn1)dec0,dec1,dec2,dec3,dec4,dec5,dec6,dec7,dec8,dec9
+call crq
+write(prt,f01); lfeed
+call crq
+'acct'='zer12'
+encode(acct,fd12)?hid
+decode(acct,f10)brn,maj,min
+'cmin'='blk3'
+if(min.eq.0)go to b20
+encode(cmin,fn3)min
+ 
+b20:
+'type'='k'
+if(v1.eq.4)go to b30
+'type'='h'
+if(v4.eq.8)go to b30
+'type'='j'
+ 
+b30:
+write(prt,f02)brn,maj,cmin,hdesc,type
+write(prt,f02)
+ 
+write(prt,f06)m37,m38,m39,m36;  func,dec.,acct/amt,desc.
+write(prt,f01);lfeed
+lcr=lcr+3
+call crq
+ 
+i=0
+ 
+b40:
+call tget(fun0,i,func,1)
+call tget(decx,i,dec0,4)
+call tget(?a,i,?a0,6)
+'desc'='null'
+'brn'='blk3'
+'cmin'='blk3'
+maj=0
+ifs(fun0.eq.ai)go to b100;   this is a constant
+call ?gkey(gmst,?a)
+go to (b90,ioerr)on status
+if(?a.eq.0)go to b10; finished with this one
+readb(gmst,recg)
+call stat(1)
+if(?gid.ne.0)go to b80
+'desc'='null'
+go to b90
+ 
+b80:
+'acct'='zer12'
+encode(acct,fd12)?gid
+decode(acct,f10)brn,maj,min
+if(min.eq.0)go to b90
+encode(cmin,fn3)min
+ 
+ 
+b90:
+write(prt,f07)fun0,decx,brn,maj,cmin,desc
+ 
+go to b110
+ 
+b100:
+go to (b101,b102,b103,b104,b105,b106,b107,b108,b109)on decx
+write(prt,f11)fun0,decx,?a
+go to b110
+ 
+b101:
+write(prt,f12)fun0,decx,?a;  1 dec. place
+ go to b110
+ 
+b102:
+write(prt,f13)fun0,decx,?a
+go to b110
+ 
+b103:
+write(prt,f14)fun0,decx,?a
+goto b110
+ 
+b104:
+write(prt,f15)fun0,decx,?a
+go to b110
+b105:
+write(prt,f16)fun0,decx,?a
+go to b110
+ 
+b106:
+write(prt,f17)fun0,decx,?a
+go to b110
+ 
+b107:
+write(prt,f18)fun0,decx,?a
+go to b110
+ 
+b108:
+write(prt,f19)fun0,decx,?a
+go to b110
+ 
+b109:
+write(prt,f20)fun0,decx,?a
+b110:
+call crq
+i=i+1
+if(i.ge.9)go to b10;  get next record
+go to b40
+ 
+q0875:
+call msg(m02);  no h acounts in this file
+ 
+q0900:
+call msg(m03);  end of job
+stop 0
+;
+;==============
+; subroutines
+ 
+subroutine crq
+;==============
+lcr=lcr+1
+if(lcr.lt.58)go to cr10
+write(prt,f01)eject
+write(prt,fhd2)client
+write(prt,f03)acnt,sl,key,title,m33,page
+page=page+1
+write(prt,f04)rdate
+write(prt,f01)
+write(prt,f05)m34,m35,m36,m40
+write(prt,f01)
+lcr=6
+ 
+cr10:
+return
+;====================
+subroutine tget
+;=================
+direct
+   lda- x+ get target address
+   sta tga
+   lda- x+ get index
+   ina ,2
+   lda- a
+   xay save it for later
+   ldb- x+ get table start
+   lda- x+ get table unit byte length
+   stx- s-
+   sta- s-
+tg01 add y,b mpy index*unit-byte-length
+   dca
+   bnz tg01
+   ldx= *-*
+tga equ *-2
+   lda- s+
+   xay maove xfr count to y
+tg02 ldab- b+
+   stab- x+
+   dcr y decr xfr count to y
+   bnz tg02
+   ldx- s+
+cpl
+return
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;====================
+define m02:'this file is not initialized for h accounts'
+define m03:'end of job'
+define m04:'enter report date'
+ 
+define m33:'page'
+define m34:'brn'
+define m35:'account'
+define m36:'description'
+define m37:'func'
+define m38:'dec'
+define m39:'account/amount'
+define m40:'type'
+ 
+define title:'calculation routines'
+define ai:'i',h:'h', j:'j', k:'k', blk3:'   ',sl:'/'
+define acct:'   000000000'
+define zer12:'   000000000',zer7:'0000000'
+ 
+format fn1:n1
+format fn2:n2
+format fn3:n3
+format fn7:n7
+ 
+format fc30:c30
+format fd12:d12
+ 
+format fhd2:x100 c100
+ 
+format f01:c90
+format f02:c4 n-7 c4 c40 c1
+format f03:n3 c1 c26 c42  c5 n4
+format f04:x100 c100
+format f05:c6 c12 c35c4
+format f06:x25c5 c4 c16 c20
+format f07:x27c1 x3 n-2 c4 n-7 c4 c30
+ 
+format f10:c3 n6 n3
+format f11:x27 c1 x3 n-2 d-11
+format f12:x27 c1 x3 n-2 d-13.1
+format f13:x27 c1 x3 n-2 d-14.2
+format f14:x27 c1 x3 n-2 d-14.3
+format f15:x27 c1 x3 n-2 d-14.4
+format f16:x27 c1 x3 n-2 d-14.5
+format f17:x27 c1 x3 n-2 d-14.6
+format f18:x27 c1 x3 n-2 d-14.7
+format f19:x27 c1 x3 n-2 d-14.8
+format f20:x27 c1 x3 n-2 d-14.9
+ 
+set opt:0,decx:0,?a:0, i4007:4007, i6000:6000, i:0, ?zero:0
+;  table of dec so dont disturb
+set dec0:0,dec1:0,dec2:0,dec3:0,dec4:0,dec5:0,dec6:0,dec7:0,dec8:0,dec9:0
+ 
+set min:0,maj:0,v4:0,v1:0,lcr:60,page:1,thou:1000
+ 
+string fun0(1),null(0),rdate(30),brn(3),cmin(3),key(6),type(1)
+ 
+end
+
+

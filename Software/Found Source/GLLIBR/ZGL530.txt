@@ -1,0 +1,354 @@
+title: ' wragle data entry - first module (gl530) '
+system
+;
+define m01:'gl530 (transaction entry) 12/29/81'
+;
+;notes
+;   9/27/77...writing first module for transaction entry...ns
+;   11/1/77...m17 was messed up..ns
+;
+;   05/24/78...combff was set backward...ns
+;    7/18/78...cosmetic changes...ns
+;    9/12/78...if trans. has -10 in sub it is not added to total (was an i account trans.)...ns
+;   05/07/79...hold/free error. & changing format of pnt..ns
+;   08/02/79...changed signon message..ns
+;   02/25/80...modified to check account type before clear amounts...kag
+;   04/09/80...mod for earned income credit in payroll file (quick fix)...ok
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;
+;
+external msg,stat,ioerr,gdate,?gkey,cget,clrec,ynget
+;
+file crt:sysipt
+entrypoint crt
+;
+;  gmst is part of recg copy
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+file trans:sys2,class=2,rnd,recsiz=77,key=rel2
+set rel2:0
+;
+file pcfil:sys3,class=2,rnd,recsiz=65,key=rel3
+set rel3:0
+;
+;=============  records
+;
+copy recg
+copy head2
+record listb(10)
+set  ?lid:0
+set  rel0:0
+endrec
+;
+copy gdet
+;
+record dethdr(65)
+set   detnul:0
+set   ppoint:0
+   set staflg:0
+set   citflg:0
+set   combff:0
+set   othflg:0
+set   perend:0
+set   lastin:0
+set   posted:0
+set   postop:0
+set   eicflg:0
+endrec
+;
+record ptranb(65)
+set    pemp:0
+set    pref:0
+set    pgr:0
+set    fica:0
+set    fwt:0
+set    oth:0
+set    oth2:0
+set    swt:0
+set    cwt:0
+set    meal:0
+set    tips:0
+set    mtded:0
+set    prdate:0
+set    deic:0
+string pdes(7)
+endrec
+;
+;
+record pnt(16)
+set    point:0
+set    cnet:0
+set    cdat:0
+set cur:0
+endrec
+ 
+;
+entry
+;
+open io (crt,gmst,trans)
+call msg(eject)
+call msg(m01)
+;
+call ?gkey(gmst,?gid);   ?gid is zero at this point
+go to (b01,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+encode(zer,f03)hh
+decode(zer,f03)h5;   payroll flag
+call msg(client);  display client name
+if(h5.eq.0)go to a30
+;
+open io pcfil
+;
+readb(pcfil,dethdr)
+call stat(1)
+if(posted.eq.0)go to a05
+if(ppoint.eq.0)go to a10
+rel3=ppoint
+readb(pcfil,ptranb)
+call stat(1)
+;
+call msg(m28a);   payroll contains unposted transaction (prcomp hasnt been run)
+call msg(m29);     last detail is: emp etc
+ldate(grin,prdate)
+sdate(string,client)
+;
+write(crt,f30)pemp,pref,pgr,client
+;
+a01:
+;
+call cget(m28,f21,xa);  do you want to keep or delete payroll details?
+ifs(xa.eq.k)go to a10
+ifs(xa.ne.d)go to a01
+encode(m03c,f02)ppoint
+call ynget(m03c);   you have xxx records do you still want to delete them?
+if(status.eq.0)go to a10
+;
+a05:
+ppoint=0
+rel3=0
+eicflg=0
+writeb(pcfil,dethdr)
+call stat(2)
+;
+a10:
+?gid=1
+call ?gkey(gmst,?gid)
+go to (a30,ioerr)on status
+readb(gmst,head2)
+call stat(1)
+;
+a12:
+staflg=citflg=combff=othflg=0
+if(?swt.eq.0)go to a15
+staflg=1
+;
+a15:
+if(?ctax.eq.0)go to a18
+citflg=1
+;
+a18:
+if(?fica.ne.0)go to a20;  change 5/24/78
+combff=1;                  if fica is 0 then fica and tax must be together
+;
+a20:
+if(?ot1.ne.0)go to a22
+if(?ot2.eq.0)go to a24
+;
+a22:
+othflg=1
+;
+a24:
+rel3=0
+call ynget(m28b);   are you entering payroll details
+if(status.ne.0)go to a24a
+h5=0
+go to a30
+;
+a24a:
+call cget(m29a,f22,perend)
+ldate(grin,perend)
+if(status.ne.0)go to a24a;   period ending date
+ldate(current)
+sdate(grin, lastin);   today's date
+;
+call msg(m18a);      enter payroll posting option
+write(crt,f01)m18b
+writen(crt,f01)m18c
+call cget(null,f03,postop)
+;
+a27:
+go to (a29,a28,a29,a29)on postop;   1,3,4 are good codes
+;
+a28:
+call cget(m06,f03,postop);  invalid try again
+go to a27
+;
+a29:
+;
+eicflg=0
+writeb(pcfil,dethdr)
+call stat(1)
+;
+a30:
+;
+b01:
+hold(trans)
+if(status.ne.0)go to b01
+readb(trans,pnt)
+call stat(1)
+cdat=h5
+if(point.eq.0)goto b09
+rel2=point
+readb(trans,gdet)
+call stat(1)
+ldate(grin,date)
+sdate(string,client);   using here as a variable
+rel2=0
+;
+call msg(m02);   g/l file contains unposted transactions
+call msg(m02a);  last g/l detail is:
+call msg(m17)
+write(crt,f40)?acct,ref,?sub,client,emp,amt
+;
+b03:
+call cget(m28,f21,xa);   do you want to keep or delete these transactions
+ifs(xa.eq.k)go to b05
+ifs(xa.ne.d)go to b03
+encode(m03c,f02)point
+;
+b03f:
+call ynget(m03c); you have xxx records do you still wish to delete them
+if(status.eq.0)go to b05
+point=0
+cnet=0
+open input list
+;
+b04:
+rel0=0
+hold(gmst)
+if(status.ne.0)go to b04
+;
+b04f:
+;
+readb(list,listb)
+if(status.ne.0)go to b04m
+if(?lid.lt.100)go to b04f;  headers
+readb(gmst,recg)
+call stat(1)
+;
+v1=vv/thou
+if (v1.eq.4) goto b04f;  k acct don't touch em...
+if (v1.eq.5) goto b04f;  j & h acct ..bypass em.....       2/25/80..
+;
+pos=0;      clearing unposted amount because they wiped the file back to 0 records.
+writeb(gmst,recg)
+call stat(1)
+go to b04f
+;
+b04m:
+close list
+rel0=0
+free(gmst)
+go to b09
+;
+b05:
+;
+cnet=0
+;
+b05a:
+rel2=rel2+1
+if(rel2.gt.point)go to b08
+readb(trans,gdet)
+call stat(1)
+call addnet
+if(jrn.eq.ljrn)go to b06
+if(?bal.eq.0)go to b06
+write(crt,f28)m26,ljrn,m27,?bal
+?bal=0
+;
+b06:
+ljrn=jrn
+if(?sub.eq.-10)goto b05a; i acct not part of proof total
+?bal=?bal+amt
+go to b05a
+;
+;
+b08:
+write(crt,f28)m26,ljrn,m27,?bal
+;
+b09:
+rel2=0
+writeb(trans,pnt)
+call stat(1)
+;
+b10:
+rel2=0
+free(trans)
+close gmst,trans
+load(xgl531,0,0)
+stop 99
+;
+;=======================
+subroutine addnet
+;=======================
+;
+if(?acct.le.?bsea)go to an20
+if(?sub.eq.-10)goto an20;   i account not part of current earnings total
+cnet=cnet+amt;  cnet is part of the header going to the next module
+;
+an20:
+return
+;
+;========================
+; working storage
+;
+set ljrn:0,?bal:0,h5:0,v1:0,thou:1000
+;
+string null(0)
+;
+define k:'k',d:'d',yes:'y',no:'n',zer:'0'
+define xgl531:'xgl531'
+;
+define m02:'general ledger file contains unposted transactions'
+define m02a:'last general ledger detail is:'
+define m03c:'you have        records in the file.  do you still want to delete them? (y/n)'
+define m06:'invalid - enter option'
+;
+define m17:'brn  maj min         ref       sub     date     emp    amount     '
+define m18a:'enter option:  1  clear all payroll master totals'
+define m18b:'3  first run of the quarter'
+define m18c:'4  standard transaction entry'
+;
+;
+define m26:'journal number'
+define m27:'balance ='
+define m28:'do you want to keep or delete these transactions? (k/d)'
+define m28a:'payroll file contains unposted transactions (prcomp has not been run)'
+define m28b:'are you entering payroll transactions during this pass? (y/n)'
+define m29:'last detail is:   emp    ref     gross    date'
+define m29a:'enter payroll period ending date (mmddyy)'
+;
+format f01:x15, c60
+format f02: x9, n6
+format f03: n1
+;
+format f21:c1
+format f22:n6n5n5x1c30x1n-12.2, x1, c20
+;
+format f28:c15n3x1c10d-12.2
+;
+format f30: n21,n7, n-11.2, x1, c15
+;
+format f40:d12n13d10,x1,c8,n7,n-11.2,d-13.2
+;
+end
+;
+;
+
+
+

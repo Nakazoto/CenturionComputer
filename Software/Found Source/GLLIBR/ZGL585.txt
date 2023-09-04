@@ -1,0 +1,511 @@
+title 'gl585--dump budget file to printer '
+system  ;(exp=b)
+;
+direct
+term equ *-*
+cpl
+define m01:'gl585 (budget file listing) 12/29/81'
+;
+;  notes:
+;    7/16/76...written...n
+;   7/20/76...still testing..ns
+;
+;   7/23/76...adding year total and option to enter all months the same..ns
+;   7/23/76...converted to master file dump..ns
+;    1/12/77...adding crq..ns
+;    7/24/78...cosmetic changes...ns
+;   6/25/79...new report format..ns
+;    6/25/79...moved page # 1 space to right..ns
+;    07/05/79...changed f05 & headings m13/m13a/m14..ns
+;    08/22/79...changed f08 to print 1 more character so that neg. would print..ns
+;   08/29/79...acnt# wasnt printing
+;   02/26/80...corrected routine which determines type of acct...kag
+;   06/24/80...recompiled for tblget,tblput routine...dle
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+ 
+record headb(131)
+string client(40)
+string coment(50)
+set    month:0;     current postings
+set    yrend:0;     fiscal year ending
+set    post:0;      if 3 retain all details
+set    ?bsea:0,?plact:0,hh:0;        put profit/loss in parent.
+set    mnum:0;      number of months into current year
+set acnt:0
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+;
+copy brec
+;   brec is the budget record
+;
+record listb(10)
+set    ?lid:0
+set    rel1:0
+endrec
+ 
+;
+file list:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+file bmst:sys1,class=2,rnd,recsiz=131,key=rel1
+set rel0:0
+;
+record recg(50)
+set  ?id:0
+set  xx:0
+set  vv:0
+string desc(30)
+endrec
+;
+;============================
+;
+file crt:sysipt
+;
+file prt:syslst,class=1,seq
+entrypoint crt
+;
+;
+external nget,aget,sget,msg,?nkey,?gkey,ioerr,stat,lfeed,pupsi,yes,mvssf,gjp,cget
+;
+entry
+;
+open io(crt,gmst,bmst,list), output prt
+call msg(eject)
+call msg(m01);      b550 budget master
+call gjp(0,key)
+;
+b05:
+call ?gkey(bmst,?zero);   call header
+goto(b06,ioerr)on status
+readb(bmst,budh)
+call stat(1)
+;
+b06:
+call ?gkey(gmst,?zero)
+call stat(1)
+readb(gmst,headb)
+call stat(1)
+call bltrun(client)
+call cent132(client,fmt1)
+b10:
+'acct'='zer5'
+encode(acct,f02)hh
+decode(acct,f03)h0,h1,h2,h3,h4
+call msg(m03)
+call cget(null,fc77,rdate)
+call bltrun(rdate)
+call cent132(rdate,fmt3)
+;
+b20:
+readb(list,listb)
+if(status.ne.0)go to b900
+if(?lid.le.100)go to b20; headings
+readb(bmst,brec)
+call stat(1)
+if(?bid.eq.0)go to b20;deleted
+call ?gkey(gmst,?lid)
+go to (b20,ioerr)on status
+readb(gmst,recg)
+call stat(1)
+if(?id.eq.0)go to b20; deleted
+?nid=?lid
+'acct'='zer12'
+encode(acct,f09)?nid
+decode(acct,f10)brn,maj,min
+'cmin'='blk3'
+if(min.eq.0)go to b31
+encode(cmin,fn3)min
+ 
+b31:
+'acct'='zer4'
+encode(acct,f07)vv;
+decode(acct,f03)v1,v2,v3,v4;   v1=2 is money account
+go to (b32,b33,b34,b35,b36,b37)on v1
+go to (b31c,b31a)on v4
+'type'='b'
+go to b100
+ 
+b31a:
+'type'='a'
+go to b100
+ 
+b31c:
+'type'='c'
+go to b100
+ 
+b32:
+'type'='d'
+go to b100
+ 
+b33:
+go to (b33f)on v4
+'type'='e'
+if(v4.eq.0)go to b100
+ 
+'type'='ii'
+go to b100
+ 
+b33f:
+'type'='f'
+go to b100
+ 
+b34:; v1=3
+'type'='g'
+go to b100
+ 
+b35:; v1=4
+'type'='k'
+if(v4.ne.8)go to b100
+'type'='h'
+go to b100
+ 
+b36:
+'type'='ij'
+if (v4.ne.8) goto b100
+'type'='h'
+goto b100
+;
+b37:
+'type'='l'
+ 
+;
+b100:
+qtr1=qtr2=qtr3=qtr4=0
+;
+b108f:
+fa1=0
+call crq
+write(prt,f04)brn,maj,cmin,type,desc
+go to (b109,b109,b145,b145,b145,b109)on v1
+go to b145
+;
+b109:
+write(prt,f01)m13,m13a,m13
+b110:
+tblget bud(1)
+call edit(bud,cbud,mask01)
+qtr1=bud
+ tblget mon(1)
+'part'='blanks'
+'line'='null'
+encode(part,f05)one,dash,mon,cbud+2
+ tblget bud(2)
+call edit(bud,cbud,mask01)
+qtr1=qtr1+bud
+ tblget mon(2)
+'line'='line+part'
+'part'='blanks'
+encode(part,f05)two,dash,mon,cbud+2
+ tblget bud(3)
+call edit(bud,cbud,mask01)
+ tblget mon(3)
+qtr1=qtr1+bud
+'line'='line+part'
+'part'='blanks';
+encode(part,f05)thr,dash,mon,cbud+2
+'line'='line+part'
+ tblget bud(4)
+call edit(bud,cbud,mask01)
+qtr2=bud
+;
+'part'='blanks';
+ tblget mon(4)
+encode(part,f05)four,dash,mon,cbud+2
+ tblget bud(5)
+call edit(bud,cbud,mask01)
+qtr2=qtr2+bud
+ tblget mon(5)
+'line'='line+part'
+'part'='blanks';
+encode(part,f05)five,dash,mon,cbud+2
+ tblget bud(6)
+call edit(bud,cbud,mask01)
+ tblget mon(6)
+qtr2=qtr2+bud
+'line'='line+part'
+'part'='blanks';
+encode(part,f05)six,dash,mon,cbud+2
+'line'='line+part'
+write(prt,f01b)line
+if(fa1.ne.0)go to b120
+;
+;
+ tblget bud(7)
+call edit(bud,cbud,mask01)
+qtr3=bud
+ tblget mon(7)
+'part'='blanks';
+encode(part,f05)sev,dash,mon,cbud+2
+ tblget mon(8)
+ tblget bud(8)
+call edit(bud,cbud,mask01)
+qtr3=qtr3+bud
+'line'='part'
+'part'='blanks';
+encode(part,f05)ate,dash,mon,cbud+2
+ tblget bud(9)
+call edit(bud,cbud,mask01)
+ tblget mon(9)
+qtr3=qtr3+bud
+'line'='line+part'
+'part'='blanks';
+encode(part,f05)nine,dash,mon,cbud+2
+'line'='line+part'
+;
+b113:
+;
+ tblget bud(10)
+call edit(bud,cbud,mask01)
+qtr4=bud
+ tblget mon(10)
+'part'='blanks';
+encode(part,f05)ten,dash,mon,cbud+2
+'line'='line+part'
+ tblget bud(11)
+call edit(bud,cbud,mask01)
+qtr4=qtr4+bud
+ tblget mon(11)
+'part'='blanks';
+encode(part,f05)elev,dash,mon,cbud+2
+'line'='line+part'
+ tblget mon(12)
+ tblget bud(12)
+call edit(bud,cbud,mask01)
+qtr4=qtr4+bud
+'part'='blanks';
+encode(part,f05)twel,dash,mon,cbud+2
+'line'='line+part'
+write(prt,f01b)line
+b120:
+yr=qtr1+qtr2+qtr3+qtr4
+write(prt,f01a)m13,m14,m13; qtr
+call edit(qtr1,cbud,mask01)
+call edit(qtr2,cqt2,mask01)
+call edit(qtr3,cqt3,mask01)
+call edit(qtr4,cqt4,mask01)
+write(prt,f12)m16,cbud+1,m17,cqt2+1,m18,cqt3+1,m19,cqt4+1
+call edit(yr,cbud,mask01)
+write(prt,f08)m08,cbud+1
+lcr=lcr+6
+b145:
+call crq
+write(prt,f01)
+go to b20
+;
+b900:
+call msg(m20);   eoj
+close bmst,crt,gmst
+call pupsi(sort)
+stop 0
+;
+noroom:
+call msg(m21);   no room going to expand the master file
+close bmst,crt,gmst,list
+stop 111
+;
+;
+;=======================
+subroutine iset
+;=======================
+ tblput mon(i)
+i=i+1
+if(i.lt.13)go to is10
+i=1
+is10:
+return
+;
+;====================
+subroutine newyear
+;====================
+return
+;
+;
+;===================
+subroutine crq
+;===================
+;
+lcr=lcr+1
+if(lcr.ge.58)go to cr10
+return
+;
+cr10:
+write(prt,fc77)eject
+write(prt,fmt1)client
+write(prt,fmt2)acnt,sl,key,m22,m09,page
+write(prt,fmt3)rdate
+write(prt,fmt3)
+write(prt,fmt4)m05,m06b
+write(prt,fmt5)m04,m05,m06,m06a
+write(prt,fmt5)
+page=page+1
+lcr=8
+return
+;
+;====================
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;=========================
+subroutine cent132
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 132-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent132 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;====================
+;   constants
+;====================
+;
+define jan:'jan',feb:'feb ',mar:'mar ',apr:'apr ',may:'may ',jun:'june',jul:'july'
+define aug:'aug ',sep:'sept',oct:'oct ',nov:'nov ',dec:'dec '
+;
+define dash:'-'
+define spc:' ',zer3:'000',sl:'/',key:'      '
+define a:'a', b:'b', c:'c', d:'d', e:'e', f:'f', g:'g', h:'h',ii:'i',ij:'j', k:'k',l:'l'
+define type:'      '
+define mask01:'  ###,###,###@.##-'
+define cbud: '                 '
+define cqt2: '                 '
+define cqt3: '                 '
+define cqt4: '                 '
+ 
+define m03:'enter report date'
+define m04:'branch'
+define m05:'account'
+define m06:'number'
+define m06a:'type'
+define m06b:'description'
+define m08:'total annual budget'
+;
+;
+define m09:'page '
+define m10:'*no match in chart of accounts'
+define m13:'- - - - - - - - - - - - - - - - - - - - - - - - - - - -'
+define m13a:'monthly budget'
+define m14:'quarterly budget'
+define m16:'1st quarter'
+define m17:'2nd quarter'
+define m18:'3rd quarter'
+define m19:'4th quarter'
+;
+;
+define m20:'***   end of job   ***'
+define m21:'no room - must expand master - will return shortly'
+define m22:'budget master file'
+;
+;
+;
+define zer5:'00000',zer12:'      000000'
+;
+define zer4:'0000'
+define blanks:'                     ';21 blanks
+;
+define blk3:'   '
+ 
+set fa1:0,i:0,j:0,page:1,lcr:60
+set  yr:0,qtr1:0,qtr2:0,qtr3:0,qtr4:0
+set maj:0,min:0,?nid:0,?zero:0
+set mil:1000000,thou:1000,h0:0,h1:0,h2:0,h3:0,h4:0
+set sort:0,v1:0,v2:0,v3:0,v4:0
+set one:1,two:2,thr:3,four:4,five:5,six:6,sev:7,ate:8,nine:9,ten:10,elev:11,twel:12
+;
+;
+string acct(15),line(133),part(30),null(0),rdate(77),cmin(3),brn(3)
+;
+;
+;
+format f01:x4 c54 c15 c55
+format f01a:x10 c47 c17 c49
+format f01b: x3 c129
+format f02:n5
+format f03:n1
+format f04:x1 c9 n6 x3 c9 c10 c30
+format f05:n3c1 c3 c14
+format ftest: n-10.2 c16 c16 c16
+format f06:n10.2
+format f07:n4
+format f08: x5 c23 c15
+format f09:d12
+format f10:c3n6n3
+format f12:x10 c12 c17 c12 c17 c12 c17 c12 c17
+;
+format fmt1: x100 c100
+format fmt2: n3 c1 c53 c66 c5 n4
+format fmt3: x100 c100
+format fmt4: x26 c21 c30
+format fmt5: c9 c8 c10 c10
+ 
+format fn3: n3
+format fc77: c77
+;
+end
+
+

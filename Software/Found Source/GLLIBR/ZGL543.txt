@@ -1,0 +1,197 @@
+system
+;
+;
+define m01:'gl543 (financial statement cover letter) 12/29/81'
+;
+external cget,ynget,msg,gupsi,pupsi,stat
+;
+;  notes:
+;   11/15/76...converted from g250 to gl544...ns
+;   1/6/77...changed sget to cget and added external statement..glg
+;   7/20/78...cosmetic change...ns
+;   7/17/79...changed from 25 to 50 lines and added ability to make changes..ns
+;   8/02/79...added firms name..ns
+;   8/09/79...adding delete/add & no change options..ns
+;
+;  12/29/81...recompile to have a common date base...dl
+;
+file crt:sysipt
+file mstr:sys0,class=2,seq,buffer=400,buf1
+file nmstr:sys1,class=2,seq,buffer=400,buf2
+buffer buf1(400)
+;
+;
+buffer buf2(400)
+entry
+open io (crt,mstr,nmstr)
+;
+;
+call msg(null)
+call msg(m01)
+call msg(null)
+;
+;
+;
+call msg(m02)
+call msg(null)
+ 
+b05:
+encode(m04,f04)clr
+fa1=1
+;
+call msg(m05);  1=write new letter
+write(crt,fopt)m06;   2=change letter
+write(crt,fopt)m07;  3=add your firms name to first of letter
+write(crt,fopt)m07a; 9=end
+call cget(null,fn1,opt)
+if(status.ne.0)go to b05
+go to (b10,c10,d10)on opt
+if(opt.eq.9)go to q0900
+go to b05
+ 
+b10:
+encode(m04,f02)fa1
+call cget(m04,f01,lin1); get next line
+write(mstr,f01)lin1
+fa1=fa1+1
+if(fa1.le.50)go to b10
+endfile mstr
+rewind mstr
+go to b05; to change it
+;
+;
+c10:
+call cget(m08,fn2,opt);  enter line #
+if(status.ne.0)go to c10
+if(opt.le.0)go to b05
+if(opt.gt.55)go to b05
+call msg(m05a); enter fff to delete, ::: to not change, aaa to add a line
+ 
+c20:
+read(mstr,f01)lin1
+if(status.eq.0)go to c23
+'lin1'='null'
+ 
+ 
+c23:
+write(crt,f03)fa1,lin1
+if(fa1.eq.opt)go to c30
+fa1=fa1+1
+write(nmstr,f01)lin1
+call stat(1)
+go to c20
+ 
+c30:
+'lin2'='lin1';  hold incase there is no change
+encode(m04,f02)fa1
+call cget(m04,f01,lin1)
+if(status.ne.0)go to c30
+ 
+ifs(lin1.eq.fff)go to c40;  delete the line
+ifs(lin1.eq.aaa)go to c70
+ifs(lin1.ne.colons)go to c35
+'lin1'='lin2';  move back original entry
+ 
+c35:
+ write(nmstr,f01)lin1
+ 
+c40:
+read(mstr,f01)lin1
+if(status.ne.0)go to c50
+write(nmstr,f01)lin1
+call stat(1)
+go to c40
+ 
+c70:;  add some lines
+write(nmstr,f01)lin2;   this line doesnt get changed
+ 
+c75:
+fa1=fa1+1
+encode(m04,f02)fa1
+ 
+c76:
+call cget(m04,f01,lin1)
+if(status.ne.0)go to c76
+ifs(lin1.eq.null)go to c40; write rest of file
+write(nmstr,f01)lin1
+go to c75
+c50:
+endfile nmstr,mstr
+close nmstr,mstr
+open io (nmstr,mstr)
+ 
+c55:
+read(nmstr,f01)lin1;   copy the new file back into the good file
+if(status.ne.0)go to c60
+write(mstr,f01)lin1
+call stat(1)
+go to c55
+c60:
+ 
+endfile mstr
+rewind mstr,nmstr
+go to b05
+ 
+d10:
+ 
+i=1
+ 
+d11:
+i=i+1
+if(i.gt.6)go to c40;   copy rest of file into nmstr & then copy it back again
+ 
+d15:
+call cget(m04a,f01,lin1)
+if(status.ne.0)go to d15
+write(nmstr,f01)lin1
+call stat(1)
+ 
+go to d11
+ 
+q0900:
+stop 0
+ 
+;
+;===================
+;
+set fa1:0, opt:0, i:0
+;
+;
+define xgl543:'      '
+string ans(1), lin1(50),null(0),lin2(50)
+;
+define fff:'fff', colons:':::',aaa:'aaa'
+;
+define m02:'enter 50 lines with 50 characters per line maximum'
+define m03:'are you ready to create your transmittal letter ??'
+define m04:'line # 01'
+define m04a:'enter your address (5 lines)'
+define m05a:'enter fff to delete, ::: for no change,  aaa to insert lines'
+define m05:'enter option:  1  write new letter'
+define m06:'2  change the letter'
+define m07:'3  add your firms name to top of letter'
+define m07a:'9  end program'
+define m08:'enter line number for change'
+;
+define clr:'00'
+define yes:'y'
+;
+;
+format f01:c50
+format f02:x7n2
+format f03:n-4 c50
+ 
+format f04:x7c2
+format fn1:n1
+format fn2:n2
+ 
+format fopt:x15 c40
+;
+;
+entrypoint crt
+;
+;
+end
+
+
+

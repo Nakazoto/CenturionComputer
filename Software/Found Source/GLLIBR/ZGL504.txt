@@ -1,0 +1,115 @@
+title 'gl504--clears money totals when master files are copied '
+system
+ ;
+define m01:'gl504 (clearing account balances) 12/29/81'
+;
+external cget,msg,?gkey,ioerr,stat,clrec,lfeed,gupsi,pupsi
+;   notes:
+;  9/29/76...created out of gl515 when need for simplified process of copying
+;            master files was made clear.  used only in glnew jobstream..glg
+;    1/30/77..changing so le 100 are headers...ns
+;      7/18/78...cosmetic changes...ns
+;      9/01/78...dont clear accounts h, j, or k...ns
+;     5/02/79...wasnt clearing posting option in usef...ns
+;     7/13/79...changed to clear posting even if it was a 2..ns
+;    8/02/79...changing signon mess..ns
+;    9/25/79...added clearing of ?inv...jwb
+;
+;   12/29/81...recompile to have a common date base...dl
+;    g/l master
+copy recg
+copy list
+;
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+entry
+;
+open io (crt,gmst,list)
+;
+call msg(m01);    salutation
+;
+a1:
+readb(list,listb)
+if(status.ne.0)go to a3
+if(?lid.le.100)go to a1
+'acct'='zer12'
+encode(acct,f09)?lid
+decode(acct,f10)brn,maj,min
+?new1=?lid
+;
+call glread
+if(?gid.eq.0)go to a1;  it has been deleted previously
+   if(v1.eq.6)go to a2;  l accounts ok to clear(inventory)
+   if(v1.ge.4)go to a1;  h,j,k accounts are calculated each time-dont clear
+;                              calculation info is kept in amount fields
+;
+a2:
+?inv=?cbal=cmo=mon2=mon3=mon4=mon5=mon6=mon7=mon8=mon9=0; added ?inv 09/25/79...jwb
+mona=monb=monc=mond=mone=monf=?pbal=pos=0
+usef=usef/10*10
+ 
+a25:
+writeb (gmst,recg)
+call stat(1)
+go to a1
+;
+a3:
+call msg(null)
+call msg(m02)
+call msg(m03)
+call msg(m04); newline to acknowledge
+call msg(null)
+read(crt,f87)
+close gmst,crt,list
+stop 0
+;
+;
+;
+subroutine glread
+;========================================
+readb(gmst,recg)
+go to (w33,w33)on status;  error in list of master
+if(?gid.eq.0)go to w33
+'acct'='zer12'
+encode(acct,f09)?gid
+decode(acct,f10)brn,maj,min
+'acct'='zer4'
+encode(acct,f11)vv
+decode(acct,f87)v1,v2,v3,v4
+'acct'='zer3'
+encode(acct,f10)ff
+decode(acct,f87)f3,f1,f2
+return
+w33:
+?gid=f1=f2=f3=0
+return
+;
+ ;
+ ;
+ ;==========================================
+ ;********  constants  ********
+ ;*****************************
+ ;
+define m02:'       all balances have been cleared'
+define m03:'        please correct user record'
+define m04:'          newline to acknowledge'
+format f09:d12
+format f10:n3n6n3
+format f11:n4
+format f87:n1
+;
+define zer12:'   000000000'
+define zer3:'000'
+define zer4:'0000'
+set ?zero:0,use:0,popt:0
+set f1:0,f2:0,f3:0
+set ?new1:0
+set brn:0,maj:0,min:0
+string acct(12),null(0)
+integer v1,v2,v3,v4
+end ;  gl515
+
+

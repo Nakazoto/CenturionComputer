@@ -1,0 +1,129 @@
+system
+define m01:'gl510 (expanding master file) 12/29/81'
+;
+;
+;  notes:
+;
+;      program will enlarge billable master ....dad
+;      conversion to 900 series 12/1/75...ns
+;      conversion to general expand masters..ns
+;      expand g/l master files....6/15/76...ns
+;      7/2/76...new g/l file layout in the 500 series..ns
+;      7/9/76...new format again - 131 bytes...ns
+;    7/15/76...chng in library construction..ns
+;    12/6/76....adding ability for 100 headers (3rd header added at this time)..ns
+;
+;
+;    8/02/79...signon mess changed..ns
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;===============================
+;
+;
+;
+external ?nkey,?gkey,msg,ioerr,stat
+;
+;
+;
+;
+record rec(131);      largest that it can be
+set   ?flag:0;        this is the first integer and if it is zero (except on the header ) it will not copy the record
+;                    this assumes that the first integer being 0 indicates that the record is deleted
+;
+endrec
+;
+;
+file mst:sys0,class=2,rnd,recsiz=131,key=rel1
+;
+;
+;
+;******************************************************************
+file nmst:sys1,class=2,rnd,recsiz=131,key=rel2
+set rel2:0
+;
+;
+record listb(10)
+integer ?vlist,rel1
+endrec
+;
+file list:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+;
+;
+;********************************
+;********************************
+;
+;
+entry
+;
+open io (mst,nmst,list,crt)
+;
+call msg(m01);     hi there
+;
+;
+;
+;
+b10:
+readb(list,listb)
+if(status.eq.one) go to dun
+call stat(list)
+if(?vlist.lt.0)go to b10
+readb(mst,rec);    rel key was setup in the list file
+go to (b10,b10)on status
+if(?vlist.gt.100)go to b12;   this allows room for 100 headers
+if(?vlist.lt.0)go to b10
+go to b14;         should be header 0 or header 1
+;
+b12:
+if(?flag.eq.0)go to b10;    deleted
+;
+b14:
+call ?gkey(nmst,?vlist)
+go to (b20,ioerr) on status
+go to b10;                              skip if record already on file
+;
+b20:
+call ?nkey(nmst,?vlist)
+go to (ioerr,ioerr) on status
+writeb(nmst,rec)
+call stat(1)
+go to b10
+;
+;
+;
+dun:
+close mst,nmst,list
+call msg(m02)
+stop 0
+;
+;
+;
+noroom:
+go to dun
+;
+;
+;
+;
+;****************************************
+;
+;****************************************
+;
+;
+set one:1
+;
+define m02:'account file has been expanded'
+;
+;
+;
+;
+;
+end
+
+

@@ -1,0 +1,26 @@
+.job gledge
+.run s.xeject
+.seta cc=0
+.use crt#v for syslst
+.seta upsi=2
+.skip to ok if crt eq #2
+.use prt#2 for syslst
+.seta upsi=3
+=ok
+.use gl#0a on #1  for sys0  shar
+.use gl#0j on #1 for sys1  shar
+.use gl#0d on #1 for sys2 shar
+.use @scrc#i on #s for sys3
+.run gl.xgl540
+.skip to fin if #c ne 0
+.skip 1 if glrepo ne #4
+glmenu
+=fin
+.end
+s.con
+*   7/20/78...cleanup..ns
+*   5/15/79...added sys3
+
+
+
+

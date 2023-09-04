@@ -1,0 +1,438 @@
+.job bldgl
+.sta p#i
+.nolog
+.seta 6 = 0
+.setc 9='s.'
+.fspec s on #0 8=size
+.skip to go if 0 ne #8
+.log
+*   required file "s" is not on installing disk (#0)
+.nolog
+.setc 9=''
+.seta 6 = 1
+=go
+.skip to ack if #0 eq #1
+.fspec s on #1 7=size
+.skip to go if 0 ne #7
+.log
+*   required file "s" must be added to target disk (#1)
+.nolog
+.seta 6 = 1
+.skip to ack
+=go
+.skip to ack if 0 ne #6
+.skip to ack if #7 eq #8
+.log
+*   required file "s" may require updating on target disk (#1)
+.nolog
+.seta 6 = 1
+=ack
+.skip to go if 0 eq #6
+.log
+*   enter newline to acknowledge
+.nolog
+.pause
+=go
+.fspec gllibr.glmenu on #0 8=size
+.skip to go if 0 ne #8
+.log
+*   required file "gllibr" is not on installing disk (#0)
+*   enter newline to acknowledge
+.nolog
+.pause
+.skip to err
+*
+=go
+.fspec glmenu on #1 7=size
+.skip to cop if 0 ne #7
+.new glmenu on #1 'a' #8s fsi=2s
+=cop
+.use gllibr.glmenu on #0 for sys0
+.use glmenu on #1 for sys1
+.run s.xcoput
+=bld
+.seta upsi eq 0
+.seta 5 eq 82
+.fspec gl  on #1 7=type, 8=size
+.seta 8=#8/16
+.skip 3 if 0 eq #8
+.skip 1 if #5 ne #8
+.skip to ok1 if l eq #7
+.del gl  on #1
+.vspec #1 7=avail
+.seta 7=#7/16
+.skip to ok if #7 ge #5
+.log
+*
+*   there is not enough room on disk #1 to build gl
+*   newline to acknowledge
+*
+.nolog
+.pause
+.skip  to err
+*
+=ok
+.new gl on #1 'l' #5 fsi=8s
+=ok1
+.clr gl. on #1 dsize=1t usize=1 fsize=1t
+***
+.use gllibr.glmenu on #0 for sys0
+.new gl.glmenu on #1 'a' 8s fsi=2s
+.use gl.glmenu on #1 for sys1
+.run #9xcoput
+.use gllibr.glinit on #0 for sys0
+.new gl.init on #1 'a' 4s fsi=2s
+.use gl.init on #1 sys1
+.run #9xcoput
+.use gllibr.glmast on #0 for sys0
+.new gl.mast on #1 'a' 2s fsi=2s
+.use gl.mast on #1 sys1
+.run #9xcoput
+.use gllibr.glbrn on #0 for sys0
+.new gl.brn on #1 'a' 2s fsi=2s
+.use gl.brn on #1 sys1
+.run #9xcoput
+.use gllibr.glrepo on #0 for sys0
+.new gl.repo on #1 'a' 2s fsi=2s
+.use gl.repo on #1 sys1
+.run #9xcoput
+.use gllibr.glhd on #0 for sys0
+.new gl.hd on #1 'a' 2s fsi=2s
+.use gl.hd on #1 sys1
+.run #9xcoput
+.use gllibr.glhrep on #0 for sys0
+.new gl.hrep on #1 'a' 2s fsi=2s
+.use gl.hrep on #1 sys1
+.run #9xcoput
+.use gllibr.glmdat on #0 for sys0
+.new gl.movdat on #1 'a' 8s fsi=2s
+.use gl.movdat on #1 sys1
+.run #9xcoput
+.use gllibr.glndat on #0 for sys0
+.new gl.newdat on #1 'a' 6s fsi=2s
+.use gl.newdat on #1 sys1
+.run #9xcoput
+.use gllibr.glddat on #0 for sys0
+.new gl.deldat on #1 'a' 2s fsi=2s
+.use gl.deldat on #1 sys1
+.run #9xcoput
+.use gllibr.glnew on #0 for sys0
+.new gl.new on #1 'a' 4s fsi=2s
+.use gl.new on #1 sys1
+.run #9xcoput
+.use gllibr.glbudg on #0 for sys0
+.new gl.budg on #1 'a' 4s fsi=2s
+.use gl.budg on #1 sys1
+.run #9xcoput
+.use gllibr.glsrnk on #0 for sys0
+.new gl.srnk on #1 'a' 4s fsi=2s
+.use gl.srnk on #1 sys1
+.run #9xcoput
+.use gllibr.glsub on #0 for sys0
+.new gl.sub on #1 'a' 4s fsi=2s
+.use gl.sub on #1 sys1
+.run #9xcoput
+.use gllibr.glook on #0 for sys0
+.new gl.look on #1 'a' 4s fsi=2s
+.use gl.look on #1 sys1
+.run #9xcoput
+.use gllibr.glacc1 on #0 for sys0
+.new gl.acc1 on #1 'a' 4s fsi=2s
+.use gl.acc1 on #1 sys1
+.run #9xcoput
+.use gllibr.glsubg on #0 for sys0
+.new gl.subg on #1 'a' 4s fsi=2s
+.use gl.subg on #1 sys1
+.run #9xcoput
+.use gllibr.glpack on #0 for sys0
+.new gl.pack on #1 'a' 4s fsi=2s
+.use gl.pack on #1 sys1
+.run #9xcoput
+.use gllibr.glbcom on #0 for sys0
+.new gl.bcom on #1 'a' 4s fsi=2s
+.use gl.bcom on #1 sys1
+.run #9xcoput
+.use gllibr.gltran on #0 for sys0
+.new gl.tran on #1 'a' 4s fsi=2s
+.use gl.tran on #1 sys1
+.run #9xcoput
+.use gllibr.glttra on #0 for sys0
+.new gl.ttran on #1 'a' 4s fsi=2s
+.use gl.ttran on #1 sys1
+.run #9xcoput
+.use gllibr.glaudt on #0 for sys0
+.new gl.audt on #1 'a' 6s fsi=2s
+.use gl.audt on #1 sys1
+.run #9xcoput
+.use gllibr.gledge on #0 for sys0
+.new gl.ledge on #1 'a' 4s fsi=2s
+.use gl.ledge on #1 sys1
+.run #9xcoput
+.use gllibr.glfins on #0 for sys0
+.new gl.fins on #1 'a' 4s fsi=2s
+.use gl.fins on #1 sys1
+.run #9xcoput
+.use gllibr.glprio on #0 for sys0
+.new gl.prior on #1 'a' 4s fsi=2s
+.use gl.prior on #1 sys1
+.run #9xcoput
+.use gllibr.glfcom on #0 for sys0
+.new gl.fcom on #1 'a' 4s fsi=2s
+.use gl.fcom on #1 sys1
+.run #9xcoput
+.use gllibr.glfinc on #0 for sys0
+.new gl.finc on #1 'a' 4s fsi=2s
+.use gl.finc on #1 sys1
+.run #9xcoput
+.use gllibr.gltria on #0 for sys0
+.new gl.trial on #1 'a' 4s fsi=2s
+.use gl.trial on #1 sys1
+.run #9xcoput
+.use gllibr.glcove on #0 for sys0
+.new gl.cover on #1 'a' 4s fsi=2s
+.use gl.cover on #1 sys1
+.run #9xcoput
+.use gllibr.glean on #0 for sys0
+.new gl.glean on #1 'a' 4s fsi=2s
+.use gl.glean on #1 sys1
+.run #9xcoput
+.use gllibr.glclea on #0 for sys0
+.new gl.clean on #1 'a' 4s fsi=2s
+.use gl.clean on #1 sys1
+.run #9xcoput
+.fspec gllibr.glf56 on #0 6=size 7=fsi
+.skip 4 if #6 eq 0
+.new gl.glf56 on #1 'a' #6s fsi=#7s
+.use gllibr.glf56 on #0 for sys0
+.use gl.glf56 on #1 for sys1
+.run #9xcoput
+****
+.use gllibr.xgl500 on #0 sys0
+.new gl.xgl500 on #1 'e' 1t fsi=2s
+.use gl.xgl500 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl501 on #0 sys0
+.new gl.xgl501 on #1 'e' 2t fsi=2s
+.use gl.xgl501 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl502 on #0 sys0
+.new gl.xgl502 on #1 'e' 12s fsi=2s
+.use gl.xgl502 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl503 on #0 sys0
+.new gl.xgl503 on #1 'e' 1t fsi=2s
+.use gl.xgl503 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl504 on #0 sys0
+.new gl.xgl504 on #1 'e' 4s fsi=2s
+.use gl.xgl504 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl505 on #0 sys0
+.new gl.xgl505 on #1 'e' 1t fsi=2s
+.use gl.xgl505 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl506 on #0 sys0
+.new gl.xgl506 on #1 'e' 1t fsi=2s
+.use gl.xgl506 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl507 on #0 sys0
+.new gl.xgl507 on #1 'e' 1t fsi=2s
+.use gl.xgl507 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl508 on #0 sys0
+.new gl.xgl508 on #1 'e' 2t fsi=2s
+.use gl.xgl508 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl509 on #0 sys0
+.new gl.xgl509 on #1 'e' 14s fsi=2s
+.use gl.xgl509 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl510 on #0 sys0
+.new gl.xgl510 on #1 'e' 8s fsi=2s
+.use gl.xgl510 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl511 on #0 sys0
+.new gl.xgl511 on #1 'e' 6s fsi=2s
+.use gl.xgl511 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl512 on #0 sys0
+.new gl.xgl512 on #1 'e' 4s fsi=2s
+.use gl.xgl512 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl514 on #0 sys0
+.new gl.xgl514 on #1 'e' 1t fsi=2s
+.use gl.xgl514 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl530 on #0 sys0
+.new gl.xgl530 on #1 'e' 4s fsi=2s
+.use gl.xgl530 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl531 on #0 sys0
+.new gl.xgl531 on #1 'e' 4s fsi=2s
+.use gl.xgl531 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl532 on #0 sys0
+.new gl.xgl532 on #1 'e' 4s fsi=2s
+.use gl.xgl532 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl534 on #0 sys0
+.new gl.xgl534 on #1 'e' 4s fsi=2s
+.use gl.xgl534 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl535 on #0 sys0
+.new gl.xgl535 on #1 'e' 4s fsi=2s
+.use gl.xgl535 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl536 on #0 sys0
+.new gl.xgl536 on #1 'e' 4s fsi=2s
+.use gl.xgl536 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl537 on #0 sys0
+.new gl.xgl537 on #1 'e' 4s fsi=2s
+.use gl.xgl537 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl538 on #0 sys0
+.new gl.xgl538 on #1 'e' 4s fsi=2s
+.use gl.xgl538 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl540 on #0 sys0
+.new gl.xgl540 on #1 'e' 4s fsi=2s
+.use gl.xgl540 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl541 on #0 sys0
+.new gl.xgl541 on #1 'e' 4s fsi=2s
+.use gl.xgl541 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl543 on #0 sys0
+.new gl.xgl543 on #1 'e' 4s fsi=2s
+.use gl.xgl543 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl544 on #0 sys0
+.new gl.xgl544 on #1 'e' 4s fsi=2s
+.use gl.xgl544 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl545 on #0 sys0
+.new gl.xgl545 on #1 'e' 4s fsi=2s
+.use gl.xgl545 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl546 on #0 sys0
+.new gl.xgl546 on #1 'e' 4s fsi=2s
+.use gl.xgl546 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl547 on #0 sys0
+.new gl.xgl547 on #1 'e' 4s fsi=2s
+.use gl.xgl547 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl548 on #0 sys0
+.new gl.xgl548 on #1 'e' 4s fsi=2s
+.use gl.xgl548 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl549 on #0 sys0
+.new gl.xgl549 on #1 'e' 4s fsi=2s
+.use gl.xgl549 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl550 on #0 sys0
+.new gl.xgl550 on #1 'e' 4s fsi=2s
+.use gl.xgl550 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl551 on #0 sys0
+.new gl.xgl551 on #1 'e' 4s fsi=2s
+.use gl.xgl551 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl552 on #0 sys0
+.new gl.xgl552 on #1 'e' 4s fsi=2s
+.use gl.xgl552 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl553 on #0 sys0
+.new gl.xgl553 on #1 'e' 4s fsi=2s
+.use gl.xgl553 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl554 on #0 sys0
+.new gl.xgl554 on #1 'e' 4s fsi=2s
+.use gl.xgl554 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl560 on #0 sys0
+.new gl.xgl560 on #1 'e' 4s fsi=2s
+.use gl.xgl560 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl565 on #0 sys0
+.new gl.xgl565 on #1 'e' 4s fsi=2s
+.use gl.xgl565 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl570 on #0 sys0
+.new gl.xgl570 on #1 'e' 4s fsi=2s
+.use gl.xgl570 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl575 on #0 sys0
+.new gl.xgl575 on #1 'e' 4s fsi=2s
+.use gl.xgl575 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl580 on #0 sys0
+.new gl.xgl580 on #1 'e' 4s fsi=2s
+.use gl.xgl580 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl581 on #0 sys0
+.new gl.xgl581 on #1 'e' 4s fsi=2s
+.use gl.xgl581 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl585 on #0 sys0
+.new gl.xgl585 on #1 'e' 4s fsi=2s
+.use gl.xgl585 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl588 on #0 sys0
+.new gl.xgl588 on #1 'e' 4s fsi=2s
+.use gl.xgl588 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl589 on #0 sys0
+.new gl.xgl589 on #1 'e' 8s fsi=2s
+.use gl.xgl589 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl590 on #0 sys0
+.new gl.xgl590 on #1 'e' 8s fsi=2s
+.use gl.xgl590 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl591 on #0 sys0
+.new gl.xgl591 on #1 'e' 2t fsi=2s
+.use gl.xgl591 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl595 on #0 sys0
+.new gl.xgl595 on #1 'e' 2t fsi=2s
+.use gl.xgl595 on #1 sys1
+.run #9xcoput
+.use gllibr.xgl596 on #0 sys0
+.new gl.xgl596 on #1 'e' 4s fsi=2s
+.use gl.xgl596 on #1 sys1
+.run #9xcoput
+.use gllibr.x?bloo on #0 sys0
+.new gl.x?bloo on #1 'e' 4s fsi=2s
+.use gl.x?bloo on #1 sys1
+.run #9xcoput
+.use gllibr.xptap on #0 sys0
+.new gl.xptap on #1 'e' 4s fsi=2s
+.use gl.xptap on #1 sys1
+.run #9xcoput
+.use gllibr.xprd00 on #0 sys0
+.new gl.xprd00 on #1 'e' 4s fsi=2s
+.use gl.xprd00 on #1 sys1
+.run #9xcoput
+=end
+.skip to eoj
+=err
+.end
+/  ** e r r o r ..... cc =#c   **
+=eoj
+.end
+/ **** execution now ended... ****
+s.con on #s
+*
+#9con
+* added additional programs 06/16/79..ns
+* added programs & increased size of gl..ns
+* increased directory size from 64 to 65 tracks 09-05-79...jwb
+* removed options of copying either standard or fast menu, will always copy
+* glmenu 09-19-79...jwb
+* 12/12/79...rewritten and modified for cpu-6...kag
+* 01/08/80...increased library size...kag
+
+
+

@@ -1,0 +1,847 @@
+title 'gl595--change in financial position worksheet '
+system
+;
+define m01:'gl595 (change in financial postion worksheet) 12/29/81'
+;
+;  notes:
+;  7/28/76...written...ns
+;  8/18/76...program incorporated into standard general ledger application
+;            with name change, by g.l. gillette.  at the
+;            same time, certain cosmetic changes to formats and messages,
+;            plus minor program modifications, were made.
+;    9/20/76..changing paper size and adding option to not have the computer
+;  12/22/76..cosmetic changes on option msg and header (centering, etc.)..glg
+;            fill in source and application and working capital...ns
+;    3/31/77...reversing wamt in income if it is positive - should be neg..ns
+;  10/25/77...changing paper option so that they can use narrow, wide or no print...ns
+;   3/10/78...if depreciation was a debit the sign wasn't reversed...ns
+;    4/26/78...added option for printing 0 variance...ns
+;    7/24/78...cosmetic changes..ns
+;    9/12/78...restricting h/i/j/k/l accounts from this report...ns
+;    6/25/79...new format etc...ns
+;    07/03/79...changed mss3, mss4...ns
+;   07/27/79...added income..ns
+;   08/02/79...signon changed..ns
+;  08/13/79...reversing sign on f3=3..ns
+;  09/11/79...changed description for current earnings account...jwb
+;  11/30/79...modified for cpu-6...kag
+;
+;  12/29/81...recompile to have a common date base...dl
+;
+;
+;
+record recg(131)
+set    ?gid:0;     6 byte integer - br/maj/min  2 digits, 6 digits, 3 digits
+set   ff:0;     f1=blank - no leading char, $= if money acct print $,
+;                  if title account $= print $ on next money account.
+;                  ( = enclose in parent. if neg.
+;               f2= # of lines of overlining. (0,1,2)
+;
+set    vv:0;       v1=type acct (title,money,total,etc.)
+;                  v2=scheduled or not
+;                  v3=center title or which col. a or b
+;                  v4=total level or indicates 'c' type title
+string desc(30);   description
+set    pos:0;      entered but not posted amounts
+set    cmo:0;      current month
+set    mon2:0;     last month
+set    mon3:0;      2 months ago
+set    mon4:0;     3 months ago
+set    mon5:0;     4 months ago
+set    mon6:0
+set    mon7:0
+set    mon8:0
+set    mon9:0
+set    mona:0
+set    monb:0
+set    monc:0
+set    mond:0;     this month last year
+set    mone:0;     last month last year
+set    monf:0;     2 months ago - last year
+;
+set    ?cbal:0;    current balance (does not include post)
+set    ?pbal:0;    last years total prior to monf
+;                  (ie. if cmo is 6/76 - mond=6/75, mone=5/75, mond=4/75,
+;                   and ?pbal is total as of 3/75)
+set     usef:0;    0=no postings, 1=print whether postings or not, 2=postings
+;
+endrec
+;
+record headb(131)
+string client(40);   clients name
+string coment(50); disclaimer
+set    month:0;      current postings are (yymm) (date of cmo)
+set    yrend:0;      month of fiscal year end (mm)
+set    post:0;       if post=3 retain all details to end of year.
+set    ?bsea:0;       balance sheet ending account #
+set    ?plact:0;      profit loss accout #
+set   hh:0;         h1=# of digits in br., h2= in major, h3=in minor, h4=in sub, h5 if = 1 - post to payroll from g/l
+set  mnum:0;         # of months of postings in current year
+set acnt:0; accountant
+string xa(1); special sw
+endrec
+ 
+record head2(10)
+string dum(1)
+set dolflg:0
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+;
+record listb(10)
+set    ?lid:0;       list of account numbers (6 byte index number)
+set    rel0:0;       relative key for the 6 byte random access g/l
+endrec
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+;
+file work1:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+buffer buf2(400)
+record wrec(65)
+set    ?wid:0;     account number
+set    fx:0;      1=net income, 2=depreciation, 3=source/ 4=appl, 5=working cap
+string wdesc(30);   name or if account 0 - it is the date
+set   opt:0;      1=net income (p/l account)  2=depreciation,  3=source/4=appl
+;                  5= working capital
+set   ?camt:0;   current balance
+set    ?bamt:0;   beg. of year balance
+set   ?wamt:0;    amount of source/application or working capital
+endrec
+;
+record hwork(87)
+set ?xx:0;   for sorting
+set zx:0
+string date(77)
+endrec
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+entrypoint crt
+;
+external    ?gkey,ioerr,stat,lfeed,msg,?edit,cget,gjp,ynget
+;
+entry
+;
+open io (crt,gmst,list,work1), output prt
+call gjp(0,key)
+;
+call msg(eject)
+call msg(m01); hi there
+call msg(null)
+a010:
+call msg(m02)
+call cget(null,fc77,date); enter as of date
+if(status.ne.0)go to a010
+ 
+call ynget(m20); do you wish to print page numbers? (y/n)
+if(status.eq.0)go to a0001
+?xx=1
+ 
+a0001:
+call msg(m02a); enter option: 0=14 7/8 x 11
+write(crt,f17)m02b; 1=8 1/2 x 11
+writen(crt,f17)m02c;  2=no printing
+call cget(null,f04,popt);  print option
+go to (a0002,a0001c,a0002)on popt
+go to a0001
+ 
+a0001c:
+'mss3'='null'
+'mss4'='null'
+ 
+a0002:
+   call msg(m02d) ; enter beginning balance option:  0  last month
+   write(crt,optfmt)m02e; 1  last quarter
+   writen(crt,optfmt)m02f; 2  last year
+   call cget(null,f04,opt) ; get answer
+   go to (a0003,a0003)on opt
+   if(opt.ne.0)go to a0002
+ 
+a0003:
+writeb(work1,hwork);  header record has date in it
+call stat(1)
+;
+b10:
+;
+call msg(m17);  enter option: 1 print all accounts
+;
+write(crt,f17)m17a; 2 print 0 variance on worksheet only
+writen(crt,f17)m18; 3 dont print 0 variance
+call cget(null,f04,vopt)
+go to (b11,b11,b11)on vopt
+go to b10
+;
+b11:
+;
+b20:
+'ans'='yes'
+call ynget(m18a);  do you want to print all balance sheet accounts? (y/n)'
+go to (b22)on status
+'ans'='no'
+ 
+b22:
+call ?gkey(gmst,?zero)
+go to (b90,ioerr)on status;   b95 because we dont have bal sheet ending account
+readb(gmst,headb)
+call stat(1)
+?zero=1
+call ?gkey(gmst,?zero); now 1
+go to (b90,ioerr)on status
+readb(gmst,head2)
+call stat(1)
+go to (a020)on dolflg; 1=yes/0=no
+'mss'='null'
+'mss2'='null'
+'mss3'='null'
+'mss4'='null'
+ 
+a020:
+call bltrun(client)
+call bltrun(date)
+go to (b23)on popt
+call cent80(client,fmt1)
+call cent80(date,fmt2)
+'m09d'='null'
+'m09b'='null'
+'m09c'='null'
+go to b24
+ 
+b23:
+call cent132(client,fmt1)
+call cent132(date,fmt2)
+;
+b24:
+call crq
+go to (b25,b30)on opt
+mnum=1
+;
+go to b30
+;
+b25:
+mnum=3
+;
+b30:
+readb(list,listb)
+if(status.ne.0)go to b90
+if(?lid.le.100)go to b30
+readb(gmst,recg)
+call stat(1)
+if(vv.ge.i4000)go to b30;   h/j/k/l accounts
+b40:;
+if(?gid.eq.0)go to b30;       deleted record
+'acct'='zer3'
+encode(acct,f13)ff
+decode(acct,f04)f3,f2
+sf3=f3
+ifs(ans.eq.yes)go to b42
+if(f3.eq.0)go to b30;         not part of the change in financial position
+ 
+b42:
+'acct'='zer4'
+encode(acct,f05)vv
+decode(acct,f04)v1,v2,v3,v4
+if(v4.gt.6)go to b30;    i account
+if(f3.eq.0)go to b44
+go to (b60)on v1; d account
+ 
+b44:
+ 
+if(v1.eq.0)go to b30;  title account
+ 
+'wdesc'='desc'
+?wid=?gid
+if(v1.eq.3)go to b55
+call totyr
+go to (b50,b50)on vopt
+ 
+if(?wamt.eq.0)go to b30
+ 
+b50:
+;
+ 
+    call wrtout
+   go to b30
+;
+b55:
+if(v2.eq.2)go to b30;  not worried with scheduled totals
+ 'wdesc'='desc'
+;
+go to (b55a,b55b,b55c,b55d,b55e,b55f,b55g)on v4
+ 
+b55a:
+    ?bamt=?x1
+    ?camt=?y1
+b55aa:
+   ?wamt=?camt-?bamt
+    call clr(?x1,?y1,0)
+   f3=0
+   call wrtout
+    go to b30
+ 
+b55b:
+    ?bamt=?x2
+    ?camt=?y2
+ 
+b55ba:
+   call clr(?x2,?y2,0)
+   go to b55aa
+ 
+b55c:
+   ?bamt=?x3
+   ?camt=?y3
+ 
+b55ca:
+   call clr(?x3,?y3,0)
+   go to b55ba
+ 
+b55d:
+ 
+    ?bamt=?x4
+    ?camt=?y4
+ 
+b55da:
+    call clr(?x4,?y4,0)
+    go to b55ca
+ 
+b55e:
+ 
+    ?bamt=?x5
+    ?camt=?y5
+ 
+b55ea:
+    call clr(?x5,?y5,0)
+    go to b55da
+ 
+b55f:
+ 
+    ?bamt=?x6
+    ?camt=?y6
+ 
+    call clr(?x6,?y6,0)
+    call clr(?x7,?y7,0)
+    go to b55ea
+ 
+b55g:
+   ?bamt=?x7
+   ?camt=?y7
+    go to b55ea
+ 
+b60:
+   ?sid=?gid;     save the beginning of the scheduled accounts
+;
+   ?samt=?yamt=0
+   note(list,addr)
+b65:;   reading schedule to total up the d account
+   readb(list,listb)
+   if(status.ne.0)go to b90
+   readb(gmst,recg)
+   call stat(1)
+   if(?gid.le.0)go to b65
+   ?wid=?gid
+ 
+   'acct'='zer4'
+   encode(acct,f05)vv
+   decode(acct,f04)v1,v2,v3,v4
+   'acct'='zer3'
+   encode(acct,f13)ff
+   decode(acct,f04)f3,f2
+   if(v4.gt.6)goto b65;     h/i/j/k/l account
+   if(v2.ne.2)go to b70;    end of scheduled accounts sched is v2=2
+   call totyr
+?samt=?samt+?camt
+?yamt=?yamt+?bamt
+    go to b65
+;
+b70:
+?camt=?samt
+?bamt=?yamt
+?wamt=?camt-?bamt
+;
+point(list,addr)
+readb(list,listb);  reread the d account & then read the next record
+;
+;
+go to (b80,b80)on vopt
+ 
+if(?wamt.eq.0)go to b85;  dont write 0 variance
+;
+b80:
+   call ?gkey(gmst,?sid)
+   go to (ioerr,ioerr)on status
+   readb(gmst,recg)
+   call stat(1)
+   ?wid=?gid
+   'wdesc'='desc'
+   f3=sf3
+   v1=1;   incase last sched. was a total the d wont add into total
+   call wrtout
+;
+b85:
+  flg=0
+;
+go to b30
+;
+ 
+;
+b90:
+if(?x6.ne.0)go to b95
+if(?y6.eq.0)go to b100
+ 
+b95:
+if(popt.eq.3)go to b95f
+write(prt,f18)mss,mss,mss,mss3,mss3,mss3,mss3,mss3
+ 
+b95f:
+?bamt=?x6
+?wid=0
+?camt=?y6
+'wdesc'='m19'
+?wamt=?camt-?bamt
+f3=0
+call wrtout
+if(popt.eq.3)go to b100
+write(prt,f18)mss2,mss2,mss2,mss4,mss4,mss4,mss4,mss4
+ 
+b100:
+call msg(m10)
+endfile work1
+close work1,gmst,list,crt,prt
+stop 0
+;
+;============================
+;  =====  subroutines  =====
+;============================
+;
+subroutine wrtout
+;============================
+;
+wid=?wid/thou;   this gets rid of the minor
+'chr'='null'
+;
+min=?wid-(wid*thou);   minor account
+'cmin'='spc3'
+if(min.eq.0)go to wt001
+encode(cmin,f13)min
+;
+wt001:
+;
+call ?edit(?camt,num1,mask01)
+wt02:
+call ?edit(?bamt,num2,mask01)
+fx=f3
+call ?edit(?wamt,num3,mask01)
+go to (wt10,wt11,wt12,wt13)on f3
+go to wt30
+;
+;
+wt10:
+'chr'='i'
+go to wt30
+;
+wt11:
+'chr'='d';   depreciation
+go to wt30
+;
+wt12:
+'chr'='s';   source and appl
+if(?wamt.lt.0)go to wt30
+'chr'='a'
+fx=4
+go to wt30
+ 
+wt13:
+'chr'='w'
+fx=5
+;
+wt30:
+go to (wt31,wt31,wt31f)on popt
+;
+wt31:
+write(prt,f11)wid,cmin,wdesc,chr,num2+1,num1+1,num3+1,m09d
+;
+wt31f:
+if(fx.gt.3)go to wt50;  income & depreciation should show opposit sign 3/31/77 & 3/10/78
+if(f3.eq.0)go to wt50
+?wamt=0-?wamt
+go to wt50
+;
+wt50:
+if(v1.eq.3)go to wt54; total
+call addtot(?x1,?y1,?x2,?y2,?x3,?y3,?x4,?y4,?x5,?y5,?x6,?y6,?x7,?y7,0)
+if(f3.eq.0)go to wt54
+go to (wt51)on vopt
+if(?wamt.eq.0)go to wt54;  dont write in statement if 0 variance
+;
+wt51:
+;
+if (?plact. ne. ?wid) goto wt52
+'wdesc' = 'm21'
+;
+wt52:
+;
+writeb(work1,wrec)
+call stat(2)
+;
+wt54:
+;
+if(popt.eq.3)goto wt55
+call crq
+ 
+wt55:
+return
+;
+;=======================
+subroutine addtot
+;=======================
+ 
+direct
+ lda- x+
+ bnz *+3
+ rsr
+ sta ad10+3
+ sta ad10+13
+ lda- x+
+ sta ad20+3
+ sta ad20+13
+cpl
+ 
+ad10:
+?x1=?x1+?bamt
+ 
+ad20:
+?y1=?y1+?camt
+go to addtot
+;
+;================
+subroutine clr
+;===============
+direct
+ lda- x+
+ bnz *+3
+ rsr
+ sta cl10+8
+cpl
+ 
+cl10:
+?x1=0
+go to clr
+;
+;
+;==========================
+subroutine totyr
+;=========================
+;
+?camt=?cbal;        current balance
+;
+go to (ty10,ty11,ty12,ty13,ty14,ty15,ty16,ty17,ty18,ty19,ty20,ty21)on mnum;  number of months into fiscal year
+write(crt,f13)mnum,m11
+?bamt=0
+goto ty30
+;
+;
+ty10:
+?bamt=cmo
+go to ty30
+;
+ty11:
+?bamt=cmo+mon2
+go to ty30
+;
+ty12:
+?bamt=cmo+mon2+mon3
+go to ty30
+;
+ty13:
+?bamt=cmo+mon2+mon3+mon4
+go to ty30
+;
+ty14:
+?bamt=cmo+mon2+mon3+mon4+mon5
+go to ty30
+;
+ty15:
+?bamt=cmo+mon2+mon3+mon4+mon5+mon6
+go to ty30
+;
+ty16:
+?bamt=cmo+mon2+mon3+mon4+mon5+mon6+mon7
+go to ty30
+;
+ty17:
+?bamt=cmo+mon2+mon3+mon4+mon5+mon6+mon7+mon8
+go to ty30
+;
+ty18:
+?bamt=cmo+mon2+mon3+mon4+mon5+mon6+mon7+mon8+mon9
+go toty30
+;
+ty19:
+?bamt=cmo+mon2+mon3+mon4+mon5+mon6+mon7+mon8+mon9+mona
+go to ty30
+;
+ty20:
+?bamt=cmo+mon2+mon3+mon4+mon5+mon6+mon7+mon8+mon9+mona+monb
+go to ty30
+;
+ty21:
+?bamt=cmo+mon2+mon3+mon4+mon5+mon6+mon7+mon8+mon9+mona+monb+monc
+;
+ty30:
+?bamt=?camt-?bamt;    the begin balance is current bal minus all months this year
+?wamt=?camt-?bamt;     change is diff between current bal and beginning of year
+return
+;
+;==============================
+subroutine crq
+;=============================
+if(popt.eq.3)go to cr30; return
+if(f2.eq.0)go to cr05
+lcr=lcr+1
+sf2=f2/10*10
+if(f2.eq.sf2)go to cr03
+write(prt,f18)mss,mss,mss,mss3,mss3,mss3,mss3,mss3
+go to cr05
+ 
+cr03:
+write(prt,f18)mss2,mss2,mss2,mss4,mss4,mss4,mss4,mss4
+ 
+cr05:
+lcr=lcr+1
+if(lcr.ge.58)go to cr10
+return
+;
+cr10:
+write(prt,f02)eject
+write(prt,fmt1)client
+'ms1'='spc10'
+if(?xx.eq.0)go to cr11
+encode(ms1,f19)page,pg
+cr11:
+go to (cr15)on popt
+write(prt,fmt3)acnt,sl,key,m05,ms1
+pg=pg+1
+write(prt,fmt4)m06
+go to cr20
+ 
+cr15:
+; wide
+write(prt,fmt3w)acnt,sl,key,m05,ms1
+pg=pg+1
+write(prt,fmt4w)m06
+ 
+cr20:
+write(prt,fmt2)date
+write(prt,fmt2)
+write(prt,fmt5)m09,m09b
+write(prt,fmt5)m09a,m09c
+write(prt,fmt5)
+lcr=8
+cr30:
+return
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;=========================
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+subroutine cent132
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent132 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;=========constants ===========
+;==============================
+;
+set ?sid:0,?yamt:0,?samt:0,lcr:70,pg:1,?zero:0,wid:0,thou:1000,min:0,i4000:4000
+set crqsw:0,popt:0,sf3:0,flg:0,sf2:0,f2:0,addr:0
+set  ?ctot:0,?btot:0,?stot:0,?atot:0,?wtot:0;   final totals
+set  f3:0,vopt:0
+define zer3:'000',zer4:'0000',spc3:'   ',sl:'/',key:'      '
+define spc10:'          ',ms1:'          '
+define no:'n',yes:'y'
+define mask01:'  ##,###,###@.##-'
+define mask02:'  ####,###@.##-'
+define num1:'                  ',num2:'                  '
+define num3:'                  ',num4:'                  ',num5:'                  '
+define a:'a',d:'d',i:'i',s:'s',w:'w'
+define num6:'                 '
+define mss:'-------------'
+define mss2:'============='
+define mss3:'---------'
+define mss4:'========='
+;
+integer v1,v2,v3,v4
+;
+string acct(8),null(0),chr(1),ans(1),cmin(3)
+string datmsg(37)
+;
+define m02:'enter worksheet date'
+define m02a:'enter option:  1  14 7/8 x 11"  '
+define m02b:'2   8 1/2 x 11" '
+define m02c:'3  no printing '
+define m02d:'enter beginning balance option:  0  last month'
+define m02e:'1  last quarter'
+define m02f:'2  last year '
+define m04:'net income'
+define m05:'statement of changes in financial position'
+define m06:'worksheet'
+define page:'page  '
+define m09:'  account        description      typ    beginning        ending     net change'
+define m09a:'                                          balance        balance     for period'
+define m09b:'       adjustments      appl of   sources   working'
+define m09c:'     debit     credit    funds   of funds   capital'
+define m09d:'*         :         *         :         *'
+define m10:'end financial change worksheet program'
+define m11:' is not the proper number of months into the year'
+define m14:'for current month'
+define m15:'for current quarter'
+define m16:'for current year'
+define m17:'enter option:  1  print all accounts'
+define m17a:'2  print 0 variance on worksheet only'
+define m18:'3  do not print 0 variance accounts'
+define m18a:'do you want to print all income & balance sheet accounts? (y/n)'
+define m19:'total'
+define m20:'do you wish to print page numbers? (y/n)'
+;
+define m21: 'net profit/loss'
+;
+format f02:c30
+format f04:n1
+format f05:n4
+format f06:x45c55x15c6n4
+format f06n:x20c50c5n4
+format f06a:x45c55
+format f07:x55c8c30
+format f08:x43c87
+format f08n:x43c40
+format f10:n9x1c4c31c2c18,c18,c16
+format f11: n-7 c4 c23 x1 c1 x1 c15 c15 c15 c45
+format f13:n3,c50;    using n3 dont change it
+format f15:x47c15x3c15x1c13x1c15x1c15
+format f16:x14,c33,c18c18c16c16c16
+format f17:x15c50
+;
+format f18:x37 c15 c15 c16 c10 c10 c10 c10 c9
+format f19:c5n4
+format optfmt:x33c40
+ 
+format fmt1:x100 c100
+format fmt2:x100 c100
+format fmt3:n3 c1 c15 c53 c9
+format fmt4:x35c9
+format fmt5:c80 c52
+format fmt3w:n3 c1 c41 c78 c9
+format fmt4w:x61 c10
+;
+;
+format f37:c1
+;
+format fc77:c77
+ 
+;
+set ?x1:0,?x2:0,?x3:0,?x4:0,?x5:0,?x6:0,?x7:0
+set ?y1:0,?y2:0,?y3:0,?y4:0,?y5:0,?y6:0,?y7:0
+end
+
+
+

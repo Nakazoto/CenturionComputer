@@ -1,0 +1,33 @@
+.nolog
+.seta 4=0
+.fspec @lst#i on #s 4=size
+.skip 1 if 0 eq #4
+.del @lst#i on #s
+.new @lst#i on #s 'a' 1
+.use @lst#i on #s syslog
+.dir #1 (gl a)
+.dir #1 (gl  a)
+.dir #1 (gl   a)
+.use crt#v syslog
+.seta upsi=0
+.use @lst#i on #s sys1
+.use sort1#i on #s sys2
+.use sort2#i on #s sys3
+.use sort3#i on #s sys4
+.use sort4#i on #s sys5
+.run s.dsort
+print=no,input=1,filtyp=a,recsiz=15
+work=4,output=inp,key=(1,6,av)
+/*
+.use @lst#i on #s sys0
+.use @scr#i on #s sys1
+.setc 8=clean
+.run gl.xgl589
+.seta 3=0
+.seta 5=1
+@scr#i on #s
+.end
+s.con
+
+
+

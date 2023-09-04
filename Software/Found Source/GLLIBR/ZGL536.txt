@@ -1,0 +1,468 @@
+title 'gl536--first module of posting'
+system (exp=b)
+direct
+term equ *-*
+cpl
+;
+define m01:'gl536 (posting general ledger) 12/29/81'
+;
+; notes:
+;   11/7-11/76...written...ns
+;   11/14/76...adding check on client number...ns
+;   12/10/76...if there are no details it tells them instead of giving an ioerr
+;              (means that i added para. c200)
+;  12/15/76...first of year option wasnt working..ns
+;  12/22/76...changed messages: posting option, no details..glg
+;  1/6/77...changed goto on first run of year processing if wrong option is
+;           first selected..glg
+;   1/10/77...automatic move current earnings to retained at end of year,
+;             changed c200 also...ns
+;    3/15/77..retained earnings needs its posting option changed at end of year..ns
+;
+;   11/7/77...recompiling for new gdet...ns
+;   07/19/78...cosmetics & changing retaining details flags...ns
+;   09/14/78...changing so that only v1=2 and v1=6 roll monthly balances down..ns
+;    09/27/78...end of year closing problem - inventory was being cleared..ns
+;
+;   01/15/79...replaced posting options...kam
+;   08/02/79...changed signon..ns
+;   09/24/79...modified to move prior year retained earnings to holding area
+;              when a year end close is performed...jwb
+;   11/28/79...changed subr (mov) to some  different instructions ...kag
+;   01/14/80...added exp=b to system statement...kag
+;   05/21/80...modified to update retained earnings prior year balance...kag
+;   06/27/80...added verification on posting - clear total option...kag
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;
+;==========
+;
+;
+;  this program updates the master file  and merges the old details with the
+;   new details.  it doesnot print - general ledger print program prints the
+;   ledger.
+;
+;============
+copy gdet
+copy recg
+copy list
+file newdet:sys3,class=2,seq,lsr=4,filtyp=b,buffer=400,buf3
+copy hd3
+file crt:sysipt
+;
+buffer buf2(400),buf3(400),buf5(400),buf6(400)
+;
+set rel4:0
+;
+entrypoint crt
+;
+external ?gkey,ioerr,stat,cget,msg,pupsi,gjp,ynget
+;
+;
+;
+;==================
+entry
+;
+   open io (crt,gmst)
+   open input(list,newdet)
+;
+   call ?gkey(gmst,?zero)
+   go to (c210,ioerr)on status;  no header
+   readb(gmst,headb)
+   call stat(1)
+;
+   call ?gkey(gmst,?two)
+   goto (c210,ioerr) on status; no retain earning acct..
+   readb(gmst,hd3)
+   call stat(1)
+;
+   call gjp(zero,key)
+  'acct'='zer9'
+   encode(acct,fn9)hh
+   decode(acct,f10)numon
+   if(numon.eq.13)go to a0005
+   numon=12
+ 
+a0005:
+ 
+;
+   call msg(eject)
+   call msg(m01)
+   curp(crt,1,5)
+   call msg(client)
+   call msg(null)
+;
+   readb(newdet,gdet)
+   if(status.ne.0)go to c200;   there are no details
+   xcdate=date
+   ifs(ddesc.eq.key)go to a10
+   write(crt,f03)m08,key,m09,ddesc;   posting user # xxxxxx but details are for xxxxxx
+   go to c205
+a10:
+   'acct'='zer6'
+   encode(acct,f09)xcdate
+   decode(acct,f10)cyy,cmm,cdd;   cdd is 0
+   cdate=cmm*100+cyy
+b05:
+call msg(m051) ; enter posting option  0 = standard
+write(crt, f04)m052; 1 = clear all account totals
+write(crt,f04)m053; 2 = first of year
+write(crt,f04)m054; 3 = standard and keep all details
+read(crt,f13)fla2
+;
+fa1=yrend+1
+if(fa1.le.numon)go to b10
+ 
+b05f:
+fa1=1
+;
+b10:
+if(fla2.eq.0)go to b40;  standard
+go to (b79,b12,b40)on fla2
+go to b05
+;
+b12:
+if(cmm.eq.fa1)go to b20;  first run of year - be sure that it is first run of the month
+b15:
+call msg(m29a); cant be first run of year
+b16:
+call msg(m051) ; enter posting option  0 = standard
+write(crt,f04)m052 ; 1 = clear all account totals
+write(crt,f04)m053 ; 2 = first of year
+write(crt,f04)m054 ; 3 = standard and retain details
+read(crt,f13)fla2
+if(fla2.eq.0)go to b40
+go to (b79,b18,b40)on fla2
+go to b16
+b18:
+call msg(m03);   end of job
+stop 25
+;
+b20:
+if(cdate.eq.month)goto b15; cant be first run of year this month already posted
+mnum=1;  number of months into the year
+call ?gkey (gmst,?two);  get retained eaenings account
+go to(b80,ioerr)on status
+readb(gmst,hd3)
+call stat(1)
+;
+go to b80;    this option is ok
+;
+b40:;   check options 0 and 3
+if(fa1.ne.cmm)go to b50;  cant be first run of the year
+if(cdate.eq.month)go to b50; this month is already posted so it isnt first run of year
+call cget(m29b,f13,fla2);  this should have been first run of year - if it is ok to change option enter "2"
+if(fla2.ne.2)go to b18
+;
+;
+go to b12 ; go to right place to start first run of year processing
+;
+b50:
+if(cdate.eq.month)go to c10;   dont roll months down - month is already posted once
+;
+b70:
+   'acct'='zer4'
+   encode(acct,f09a)month
+   decode(acct,f10)mm,yy
+   if(yy.gt.cyy)go to c10;  dont update months
+   if(mm.lt.cmm)go to b72
+   if(yy.eq.cyy)go to c10;  dont update months
+   go to b74
+;
+b72:
+   if(yy.eq.cyy)go to b74
+;
+b73:
+   call msg(m12);          current month is either back too far or too far forward
+;
+   go to c205
+;
+b74:
+;
+   j=cmm-mm
+   if(j.gt.0)go to b76
+   j=j+numon
+b76:
+   mnum=mnum+j
+   if(mnum.gt.numon)go to b73
+   go to b80
+;
+b79:
+   ;
+   call ynget(m29c)
+   if(status.ne.1) goto b05  ; n0 - re-enter option
+   ;
+   mnum=0;clear all
+   ;
+b80:
+   month=cdate
+   call ?gkey(gmst,?zero)
+   call stat(1);   ioerror if either status or 1 or 2
+   writeb(gmst,headb)
+   call stat(1)
+;
+b100:
+   readb(list,listb)
+   goto (c30)on status
+   if(?lid.le.100)go to b100
+   readb(gmst,recg)
+   call stat(1)
+   v1=vv/thou;    if v1 is not 2 or 6 not a money account so dont bother with it
+   if(v1.eq.2)go to b110;money account
+   if(v1.ne.6)go to b100; not an inventory account
+;
+b110:
+;
+   if(?gid.le.100)go to b100
+   go to (c20)on flag;  only pos gets cleared
+;
+;
+   go to (b200,b300,b150)on fla2
+;
+b150:;  0 and 3  - standard
+   i=j+1
+;
+b160:
+   i=i-1
+   if(i.le.0)go to b180
+;
+   call mov
+   go to b160
+b180:
+   writeb(gmst,recg)
+   call stat(1)
+   go to b100
+;
+b200:;  clear all
+   ;
+   ?pbal=cmo=pos=?cbal=0
+   usef=usef/10*10
+   monf=mone=mond=monc=monb=mona=mon9=mon8=mon7=mon6=mon5=mon4=mon3=mon2=0
+ 
+    if(numon.eq.12)go to b180
+    ;mong=0
+    go to b180
+   ;
+b300:;  end of year
+;
+if(?gid.eq.?ret) call retsav; save last year beg. bal...5/21/80..kg
+   call mov
+   if(?gid.eq.?plact)go to b350
+   if(?gid.le.?bsea)go to b180
+;   clear last year totals in income & expense portion
+;
+   ?pbal=monf=0
+   if(numon.eq.12)go to b304
+    ;mong=0
+    go to b305
+ 
+b304:
+ 
+    mone=0
+ 
+b305:
+ 
+    if(v1.eq.6)go to b180;  inventory isnt zeroed on year end
+ 
+   ?cbal=0
+   xx=usef-(usef/10*10)
+    go to (b180)on xx
+   usef=usef/10*10
+   go to b180
+;
+b350:  ;move earnings to date to retained earnings
+   ?sav=?cbal;   keep this to add to ret.
+   ?cbal=?pbal=monf=0
+    if(numon.eq.12)go to b355
+    ;mong=0
+ 
+    goto b356
+ 
+b355:
+ 
+    mone=0
+ 
+b356:
+   writeb(gmst,recg)
+   call stat(1)
+   call ?gkey(gmst,?ret);  retained earning acct
+   go to(b360,ioerr)on status
+   readb(gmst,recg)
+   call stat(1)
+   if(?ret.le.0)go to b360
+   'acct'='zer4'
+   encode(acct,f09a)vv
+   decode(acct,f13)v1,v2,v3,v4
+   if(v1.ne.2)go to b360;        not a money account
+   if(?gid.le.0)go to b360
+                      ;?inv = ?cbal ; removed ..5/21/80....kg
+   ?cbal=?cbal+?sav
+   usef=usef/10*10+2
+   go to b180
+;
+b360:;  there was no retained earnings account
+   call msg(m06);  retained earnings account is not correct
+   write(crt,f02)?ret,?gid,vv
+   call ?gkey(gmst,?plact)
+   go to (ioerr,ioerr)on status
+   readb(gmst,recg)
+   call stat(1)
+   ?cbal=?sav
+   go to b180
+;
+;
+;=================   merge detail files   ================
+c10:
+   flag=1
+   go to b100
+;
+c20:
+   pos=0
+   go to b180
+;
+c30:
+   if(flag.eq.2)go to c205;   no details
+   call pupsi(fla2)
+   load(xgl537,0,0)
+   call msg(m04);   module missing
+   go to c205
+;
+;
+c200:;   no details
+   call msg(m055);  ther are no details
+c205:
+   call msg(m03);  error condition incountered
+stop 25
+;
+c210:
+   call msg(m02a);  no header
+   go to c205
+;
+;=====================
+; s u b r o u t i n e s
+;=====================
+;
+subroutine mov
+;=====================
+if(numon.eq.12)go to mov10
+;?pbal=?pbal+mong
+;mong=monf
+go to mov11
+ 
+mov10:
+?pbal=?pbal+monf
+if(?lid.eq.?ret) call retearn  ; update ret earning amt...5/21/80..kg
+;
+mov11:
+;
+direct
+ xfr z,a
+ sta- s-
+ lda= monf
+ xay
+ lda= monf+4
+ xaz
+ lda= (monf-cmo)/2
+loop equ *
+ ldb- y-
+ stb- z-
+ dca
+ bgz  loop
+ lda- s+
+ xaz           11-28-79..changed instruction
+cpl
+cmo=pos=0
+return
+;
+;=======================
+subroutine retearn      ; added..5/21/80..kg
+;=======================
+;
+if(mnum.le.3) goto retx
+?inv=?inv + monf
+retx:
+return
+;
+retsav:  ;  added...5/21/80
+?inv=?cbal-(cmo+mon2+mon3+mon4+mon5+mon6+mon7+mon8+mon9+mona+monb+monc)
+return
+;
+;
+;=============== w o r k i n g   s t o r a g e ============
+;
+set cdate:0,xcdate:0,fla2:0,mm:0,dd:0,yy:0,cmm:0,cdd:0,cyy:0,j:0,i:0,?sav:0
+set  sav:0,?zero:0,fa1:0,flag:0,?two:2,v1:0,v2:0,v3:0,v4:0,xx:0,thou:1000
+set numon:0
+;
+string acct(14),null(0)
+;
+define zer9:'000000000',zer4:'0000'
+string key(6)
+define zer6:'000000'
+;
+define m02a:'the accounts file does not contain a user record'
+define m03:'error condition :  end of program'
+define m04:'xgl537 is not in proper library.  call your dealer.'
+define m055:'there are no details'
+define m06:'retained earnings account is incorrect'
+define m08:'you are trying to post user #'
+define m09:'with details from user#'
+define m12:'current month is either too far backward or forward to post'
+define m12a:'on first run of the year you cannot post more than 1 month'
+define m29a:'this cannot be first run of year'
+define m29b:'this should be first run of year...enter  2  to continue'
+define m29c:'is this correct? (y/n)'
+define m29d:'please correct user record and restart posting'
+;
+define m051:'enter posting option:  0  standard'
+define m052:'1  clear all account totals'
+define m053:'2  first of year'
+define m054:'3  save details'
+;
+format f02:d15d15n6
+format f03:c31,c6,c25,c6
+format f04:x23, c50
+format f09:n6
+format f09a:n4
+format f10:n2
+format fn9:n9
+format f13:n1
+;
+define xgl537:'xgl537'
+;
+end;  gl536
+
+define m03:'error condition :  end of program'
+define m04:'xgl537 is not in proper library.  call your dealer.'
+define m055:'there are no details'
+define m06:'retained earnings account is incorrect'
+define m08:'you are trying to post user #'
+define m09:'with details from user#'
+define m12:'current month is either too far backward or forward to post'
+define m12a:'on first run of the year you cannot post more than 1 month'
+define m29a:'this cannot be first run of year'
+define m29b:'this should be first run of year...enter  2  to continue'
+define m29c:'is this correct? (y/n)'
+define m29d:'please correct user record and restart posting'
+;
+define m051:'enter posting option:  0  standard'
+define m052:'1  clear all account totals'
+define m053:'2  first of year'
+define m054:'3  save details'
+;
+format f02:d15d15n6
+format f03:c31,c6,c25,c6
+format f04:x23, c50
+format f09:n6
+format f09a:n4
+format f10:n2
+format fn9:n9
+format f13:n1
+;
+define xgl537:'xgl537'
+;
+end;  gl536
+
+
+

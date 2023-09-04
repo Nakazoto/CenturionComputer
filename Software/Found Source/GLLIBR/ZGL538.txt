@@ -1,0 +1,140 @@
+title: 'gl538 (posting general ledger) - module 3'
+system  (exp=b)
+;
+define m01:'gl538 (posting general ledger) 12/29/81'
+;
+; notes
+;  11/11/76...written..ns
+;  1/6/77...made slam door shut on two transaction scratch files so that
+;           can't go back into glpost and do 'em again..glg
+;  3/10/77...rel carries rel0 in detail so ?gkey doesnt have to be gone through..ns
+;   9/9/77...if master has expanded field rel is not right,
+;            para. b20 changed...ns
+;  10/31/77...when message was displayed the year printed as 777 because of the
+;            module preceding it.  changing the date to 10/31/77 from 9/9/77 fixed it..ns
+;   9/14/78...cosmetic changes...ns
+;   8/02/79...changing signon mess...ns
+;  11/12/79...changed to end correctly if reject detail file is empty...jwb
+;  11/21/79...added correct open statements for files..kag
+;  01/14/80...added exp=b to system statement...kag
+;
+;  12/29/81...recompile to have a common date base...dl
+;
+;  this module reposts the rejects into the detail input file
+;===============
+;
+copy gdet
+copy recg
+;
+set rel0:0
+file reject:sys5,class=2,seq,lsr=4,filtyp=b,buffer=400,buf5
+buffer buf5(400),buf3(400)
+;
+file gcfil:sys4,class=2,rnd,recsiz=77,key=rel4
+set rel4:0
+;
+file newdet:sys3,class=2,seq,lsr=4,filtyp=b,buffer=400,buf3
+;
+record pnt(4);   this has more than pointer in it to clear
+set point:0
+endrec
+;
+;================
+file crt:sysipt
+entrypoint crt
+external ?gkey,stat,ioerr,msg,clrec
+;
+;
+entry
+open io (crt,gmst,gcfil,newdet,reject)
+curp(crt,1,3)
+call msg (m01)
+curp(crt,1,12)
+;
+readb(reject,gdet)
+goto (b90, ioerr) on status ; 11/12/79...jwb
+p1=emp;         this was the pointer count when these records were rejected
+;
+b10:
+hold(gcfil)
+if(status.ne.0)go to b10
+readb(gcfil,pnt)
+call stat(1)
+if(point.eq.p1)go to b20
+;   there have been details entered since these were taken
+p2=point;   they will be added to the end
+;
+b20:
+readb(reject,gdet)
+if(status.ne.0)go to b90
+rel4=rel4+1
+sorpnt=rel4;   reset the sort flag
+writeb(gcfil,gdet)
+call stat(1)
+if(?acct.lt.100)go to b20
+call ?gkey(gmst,?acct)
+go to (b20,ioerr)on status
+rel=rel0
+b30:
+readb(gmst,recg)
+call stat(1)
+if(?gid.eq.0)go to b20
+   pos=pos+amt
+   if(pos.eq.0)go to b20
+writeb(gmst,recg)
+call stat(1)
+go to b20
+;
+b90:
+point=rel4
+if(p2.le.p1)go to b100
+rel4=p1
+;
+b95:
+rel4=rel4+1;  these are records following audit
+if(rel4.gt.p2)go to b100
+readb(gcfil,gdet)
+call stat(1)
+p1=rel4;   save this
+point=rel4=sorpnt=point+1
+writeb(gcfil,gdet)
+call stat(1)
+rel0=rel
+if(rel.ne.0)go to b98
+call ?gkey(gmst,?acct)
+go to (b99,ioerr)on status
+rel=rel0
+b98:
+readb(gmst,recg)
+call stat(1)
+if(?gid.eq.0)go to b99
+   pos=pos+amt
+   if(pos.eq.0)go to b99
+writeb(gmst,recg)
+call stat(1)
+;
+b99:
+rel4=p1
+go to b95
+;
+b100:
+;   point is already set
+p2=point
+call clrec(pnt)
+point=p2
+rel4=0
+writeb(gcfil,pnt)
+call stat(1)
+free(gcfil)
+;
+   rewind reject ; go back to beginning
+   endfile newdet,reject; slam door shut
+   close newdet,reject,crt,gmst,gcfil
+   stop 0
+;
+;=========w o r k i n g    s t o r a g e ===========
+set p1:0,p2:0
+;
+end;  gl538
+
+

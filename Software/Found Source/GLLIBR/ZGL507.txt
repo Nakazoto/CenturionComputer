@@ -1,0 +1,507 @@
+title 'gl507--payroll record maintenance '
+system
+;
+define m01:'gl507 (general ledger master file maintenance) 12/29/81'
+;
+external cget,ynget,msg,?nkey,?gkey,ioerr,stat,clrec,gjp,pupsi,gupsi,pjp,msgn
+;   notes:
+;    5/01/79...new program split off of gl500...ns
+;    8/02/79..change to signon message..ns
+;   04/15/80...added earned income credit account (eic)...kag
+;
+;   12/29/81...recompile to have a common date base...dl
+;
+;
+;
+;
+;     g/l master file
+copy headb
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+set  rel0:0;   this used to be part of list - arent using list in this prog.ns
+copy head2
+;
+copy hd3
+ 
+;
+;
+;
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+entry
+;
+open io(crt,gmst)
+call gjp(3,recall)
+call ?gkey(gmst,?zero)
+call stat(1)
+a10:
+hold(gmst)
+if(status.ne.0)go to a10
+readb(gmst,headb)
+call stat(1)
+'acct'='zer7'
+encode(acct,fn7)hh
+decode(acct,fn1)haflg,h0,h1,h2,h3,h4,h5
+call ?gkey(gmst,?one)
+call stat(1)
+readb(gmst,head2)
+call stat(1)
+call ?gkey(gmst,?two)
+call stat(1)
+readb(gmst,hd3)
+call stat(1)
+;
+d110:
+call msg(eject)
+call msg(m01)
+fa1=0
+d120:
+curp(crt,1,2)
+write(crt,f13a)fldn01,m24a,?g1,fldn08,m24a,?g8,fldn15,m24f,?ot2
+if(fa1.ne.0)go to d300
+;
+d130:
+curp(crt,1,4)
+d140:
+write(crt,f13a)fldn02,m24a,?g2,fldn09,m24a,?g9,fldn16,m24g,?mea
+if(fa1.ne.0)go to d300
+;
+d150:
+curp(crt,1,6)
+d160:
+write(crt,f13a)fldn03,m24a,?g3,fldn10,m24b,?fica,fldn17,m24k,?meal2
+if(fa1.ne.0)go to d300
+d170:
+curp(crt,1,8)
+write(crt,f13a)fldn04,m24a,?g4,fldn11,m24c,?fwt,fldn18,m24h,?tips
+if(fa1.ne.0)go to d300
+d190:
+curp(crt,1,10)
+d200:
+write(crt,f13a)fldn05,m24a,?g5,fldn12,m24d,?swt,fldn19,m24l,?tips2
+if(fa1.ne.0)go to d300
+d210:
+curp(crt,1,12)
+d220:
+write(crt,f13a)fldn06,m24a,?g6,fldn13,m24j,?ctax,fldn20,m24i,?mtded
+if(fa1.ne.0)go to d300
+;
+d230:
+curp(crt,1,14)
+write(crt,f13a)fldn07,m24a,?g7,fldn14,m24e,?ot1,fldn21,m24m,?mtded2
+;
+if(fa1.ne.0)go to d300
+;
+d250:
+curp(crt,1,16)
+d260:
+write(crt,f13b)fldn22,m24n,prbnk
+;
+if (fa1.ne.0) goto d300
+;
+d270:
+curp(crt,1,18)
+write(crt,f13c)fldn23,m24o,?eic
+;
+d300:
+call position
+call getit(m85,fn2,fa1);enter field number
+go to (e30,e30,e30,e30,e30,e30,e30,e30,e30,e39)on fa1
+fa1=fa1-10
+go to (e40,e41,e47,e42,e43,e44,e48,e45,e49,e46,e50,e51,e52)on fa1
+if(fa1.eq.89)go to d900
+go to d300
+;
+d900:
+call ?gkey(gmst,?one)
+call stat(1)
+writeb(gmst,head2)
+call stat(1)
+d905:
+call ?gkey(gmst,?two)
+writeb(gmst,hd3)
+call stat(1)
+call ?gkey(gmst,?zero)
+free(gmst)
+;
+load(recall,0,0); either xgl500 or xgl514
+stop 20;               if it returns it is in error
+;
+;
+;
+e30:
+call ms25
+call msg(m25a)
+go to (e301,e302,e303,e304,e305,e306,e307,e308,e309,d300) on fa1
+e301:
+call getacct(?g1)
+go to d120
+e302:
+call getacct(?g2)
+go to d130
+e303:
+call getacct(?g3)
+go to d150
+e304:
+call getacct(?g4)
+go to d170
+e305:
+call getacct(?g5)
+go to d190
+e306:
+call getacct(?g6)
+go to d210
+e307:
+call getacct(?g7)
+go to d230
+e308:
+call getacct(?g8)
+go to d120
+e309:
+call getacct(?g9)
+go to d130
+;
+e39:
+call ms25
+call msg(m24b)
+call geta2(?fica)
+go to d150
+;
+e40:
+call add10
+call ms25
+call msgn(m27)
+call msg(m27a);   federal withholding
+call geta2(?fwt)
+go to d170
+;
+e41:
+call add10
+call ms25
+call msgn(m28); state w/h
+call msg(m27a)
+call geta2(?swt)
+go to d190
+;
+e42:
+call add10
+call ms25
+call msg(m24e); other 1
+call getacct(?ot1)
+go to d230
+;
+e43:
+call add10
+call ms25
+call msg(m24f);other 2
+call getacct(?ot2)
+go to d120
+;
+e44:
+call add10
+call ms25
+call msg(m31);meals
+call geta2(?mea)
+go to d130
+;
+e45:
+call add10
+call ms25
+call msg(m32);tips
+call geta2(?tips)
+go to d170
+;
+e46:
+call add10
+call ms25
+call msg(m33);meals/tips
+call geta2(?mtded)
+go to d210
+;
+e47:
+call add10
+call ms25
+call msg(m34a)
+call geta2(?ctax)
+goto d210
+;
+e48:
+call add10
+;
+call ms25
+call msgn(m31); meal contra
+call msg(m33a)
+call geta2(?meal2)
+go to d150
+;
+e49:
+call add10
+;
+call ms25
+call msgn(m32); tip contra
+call msg(m33a)
+call geta2(?tips2)
+goto d190
+;
+e50:
+call ms25
+call msgn(m33); meals/tips contra
+call msg(m33a)
+call geta2(?mtded2)
+go to d230 ; changing
+;
+e51:
+call ms25
+call msg(m33b)
+call geta2(?gg)
+prbnk=?gg
+go to d250
+;
+e52:
+;
+call ms25
+call msg (m35)
+call geta2 (?eic)
+goto d270
+;
+;
+;
+;=====================
+;  subroutine
+;======================
+;
+subroutine getacct
+;=====================
+;
+go to (g1,g1,g1) on h1
+go to geta2
+g1:
+call getit(m23c,f10,brn)
+go to geta3
+;
+;
+geta2:
+brn=0
+;
+geta3:
+maj=min=0
+go to (g4,g5,g6,g7,g8,g9)on h2
+go to geta5
+g4:
+call major(fn1)
+go to geta5
+g5:
+call major(fn2)
+go to geta5
+g6:
+call major(f10)
+go to geta5
+g7:
+call major(fn4)
+go to geta5
+g8:
+call major(fn5)
+go to geta5
+g9:
+call major(fn6)
+;
+geta5:
+go to (g10,g11,g12) on h3
+go to geta7
+g10:
+call minor(fn1)
+go to geta7
+g11:
+call minor(fn2)
+go to geta7
+g12:
+call minor(f10)
+;
+geta7:
+'acct'='zer12'
+encode(acct,f10)brn,maj,min
+decode(acct,f09)?gg
+direct
+    lda- x+
+    sta   geta9+8
+cpl
+ 
+geta9:
+ 
+?g1=?gg
+return
+;
+;===============
+subroutine major
+;===============
+direct
+ lda- x+
+ sta  maj10+5
+cpl
+maj10:
+call getit(m23d,fn1,maj); fn1 is variable
+return
+ 
+;==============
+subroutine minor
+;==============
+direct
+ lda- x+
+ sta min10+5
+cpl
+min10:
+call getit(m23e,fn1,min)
+return
+;=================
+subroutine add10
+;=================
+;
+fa1=fa1+10
+return
+;
+;=================
+subroutine blank
+;=================
+curb(crt,70)
+return
+ 
+subroutine position
+;==================
+curp(crt,1,21)
+call blank
+curp(crt,1,22)
+call blank
+curp(crt,1,23)
+call blank
+curp(crt,1,24)
+call blank
+curp(crt,1,20)
+call blank
+return
+subroutine getit
+;==================
+direct
+   lda- x+
+   sta gt10+3
+   lda- x+
+   sta gt10+5
+   lda- x+
+   sta gt10+7
+cpl
+ 
+gt10:
+call cget(m85,fn2,fa1); variable messages, formats, & ans.
+if(status.eq.0)go to gt20
+call msg(beep)
+go to gt10
+ 
+gt20:
+return
+ 
+subroutine ms25
+;===============
+call msgn(m25)
+return
+;=========
+ 
+;
+ ;*****************************
+ ;********  constants  ********
+ ;*****************************
+ ;
+define fldn01:'(01)'
+define fldn02:'(02)'
+define fldn03:'(03)'
+define fldn04:'(04)'
+define fldn05:'(05)'
+define fldn06:'(06)'
+define fldn07:'(07)'
+define fldn08:'(08)'
+define fldn09:'(09)'
+define fldn10:'(10)'
+define fldn11:'(11)'
+define fldn12:'(12)'
+define fldn13:'(13)'
+define fldn14:'(14)'
+define fldn15:'(15)'
+define fldn16:'(16)'
+define fldn17:'(17)'
+define fldn18:'(18)'
+define fldn19:'(19)'
+define fldn20:'(20)'
+define fldn21:'(21)'
+define fldn22:'(22)'
+define fldn23:'(23)'
+define m23c:'branch'
+define m23d:'major:'
+define m23e:'minor:'
+define m24a:'gross:'
+define m24b:' fica:'
+define m24c:'fed w:'
+define m24d:'st wh:'
+define m24e:'other1:'
+define m24f:'other2:'
+define m24g:' meals:'
+define m24h:'  tips:'
+define m24i:'mls&tp:'
+define m24j:'cy wh:'
+define m24k:'mls ct:';  meals contra account
+define m24l:'tps ct:';  tips contra
+define m24m:'m&t ct:'
+define m24n:'pr bnk:'
+define m24o:'   eic:'
+;
+define m25 :'enter account number for:'
+define m25a:'gross payroll'
+define m27:' federal', m27a:' withholding'
+define m28:'state'
+define m31:' meals'
+define m32:'tips'
+define m33:' meals & tips '
+define m33a:' contra acct'
+define m33b:'payroll bank account'
+define m34a:'city tax'
+define m35:' eic'
+define m85:'enter field number  - 99 to redisplay first page'
+define recall:'xgl500';   is either xgl500 or xgl514
+define beep:' '
+;
+;
+;
+;
+;
+format f09:d12
+format f10:n3n6n3
+format f13a:c4c7d12x4c4c7d12x4c4c8d12
+format f13b:x54 c4 c8 n12
+format f13c:x54,c4,c8,d12
+;
+;
+format fn1:n1
+format fn2:n2
+format fn4:n4
+format fn5:n5
+format fn6:n6
+format fn7:n7
+define zer12:'   000000000'
+define zer7:'0000000'
+string null(0),acct(12)
+ ;
+ ;
+set brn:0,?one:1,?gg:0,?two:2
+set haflg:0,h0:0,h1:0,h2:0,h3:0,h4:0,h5:0
+set  ?zero:0
+set maj:000
+set min:000
+;
+ ;
+integer fa1
+ ;
+ ;
+end;    gl500
+
+
+

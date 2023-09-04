@@ -1,0 +1,95 @@
+.job glttra
+.run s.xeject
+.seta cc=0
+.seta upsi=0
+.log
+*   ready paper tape reader - press newline
+.nolog
+.pause
+.seta 0=#0
+.use @scr#i on 1 for sys0
+.run gl.xptap
+.skip to fin if #c ne 0
+.use gl#0a on #1 for sys0 shar
+.use gl#0e on #1 for sys2 pass shar
+.fspec pr#0d on #1 7=size
+.skip 1 if 0 ne #7
+.new pr#0d on #1 'c' 1
+.use pr#0d on #1 sys3 shar pass
+.use @scr#i on 1 for sys4
+.run gl.xgl532
+.skip to recall if #c = 20
+.skip to go if #c eq 0
+.skip to err if #c ge 100
+.seta upsi=#c-1
+.seta cc=0
+.run s.xgrow
+.rel sys#u
+.vspec #1 7=avail
+.skip to err1 if #7 lt #8
+.seta upsi=0
+.fspec #5 on #6 3=use
+.skip to ok if #3 eq 1
+.log
+*
+*   detail file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition expand detail file? (y/n)
+*
+.nolog
+.enter 3
+.skip to recall if y eq #3
+=ok
+.new gl@#i on #6 'c' #8s
+.use #5 on #6 for sys0
+.use gl@#i on #6 for sys1
+.run s.xcoput
+.skip to err if #c ne 0
+.del #5 on #6
+.nam gl@#i on #6 #5
+=ttra
+.skipr 0
+=err
+.log
+*
+*  an error condition has been encountered
+*
+.nolog
+.skip to fin
+=err1
+.log
+*
+*   insufficient disk space to expand detail file
+*
+.nolog
+.skip to fin
+=go
+.rel sys3,sys2
+.skip to audt if #u ne 3
+.log
+*   do you want to run the general ledger audit report now? (y/n)
+.nolog
+.enter 9
+.seta upsi=2
+.skip to recall if y ne #9
+=audt
+.skip to recall if #u ne 2
+.seta upsi=2
+.run s.xopt
+gl.audt
+=recall
+.skip 1 if glmenu ne #4
+glmenu
+=fin
+.end
+s.con
+*   4/25/78...changed to new standards..ns
+*   7/19/78...cleanup..ns
+*  10/06/78...spelling error corrected...ns
+
+

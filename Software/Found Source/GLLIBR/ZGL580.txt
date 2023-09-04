@@ -1,0 +1,712 @@
+title 'gl580--budget file maintenance '
+system
+;
+define m01:'gl580 (budget maintenance) 12/29/81'
+;
+;  notes:
+;    7/16/76...written...n
+;   7/20/76...still testing..ns
+;
+;   7/23/76...adding year total and option to enter all months the same..ns
+;
+;   1/26/77...putting option 13 back in..ns
+;   3/17/77...displaying account number..ns
+;    3/30/77... changing m15a, chang in b45, asking change (y/n)...ns
+;    10/5/77... in newyear budget record wasnt re-written after update...ns
+;    07/24/78... cosmetic changes...ns
+;   09/06/78...restricting h,i,j,k, & l accounts from the budget...ns
+;   10/06/78...putting k, l accounts into the budget...ns
+;   11/14/78...added update of consolidated accts when changing budget amt...jwb
+;    06/05/79...allowing j & l beg/ending accounts & d account balances..ns
+;    07/03/79...adding h accounts to file..ns
+;   07/27/79...not allowing beg. or ending inv. into budget..ns
+;   02/26/80...added a second chance to change option...kag
+;   06/24/80...recompiled for tblget,tblget routine...dle
+;   07/09/80...corrected deleteing of  acct. branch from consolidated...kag
+;   07/18/80...moved new year option from pgm to jobstream for sorting purpose...kag
+;
+;   03/11/81...modify the program to clear the budget master to 0, if new year
+;              option elected in the job stream...dl
+;
+;   12/29/81...recompile to have a common date base...dl
+record headb(131);    the header of glxxxa is all that i need
+string client(30)
+string coment(60)
+set    month:0;     current postings
+set    yrend:0;     fiscal year ending
+set    post:0;      if 3 retain all details
+set    ?bsea:0
+set    ?plact:0
+set    hh:0;        put profit/loss in parent.
+set    mnum:0;      number of months into current year
+endrec
+;
+file prt:syslst, class=1, seq           ;jeff
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+set rel0:0
+;
+copy brec
+;   brec is the budget record
+;
+record consrec (131)         ;temp. place to hold consol. rec.
+set ?dum: 0
+table conbud (24)           ;consol. budget table
+set dum: 0
+endrec
+;
+record listb(10)
+set    ?lid:0
+set    rel1:0
+endrec
+;
+file list:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+file bmst:sys1,class=2,rnd,recsiz=131,key=rel1
+;
+record recg(50)
+set  ?id:0
+set  xx:0
+set  vv:0
+string desc(30)
+endrec
+;
+;============================
+;
+file crt:sysipt
+;
+entrypoint crt
+;
+external cget,msg,?nkey,?gkey,ioerr,stat,lfeed,pupsi,mvssf,ynget,gupsi
+;
+entry
+;
+open io (crt,gmst,bmst)
+open input list
+call msg (eject)
+call msg(m01)
+;
+b01:
+call ?gkey(gmst,?zero)
+go to (b08,ioerr) on status
+readb(gmst,headb)
+call stat(1)
+call ?gkey(bmst,?zero);   call header
+goto(b06,ioerr)on status
+readb(bmst,budh)
+call stat(1)
+b02:
+call gupsi (ans);   see if we are setting up a new year
+b05:
+if (ans.eq.1) call newyear
+if (ans.eq.1) goto b01       ; added..(3-10-81..dl)
+goto b10
+;
+b06:
+i=13-yrend;
+j=1
+;
+b07:
+'mon'='jan'
+call iset
+'mon'='feb'
+call iset
+'mon'='mar'
+call iset
+'mon'='apr'
+call iset
+'mon'='may'
+call iset
+'mon'='jun'
+call iset
+'mon'='jul'
+call iset
+'mon'='aug'
+call iset
+'mon'='sep'
+call iset
+'mon'='oct'
+call iset
+'mon'='nov'
+call iset
+'mon'='dec'
+call iset
+;
+call ?nkey(bmst,?zero)
+go to (noroom,ioerr)on status
+sort=1
+writeb(bmst,budh)
+call stat(1)
+;
+go to b10
+;
+b08:
+call msg(m03);    g/l master is not setup yet
+stop 50
+;
+b10:
+'acct'='zer6'
+encode(acct,f02)hh
+decode(acct,f03)h1,h2,h3
+;
+b20:
+brn=maj=min=0
+call msg(m09)  ;  enter account number
+b21:
+if (h1.eq.zero) go to geta2  ; no branch numbers
+call cget(m04,f12,brn)       ; get branch number
+if (status.ne.zero) go to b21
+go to geta3
+;
+geta2:
+brn=0
+;
+geta3:
+maj=min=0
+go to (g4,g5,g6,g7,g8) on h2  ; get major account number
+go to g9                      ; takes care of max case and anything else
+g4:
+call cget(m05,f03,maj)        ; get one-digit major number
+go to geta4
+g5:
+call cget(m05,f11,maj)        ; get two-digit major number
+go to geta4
+g6:
+call cget(m05,f12,maj)        ; get three-digit major number
+go to geta4
+g7:
+call cget(m05,f07,maj)        ; get four-digit major number
+go to geta4
+g8:
+call cget(m05,f02,maj)        ; get five-digit major number
+go to geta4
+g9:
+call cget(m05,f13,maj)        ; get six-digit major number
+geta4:
+if (status.ne.zero) go to geta3
+if (maj.le.zero) go to b900   ; terminate program
+;
+geta5:
+go to (g10,g11,g12) on h3     ; get minor account number
+go to b30                   ; no minor account number
+g10:
+call cget(m06,f03,min)        ; get one-digit minor number
+go to geta6
+g11:
+call cget(m06,f11,min)        ; get two-digit minor number
+go to geta6
+g12:
+call cget(m06,f12,min)        ; get three-digit minor number
+geta6:
+if (status.ne.zero) go to geta5
+;
+b30:
+?nid=brn*mil+maj*thou+min
+call ?gkey(gmst,?nid)
+go to (b35,ioerr)on status
+readb(gmst,recg)
+call stat(1)
+'acct'='zer4'
+encode(acct,f07)vv;
+decode(acct,f03)v1,v2,v3,v4;   v1=2 is money account
+if(?id.eq.0)goto b35
+go to b38
+ 
+b35:
+call msg(m10);no match
+call ynget(m11)
+if(status.eq.0)go to b20;  no
+;
+b38:
+;
+call ?gkey(bmst,?nid)
+go to (b40,ioerr)on status
+readb(bmst,brec)
+call stat(1)
+if(?bid.eq.0)go to b45
+;
+go to (b100,b100)on btest
+btest=0;  it is a new field
+go to b100
+;
+b40:
+call ?nkey(bmst,?nid)
+go to (noroom,ioerr)on status
+sort=1
+;
+b45:
+direct
+  ldb= bud+5    beginning adress of table
+  lda= (edbud)-(bud+6)  length of table
+  jsr/ mvssf     move filler
+  db   0         filler chr.
+  ldab= 4       sets up 4 as table length
+  stab/ bud-1   just in case someone did a control c or garbaged table in some other way
+cpl
+?bid=?nid
+;
+btest=0
+ 
+b100:
+call ?gkey(gmst,?nid)
+go to (b105,ioerr)on status
+readb(gmst,recg)
+call stat(1)
+go to b108
+;
+b105:
+'desc'='m10'
+b108:
+qtr1=qtr2=qtr3=qtr4=0
+;
+b108f:
+call msg(eject)
+write(crt,f04a)m12a,brn,maj,min
+fa1=0
+write(crt,f04)m12,desc
+go to (b108q,b109a,b145,b146,b146,b109)on v1; 1=d, 2=money, 3=total, 4=k, 5=h, j, 6*l
+go to b143
+ 
+b108q:; d type
+curp(crt,1,2)
+write(crt,f04)m12,desc,m16,btest
+;
+go to b109a
+ 
+b109:
+if(v4.ne.8)go to b170;  delete that dude
+ 
+ 
+b109a:
+curp(crt,1,4)
+write(crt,f01)m13
+b110:
+ tblget bud(1)
+qtr1=bud
+ tblget mon(1)
+curp(crt,1,5)
+curb(crt,79)
+writen(crt,f05)one,mon,bud
+ tblget bud(2)
+qtr1=qtr1+bud
+ tblget mon(2)
+writen(crt,f05)two,mon,bud
+ tblget bud(3)
+ tblget mon(3)
+qtr1=qtr1+bud
+write(crt,f05)thr,mon,bud
+if(fa1.ne.0)go to b120
+;
+b111:
+ curp(crt,1,7)
+ curb(crt,79)
+ tblget bud(4)
+qtr2=bud
+;
+ tblget mon(4)
+writen(crt,f05)four,mon,bud
+ tblget bud(5)
+qtr2=qtr2+bud
+ tblget mon(5)
+writen(crt,f05)five,mon,bud
+ tblget bud(6)
+ tblget mon(6)
+qtr2=qtr2+bud
+write(crt,f05)six,mon,bud
+if(fa1.ne.0)go to b120
+;
+b112:
+curp(crt,1,9)
+curb(crt,79)
+;
+ tblget bud(7)
+qtr3=bud
+ tblget mon(7)
+writen(crt,f05)sev,mon,bud
+ tblget mon(8)
+ tblget bud(8)
+qtr3=qtr3+bud
+writen(crt,f05)ate,mon,bud
+ tblget bud(9)
+ tblget mon(9)
+qtr3=qtr3+bud
+write(crt,f05)nine,mon,bud
+if(fa1.ne.0)go to b120
+;
+b113:
+curp(crt,1,11)
+curb(crt,79)
+;
+ tblget bud(10)
+qtr4=bud
+ tblget mon(10)
+writen(crt,f05)ten,mon,bud
+ tblget bud(11)
+qtr4=qtr4+bud
+ tblget mon(11)
+writen(crt,f05)elev,mon,bud
+ tblget mon(12)
+ tblget bud(12)
+qtr4=qtr4+bud
+write(crt,f05)twel,mon,bud
+b120:
+curp(crt,1,14)
+curb(crt,60)
+?yr=qtr1+qtr2+qtr3+qtr4
+write(crt,f08)m08,?yr
+call msg(m22);   enter 13 to change all
+call msg(m22a);  14 to delete
+curp(crt,1,17)
+curb(crt,40)
+curp(crt,1,18)
+curb(crt,41)
+curp(crt,1,19)
+curb(crt,41)
+curp(crt,1,20)
+curb(crt,16)
+curp(crt,1,17)
+;
+call ynget(m11a);  change (y/n)?
+if(status.eq.0)goto b140
+curp(crt,1,17)
+curb(crt,20)
+;       last year will go here if need be
+ call cget(m14,f11,fa1);  enter field number
+if(fa1.eq.13)go to b160;    all months are the same
+if(fa1.eq.14)go to b170;   deletes budget
+if(fa1.gt.12)go to b124
+if(fa1.lt.1)go to b120
+tblget mon(fa1)  ;get month's name
+'mss'='m15+mon'
+if (brn. eq. cons) goto b0121
+if (brn. eq. 0) goto b0121
+tblget bud (fa1)
+savamt=bud
+;
+b0121:
+;
+call cget (mss, f06, bud)
+if (status. ne. 0) goto b0121
+work=bud-savamt
+tblput bud (fa1)
+if (brn. eq. cons) goto b0130
+if (brn. eq. 0) goto b0130
+writeb (bmst, brec)
+call stat (1)
+?work=cons*mil+maj*thou+min
+call ?gkey (gmst, ?work)
+goto (b0130, ioerr) on status
+call ?gkey (bmst, ?work)
+goto (b0122, ioerr) on status
+readb (bmst, brec)
+call stat (1)
+goto b0123
+;
+b0122:
+;
+call ?nkey (bmst, ?work)
+goto (noroom, ioerr) on status
+sort=1
+direct
+ ldb= bud+5
+ lda= (edbud)-(bud+6)
+ jsr/ mvssf
+ db 0
+ ldab= 4
+ stab/ bud-1
+cpl
+;
+b0123:
+;
+?bid=?work
+tblget bud (fa1)
+bud=bud+work
+tblput bud (fa1)
+writeb (bmst, brec)
+call stat (1)
+goto b30
+;
+b124:; check to see if d account
+if(fa1.ne.15)go to b120
+if(v1.ne.1)go to b120
+call msg(m17);  enter option: 0=print d & its schedule on budget
+write(crt,fopt)m17a; 1=print d only
+writen(crt,fopt)m17b; 2=print schedule only
+call cget(null,fn1,btest)
+if(status.ne.0)go to b124
+go to (b108f,b108f)on btest
+if(btest.eq.0)go to b108f
+go to b124
+b0130:
+;
+go to (b110,b110,b110,b111,b111,b111,b112,b112,b112,b113,b113,b113)on fa1
+go to b100;   error
+;
+b140:
+writeb(bmst,brec)
+call stat(1)
+go to b20
+;
+b160:
+call cget(m15a,f06,bud);   enter budget amount
+if (status. ne. 0) goto b160
+savamt=bud
+fa1=1
+b165:
+;
+if (brn. eq. cons) goto b0166
+if (brn. eq. 0) goto b0166
+tblget bud (fa1)
+work=savamt-bud
+;
+b0166:
+;
+bud=savamt
+tblput bud (fa1)
+if (brn. eq. cons) goto b0169
+if (brn. eq. 0) goto b0169
+writeb (bmst, brec)
+call stat (1)
+?work=cons*mil+maj*thou+min
+call ?gkey (gmst, ?work)
+goto (b0169, ioerr) on status
+call ?gkey (bmst, ?work)
+goto (b0167, ioerr) on status
+readb (bmst, brec)
+call stat (1)
+goto b0168
+;
+b0167:
+;
+call ?nkey (bmst, ?work)
+goto (noroom, ioerr) on status
+sort=1
+direct
+ ldb= bud+5
+ lda= (edbud)-(bud+6)
+ jsr/ mvssf
+ db 0
+ ldab= 4
+ stab/ bud-1
+cpl
+;
+b0168:
+;
+?bid=?work
+tblget bud (fa1)
+bud=bud+work
+tblput bud (fa1)
+writeb (bmst, brec)
+call stat (1)
+call ?gkey (bmst, ?nid)
+goto (ioerr, ioerr) on status
+readb (bmst, brec)
+call stat (1)
+;
+b0169:
+;
+fa1=fa1+1
+if(fa1.lt.13)go to b165
+fa1=0
+go to b108f
+;
+b170:
+?bid=0;   deleteing a branch
+fa1=1;   seta up for table search
+savamt=rel1; save key of brch record for later
+?work=cons*mil+ maj*thou+ min  ;calc cons. arg.
+call ?gkey(bmst,?work)
+goto (b172,ioerr) on status; no cons / err...(3-10-81..dl)
+readb(bmst,consrec)
+call stat (1)     ;  if error
+;
+b171:
+tblget bud (fa1)
+tblget conbud (fa1)
+conbud= conbud-bud
+tblput conbud (fa1)
+ fa1=fa1+1
+ if(fa1.lt.13) goto b171 ; go back to loop
+writeb(bmst,consrec)     ; write em back out
+call stat (1)            ; error
+;
+b172:                        ; added...(3-10-81..dl)
+rel1=savamt             ; re-locate branch record by setting key value
+goto b140;
+;
+b143:
+call msg(m35)
+b144:
+call cget(m07a,f10,str)  ; keep or delete
+ifs (str.eq.d) go to b170
+ifs (str.eq.k) go to b140
+go to b144
+;
+b145:
+call msg(m36)
+go to b144
+ 
+b146:
+call msg(m37); calculation account
+call cget(m07a,f10,str)
+ifs(str.eq.d)go to b170
+ifs(str.eq.k)go to b140
+ifs(str.ne.x)go to b146
+go to b109a; display the latest set of calculations
+;
+b900:
+call msg(m20);   eoj
+close bmst,crt,gmst
+call pupsi(sort)
+stop 0
+;
+noroom:
+call msg(m21);   no room going to expand the master file
+close bmst,crt,gmst,list
+stop 111
+;
+;
+;=======================
+subroutine iset
+;=======================
+ tblput mon(i)
+i=i+1
+if(i.lt.13)go to is10
+i=1
+is10:
+return
+;
+;====================
+subroutine newyear
+;====================
+call msg(m38)        ; standby while budget cleared
+call pupsi(0)
+ny5:
+readb(list,listb)
+if(status.ne.0)go to ny50
+if(?lid.eq.0)go to ny5
+readb(bmst,brec)
+call stat(1)
+i=1
+j=13
+;
+ny10:
+ tblget bud(i)
+ tblput bud(j)
+bud=0
+ tblput bud(i)
+i=i+1
+j=j+1
+if(j.lt.25)go to ny10
+writeb(bmst,brec)
+call stat(1)
+;
+go to ny5
+;
+ny50:
+return
+;
+;
+;====================
+;   constants
+;====================
+;
+define jan:'jan',feb:'feb ',mar:'mar ',apr:'apr ',may:'may ',jun:'june',jul:'july'
+define aug:'aug ',sep:'sept',oct:'oct ',nov:'nov ',dec:'dec '
+define d:'d', k:'k', no:'n', x:'x'
+;
+define m02:'are you setting up a budget for a new year? (y/n)'
+define m02a:'  option correct? (y/n)'
+define m03:'user record does not exist'
+define m04:'branch:'
+define m05:' major:'
+define m06:' minor:'
+define m07a:'keep or delete? (k/d)'
+define m08:'years budget total for this account is:'
+define m09:'enter account number'
+define m10:'no match in chart of accounts'
+define m11:'ok? (y/n)'
+define m11a:'change (y/n)'
+define m12:'description:'
+define m12a:'account number:'
+define m13:'*****    current years budget    *****'
+define m14:'enter month number'
+define m15:'enter amount budgeted for '
+define m15a:'enter amount budgeted for each month in year'
+define m16:'(15) print sch?'
+define m17:'enter option:  0  print d & its schedule'
+define m17a:'1  print d account only'
+define m17b:'2  print schedule only'
+;
+define m20:'end budget maintenance program'
+define m21:'budget file is full'
+define m22:'enter 13 to enter each month the same amount'
+define m22a:'      14 to delete'
+define m35:'****   title account   **** '
+define m36:'****   total account   **** '
+define m37:'*** calculation account ***'
+define m38:'standby while budget amounts are being cleared'
+;
+;
+define zer6:'000000'
+;
+define zer4:'0000'
+;
+set cons:999, work:0, ?work:0, savamt:0
+set  fa1:0,i:0,j:0,ans:0
+set  ?yr:0,qtr1:0,qtr2:0,qtr3:0,qtr4:0
+set brn:0,maj:0,min:0,?nid:0,?zero:0
+set mil:1000000,thou:1000,h1:0,h2:0,h3:0,h4:0
+set sort:0,v1:0,v2:0,v3:0,v4:0
+define one:'(1)'
+define two:'(2)'
+define thr:'(3)'
+define four:'(4)'
+define five:'(5)'
+define six:'(6)'
+define sev:'(7)'
+define ate:'(8)'
+define nine:'(9)'
+define ten:'(10)'
+define elev:'(11)'
+define twel:'(12)'
+define thir:'(13)'          ;jeff
+define fort:'(14)'          ;jeff
+define fift:'(15)'          ;jeff
+define sixt:'(16)'          ;jeff
+define sevt:'(17)'          ;jeff
+;
+;
+string acct(9),null(0),mss(30)
+string str(1)
+;
+;
+;
+format f01:c41c40
+format f02:n5
+format f03:n1
+format f04:c13c32 c15 n2
+format f04a:c16n4n7n4
+format f05:x4c4c6n-12.2
+format f06:n10.2
+format f07:n4
+format f08:c40x1d-14.2
+format f09:c34c11c34
+format f10:c1
+format f11:n2
+format f12:n3
+format f13:n6
+format f14:c26c3
+format f15:d12
+format f16:c4x2d10d10d10d10n6n6n6        ;jeff
+;
+;
+format fopt:x15 c50
+format fn1:n1
+ 
+end; gl580
+;
+
+

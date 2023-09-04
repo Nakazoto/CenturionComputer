@@ -1,0 +1,1040 @@
+copy sys
+;
+define m00:'or100 - order entry pgm (05-11-81)'
+;
+;notes:
+;
+;      08-29-77...written on this date...d zwingelberg
+;      12-15-77...modified from school book...pel
+;      06-30-78...general clean-up...pel
+;      07-08-78...added back-order file...pel
+;      11-13-78...corrected next invoice # feature...d zwingelberg
+;      12-07-78...corrected format for entering manual lprice...d zwingelberg
+;      02-01-79...added no print invoice code...d zwingelberg
+;      02-27-79...added delete qty committed on order delete...pel
+;      03-07-79...added addtional breakdown on tran code 3 (misc.
+;                 charges)...pel
+;      03-13-79...added option flag on volume discounts...pel
+;      03-07-79...general clean-up and reduction in size...d zwingelberg
+;      03-21-79...added use of ship-to file...d zwingelberg
+;      03-28-79...corrected credit memo handling...d zwingelberg
+;      04-02-79...corrected problem with volume discounts being taken
+;                 against price 1, even if cust price is 2,3,4 or 5...pel
+;      04-12-79...corrected backorder routine...d zwingelberg
+;      07-24-79...modified to use actual cost...d zwingelberg
+;      12-04-79...added display of credit limit...pel
+;      12-10-79...increased lmax...d zwingelberg
+;      03-12-80...corrected cm update & added by store...d zwingelberg
+;      08-13-80...corrected frer on header...d zwingelberg
+;      03-11-81...corrected rounding @ b295e & ld103a...d zwingelberg
+;      05-11-81...put slashes in date...d zwingelberg
+;
+;
+;
+;===========================================================================
+;                    files
+;===========================================================================
+;
+file cmst:sys0,class=2,ind,key=ckey
+ set ckey:0
+;
+ copy custom
+;
+file promst:sys1,class=2,ind,key=prokey
+ set prokey:0
+;
+copy prorec
+copy nosign
+;
+file strmst:sys2,class=2,ind,key=strkey
+ set strkey:0
+;
+copy strrec
+;
+file order:sys3,class=2,ind,key=okey
+ set okey:0
+;
+ copy order
+;
+file line:sys4,class=2,ind,key=lkey
+ set lkey:0
+;
+file smst:sys5,class=2,ind,key=skey
+ set skey:0
+;
+file shpfil:sys6,class=2,rnd,recsiz=131,key=cshpto
+;
+copy ship
+;
+file crt:sysipt
+;
+external cget,msg,stat,getk,newk,delk,getr,putr,hldr,frer,clrec
+external lfeed,ynget,f90,ioerr
+entrypoint crt
+;
+;
+;========================================================================
+;                       logic
+;========================================================================
+;
+;
+entry
+open io crt
+open io (cmst,promst,smst,shpfil)
+open io (order,line,strmst)
+;
+   write(crt,f90) eject
+   call lfeed(crt,1)
+   call msg(m00)
+   call lfeed(crt,1)
+;
+   call getk (promst,pzero)
+   call stat(1)
+   call getr (promst,prohed)
+   call stat(1)
+   if (pstrnm.gt.98) goto a00   ; invalid
+   if (pstrnm.lt.1)  goto a00   ;  "
+   goto a000                    ; valid
+a00:
+   pstrnm=1
+   call putr (promst,prohed)
+   call stat(1)
+;
+a000:
+   call getk (order,zero)
+   goto (a010,ioerr) on status
+   goto a020
+a010:
+   call msg (m00a)         ; file not init.
+   call newk (order,zero)
+   if (status.gt.0) goto ioerr
+   plno=lino=0
+   dte=n1
+a011:
+   call hldr (order)
+   if (status.ne.0) goto a011
+   goto a050
+a020:
+   call hldr (order)
+   if (status.ne.0) goto a020
+   call getr (order,ohead)
+   call stat(1)
+a025:
+   call msg (null)
+   write (crt,f13) m42+6,inv
+   call msg (null)
+   call cget (m01,f01,dte)   ; get date
+   if (dte.eq.n1) goto a050
+   call ynget (m02)          ; correct?
+   if (status.ne.1) goto a025
+   goto a075
+a050:
+   call cget(m42,f07,inv)         ; next invoice#
+   call ynget(m46)    ;  edit misc charge type descriptions
+   if(status.ne.1)goto a025
+   call cget(m47,f11,omisc1)
+   call cget(m48,f11,omisc2)
+   call cget(m49,f11,omisc3)
+   call cget(m50,f11,omisc4)
+   call cget(m51,f11,omisc5)
+   goto a025
+a075:
+   call putr (order,ohead)
+   call stat(1)
+   hedkey=okey                      ; save location of header record
+   call frer (order)
+   call cget(m52,f18,vflg)   ;  take vol discounts on prices other than price 1?
+   cash=0
+a100:
+   cflag=0
+   call cget (m03,f02,?ccust)         ; get cust #
+   if(?ccust.ne.?one)goto a104           ; not cash sale
+   cflag=1
+a104:
+    if (?ccust.le.0) goto eoj         ; done
+    call getk (cmst,?ccust)
+    goto (a110,ioerr) on status
+    goto a120
+a110:
+    call msg (m04)                    ; no cust reenter
+    goto a100
+a120:
+   call getr (cmst,crec)
+   call stat(1)
+   call ciget
+   write (crt,f90) eject
+   write (crt,f90)
+   write (crt,f02) ?ccust
+   write (crt,f03) cnam
+   write (crt,f03) cad1
+   write (crt,f03) cad2
+   write (crt,f03) cad3
+   write (crt,f90)
+   write (crt,f90) m05
+   write (crt,f04) ccur,c30,c60,c90,cbal,ccred
+a200:
+   call lfeed (crt,3)
+   call msg (m06)
+   call msg (m07)
+   call msg (m08)
+   call msg (m09)
+   call msg (m10)
+   call msg (m10a)
+   read (crt,f05) option
+   ifs (option.eq.n) goto b00        ; new order
+   ifs (option.eq.c) goto c00       ; change order
+   ifs (option.eq.d) goto d00       ; delete order
+   ifs (option.eq.m) goto e00       ; credit memo
+   write (crt,f90) eject
+   call lfeed (crt,2)
+   goto a100                        ; next customer
+;
+;
+eoj:
+   write(crt,fl03)m38,cash
+   close cmst,promst,strmst,smst,order,line
+   stop 0
+;
+exp:
+   call msg (mexp0)
+   call msg (mexp)
+   goto eoj
+exp1:
+   call msg (mexp1)
+   call msg (mexp)
+   goto eoj
+exp2:
+   call delk (order,plno)
+   call stat(1)
+   goto exp
+exp3:
+   call delk(line,lino)
+   call stat(1)
+   goto exp1
+;
+;
+;*************************************
+;  new order
+;
+b00:
+   ttype=total=ototal=0
+b00a:
+   newflg=1
+b001:
+   call cget(m33,f01,plno)             ; enter order #
+   call getk (order,plno)
+   goto (b050,ioerr) on status
+   call msg(m34)                       ; order already on file
+   goto a200
+b050:
+   call newk (order,plno)
+   goto (exp,ioerr,ioerr,ioerr) on status
+   call getr (order,orec)
+   goto (exp2,ioerr) on status
+   call clrec(orec)
+   oplno=plno
+   otype=ttype
+   call overide                    ; check for over rides
+b100:
+   call msg(m44)    ;  display tran codes
+   call cget(m12,f01,code)   ; enter t/a code
+   if(code.le.0)goto b900    ; done
+   if(code.gt.5)goto b100    ; invalid
+b105:
+   sskey=okey                       ; hold this location
+   okey=hedkey                      ; point to header record
+b110:
+   call hldr (order)
+   if (status.ne.0) goto b110
+   call getr (order,ohead)
+   call stat(1)
+   lino=lino+1
+   if(lino.lt.lmax)goto b120
+   lino=1
+b120:
+   call putr (order,ohead)
+   call stat(1)
+   call frer (order)
+   okey=sskey                    ; restore location
+b200:
+   call getk (line,lino)
+   goto (b201,ioerr) on status
+   goto b105
+b201:
+   call newk (line,lino)
+   goto (exp1,ioerr,ioerr,ioerr) on status
+   call getr(line,lrec)
+   goto (exp3,ioerr) on status
+   if (newflg.eq.1) call b950         ; set ptr to first line item in orec
+   if (newflg.ne.1) call b975        ; set ptr to next line item in lrec
+   call clrec(lrec)
+   newflg=0
+b250:
+   ltran=code
+   lplno=oplno
+   savlin=lino
+   ?lcust=?ocust
+   lunits=1
+   lcatno=0
+   goto (b260,b260,b300,b400,b300) on code
+b260:
+   pflag=0     ; set manual product flag
+   call cget(m11,f14,lprod)    ; get product #
+   if(status.ne.0)goto b260
+   call nosign (lprod)
+   ifs(lprod.eq.null)goto b260
+   ifs(lprod.eq.m)goto b275   ; manual product line
+   call getk(promst,lprod)
+   goto (b270,ioerr) on status
+   pflag=1      ; set for auto product
+   call getr(promst,prorec)    ; get product record
+   call stat(1)
+   lcatno=pcat1
+   lstore=1                    ; default to store 1
+   if (pstrnm.le.1) goto b262  ; only 1 store
+   call cget(m32,f01,lstore)    ; enter store #
+b262:
+   if(lstore.le.0)goto b272
+   if(firstp.eq.0)goto b272
+   call getk(strmst,firstp)
+   call stat(1)
+b265:
+   call getr(strmst,strrec)
+   call stat(1)
+   if(stonum.eq.lstore)goto b280   ; store record found
+   if(point.eq.0)goto b272         ; store not on file
+   call getk(strmst,point)
+   call stat(1)
+   goto b265
+b270:
+   call msg(m13)               ; product not on file
+   goto b260
+b272:
+   call msg(m13a)              ; store not on file
+   goto b260
+b275:
+   call cget(m11a,f14,lprod)
+   call cget(m19e,f01,lcatno)    ; enter category code
+;  call cget(m32,f01,lstore)
+   lstore=99                 ; show manual prod
+   call cget(m18,f15,ldesc)
+   call cget(m19,f17,lpric)    ; enter unit price
+   call cget(m19a,f17,lcost)   ; unit cost
+   call cget(m19d,f07,lunits)  ; units/pkg
+   goto b285
+b280:
+   'ldesc'='pdesc'
+   lunits=punits
+   if(punits.gt.0)goto b280aa
+   punits=lunits=1
+b280aa:
+   lcost=pacost                 ; cost = actual cost
+   goto (b280a,b280b,b280c,b280d,b280e) on cpric
+   goto b280a
+b280a:
+   lpric=price1
+   goto b285
+b280b:
+   lpric=price2
+   goto b285
+b280c:
+   lpric=price3
+   goto b285
+b280d:
+   lpric=price4
+   goto b285
+b280e:
+   lpric=price5
+b285:
+   if(otype.ne.1)goto b288
+   call cget(m39,f07,lqord)    ; enter qty credited
+   call cget(m40,f07,lqshp)    ; enter qty returned
+   call cget(m41,f07,lqback)   ; enter qty defective
+   call cget(m19,f17,lpric)    ; enter unit price
+   lqord=0-(lqord*100)
+   lqshp=0-(lqshp*100)
+   lqback=0-(lqback*100)
+   goto b295e
+b288:
+   call cget (m20,f07,lqord)      ; qty ordered
+   lqord=lqord*100
+b290:
+   lqshp=lqord
+   if(pflag.ne.1)goto b295e  ; skip if manual product line
+   if(cpric.eq.1)goto b295   ;  always take vol discounts on price 1
+   if(vflg.ne.0)goto b295e
+b295:
+   if(pvol3.le.0)goto b295b
+   if(lqshp.lt.pvol3)goto b295b
+   ldisc=(lpric*pdisc3)/tenk
+   goto b295d
+b295b:
+   if(pvol2.le.0)goto b295c
+   if(lqshp.lt.pvol2)goto b295c
+   ldisc=(lpric*pdisc2)/tenk
+   goto b295d
+b295c:
+   if(pvol1.le.0)goto b295e
+   if(lqshp.lt.pvol1)goto b295e
+   ldisc=(lpric*pdisc1)/tenk
+b295d:
+   lpric=lpric-ldisc
+b295e:
+   lpric=(lpric+50)/100
+   lamt=(((lqord*lpric)/lunits)+50)/100
+   if (lamt.ge.0) goto b295a
+   lamt=(((lqord*lpric)/lunits)-50)/100
+b295a:
+   opt=5    ; force qty-on-hand check
+   call ld180    ; update totals
+   write (crt,f90) eject
+   call ldisply                   ; display line item for correction
+   goto b100                      ; next prod
+;
+b300:
+   if(ltran.eq.5)goto b500
+   call cget(m45,f18,lcatno)    ;   get type code for miscellaneous charges
+   call cget(m18,f15,ldesc)      ; description
+   call cget(m19b,f16,lamt)      ; line amt
+   call cget(m19a,f17,lcost)     ; cost amt
+   if(otype.ne.1)goto b295a
+   lamt=0-lamt
+   lcost=0-lcost
+   goto b295a
+b400:
+   call cget(m31,f15,ldesc)      ; enter message line
+   goto b295a
+b500:
+   call cget(m35,f16,lamt)     ; enter new freight amt
+   'ldesc'='m36'
+   if(otype.ne.1)goto b295a
+   lamt=0-lamt
+   goto b295a
+;
+b900:
+   if (?ocust.eq.1) goto b905          ; get tax
+   if (ocmno.eq.1) goto b905           ; get tax
+   goto b910                           ; normal order
+b905:
+   call cget (m37a,f16,octax)          ; city tax
+   call cget (m37b,f16,otamt)          ; state tax
+   if (otype.ne.1) goto b906           ; invoice
+   octax=0-octax
+   otamt=0-otamt
+b906:
+   otamt=otamt+octax                   ; state tax=total tax-city tax
+   call putr(order,orec)
+   call stat(1)
+   total=total+otamt
+   if (?ocust.ne.1) goto b910
+   cash=cash+total              ; update new sales
+b910:
+   write (crt,f12) m24,total
+   call ynget (m02)                ; correct total??
+   if (status.ne.1) goto c01       ; change order
+   goto a100                       ; next customer
+;
+b950:
+   call getk (order,oplno)
+   call stat(1)
+   call getr (order,orec)
+   call stat(1)
+   oline=lino
+   call putr (order,orec)
+   call stat(1)
+   return
+;
+b975:
+   call getk (line,savlin)        ; set pointer in lrec
+   call stat(1)
+   call getr (line,lrec)
+   call stat(1)
+   lptr=lino
+   call putr (line,lrec)
+   call stat(1)
+   call getk (line,lino)          ; set key again
+   call stat(1)
+   return
+;
+;
+;******************************************
+; change order
+;
+c00:
+   total=newflg=0
+   call cget (m25,f07,oplno)           ; get packing list (order) #
+   if (oplno.le.0) goto a100           ; next cust
+c01:
+   call getk (order,oplno)
+   goto (c02,ioerr) on status
+   goto c03
+c02:
+   call msg (m26)                       ; no order exists
+   goto c00
+c03:
+   call getr (order,orec)
+   call stat(1)
+   if (?ocust.eq.?ccust) goto c10       ; match
+   call msg (m27)                  ; this order does't exist for this cust
+   goto c00
+c10:
+   call o00                              ; display order (in overide)
+   if (oline.ne.0) goto c11
+   newflg=1
+   goto c100
+c11:
+   call getk (line,oline)
+   call stat(1)
+   call getr (line,lrec)
+   call stat(1)
+   ototal=total=lamt
+   call ldisply                  ; display line item
+   savlin=oline                 ; for use in adding lines
+c25:
+   write(crt,f12)m24,total
+   if (lptr.eq.0) goto c100      ; no more line items
+   savlin=lptr                  ; for use if adding lines
+   call getk(line,lptr)
+   call stat(1)
+   call getr (line,lrec)
+   call stat(1)
+   ototal=total=total+lamt
+   call ldisply                  ; display line item
+   goto c25
+c100:
+   if (?ocust.eq.1) goto c110         ; cash sale
+   if (ocmno.eq.1) goto c110          ; no print inv
+   goto c150                          ; regular order
+c110:
+   total=total+otamt             ; total + tax
+   fa1=otamt-octax                     ; figure state tax
+   write (crt,f12) m37a,octax
+   write (crt,f12) m37b,fa1
+   call ynget (m02)            ; correct
+   if (status.eq.1) goto c150  ; okay
+   total=total-otamt           ; reverse ot tax
+   call cget (m37a,f16,octax)  ; city tax
+   call cget (m37b,f16,otamt)  ; state tax
+   otamt=otamt+octax           ; state tax=total tax-city tax
+   total=total+otamt           ; add in tax
+c150:
+   call putr(order,orec)
+   call stat(1)
+   write (crt,f12) m24,total      ; write order total to screen
+   call lfeed (crt,2)
+   call msg (m07)                ; change order
+   call msg (m08)                ; delete order
+   call msg (m09a)               ; add line items
+   call msg (m10)                ; done
+   call cget (m10a,f05,option)   ; get option
+   ifs (option.eq.c) goto c00    ; change
+   ifs (option.eq.d) goto d00    ; delete
+   ifs (option.ne.l) goto a100   ; next cust
+   goto b100
+;
+;
+;**********************************
+; delete order
+;
+d00:
+   call cget (m25,f07,oplno)          ; get packing list (order) #
+   if (oplno.le.0) goto a100          ; next cust
+d01:
+   call getk (order,oplno)
+   goto (d02,ioerr) on status
+   goto d03
+d02:
+   call msg (m26)               ; order doesn't exist
+   goto d00
+d03:
+   call getr (order,orec)
+   call stat(1)
+   if (?ocust.eq.?ccust) goto d10  ; match
+   call msg (m27)         ; this order doesn't exist for this cust
+   goto d00
+d10:
+   call ynget (m23)               ; really delete??
+   if (status.ne.1) goto d00
+   savlin=oline
+   savord=oplno
+   savtyp=otype
+   call clrec (orec)                   ; so not to print in packing list
+   call putr (order,orec)
+   call stat(1)
+   call delk (order,savord)
+   if (status.ne.0) goto ioerr
+   if (savlin.eq.0) goto d100       ;no line items in order
+d25:
+   call getk (line,savlin)
+   call stat(1)
+   call getr (line,lrec)
+   call stat(1)
+   otype=savtyp
+   call ldisply   ;  reverse out line amounts
+   savptr=lptr
+   call clrec(lrec)
+   call putr(line,lrec)
+   call stat(1)
+   call delk (line,savlin)
+   if (status.ne.0) goto ioerr
+   savlin=savptr
+   if (savptr.eq.0) goto d100    ; no more line items
+   goto d25
+d100:
+   goto a100
+;
+;
+e00:
+   ttype=1
+   total=0
+   ocmno=0
+   goto b00a
+;
+;============================================================================
+;                     subroutines
+;============================================================================
+;
+;***************************************
+; change order file data
+;
+overide:
+   ?ocust=?ccust
+   odte=dte
+   oslm=csalm
+   ocmno=0
+   call cget (m14a,f06,opono)         ; cust pur order #
+   if (cshpto.le.0) goto or           ; no ship to pointer
+   readb (shpfil,shprec)              ; read ship to name & address
+   if (status.ne.0) goto or           ; bad read
+   ifs (snam.eq.null) goto or         ; no name
+   call ynget (m21)                   ; use customer ship to name ?
+   if (status.ne.1) goto or           ; no
+   'onam'='snam'
+   'oad1'='sad1'
+   'oad2'='sad2'
+   'oad3'='sad3'
+   goto orb
+   ;
+or:
+   call cget (m14,f03,onam)      ; order ship to nam
+   ifs (onam.eq.null) go to ora     ; use bill name
+   ifs (onam.eq.plus) go to ora     ; use bill name
+   call cget (m15,f03,oad1)
+   call cget (m15,f03,oad2)
+   call cget (m15,f03,oad3)
+   goto orb
+ora:
+   'onam'='cnam'
+   'oad1'='cad1'
+   'oad2'='cad2'
+   'oad3'='cad3'
+orb:
+   call cget (m16,f01,osdte)     ; shipping date
+   ocity=ccity
+   'ovia'='cvia'
+o00:
+   ldate (grin,odte)
+   sdate (string,date1)
+   ldate (grin,osdte)
+   sdate (string,date2)
+   write (crt,f90) eject
+   call lfeed (crt,2)
+   if (otype.eq.1) goto o00a           ; credit memo
+   write (crt,fo01) mo0a,oplno,m03+6,?ocust
+   goto o00b
+o00a:
+   write (crt,fo01) mo0a,oplno,m03+6,?ocust,credit
+o00b:
+   write (crt,fo02) mo01,date1,mo02,oslm,mo03,opono
+   write (crt,f90)
+   write (crt,f90) mo10
+   write (crt,fo03) mo11,onam
+   write (crt,fo04) mo12,oad1,mo15,ocity
+   write (crt,fo03) mo13,oad2,mo16,date2
+   write (crt,fo03) mo14,oad3,mo17,ovia
+   write (crt,fo04) null,null,mo18,ocmno
+   write (crt,f90)
+   call cget (m17,f01,opt)          ; change opt
+   if (opt.le.0) goto o100         ; done
+   goto (o1,o2,o3) on opt
+   opt=opt-10
+   goto (o11,o12,o13,o14,o15,o16,o17,o18) on opt
+   goto o00
+o1:
+   call cget (mo01,f01,odte)
+   goto o00
+o2:
+   call cget (mo02,f07,oslm)
+   call getk (smst,oslm)
+   goto (o2,ioerr) on status
+   goto o00
+o3:
+   call cget (mo03,f06,opono)
+   goto o00
+;
+o11:
+   call cget (mo11,f03,onam)
+   goto o00
+o12:
+   call cget (mo12,f03,oad1)
+   goto o00
+o13:
+   call cget (mo13,f03,oad2)
+   goto o00
+o14:
+   call cget (mo14,f03,oad3)
+   goto o00
+o15:
+   call cget (mo15,f01,ocity)
+   goto o00
+o16:
+   call cget (mo16,f01,osdte)
+   goto o00
+o17:
+   call cget (mo17,f11,ovia)
+   goto o00
+o18:
+   call cget (mo18,f01,ocmno)
+   if (ocmno.eq.0) goto o00
+   if (ocmno.eq.1) goto o00              ; dont print this inv
+   goto o18
+;
+o100:
+   call putr (order,orec)
+   call stat(1)
+   return
+;
+define mo0a:'order #'
+define mo01:'(1)ord dte'
+define mo02:'(2)slm num'
+define mo03:'(3)p o num'
+define mo10:'ship to address'
+define mo11:'(11)name     '
+define mo12:'(12)add 1'
+define mo13:'(13)add 2'
+define mo14:'(14)add 3'
+define mo15:'(15)tax code '
+define mo16:'(16)ship date'
+define mo17:'(17)ship via '
+define mo18:'(18)inv print   (0=yes,1=no)'
+;
+define credit:'credit memo'
+;
+format fo01: c10 x2 n10 x2 c5 x7 d10 x2 c12
+format fo02: c10 x2 c9 x3 c10 x2 n10 x2 c10 x2 c10
+format fo03: c10 x1 c25 x2 c15 x1 c25
+format fo04: c10 x1 c25 x2 c15 x1 n6
+;
+string date1(8), date2(8)
+;
+;
+;******************************************
+;       line display & change
+;
+ldisply:
+   if (lplno.eq.0) goto ld199     ; deleted line
+   pflag=opt=0
+   if(ltran.gt.1)goto ld0
+   call getk(promst,lprod)
+   goto (ld0,ioerr) on status
+   call getr(promst,prorec)
+   call stat(1)
+   strnum=firstp
+ld0a:
+   call getk(strmst,strnum)
+   goto (ld0,ioerr) on status
+   call getr(strmst,strrec)
+   call stat(1)
+   if(stonum.eq.lstore)goto ld0b
+   if(point.eq.0)goto ld0
+   strnum=point
+   goto ld0a
+ld0b:
+   pflag=1
+ld0:
+   ifs(option.eq.d)goto ld101   ;  deleting order
+   call lfeed (crt,1)
+   write(crt,fl00)ml00a,lplno,ml00b,?lcust
+   'lmisc'='blnk15'
+   if(ltran.ne.3)goto ld20   ;   skip if not a misc charge
+   goto (ld11,ld12,ld13,ld14,ld15) on lcatno
+   goto ld20                 ; not using type codes
+ld11:
+   'lmisc'='omisc1'
+   goto ld20
+ld12:
+   'lmisc'='omisc2'
+   goto ld20
+ld13:
+   'lmisc'='omisc3'
+   goto ld20
+ld14:
+   'lmisc'='omisc4'
+   goto ld20
+ld15:
+   'lmisc'='omisc5'
+ld20:
+   write(crt,fl00)ml00,ltran,lmisc
+   write(crt,fl01)ml01,lprod
+   write(crt,fl02)ml02,lstore
+   write(crt,fl03)ml03,lpric
+   if(otype.eq.1)goto ld70
+   write(crt,fl03)ml04,lqord
+   write(crt,fl03)ml05,lqshp
+   write(crt,fl03)ml06,lqback
+   goto ld80
+ld70:
+   write(crt,fl03)ml11,lqord
+   write(crt,fl03)ml12,lqshp
+   write(crt,fl03)ml13,lqback
+ld80:
+   write(crt,fl03)ml07,lamt
+   write(crt,fl05)ml08,lcost
+   write(crt,fl04)ml09,ldesc
+   write(crt,fl02)ml10,lunits
+   call lfeed(crt,2)
+ld100:
+   call cget(m22,f01,opt)    ; accept,change,delete
+   if(opt.le.0)goto ld195    ; done
+ld101:
+   lqshp=0-lqshp
+   lqback=0-lqback
+   lamt=0-lamt
+   call ld180            ; reverse out totals
+   lqshp=0-lqshp
+   lqback=0-lqback
+   lamt=0-lamt
+   ifs(option.eq.d)goto ld189   ; deleting order
+   if(opt.eq.nines)goto ld190; delete
+   goto (ld100,ld100,ld103,ld104,ld105,ld106,ld107,ld108,ld109,ld110) on opt
+   goto ld150
+ld103:
+   call cget(ml03,f16,lpric)
+ld103a:
+   lamt=(((lqshp*lpric)/lunits)+50)/100
+   if (lamt.ge.0) goto ld150
+   lamt=(((lqord*lpric)/lunits)-50)/100
+   goto ld150
+ld104:
+   if(otype.eq.1)goto ld104a
+   call cget(ml04,f16,lqord)
+   goto ld150
+ld104a:
+   call cget(ml11,f16,lqord)   ; enter qty credited
+   goto ld150
+ld105:
+   if(otype.eq.1)goto ld105a
+   call cget(ml05,f16,lqshp)
+   goto ld103a                      ; re calc line amt
+ld105a:
+   call cget(ml12,f16,lqshp)   ; enter qty returned
+   goto ld150
+ld106:
+   if(otype.eq.1)goto ld106a
+   call cget(ml06,f16,lqback)
+   goto ld150
+ld106a:
+   call cget(ml13,f16,lqback)    ; enter qty defective
+   goto ld150
+ld107:
+   call cget(ml07,f16,lamt)
+   goto ld150
+ld108:
+   call cget(ml08,f17,lcost)
+   goto ld150
+ld109:
+   call cget(ml09,f15,ldesc)
+   goto ld150
+ld110:
+   call cget(ml10,f07,lunits)
+   goto ld150
+;
+ld150:
+   call ld180     ; update totals
+   goto ld0
+;
+;     update totals in inventory
+;
+ld180:
+   ototal=total=total+lamt
+   if(pflag.eq.0)goto ld185     ; not a product sale
+   if(ltran.gt.1)goto ld185     ;       "
+   if (otype.eq.1) goto ld183   ;  credit memo
+   qnty=stoqoh-stoqcm
+   if(opt.ne.5)goto ld181    ;  not changing qty shipped
+   if(lqshp.le.qnty)goto ld181
+   call ynget(m43)                   ; fill order anyway?
+   if(status.ne.1)goto ld182
+ld181:
+   stoqcm=stoqcm+lqshp
+   stoqbk=stoqbk+lqback
+   oqback=oqback+lqback
+   goto ld185
+ld182:
+   if(qnty.ge.0)goto ld182a
+   qnty=0
+ld182a:
+   lqback=lqshp-qnty
+   lqshp=qnty
+   ototal=total=total-lamt
+   lamt=((lqshp*lpric)/lunits)/100
+   ototal=total=total+lamt
+   goto ld181
+ld183:
+   stoqoh=stoqoh-lqshp
+   pdqty=pdqty-lqback
+ld185:
+   if(ltran.ne.5)goto ld188
+   ofamt=ofamt+lamt
+ld188:
+   if(pflag.eq.0)goto ld189
+   call putr(promst,prorec)
+   call stat(1)
+   call putr(strmst,strrec)
+   call stat(1)
+ld189:
+   return
+;
+ld190:
+   call ynget(m23)  ; really delete?
+   if(status.ne.1)goto ldisply
+   lplno=lamt=lqord=lqshp=lqback=0
+;
+ld195:
+   if(pflag.ne.1)goto ld195a
+   if(ltran.gt.1)goto ld195a
+   call putr(strmst,strrec)
+   call stat(1)
+ld195a:
+   call putr(order,orec)
+   call stat(1)
+   call putr(line,lrec)
+   call stat(1)
+ld199:
+   return
+;
+define ml00a:'    order#     ='
+define ml00b:'    customer # ='
+define ml00:'    tran code  ='
+define ml01:'    product #  ='
+define ml02:'    store #    ='
+define ml03:'03) unit price ='
+define ml04:'04) qty ord    ='
+define ml05:'05) qty shp    ='
+define ml06:'06) qty b.o.   ='
+define ml07:'07) line amt   ='
+define ml08:'08) unit cost  ='
+define ml09:'09) desc.      ='
+define ml10:'10) units/pkg  ='
+define ml11:'04) qty cred   ='
+define ml12:'05) qty return ='
+define ml13:'06) qty defect ='
+;
+format fl00:c20 n9 x5 c20 d12
+format fl01:c20 c12
+format fl02:c20 n9
+format fl03:c20 n9.2
+format fl04:c20 c30
+format fl05:c20 n10.4
+;
+;
+;===========================================================================
+;                     working storage
+;===========================================================================
+;
+;
+set newflg:0, n1:-1, opt:0,total:0,savlin:0,nines:999,savord:0
+set ?one:1,code:0,pflag:0,ldisc:0,lmax:90000000,work1:0
+set cflag:0,tenk:10000,strnum:0,cash:0,vflg:0,sskey:0,hedkey:0
+set ttype:0, qnty:0,savptr:0,savtyp:0,fa1:0
+set fivek:5000
+string null(0), option(1), lmisc(15)
+define c:'c', n:'n', d:'d', m:'m', l:'l', no:'n', plus:'+',blnk15:'               '
+define msk1:'  @##/##/##', pzero:'000000000000'
+;
+define m00a:'order file not initized....enter beginning numbers'
+define mexp:'process the orders in the file to get more room'
+define mexp0:'end of file on order file'
+define mexp1:'end of file on line item file'
+define m01:'enter new order date (mmddyy)'
+define m02:'correct?? (y/n)'
+define m03:'enter cust# (newline to end or 1 for cash sale)'
+define m04:'no customer on file    re-enter'
+define m05:'    current       30 day       60 day       90 day      bal due  credit limit'
+define m06:'                n....new order'
+define m07:'                c....change order'
+define m08:'                d....delete order'
+define m09:'                m....credit memo'
+define m09a:'                l....add line items'
+define m10:'                e....end this cust'
+define m10a:'enter option'
+define m11:'enter product# (or "m" for manual product)'
+define m11a:'enter manual product number'
+define m12:'trans code  '
+define m13:'no product record on file'
+define m13a:'no store record on file'
+define m14a:'p. o. number'
+define m14:'ship to name'
+define m15:'ship to add'
+define m16:'shipping date'
+define m17:' enter field # to change  or  newline when done'
+define m18:'description'
+define m19:'unit price (xxxx.xxxx) ='
+define m19a:'unit cost (xxxx.xxxx) ='
+define m19b:'line amount'
+define m19d:'units/pkg'
+define m19e:'category code'
+;
+define m20:'quantity ordered'
+define m21:'use customer ship to name & address? (y/n)'
+define m22:'enter field # to change,  999 to delete,  newline when done'
+define m23:'are you sure you want to delete this record?? (y/n)'
+define m24:'total of order'
+define m25:'enter packing list (order) #  or  newline if done'
+define m26:'order does not exist'
+define m27:'order does not exist for this cust '
+;
+define m31:'message line'
+define m32:'store number'
+define m33:'enter order #'
+define m34:'order already on file'
+define m35:'freight amt = '
+define m36:'freight'
+define m37a:'city  tax='
+define m37b:'state tax='
+define m38:'new cash sales='
+define m39:'quantity credited (xxxxx.)'
+define m40:'quantity returned (xxxxx.)'
+define m41:'quantity defective (xxxxx.)'
+define m42:'enter last invoice#'
+define m43:'not enough stock -- fill order anyway? (y/n)'
+define m44:'(tran code 1=mdse sale, 2=drop ship, 3=misc, 4=msg, 5=freight)'
+define m45:'enter charge type code (1-5) or newline if not using type codes'
+define m46:'edit misc charge type descriptions? (y/n)'
+define m47:'misc charge - type 1'
+define m48:'misc charge - type 2'
+define m49:'misc charge - type 3'
+define m50:'misc charge - type 4'
+define m51:'misc charge - type 5'
+define m52:'take volume discounts on prices other than price 1? (0=yes,1=no)'
+;
+;
+format f01:n6
+format f02:d12
+format f03:c25
+format f04:e11 x2 e11 x2 e11 x2 e11 x2 e11 x2 e11
+format f05:c1
+format f06:c10
+format f07:n9
+;
+format f11:c15
+format f12: c15 e11
+format f13: c25 n10
+format f14:c12
+format f15:c30
+format f16:n9.2
+format f17:n9.4
+format f18:n2
+;
+;
+end

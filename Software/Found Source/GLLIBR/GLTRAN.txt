@@ -1,0 +1,99 @@
+.job gltran
+.run s.xeject
+.seta cc=0
+.seta upsi=0
+.use gl#0a  on #1 sys0 shar
+.use gl#0j on #1 sys1 shar
+.use gl#0e on #1 sys2 pass shar
+.fspec pr#0d on #1 7=size 6=type
+.skip 1 if 0 ne #7
+.new pr#0d on #1 'c' 1
+.use pr#0d on #1 sys3 shar pass
+.run gl.xgl530
+.skip to recall if #c = 20
+.skip to fin1 if #c = 99
+.skip to ?sort if #c = 0
+.skip to err if #c ge 100
+.seta upsi=#c-1
+.seta cc=0
+.run s.xgrow
+.rel sys#u
+.vspec #1 7=avail
+.skip to err1 if #7 lt #8
+.seta upsi=0
+.fspec #5 on #6 3=use
+.skip to ok if #3 eq 1
+.log
+*
+*   detail file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition expand detail file? (y/n)
+*
+.nolog
+.enter 3
+.skip to tran if y eq #3
+=ok
+.new gl@#i on #6 'c' #8s
+.use #5 on #6 for sys0
+.use gl@#i on #6 for sys1
+.run s.xcoput
+.skip to err if #c ne 0
+.del #5 on #6
+.nam gl@#i on #6 #5
+=tran
+.skipr 0
+=err
+.log
+*
+*  an error condition has been incountered
+*
+.nolog
+.skip to fin
+=err1
+.log
+*
+*   insufficient disk space to expand detail file
+*
+.nolog
+.skip to fin
+=?sort
+.rel sys2,sys3
+.skip to audt if #u ne 3
+.fspec pr.comp on #d 7=size
+.skip to audt if 0 eq #7
+.log
+*
+*   do you want to print the payroll comp report now? (y/n)
+*
+.nolog
+.enter 9
+.skip to recall if n eq #9
+.seta upsi=0
+.seta upsi=2
+.run s.xopt
+pr.comp
+=audt
+.skip to recall if #u ne 2
+.seta upsi=2
+.run s.xopt
+gl.audt
+=recall
+.skip to fin if glmenu ne #4
+glmenu
+=fin1
+.log
+*   transaction entry module (xgl531) can not be found
+.nolog
+=fin
+.end
+s.con
+*  4/25/78...changed to new standards...ns
+*   7/19/78...cleanup..ns
+*  11/28/79...modified for cpu-6...kag
+
+

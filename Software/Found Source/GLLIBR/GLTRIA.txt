@@ -1,0 +1,24 @@
+.job gltria
+.run s.xeject
+.seta cc=0
+.use crt#v syslst
+.seta upsi=2
+.skip to ok if #2 eq crt
+.use prt#2 syslst
+.seta upsi=3
+=ok
+.use gl#0a on #1 for sys0 shar
+.use gl#0j on #1 for sys1 shar
+.run gl.xgl548
+.skip to fin if #c ne 0
+.skip 1 if glrepo ne #4
+glmenu
+=fin
+.end
+s.con
+*   4/25/78...changed to new standards..ns
+*   7/7/78...cleanup..ns
+
+
+
+

@@ -1,0 +1,158 @@
+title: 'gl588  (directory of general ledger clients) '
+ 
+system
+ 
+define m01:'gl588 (directory of general ledger clients)  12/29/81'
+ 
+;notes:
+;
+;   6/11/79...written..ns
+;   6/16/79..changed heading..ns
+;    6/23/79...changed f03 & f07..ns
+;    6/29/79...added number to acnt & /key no  to client no
+;   11/28/79...fixed to create hd4 so that default bs and inc headings used
+;   11/16/81...modified to print all clients on one page..dl
+;   12/29/81...modified to have a common date base...dl
+ 
+file crt:sysipt
+file prt:syslst,class=1
+entrypoint crt
+ 
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel1
+set rel1:0
+record headb(131)
+string client(40)
+string coment(50)
+set month:0,yrend:0,post:0,?bsea:0,?plact:0,hh:0,mnum:0,acnt:0
+endrec
+;
+record hd4 (131) ; balance sheet and income statement default headings
+ define bs:'balance sheet                                                   '
+ define inc:'income statement                                                '
+endrec
+;
+ 
+external ?gkey,msg,cget,stat,ioerr,gjp,pjp,clrec,?nkey,bltrun
+ 
+entry
+open io (crt,gmst), output prt
+ 
+call gjp (1,parm1); disk number
+call gjp(3,parm3);  # times into this program
+call gjp(6,parm6); volumn name
+call gjp(5,parm5);  page number
+call bltrun(parm3); added (11-16-81)..dl
+decode(parm3,fn6) time
+decode(parm5,fn6) page
+if(time.ne.0)go to a010
+call msg(eject)
+call msg(m01)
+call msg(null)
+ 
+a010:
+ldate(current)
+sdate(string,rdate)
+b010:
+call clrec(headb)
+call gjp(0,parm0)
+decode(parm0,f02)key; x2c3
+ 
+b020:
+if(time.eq.0)go to b030
+time=time-50
+if(time.ge.0)go to b030
+go to b040
+ 
+b030:
+write(prt,f01)eject
+write(prt,f03)m04,parm1,m03,m05,page
+write(prt,f04)m04a,parm6,rdate
+write(prt,f04)
+page=page+1
+encode(parm5,fn6)page
+call pjp(5,parm5)
+write(prt,f05)m06,m07,m08,m09
+write(prt,f06)m06a,m10,m11
+ 
+b040:
+write(prt,f07)
+call ?gkey(gmst,?zero)
+go to (b050,ioerr)on status
+readb(gmst,headb)
+call stat(1)
+hh=hh-(hh/10*10)
+if(hh.ne.1)go to b015
+'payrol'='yes'
+ 
+b015:
+'acct'='zer4'
+encode(acct,fn4)month
+decode(acct,fn2)mm,yy
+ 
+b050:
+call ?gkey (gmst,?thr) ; get key for hd4
+go to (b060,ioerr) on status ; go to b060 if hd4 is not established
+go to b080 ; it is established - all is well
+;
+b060:
+call ?nkey (gmst,?thr) ; establish a new key for hd4
+go to (b070,ioerr) on status ; go to b070 if no more room in the file
+writeb (gmst,hd4) ; write the default header
+call stat (2)
+go to b080 ; now exit
+;
+b070:
+'flag'='ast' ; place an * as last character of the line
+;
+b080:
+write(prt,f07) flag,key,client,acnt,mm,sl,yy,payrol
+stop 0
+ 
+;========w o r k i n g   s t o r a g e
+ 
+define acct:'    ',payrol:'no ',yes:'yes',sl:'/',zer4:'0000'
+define parm1:'      ',parm0:'      ',parm3:'      ',parm4:'      ',parm5:'      ',parm6:'      '
+define ast:'*',flag:' '
+ 
+define key:'   ',rdate:'        '
+define m03:'general ledger client file list'
+define m04:'disk no'
+define m04a:'vol name'
+define m05:'page'
+define m06:'client no/'
+define m06a:'  key no'
+define m07:'client name'
+define m08:'acnt   current'
+define m09:'payroll'
+define m10:'number   month'
+define m11:'accumulation'
+ 
+set mm:0,yy:0,time:0,page:0,?zero:0
+set ?thr:3
+ 
+string null(0)
+ 
+format f01:c1
+format fn2:n2
+format fn3:n3
+format fn4:n4
+format fn6:n6
+ 
+format f02:x2 c3
+format f03: c9 c15 c48 c6 n3
+format f04: c9 c27 c40
+format f05: c26 c27 c18 c10
+format f06: c52 c17 c12
+format f07: c1 x2 c9 c42 n3 x4 n2 c1 n2 x08 c3
+ 
+ 
+end
+ 
+
+
+
+
+
+
+
+

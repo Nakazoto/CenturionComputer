@@ -1,0 +1,133 @@
+title 'gl534  review trans and print audit report - module 1'
+system
+define m01:'gl534 (printing audit report - module 1) 12/29/81'
+;
+;hi there
+;  05/10/79...written..ns
+;  06/23/79..mod. for formats in gl535...ns
+;  08/02/79..changed signon..ns
+;  11/21/79...added open statement for prt...kag
+;
+;  12/29/81...recompile to have a common date base...dl
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+copy headb
+file list:sys1,class=2,rnd,recsiz=395,key=rel1
+set rel1:0,rel0:0
+copy hd3
+copy head2
+ 
+record listb(125)
+string key(6), nclient(50)
+set form:0
+define m31:'brn'
+define m33:'subacct'
+define m34:'empl'
+set date1:1300,?nplact:0,?nmea:0,?ntip:0,nmonth:0
+set nacnt:0,nmnum:0,?nbsea:0
+endrec
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+external stat,msg,gupsi,pupsi,cget,lfeed,gjp,ynget,?edit,?gkey,ioerr
+entrypoint crt
+;
+;======= program logic ========
+;
+entry
+;
+open io(crt,gmst,list)
+open output (prt)
+call msg(eject)
+call msg(m01)
+call msg(null)
+ 
+call gjp(zero,key)
+;
+a0001:
+call ?gkey(gmst,?zero)
+go to (b980,ioerr)on status
+readb(gmst,headb)
+if(status.ne.0)go to b980
+?zero=1
+call ?gkey(gmst,?zero);now 1
+goto (b980,ioerr)on status
+readb(gmst,head2)
+if(status.ne.0)go to b980
+?zero=2
+call ?gkey(gmst,?zero);now 2
+goto (b980,ioerr)on status
+readb(gmst,hd3)
+call stat(1)
+'nclient'='client'
+?nplact=?plact
+?nmea=?mea
+?ntip=?tips
+nmonth=month
+nacnt=acnt
+nmnum=mnum
+?nbsea=?bsea
+rel1=0
+'acct'='zer9'
+encode(acct,fn9)hh
+decode(acct,f11)numon,h1,h2,h3,h4,h5; h1=brn,h2=maj,h3=min,h4=sub,h5=pr
+; h1=brn, h2=maj, h3=min, h4=sub, h5=emp
+if(h1.ne.0)go to a0005
+'m31'='null'; no branch in title line
+ 
+go to a0005a
+ 
+a0005:
+a0005a:
+if(h4.ne.0)go to a0008; # subs
+'m33'='null'; no sub in title line
+form = form+1
+ 
+a0008:
+if(h5.ne.0)go to a0009; p/r
+'m34'='null';  no empl in title line
+ 
+a0009:
+if(numon.ne.13)go to a0010; # months in yr
+date1=date1+100
+ 
+a0010:
+if(h3.ne.0)go to a0012; # in minor
+form=form+2
+ 
+a0012:
+rel1=0
+    writeb(list,listb)
+    call stat(1)
+    load(xgl535,0,0)
+    stop 2
+b980:
+call msg(m14)
+stop 2
+;==================
+;  w o r k i n g    s t o r a g e
+;=================================
+;
+set ?zero:0,hund:100,h1:0,h0:0,h2:0,h3:0,h4:0,h5:0,numon:0
+string acct(14)
+string null(0),rdate(8)
+;
+define zer9:'000000000',astk:'*',i999:'999'
+define xgl535:'xgl535'
+define blk3:'   ', blk9:'         ',sl:'/'
+define zer12:'   000000000'
+define zer4:'0000'
+define mask01:'  ##,###,###@.##-'
+define amt01 :'                 '
+;
+define m14:'there is no user record'
+ 
+format fn9:n9
+format f11: n2 x2 n1 n1 n1 n1 n1
+ 
+end;  gl535 (audit only)
+;
+;
+
+

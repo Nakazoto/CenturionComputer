@@ -1,0 +1,401 @@
+title:'zgl575 (consolidate sub ledger details) '
+system
+;
+define m00:'gl575 (consolidate sub ledger details) 12/29/81'
+;
+;   notes:
+;   8/2/76...written..ns
+;   1/7/77...adding options 1, 2, & 3...ns (with this i am changing post so that
+;   no sub account details will be deleted at end of year)...ns
+;   1/12/77..cleanup..ns
+;
+;   1/9/78...adding options 4,5,6,7...kam
+;   1/15/78...compare on jdte instead of date in option 7...ns
+;   4/24/78...misspelling in m08...ns
+;   7/10/80...modified to request gla account numbers according to
+;             lengths stored in header. allowed auto reentry into program
+;             for further processing.
+;
+;  12/29/81...recompile to have a common date base...dl
+;
+;============================================================================
+;                             f i l e s
+;============================================================================
+;
+file crt:sysipt
+;
+file odet:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf0
+;
+file ndet:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf0(400),buf1(400)
+;
+; note: gmst is defined as sys0 in library g
+;
+set rel2:0
+;
+;
+entry point crt
+;
+external msg,stat,?gkey,cget,ioerr,gupsi,pupsi,ynget
+;
+;
+;
+;===========================================================================
+;                         r e c o r d s
+;===========================================================================
+;
+copy recg
+;
+set rel0:0
+;
+copy gdet
+;
+record ldet(77)
+set    ?lacct:0
+set    ?lsub:0
+set     ljrn:0
+set     lsorpnt:0
+set     lref:0
+set     ldate:0
+set     lemp:0
+string  ldesc(30)
+set     lamt:0
+endrec
+;
+;
+;=============================================================================
+;                    p r o g r a m    l i n k a g e
+;=============================================================================
+;
+entry
+;
+open io (crt,gmst)
+open input odet
+open output ndet
+;
+call ?gkey(gmst,?zero) ; get key to headb
+go to (nohead) on status
+call stat (1)
+readb (gmst,headb)
+call stat (1)
+;
+encode (actlen,f07) hh ; begin to determine account number lengths
+decode (actlen,f08) h1,h2,h3,h4 ; lengths for branch,major,minor, and sub
+;
+b00:
+call msg(eject)
+call msg(m00);  hi there
+call msg(null)
+call msg(m01);   enter 1=summarize details
+write(crt,f10)m02;   2=delete all details
+write(crt,f10)m03;   3=delete all except balance sheet details
+write(crt,f10)m06;   4=delete sub account
+write(crt,f10)m07;   5=delete sub account/account #
+write(crt,f10)m08;   6=delete all account #
+write(crt,f10)m04;   7=delete all details date prior to
+call msg(null)
+writen(crt,f10)m11;   9=return to menu
+call cget(null,f04,opt)
+if (status.ne.0) go to b00 ; bad format
+call pupsi (opt) ; put upsi for now
+if(opt.le.0)go to b00
+if (opt.eq.9) go to b100 ; return to menu
+if(opt.gt.7)go to b00
+if(opt.ne.7)go to b05
+;
+b03:
+call cget(m05,f02,yymm);   enter prior date entered as mmyy
+if (status.ne.0) go to b03 ; bad format
+encode(al1,f02)yymm
+decode(al1,f03)mm,yy
+yymm=yy*100+mm
+work1=(mm*tentou)+100+yy ; construct grin date
+ldate (grin,work1)
+sdate (grin,work1)
+if (status.ne.0) go to b03 ; bad month and year
+;
+b05:
+call ynget (m16) ; correct?
+if (status.ne.1) go to b00 ; redisplay selection menu
+go to (b10,b100,b200,b400,b500,b600,b300)on opt
+;
+b10:
+readb(odet,gdet)
+if(status.ne.0)go to b90
+if(?sub.ne.?lsub)go to b20
+if(?acct.ne.?lacct)go to b20;   write out consolidated record
+;
+b15:
+lamt=lamt+amt
+'ldesc'='null'
+?lacct=?acct
+?lsub=?sub
+go to b10
+;
+b20:
+if(?lacct.eq.0)go to b15;   first pass
+if(lamt.eq.0)go to b15
+writeb(ndet,ldet)
+call stat(2)
+lamt=0
+go to b15
+;
+b90:
+if(?lacct.eq.0)go to b100;    no records
+if(lamt.eq.0)go to b100;      last one has no totals
+writeb(ndet,ldet)
+call stat(2)
+;
+b100:
+endfile ndet
+;
+if(opt.eq.2)go to b140
+if (opt.ne.9) go to b150 ; not return to main menu - this program will be reentered
+;
+b140:
+call msg(m999)
+;
+b150:
+close ndet,odet,crt
+stop 0
+;
+;=============  delete all except balance sheet details =========
+b200:
+call readrec
+if(?acct.gt.?bsea)go to b200;   income item
+call writerec
+go to b200
+;
+;========= delete all details prior to jdte of yymm =======
+b300:
+call readrec
+if(jdte.lt.yymm)go to b300;  ie: 751231 is lt 760100 so delete - used to clear end of year
+call writerec
+go to b300
+;
+;========delete sub account============
+b400:
+;
+call getsub ; get the subaccount number
+go to (b00) on sublod ; no-go
+;
+b450:
+;
+call readrec
+if(?sub.eq.?nsub) goto b450
+call writerec
+goto b450
+;
+;==============delete sub account/account #===========================
+b500:
+;
+call getsub ; get the subaccount
+go to (b00) on sublod ; no-go
+;
+call getacct ; get the gla account
+go to (b00) on actlod ; no-go
+;
+;
+b550:
+;
+call readrec
+if (?sub.ne.?nsub)goto b560; not the correct sub acct num. for deletion
+if (?acct.eq.?nacct) goto b550;  this is a delete
+;
+b560:
+;
+   call writerec
+goto b550
+;
+;==========delete all account # =====================
+b600:
+;
+call getacct ; get gla account
+go to (b00) on actlod ; no-go
+;
+b650:
+;
+call readrec
+if(?acct.eq.?nacct) goto b650
+call writerec
+   go to b650
+;
+nohead:
+call msg (m10) ; no header
+stop 1
+;
+;==============================
+subroutine readrec
+;==============================
+;
+readb(odet,gdet)
+if(status.eq.1)goto b100
+return
+;
+;==============================
+subroutine writerec
+;==============================
+;
+writeb(ndet,gdet)
+call stat(2)
+return
+;
+;
+;=================================
+subroutine getacct
+;=================================
+;
+brn=maj=min=0 ; set intermediate accounts to zero
+actlod=0 ; set to found condition
+;
+get010:
+if (h1.eq.0) go to get020 ; no branch number required
+call cget (m12,f09,brn) ; get branch number
+if (status.ne.0) go to get010 ; bad format
+;
+get020:
+go to (maj1,maj2,maj3,maj4,maj5,maj6) on h2 ; on major account number length
+;
+maj1:
+call cget (m13,f04,maj) ; one position major number
+if (status.ne.0) go to maj1
+go to min0 ; now minor number
+;
+maj2:
+call cget (m13,f11,maj) ; two position major number
+if (status.ne.0) go to maj2
+go to min0
+;
+maj3:
+call cget (m13,f09,maj) ; three position major number
+if (status.ne.0) go to maj3
+go to min0
+;
+maj4:
+call cget (m13,f12,maj) ; four position major number
+if (status.ne.0) go to maj4
+go to min0
+;
+maj5:
+call cget (m13,f13,maj) ; five position minor number
+if (status.ne.0) go to maj5
+go to min0
+;
+maj6:
+call cget (m13,f14,maj) ; six position major number
+if (status.ne.0) go to maj6
+;
+min0:
+if (maj.le.0) go to get080 ; doesn't want to continue
+go to (min1,min2,min3) on h3 ; on minor account length
+go to get030 ; no minor account
+;
+min1:
+call cget (m14,f04,min) ; one position minor number
+if (status.ne.0) go to min1
+go to get030
+;
+min2:
+call cget (m14,f11,min) ; two position minor number
+if (status.ne.0) go to min2
+go to get030
+;
+min3:
+call cget (m14,f09,min) ; three position minor number
+if (status.ne.0) go to min3
+;
+get030:
+?nacct=(brn*bil)+(maj*thou)+min ; construct account
+if (status.ne.0) go to get070 ; bad arithemetic
+call ?gkey(gmst,?nacct)
+if (status.eq.1) go to get070 ; key not on file
+call stat (1)
+readb (gmst,recg) ; read the record
+call stat (1)
+if (?gid.eq.?zero) go to get070 ; deleted record
+call msg (desc) ; show the description
+call ynget (m16) ; correct?
+if (status.ne.1) go to get070 ; doesn't want to continue
+return
+;
+get070:
+call msg (m18) ; account not on file
+call msg (null)
+go to getacct ; try again
+;
+get080:
+actlod=1 ; no-go situation
+return
+;
+;
+;============================================
+subroutine getsub
+;============================================
+;
+sublod=0 ; set to found condition
+;
+call cget (m09,f05,?nsub) ; get the subaccount number
+if (status.ne.0) go to getsub ; bad format
+if (?nsub.le.?zero) go to sub080 ; no-go
+call ynget (m16) ; correct?
+if (status.ne.1) go to getsub ; try again
+return
+;
+sub080:
+sublod=1 ; set to no-go condition
+return
+;
+;
+;==========================================================================
+;                 w o r k i n g    s t o r a g e
+;==========================================================================
+;
+;
+string null(0)
+;
+define al1:'0000', actlen:'00000'
+;
+set ?zero:0,opt:0,yymm:0,mm:0,yy:0,?nsub:0,?nacct:0,work1:0
+set h1:0, h2:0, h3:0, h4:0, thou:1000, bil:1000000000, actlod:0, sublod:0
+set brn:0, maj:0, min:0, tentou:10000
+;
+;
+;
+define m01:'enter option: 1 = summarize details'
+define m02:'2 = delete all details'
+define m03:'3 = delete all except balance sheet details'
+define m04:'7 = delete all details dated prior to'
+define m05:'enter prior to date   (mmyy)'
+define m06:'4 = delete all of sub account number'
+define m07:'5 = delete specific sub acct/account #'
+define m08:'6 = delete all details for account #'
+define m09:'enter sub account number (-1 to return to options):'
+define m10:'the header for this client is not initialized - run is aborted!'
+define m11:'9 = return to menu'
+define m12:'enter branch number:'
+define m13:'enter major account number (-1 to return to options):'
+define m14:'enter minor account number:'
+define m15:'account number is not valid!'
+define m16:'correct? (y or n):'
+define m17:'this client is not initialized!'
+define m18:'account number is not on file!'
+define m999:'end of program'
+;
+;
+format f02:n4
+format f03:n2n2
+format f04:n1
+format f05:d6
+format f06:d12
+format f07:n5
+format f08:n1
+format f09:n3
+format f10:x14c50
+format f11:n2
+format f12:n4
+format f13:n5
+format f14:n6
+;
+end
+
+

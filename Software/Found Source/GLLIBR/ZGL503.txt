@@ -1,0 +1,686 @@
+title:'gl503  printing the chart of accounts '
+system
+ ;
+define m01:'gl503  (printing the chart of accounts)  12/29/81'
+;
+;  program incorporated into standard general ledger application
+;  with name change on august 6, 1976, by g.l. gillette.  at the
+;  same time, certain cosmetic changes to formats and messages,
+;  plus minor program modifications, were made.
+;
+;
+external cget,msg,?nkey,?gkey,ioerr,stat,clrec,lfeed,gupsi,pupsi,gjp
+;   notes:
+;    12/6/75...conversion to os2..ns
+;     1/16/76...adding usef and yrend fields...ns
+ ;     1/23/76...stopped using month in vv, vv was being created wrong..ns
+;      g/l master file   'c' type indexed
+;      3/12/76...giving an option on the chart of accounts to only indicate
+;               the account number on money amonts,...ns
+;     3/12/76...also no longer allowing changes to totals unless e or f type..ns
+;      3/17/76...pulled disply in w26:.....ns
+;    4/8/76...adding holds and frees...ns
+;   4/22/76...chng to e glread, and option 3 on chng detail..ns
+;    6/8/76...reading header before doing print routine...ns
+;   6/14/76...added ?pbal to recg - there are no more bytes left in recg..ns
+;   6/14/76...converting g900 to g500...ns
+;   6/16/76...chnged format f04 so that coment would print all 60 char..ns
+;   6/17/76...change - ff was not being handled correctly...ns
+;   6/21/76...adding h0 - option for all neg. on financial statement to print
+;            in parenthesis..ns
+;   6/22/76...adding branches...ns
+;    6/29/76...formats clean up - f02 and f22...ns
+;    7/2/76...changing master file layout - not compatible with previous copies....ns
+;      7/9/76...changing a couple of comments...ns
+;   7/9/76...changing record size again ( to 131 bytes from 395)..ns
+;     7/12/76....adding f3 - ff= f3,f1,f2...(f3 is source and appl. of funds)..
+;                f3=1 is net income  ( level 6 of income section)
+;                f3=2 is depreciation
+;                  =3 is sourse and appl of funds
+;                   4 is working capital
+;   7/12/76...dividing g500 into g500, g500p(print), g500b(branches)..ns
+;    7/15/76...chng recg and list into 2 copies...ns
+;   12/6/76...adding new option, changing some messages..ns
+;   3/15/77...added sign reversal option (z8)... ns
+;   12/02/77...adding date and key number to report...ns
+;    3/14/78...nolonger doing a ?gkey after reading list, cbrn was only defined
+;             as 2 bytes long should be 3, replaced copy statements...ns
+;    7/18/78...undoing some of those cosmetic changes from 8/6/76...ns
+;    9/13/78...adding h,i,j,k & l accounts...ns
+;    6/19/79...added report option 3, changed heading, added "a", column c, non-
+;            printing of schedule on the d account...ns
+;    6/29/79..formats f24, f20 & f20a were changed..ns
+;   8/02/79...changing signon mess..ns
+;
+;  12/29/81...recompile to have a common date base...dl
+;     g/l master file
+record recg(131)
+set    ?gid:0;     6 byte integer - br/maj/min  2 digits, 6 digits, 3 digits
+set   ff:0;     f1=blank - no leading char, $= if money acct print $,
+;                  if title account $= print $ on next money account.
+;                  ( = enclose in parent. if neg.
+;               f2= # of lines of overlining. (0,1,2)
+;
+set    vv:0;       v1=type acct (title,money,total,etc.)
+;                  v2=scheduled or not
+;                  v3=center title or which col. a or b
+;                  v4=total level or indicates 'c' type title
+string desc(30);   description
+set    pos:0;      entered but not posted amounts
+set    cmo:0;      current month
+set    mon2:0;     last month
+set    mon3:0;      2 months ago
+set    mon4:0;     3 months ago
+set    mon5:0;     4 months ago
+set    mon6:0
+set    mon7:0
+set    mon8:0
+set    mon9:0
+set    mona:0
+set    monb:0
+set    monc:0
+set    mond:0;     this month last year
+set    mone:0;     last month last year
+set    monf:0;     2 months ago - last year
+;
+set    ?cbal:0;    current balance (does not include post)
+set    ?pbal:0;    last years total prior to monf
+;                  (ie. if cmo is 6/76 - mond=6/75, mone=5/75, mond=4/75,
+;                   and ?pbal is total as of 3/75)
+set     usef:0;    0=no postings, 1=print whether postings or not, 2=postings
+;
+endrec
+;
+record headb(131)
+string client(40);   clients name
+string coment(50); disclaimer
+set    month:0;      current postings are (yymm) (date of cmo)
+set    yrend:0;      month of fiscal year end (mm)
+set    post:0;       if post=3 retain all details to end of year.
+set    ?bsea:0;       balance sheet ending account #
+set    ?plact:0;      profit loss accout #
+set   hh:0;         h1=# of digits in br., h2= in major, h3=in minor, h4=in sub, h5 if = 1 - post to payroll from g/l
+set  mnum:0;         # of months of postings in current year
+set acnt:0; accountant
+string xa(1); special sw
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+; p/r header adding prbnk 3/18
+;
+record head2(131)
+set   ?aset:0
+set   ?clib:0
+set   ?nwor:0
+set   ?ctax:0;    city tax
+set   ?g1:0;     gross income account numbers
+set   ?g2:0
+set ?g3:0
+set   ?g4:0
+set   ?g5:0
+set   ?g6:0
+set   ?g7:0
+set   ?g8:0
+set   ?g9:0
+;
+set   ?fica:0
+set   ?fwt:0;    fed. withholding
+set   ?swt:0;    state w/h
+set   ?ot1:0;    other 1
+set   ?ot2:0;    other 2
+set   ?mea:0;    meals
+set   ?tips:0;   tips
+set   ?mtded:0;  meals and tips contra account
+set  prbnk:0;  just maj/min
+;    130 bytes
+;
+endrec
+;
+;
+record listb(10)
+set    ?lid:0;       list of account numbers (6 byte index number)
+set    rel0:0;       relative key for the 6 byte random access g/l
+endrec
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+;
+;
+;
+;
+;
+;
+;
+file prt:syslst,class=1,seq
+file crt:sysipt
+;
+entrypoint crt
+;
+entry
+;
+open io (crt,gmst), output prt, input list
+call msg(eject)
+call msg(m01);hi there
+;
+a01:
+call cget(m08,fc30,rdate)
+if(status.ne.0)go to a01
+call gjp(0,key)
+;
+ ;
+;
+ ;
+call gupsi(print)
+call pupsi(0)
+ ;
+call ?gkey(gmst,?zero)
+go to (b15,ioerr)on status
+call bltrun(rdate)
+call cent80(rdate,fhd1)
+encode(head1,fhd1)rdate
+readb(gmst,headb)
+call stat(1)
+call bltrun(client)
+call cent80(client,fhd1)
+call ?gkey(gmst,?one)
+go to (b03,ioerr)on status
+readb(gmst,head2)
+call stat(1)
+b03:
+'acct'='zer6'
+encode(acct,fn6)hh
+decode(acct,fn1)h0,h1,h2,h3,h4,h5;  h1=number of digits in branch
+if(h1.ne.0)go to c10
+'m34'='null';   no branches dont print it
+go to c10
+;
+;
+b15:;     no header
+call msg(m02);  no header
+go to r600
+;
+;=========  print chart of accounts ===========
+ ;
+c10:
+page=1
+if(print.ne.2)goto c13;video
+c13:
+call msg(m47a)
+call msg(m04)
+write(crt,fopt)m05
+write(crt,fopt)m06; 0=print all, 1=print money accounts with account #, 2=print on ly money accounts
+writen(crt,fopt)m07
+call cget(null,fn1,opt)
+if(status.ne.0)go to c13
+go to (c13f,c13f,c13f)on opt
+if(opt.ne.0)goto c13
+;
+c13f:
+;
+call cget(m47,fn1,a8);   setand go
+call head
+r100:
+readb(list,listb)
+if(status.ne.0)go to r300
+if(?lid.lt.100)go to r100
+readb(gmst,recg);         list setsup the rel. key
+call stat(1)
+if(?gid.eq.0)go to r100; deleted
+'acct'='zer4'
+encode(acct,fn4)vv
+decode(acct,fn1)v1,v2,v3,v4
+if(opt.lt.2)go to r130
+go to (r100,r130,r110)on v1;  only want totals(for line feed) & money accounts
+go to r100
+ 
+r110:
+if(v4.lt.2)go to r100
+go to (r100)on flg
+call lfeed(prt,1)
+flg=1;   surpresses line feeds if there have been no report lines printed
+call crq
+go to r100
+ 
+r130:
+ 
+'acct'='zer12'   ;    br=3, maj=6, min=3
+encode(acct,fd12)?gid
+decode(acct,f10a)cbrn,maj,min;    branch not in it yet
+'cmin'='blk3'
+if(min.eq.0)go to r140
+encode(cmin,f10)min
+ 
+r140:
+revf=usef/10
+'acct'='zer3'
+encode(acct,f10)ff
+decode(acct,fn1)f3,f1,f2;    f1=0 no leading char., 1=$, 2=(
+if(v1.eq.6)go to r150
+if(v1.le.3)go to r150
+revf=f3;    h to k accounts use f3 as reverse flag/ they are not allowed on chang in fins
+f3=0
+;
+r150:
+;
+if(opt.eq.3)go to r155
+call determ
+r155:
+call typest
+go to r100
+r300:
+if(print.ne.2)goto r600
+call cget(m52,fn1,b2)  ;  end of file - press newline when through
+;
+r600:
+call msg(m03)
+close prt,crt,list,gmst
+stop 0
+;
+;==========================
+ ;
+ ;
+;========================================
+subroutine head
+;==========================================
+write(prt,fc1)eject
+write(prt,fhd1)client
+write(prt,f20)acnt,sl,key,title,?plact,m33,page
+write(prt,f20a)head1,?bsea
+call lfeed(prt,1)
+if(opt.eq.3)go to hd5
+write(prt,f20b)m34,m35,m35,m36,m37
+write(prt,f20b)null,m38
+go to hd7
+ 
+hd5:
+write(prt,f20c)m34,m35,m35,m36
+write(prt,f20c)null,m38
+ 
+hd7:
+call lfeed(prt,1)
+line=7
+page=page+1
+return
+ ;
+;============================
+subroutine crq
+;============================
+;
+line=line+1
+if(print.eq.2)go to cr2
+if(line.lt.58)go to cr1
+call head
+cr1:
+return
+;
+cr2:
+if(line.lt.20)goto crx
+call msg(null)
+call cget(m51,fn2,line);more to follow - going to crt
+if(line.eq.99)go to r600;   eoj
+call head
+;
+;
+crx:
+return
+;
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;
+;============================
+;
+;
+;
+;
+;======================
+subroutine typest
+;============================
+if(opt.eq.0)go to rz01
+if(v1.eq.2)go to rz01
+if(v1.ne.6)goto rz02
+if(v4.ne.8)goto rz02;   inventory contra is a money account for this purpose
+;
+rz01:
+if(opt.eq.3)go to rz10
+;
+write(prt,f22) cbrn,maj,cmin,desc,z1,z2,z3,z4,z5,z6,z8,z7
+flg=0
+call crq
+go to rz04
+rz02:
+if(opt.eq.2)goto rz06; not printing any but money accounts
+if(v1.eq.3)go to rz03;   total
+write(prt,f21)desc,z1,z2,z3,z4,z5,z6,z8,z7;   v1=0 is b or c,  v1=1 is d
+call crq
+return
+;
+rz03:
+write(prt,f23)desc,z1,z2,z3,z4,z5,z6,z8,z7
+call crq
+go to rz04a
+ 
+rz04:
+if(v1.ne.3)go to rz05
+if(v4.lt.2)go to rz05
+ 
+rz04a:
+call lfeed(prt,1)
+call crq
+flg=1;   line feed on total & haven't had another money account
+ 
+rz05:
+return
+;
+rz06:
+if(flg.eq.0)go to rz04; check to see if it is a total account
+return
+rz10:
+write(prt,f24)cbrn,maj,cmin,desc
+flg=0
+call crq
+return
+ 
+;
+;
+;=======================================
+subroutine determ
+;=======================================
+'z1'='blank'; type
+'z2'='blank';schedule
+'z3'='blank';column a/b/c
+'z8'='blank';sign reversal
+'z4'='blank'; total level
+'z5'='blank';char ($,()
+'z6'='blank'; underline cod
+'z7'='blank'; s&a
+if(f2.eq.0)go to dt01
+encode(z6,fn1)f2;   # of underlines
+ 
+dt01:
+if(v1.ne.0)go to dt10
+; title account
+dt08:
+;
+go to (dt09,dt18)on v4
+'z1'='b'
+go to dt100
+ 
+dt09:
+'z1'='c'
+go to dt100
+ 
+dt18:
+'z1'='a'
+go to dt100
+ 
+dt10:
+go to (dt40,dt50,dt60,dt70,dt80,dt90)on v1
+go to dt08
+ 
+dt40:
+'z1'='d'
+v2=v2-2
+go to (dt41,dt42)on v2
+go to dt130
+ 
+dt41:
+'z2'='no'
+go to dt130
+ 
+dt42:
+'z2'='s'
+go to dt130
+ 
+dt50:; money
+goto (dt55)on v4
+if(v4.ge.7)go to dt58
+'z1'='e'
+go to dt100
+ 
+dt55:
+'z1'='f'
+go to dt100
+ 
+dt58:
+'z1'='i'
+go to dt100
+ 
+dt60:; total record
+encode(z4,fn1)v4;   total level
+'z1'='g'
+go to dt100
+ 
+dt70:;
+'z1'='k'
+go to dt100
+ 
+dt80:
+if(v4.eq.7)go to dt85
+'z1'='h'; no printing
+return
+ 
+dt85:
+'z1'='j'
+go to dt100
+ 
+dt90:
+'z1'='l'
+ 
+dt100:
+if(v2.ne.2)go to dt130
+'z2'='s'
+ 
+dt130:
+if(v4.gt.7)go to dt300; non-print
+go to (dt150,dt160,dt140)on v3; column number
+if(v1.ne.3)go to dt140; totals default to old values
+go to (dt140,dt150)on v4
+go to dt160
+ 
+dt140:
+'z3'='a'
+go to dt180
+ 
+dt150:
+'z3'='b'
+go to dt180
+ 
+dt160:
+'z3'='c'
+ 
+dt180:
+go to (dt185,dt188)on f1
+go to dt190
+ 
+dt185:
+'z5'='dol'
+go to dt190
+ 
+dt188:
+'z5'='paren'
+go to dt190
+ 
+dt190:
+if(f3.eq.0)go to dt300
+encode(z7,fn1)f3;   s & a
+ 
+dt300:
+if(revf.ne.1)goto dt310
+encode(z8,fc1)dash
+ 
+dt310:
+return
+;
+ ;*****************************
+ ;********  constants  ********
+ ;*****************************
+ ;
+ ;
+define m02:'account file does not contain user record'
+define m03:'end chart of accounts print program'
+define m04:'enter option:  0  print all accounts'
+define m05:'1  print only account numbers on money accounts'
+define m06:'2  print only money accounts'
+define m07:'3  print money accounts without type designations'
+define m08:'enter report date'
+define m33: 'page'
+define m34:'branch'
+define m35:'account'
+define m36:'description'
+define m37:'typ col lev $ line s&a'
+define m38:'number'
+define m47:'ready printer - press newline'
+define m47a:'enter one of the following:'
+define m51:'newline to continue - enter 99 to terminate'
+define m52: 'end of file - press newline when through'
+;
+ ;
+define title:'chart of accounts'
+define cone:'1', ctwo:'2'
+;
+string key(6),rdate(30)
+;
+;
+;
+format fhd1: x100 c100
+ 
+format f10:n3n6n3
+format f10a:c3n6n3
+format f20:n3c1c6 x21 c26d-10 x6c5n3
+format f20a: c57 d-10
+format f20b: c8 c12 c8 c26 c30
+format f20c: x4 c9 c38 c8 c35
+;
+format f21: x17c30x8c1c1x2c1x2c1x3c1x2c1x1c1x4c1
+format f22: x1c3x1n6x1c3x5c30x5c1c1x2c1x2c1x3c1x2c1x1c1x4c1
+format f23:x23c30x2c1c1x2c1x2c1x3c1x2c1x1c1x4c1
+format f24: x5 c3 x4 n6 x1 c3 x24 c30
+;
+;
+ ;
+format fn1:n1
+format fn2:n2
+format fn4:n4
+format fn6:n6
+ 
+format fc30:c30
+format fd12:d12
+ 
+format fc1:c1
+format fopt:x15 c65
+define yes: 'y',dash:'-'
+define no: 'n'
+define s:'s'
+define a:'a'
+define b:'b'
+define c:'c'
+define d:'d'
+define e:'e'
+define f:'f'
+define g:'g'
+define h:'h', i:'i', j:'j', k:'k', l:'l'
+define blank: ' '
+define zer12:'   000000000', sl:'/'
+define zer4:'0000',zer6:'000000'
+define zer3:'000', blk3:'   '
+define dol:'$',  paren:'('
+string   a5(1),op2(1),cbrn(3),cmin(3)
+;      a5= type of acct (b,c,d,e,f,g)
+string a8(1),null(0),acct(12);  a8=center desc??, a8=scheduled??, a8= ready to print?? a8=colum a or b
+string z1(1), z2(1), z3(1),z4(1)
+;    z1,z2,z3 = v1,v2,v3 only in character form,   a8= change or delete??
+string z5(1),z6(1),z7(1),z8(1);   changes ff to character form
+ ;
+define head1:'                                                                                  '
+ ;
+set thou:1000,br:0,lbr:0,brn:0,?one:1,flg:0
+set h0:0,h1:0,h2:0,h3:0,h4:0,h5:0,revf:0
+set  ?zero:0,?tot:0
+set  sort:0;   flag that says call gsort if new accounts are added
+set fa1:0
+;
+ ;
+integer num,opt
+integer print
+integer sorce,b2
+integer v1,v2,v3,v4,f3,f1,f2,line,page
+integer maj,min,?new1
+ ;
+ ;
+;
+end;    g500
+
+

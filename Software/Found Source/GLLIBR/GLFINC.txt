@@ -1,0 +1,57 @@
+.job glfinc
+.run s.xeject
+.log
+*   enter option:  1  print financial change worksheet and statement
+*                  2  reprint change in financial position report
+.nolog
+.enter upsi
+.skip to err if 2 lt #u
+.skip to err if 0 gt #u
+.seta 8=#u
+.use crt#v for syslst
+.skip to ok if crt eq #2
+.use prt#2 for syslst
+=ok
+.skip to statem if 2 = #8
+.use gl#0a on #1 for sys0 shar
+.use gl#0j on #1 for sys1 shar
+.use @scrb#i on #s for sys2
+.run gl.xgl595
+.skip to fin if #c ne 0
+=statem
+.use @scrb#i on #s for sys1 shar
+.seta upsi=0
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=87
+work=4,output=inp,key=(7,4,bi,1,6,bi)
+/*
+.skip to fin if #c ne 0
+.use gl#0a on #1 for sys0 shar
+.use @scrb#i on #s for sys2
+.run gl.xgl596
+.skip to fin if #c ne 0
+.skip to eoj
+=err
+.log
+*
+*   invalid option selected
+*   newline to recall program
+*
+.nolog
+.pause
+.skipr 0
+=eoj
+.skip 1 if glrepo ne #4
+glmenu
+=fin
+.end
+s.con
+*  4/25/78...changed to new standards..ns
+*  7/24/78...cleanup..ns
+*  11/28/79...modified for cpu-6...kag
+
+

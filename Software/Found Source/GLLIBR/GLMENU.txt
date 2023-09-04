@@ -1,0 +1,402 @@
+ 
+.nolog
+.job glmenu
+.setc 2=crt
+.end
+.notime
+.use crt#v for syslst
+.skip to report if glrepo = #4
+.skip to glmenu if glmenu eq #4
+.seta upsi=3
+.run s.xopt
+=glmenu
+.setc 4=glmenu
+.skip to master if master = #9
+.skip to entry if entry = #9
+.skip to misc if misc = #9
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  centurion general ledger application
+*
+*******************************************************************************
+*                  key number = #0            disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  establish file set
+*                  2  master file service
+*                  3  processing cycle
+*                  4  reports
+*                  5  miscellaneous features
+*                  6  payroll accumulation
+*                 97  change key number / disk number for file set
+*                 99  processing completed
+*
+.nolog
+.enter upsi
+.skip to err if 0 ge #u
+.skip to eoj if 99 eq #u
+.skip  2 if 97 ne #u
+.setc 4=x
+.skipr 0
+.skip to err if 7 le #u
+.skip to err if 0 ge #u
+.skip to gl if 6 ne #u
+.setc 4=x
+.setc 4=prmenu
+.fspec prmenu on #d 7=size
+.skip 1 if 0 eq #7
+prmenu
+.setc 4=glmenu
+.skip to notfnd
+=gl
+.seta 8=#u
+.skip to crete if 1 eq #8
+.fspec gl#0a on #1 7=size
+.skip to good if 0 ne #7
+=err1
+.log
+*   improper request - file set not on specified disk
+.nolog
+.skip to recall
+=crete
+.fspec gl#0a on #1 7=size
+.skip to create if 0 eq #7
+.log
+*   file set already exists for key number #0 on disk #1
+*   do you wish to continue? (y/n)
+.nolog
+.enter 8
+.skip to crete if y eq #8
+.skip to recall
+=crete
+.log
+*   do you want to create a new file set from this one?  (y/n)
+.nolog
+.enter 8
+.skip to new if y eq #8
+=create
+.setc 6=init
+.log
+*   enter approximate number of accounts
+.nolog
+.enter 2
+.skip to call
+=good
+.skip #8
+*
+*
+.skip to master
+.skip to entry
+.skip to report
+.skip to misc
+=master
+.setc 9=master
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  general ledger master file service
+*
+*******************************************************************************
+*                  key number = #0          disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  chart of accounts master file service
+*                  2  add a branch to the chart of accounts
+*                  3  budget master file service
+*                  4  subaccount master file service
+*                  5  shrink chart of accounts
+*                  6  setup standard header
+*                  9  master file service completed
+.nolog
+.enter upsi
+.skip 2 if 9 ne #u
+.setc 9 = x
+.skipr 0
+.skip to err if 7 le #u
+.skip to err if 0 ge #u
+.setc 9=x
+.skip to opt#u
+=opt1
+.seta upsi=1
+.setc 6=mast
+.skip to call
+=opt2
+.setc 6=brn
+.skip to call
+=opt3
+.setc 6=budg
+.skip to ckbudg
+=opt4
+.setc 6=sub
+.skip to cksub
+=opt5
+.setc 6=srnk
+.skip to call
+=opt6
+.skip to call
+=new
+.setc 6=#0
+.seta 5=#1
+.seta upsi=3
+.run s.xopt
+.setc 2=#0
+.setc 0=#6
+.seta 3=#1
+.seta 1=#5
+.skip to same if #0 eq #2
+.fspec gl#2a on #3 7=size
+.skip to new1 if 0 eq #7
+.log
+*   improper request file set already exists on specified disk
+.nolog
+.skip to recall
+=new1
+.setc 6=new
+.skip to call
+=same
+.log
+*   both key numbers are the same
+.nolog
+.skip to recall
+=opt4
+.setc 6=srnk
+.skip to call
+=entry
+.setc 9=entry
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  general ledger application processing cycle
+*
+*******************************************************************************
+*                  key number = #0                   disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  general ledger transaction entry
+*                  2  g/l data correction
+*                  3  g/l audit/post
+*                  4  paper tape entry
+*                  9  processing cycle completed
+.nolog
+.enter upsi
+.skip 2 if 9 ne #u
+.setc 9 = x
+.skipr 0
+.skip to err if 5 le #u
+.skip to err if 0 ge #u
+.setc 9=entry
+.skip to opt#u
+=opt1
+.setc 6=tran
+.skip to call
+=opt2
+.setc 6=look
+.skip to prt
+=opt3
+.setc 6=audt
+.skip to prt
+=opt4
+.setc 6=ttran
+.skip to call
+=report
+.setc 9=report
+.run s.xeject
+.log
+*******************************************************************************
+*                  general ledger application reports
+*******************************************************************************
+*                  key number = #0          disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  chart of accounts
+*                  2  print calculation accounts
+*                  3  general ledger
+*                  4  financial statements
+*                  5  financial comparisons
+*                  6  change in financial position
+*                  7  trial balance
+*
+*                  8  chart of subaccounts
+*                  9  subaccount ledger
+*
+*                 10  dump of budget file
+*                 11  budget comparisons
+*
+*                 99  reports completed
+.nolog
+.enter upsi
+.skip 2 if 99 ne #u
+.setc 4=glmenu
+.skipr 0
+.setc 4=glrepo
+.skip to err if 12 le #u
+.skip to err if 0 ge #u
+.skip to opt#u
+=opt1
+.setc 6=repo
+.skip to prt
+=opt2
+.setc 6=hrep
+.skip to prt
+=opt3
+.setc 6=ledge
+.skip to prt
+=opt4
+.setc 6=fins
+.skip to prt
+=opt5
+.setc 6=fcom
+.skip to prt
+=opt6
+.setc 6=finc
+.skip to prt
+=opt7
+.setc 6=trial
+.skip to prt
+=opt8
+.setc 6=sub
+.skip to cksub
+=opt9
+.setc 6=subg
+.skip to cksub
+=opt10
+.setc 6=budg
+.seta upsi=8
+.skip to ckbudg
+=opt11
+.setc 6=bcom
+.skip to ckbudg
+=misc
+.setc 9 = misc
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  other miscellaneous features
+*
+*******************************************************************************
+*                  key number = #0    disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  consolidate subaccount details
+*                  2  create financial statement cover letter
+*                  3  enter monthly balances (for comparisons only)
+*                  4  list all clients on pack #1
+*                  5  create a standard header
+*                  6  move all files for key #0 to a new disk
+*                  7  copy all files for key #0 to a new key number
+*                  8  delete all files for key #0
+*                  9  miscellaneous features completed
+*
+.nolog
+.enter upsi
+.skip 2 if 9 ne #u
+.setc 9 = x
+.skipr 0
+.skip to err if 9 le #u
+.skip to err if 0 ge #u
+.setc 9=x
+.skip to opt#u
+=opt1
+.setc 6=pack
+.skip to cksub
+=opt2
+.setc 6=cover
+.skip to call
+=opt3
+.setc 6=prior
+.skip to call
+=opt4
+.setc 6=glean
+.setc 4=x
+.skip to prt
+=opt5
+.setc 6=hd
+.skip to call
+=opt6
+.log
+*   enter target disk number
+.nolog
+.enter 2
+.setc 6=movdat
+.skip to call
+=opt7
+.log
+*   enter target key number
+.nolog
+.enter 2
+.log
+*   enter target disk number
+.nolog
+.enter 3
+.setc 6=newdat
+.skip to call
+=opt8
+.setc 6=deldat
+.skip to call
+=cksub
+.fspec gl#0c on #1 7=size
+.skip to ok if 0 ne #7
+.log
+*   improper request - subaccount file set not on specified disk
+.nolog
+.skip to recall
+=ckbudg
+.fspec gl#0b on #1 7=size
+.skip to ok if 0 ne #7
+.log
+*   improper request - budget file set not on specified disk
+.nolog
+.skip to recall
+=ok
+.skip to call if report ne #9
+=prt
+.seta 7=#u
+.seta upsi=2
+.run s.xopt
+.seta upsi=#7
+=call
+.fspec gl.#6 on #d 7=size
+.skip to notfnd if 0 eq #7
+gl.#6
+=err
+.log
+*   invalid option selected
+.nolog
+.skip to recall
+=notfnd
+.log
+*   this module is not installed
+.nolog
+=recall
+.log
+*   enter newline to recall menu
+.nolog
+.pause
+.skipr 0
+=eoj
+.end
+.setc 4=x
+.setc 9=x
+s.con
+*  8/29/77... asking if they want to change client number and disk before asking for them
+*        also adding ability to recall menu (using option #8)..ns
+* 10/4/77...added notime,  and each submenu recalls main menu on option 9...ns
+* 10/5/77...new menu format as of 10/5/77...ns
+* 11/1/77...wasnt recalling reports when wrong option was selected in reports..ns
+*  12/2/77...adding .end at first of menu to clear "passed" files...ns
+* 6/10/79...added a bunch of stuff in misc & h account report..ns
+*   7/25/79...changed h accounts to calculation accounts
+*   07/10/80...modified option 10 (dump budget) to run faster...kag
+*   08-01-80...corrected error in budget master maint...kag
+
+

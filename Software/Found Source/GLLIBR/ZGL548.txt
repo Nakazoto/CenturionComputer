@@ -1,0 +1,770 @@
+title 'gl548 print trial balance'
+system
+;
+define m01:'gl548 (trial balance) 12/29/81'
+;
+;notes:
+;   10/25/76...written...ns
+;  11/19/76..added profit and loss to worksheet side...glg
+;  12/7/76...new headers with client 40 char...ns
+;  12/23/76..cosmetics: centered header lines, page eject on crt, and option
+;            msg; also put it tof on new branch and total for balance sheet..glg
+;   10/25/77...reading opt as a character field...ns
+;    05/05/78...changed headers to be any account less than 100...ns
+;    07/20/78...cosmetic changes...ns
+;    09/06/78...change to keep h,i,j,k, or l accounts from being  printed...ns
+;    05/14/79...heading changings...ns
+;    07/02/79...changed line count from 60 to 58..ns
+;    08/02/79..changed signon..ns
+;    09/10/79...changed to keep scheduled totals from clearing...jwb
+;    01/22/80...modified to print inventory net change account...kag
+;    01/23/80...modified so i account would not add into total...kag
+;
+;    12/29/81...recompile to have a common date base...dl
+;
+record recg(131)
+set    ?gid:0;     6 byte integer - br/maj/min  2 digits, 6 digits, 3 digits
+set   ff:0;     f1=blank - no leading char, $= if money acct print $,
+;                  if title account $= print $ on next money account.
+;                  ( = enclose in parent. if neg.
+;               f2= # of lines of overlining. (0,1,2)
+;
+set    vv:0;       v1=type acct (title,money,total,etc.)
+;                  v2=scheduled or not
+;                  v3=center title or which col. a or b
+;                  v4=total level or indicates 'c' type title
+string desc(30);   description
+set    pos:0;      entered but not posted amounts
+set    cmo:0;      current month
+set    mon2:0;     last month
+set    mon3:0;      2 months ago
+set    mon4:0;     3 months ago
+set    mon5:0;     4 months ago
+set    mon6:0
+set    mon7:0
+set    mon8:0
+set    mon9:0
+set    mona:0
+set    monb:0
+set    monc:0
+set    mond:0;     this month last year
+set    mone:0;     last month last year
+set    monf:0;     2 months ago - last year
+;
+set    ?cbal:0;    current balance (does not include post)
+set    ?pbal:0;    last years total prior to monf
+;                  (ie. if cmo is 6/76 - mond=6/75, mone=5/75, mond=4/75,
+;                   and ?pbal is total as of 3/75)
+set     usef:0;    0=no postings, 1=print whether postings or not, 2=postings
+;
+endrec
+;
+record headb(131)
+string client(40);   clients name
+string coment(50); disclaimer
+set    month:0;      current postings are (yymm) (date of cmo)
+set    yrend:0;      month of fiscal year end (mm)
+set    post:0;       if post=3 retain all details to end of year.
+set    ?bsea:0;       balance sheet ending account #
+set    ?plact:0;      profit loss accout #
+set   hh:0;         h1=# of digits in br., h2= in major, h3=in minor, h4=in sub, h5 if = 1 - post to payroll from g/l
+set  mnum:0;         # of months of postings in current year
+set acnt:0; accountant
+string xa(1); special sw
+endrec
+;
+;
+record listb(10)
+set    ?lid:0;       list of account numbers (6 byte index number)
+set    rel0:0;       relative key for the 6 byte random access g/l
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+file crt:sysipt
+entrypoint crt
+file prt:syslst,class=1,seq
+external ?gkey,stat,msg,ioerr,gupsi,pupsi,cget,lfeed,?edit,gjp
+;
+;===============
+; program logic
+;================
+;
+entry
+open io (gmst,crt,list), output prt
+call gjp(0,key)
+;
+call msg(eject)
+call msg(m01)  ;gl548  trial balance
+;
+call gupsi(print);   if = 2 display is 80 characters instead of 132
+;
+a10:
+call msg(m02)
+write(crt,f09)m02a;  1=current entries/ 0=posted balance
+call cget(null,f30,opt)
+if(opt.gt.1)goto a10 ; reject invalid option
+;
+a20:
+call msg(m09)
+call cget(null,fc77,rdate)
+if(status.ne.0)go to a20
+ 
+ 
+;
+b10:
+readb(list,listb)
+go to (q0900) on status
+if(?lid.gt.100)go to b20;   5/4/78
+if(?lid.ne.0)go to b10;     dont care about the second header
+readb(gmst,headb)
+call stat(1)
+call hdr
+call top
+;      all i need from here is the current earnings account number it is
+;      left blank in the money columns.
+;
+go to b10
+;
+;
+b20:
+readb(gmst,recg)
+call stat(1)
+if(?gid.eq.0)go to b10
+'acct'='zer4'
+encode(acct,f03)vv
+decode(acct,f04)v1,v2,v4
+if(v1.eq.2)go to b25
+if (v1.eq.6) go to b25
+if(v1.ne.3)go to b10;   take a subtotal
+call subtot
+go to b10
+;
+b25:
+if(v4.le.1)goto b26;  v4=0/1 e&f, v4=7/8 i accounts
+if (v4.ne.8) go to b10;                 v4 eq 8 for net inv chg acct
+;
+nummon=month/100
+if (nummon.lt.yrend) go to b25b
+;
+b25a:
+nummon=nummon-(yrend+12)
+nummon= 0-nummon          ;make em positive
+go to b25c
+;                                       added this section ...12-06-79
+b25b:
+nummon=12-(yrend-nummon)
+;
+b25c:
+;                           this section added for inv net chg account..kag
+?cbal=cmo
+decr nummon
+;
+goto (b25d,b25e,b25f,b25g,b25h,b25i,b25j,b25k,b25l,b25m,b25n) on nummon
+go to b26
+;
+b25n:
+?cbal=?cbal+monc
+b25m:
+?cbal=?cbal+monb
+b25l:
+?cbal=?cbal+mona
+b25k:
+?cbal=?cbal+mon9
+b25j:
+?cbal=?cbal+mon8
+b25i:
+?cbal=?cbal+mon7
+b25h:
+?cbal=?cbal+mon6
+b25g:
+?cbal=?cbal+mon5
+b25f:
+?cbal=?cbal+mon4
+b25e:
+?cbal=?cbal+mon3
+b25d:
+?cbal=?cbal+mon2
+;
+;
+b26:
+;
+'acct'='zer12'
+encode(acct,f05)?gid
+decode(acct,f06)brn,maj,min
+'cmin'='spc3'
+if(min.eq.0)go to b30
+encode(cmin,f07)min
+b30:
+if(?gid.eq.?plact)go to b50
+b40:
+call amount
+call wrtdet
+go to b10
+;
+b50:
+pos=?cbal=0
+write(prt,f01)
+call crq
+write(prt,f01)
+call crq
+write(prt,f12)brn,maj,min,desc,mask00,m10
+call crq
+write(prt,f01)
+call crq
+write(prt,f01)
+call crq
+go to b10
+q0900:;   eoj
+finsw=1
+call totbrn
+'money'='mask00'
+call ?edit(?dr,num,mask01)
+encode(money,f08)num
+call ?edit(?cr,num,mask01)
+encode(money,f11)num
+write(prt,f01)
+call crq
+write(prt,f01)
+call crq
+write(prt,f01)
+call crq
+if(print.eq.2)go to b905
+write(prt,f09)m03,money,m10
+write(prt,f02)eject
+goto b910
+;
+b905:
+write(prt,f09)m03,money
+;
+b910:
+call msg(m04);   end of trial balance
+close crt,prt,gmst,list
+stop 0
+;
+;=======================
+;  subroutines
+;=======================
+;
+subroutine amount
+;=======================
+decode(brn,f07)nbr
+if(nbr.ne.lbrn)call totbrn
+s10:
+;
+lbrn=nbr
+if(opt.eq.0)go to s50
+?cbal=?cbal+pos
+;
+s50:
+if(?cbal.lt.0)go to s70
+call ?edit(?cbal,num,mask01)
+'money'='mask00'
+encode(money,f08)num
+;
+;                                 check for i accounts
+if (v1.ne.2) goto s53;          i acconts don't need tobe added in
+if (v4.le.1) goto s53;         ;
+return
+;
+s53:
+;
+if(nbr.eq.0)go to s55
+if(nbr.ne.i999)go to s60
+s55:
+?dr=?dr+?cbal
+ 
+s60:
+?d1=?d1+?cbal
+?d2=?d2+?cbal
+?d3=?d3+?cbal
+?d4=?d4+?cbal
+?d5=?d5+?cbal
+?d6=?d6+?cbal
+?d7=?d7+?cbal
+if (v2. ne. 2) goto s61
+?sd1=?sd1+?cbal
+?sd2=?sd2+?cbal
+?sd3=?sd3+?cbal
+?sd4=?sd4+?cbal
+?sd5=?sd5+?cbal
+?sd6=?sd6+?cbal
+?sd7=?sd7+?cbal
+;
+s61:
+;
+?bdr=?bdr+?cbal;   branch total
+return
+;
+s70:
+?cbal=0-?cbal;       reverse the sign before writing
+'money'='mask00'
+call ?edit(?cbal,num,mask01)
+encode(money,f11)num
+;                                 check for i accounts
+;
+if (v1.ne.2) goto s73;           i account - don't add
+if (v4.le.1) goto s73;
+return
+;
+s73:
+;
+if(nbr.eq.0)go to s75
+if(nbr.ne.i999)go to s80
+s75:
+?cr=?cr+?cbal
+ 
+s80:
+?c1=?c1+?cbal
+?c2=?c2+?cbal
+?c3=?c3+?cbal
+?c4=?c4+?cbal
+?c5=?c5+?cbal
+?c6=?c6+?cbal
+?c7=?c7+?cbal
+if (v2. ne. 2) goto s81
+?sc1=?sc1+?cbal
+?sc2=?sc2+?cbal
+?sc3=?sc3+?cbal
+?sc4=?sc4+?cbal
+?sc5=?sc5+?cbal
+?sc6=?sc6+?cbal
+?sc7=?sc7+?cbal
+;
+s81:
+;
+?bcr=?bcr+?cbal
+;
+s89:
+;                          exit point
+return
+;
+;=========================
+subroutine subtot
+;==========================
+call crq
+write(prt,f01)
+if (v2. eq. 2) goto st100
+go to (st10,st20,st30,st40,st50,st60,st70)on v4
+return
+ 
+st10:
+call wrttot(?d1,?c1)
+ 
+st15:
+call clr2(?d1,?c1)
+;
+st17:
+;
+return
+ 
+st20:
+call wrttot(?d2,?c2)
+ 
+st25:
+call clr2(?d2,?c2)
+go to st15
+ 
+st30:
+call wrttot(?d3,?c3)
+ 
+st35:
+call clr2(?d3,?c3)
+go to st25
+ 
+st40:
+call wrttot(?d4,?c4)
+ 
+st45:
+call clr2(?d4,?c4)
+go to st35
+ 
+st50:
+call wrttot(?d5,?c5)
+ 
+st55:
+call clr2(?d5,?c5)
+go to st45
+ 
+st60:
+call wrttot(?d6,?c6)
+ 
+st65:
+call clr2(?d6,?c6)
+call clr2(?d7,?c7)
+go to st55
+ 
+st70:
+call wrttot(?d7,?c7)
+go to st55;   total 7 is only cleared on a total 6
+ 
+st100:
+   ;
+   goto (st101, st102, st103, st104, st105, st106, st107) on v4
+   ;
+st101:
+   ;
+   call wrttot (?sd1, ?sc1)
+   ;
+st101a:
+   ;
+   call clr2 (?sd1, ?sc1)
+   return
+   ;
+st102:
+   ;
+   call wrttot (?sd2, ?sc2)
+   ;
+st102a:
+   ;
+   call clr2 (?sd2, ?sc2)
+   goto st101a
+   ;
+st103:
+   ;
+   call wrttot (?sd3, ?sc3)
+   ;
+st103a:
+   ;
+   call clr2 (?sd3, ?sc3)
+   goto st102a
+   ;
+st104:
+   ;
+   call wrttot (?sd4, ?sc4)
+   ;
+st104a:
+   ;
+   call clr2 (?sd4, ?sc4)
+   goto st103a
+   ;
+st105:
+   ;
+   call wrttot (?sd5, ?sc5)
+   ;
+st105a:
+   ;
+   call clr2 (?sd5, ?sc5)
+   goto st104a
+   ;
+st106:
+   ;
+   call wrttot (?sd6, ?sc6)
+   ;
+st106a:
+   ;
+   call clr2 (?sd6, ?sc6)
+   call clr2 (?sd7, ?sc7)
+   goto st105a
+   ;
+st107:
+   ;
+   call wrttot (?sd7, ?sc7)
+   goto st105a
+   ;
+;====================
+subroutine wrttot
+;=====================
+'money'='mask00'
+direct
+   lda- x+
+   sta  wt10+3
+   lda- x+
+   sta  wt20+3
+cpl
+ 
+wt10:
+call ?edit(?d1,num,mask01);  ?d1 is variable
+encode(money,f08)num
+ 
+wt20:
+call ?edit(?c1,num,mask01)
+encode(money,f11)num
+write(prt,f09)desc,money,m10
+call crq
+return
+ 
+;=====================
+subroutine clr2
+;=====================
+ 
+direct
+  lda- x+
+   sta cl10+8
+   lda- x+
+   sta  cl20+8
+cpl
+ 
+cl10:
+?d1=0
+ 
+cl20:
+?c1=0
+return
+;            subroutine directory
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz *+9 skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+@p4 set *
+cpl
+return
+;
+;
+;=========================
+subroutine totbrn
+;================
+'money'='mask00'
+call lfeed(prt,1)
+call crq
+call ?edit(?bdr,num,mask01)
+encode(money,f08)num
+call ?edit(?bcr,num,mask01)
+encode(money,f11)num
+if(print.eq.2)go to s90
+write(prt,f10)lbrn,m12,money,m10
+;
+if(finsw.eq.0)goto s95 ; do top of form for next branch
+call crq
+go to s99
+;
+s90:
+write(prt,f10)lbrn,m12,money
+call crq
+;
+s95:
+   call top
+   goto s100
+s99:
+call lfeed(prt,1)
+call crq
+;
+s100:
+?bcr=?bdr=0
+return
+;
+;
+;=========================
+subroutine cent80
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 80-column line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call cent80 (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 80 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;==============
+subroutine cent132
+;================
+direct
+ lda- x+
+ xay
+ cla
+ dca
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1
+ ldb- x+ get address of format
+ inr b incr to add of x=spec
+ xfr b,y seave x-sec
+ inr b,3 incr to address
+ sta- b set new char count
+ ldb= 132
+ sub b,a subtr. char
+ sra divide result by 2
+ sta- y set new space count in x spec.
+cpl
+return
+;================
+subroutine wrtdet
+;=================
+;
+if(print.eq.2)go to s150
+call lfeed(prt,1)
+lcr=lcr+1
+write(prt,f12)brn,maj,cmin,desc,money,m10
+call crq
+return
+;
+s150:
+call lfeed(prt,1)
+lcr=lcr+1
+write(prt,f12)brn,maj,cmin,desc,money
+call crq
+return
+;
+;================
+subroutine hdr
+;================
+   if(hdrsw.ne.0)goto hdr6 ; done this already
+   hdrsw=1
+   call bltrun(rdate)
+   call bltrun(client)
+   if(print.gt.2)goto hdr3 ; not crt
+    call cent80(rdate,ft1)
+   call cent80(client,ft3)
+    go to hdr6
+ 
+hdr3:
+    call cent132(rdate,ft1)
+    call cent132(client,ft3)
+ 
+hdr6:
+ 
+  return
+;==================
+subroutine crq
+;===================
+lcr=lcr+1
+if(print.eq.2)go to s210
+if(lcr.ge.58)go to top
+return
+;
+s210:
+if(lcr.ge.20)go to s220
+return
+;
+s220:
+call cget(m05,f02,newline);  newline when ready
+;
+top:
+write(prt,f02)eject
+write(prt,ft3)client
+if(print.eq.2)go to top10
+write(prt,ft2)acnt,sl,key,m06,m11,page
+go to top11
+ 
+top10:
+write(prt,ft2n)acnt,sl,key,m06,m11,page
+ 
+top11:
+page=page+1
+write(prt,ft1)rdate
+write(prt,ft3)
+write(prt,f01)m07,m07a
+write(prt,f01)m08,m08a
+write(prt,f01)
+lcr=7
+return
+;
+;====================================
+;   working storage - constants
+;====================================
+;
+set ?sd1:0, ?sd2:0, ?sd3:0, ?sd4:0, ?sd5:0, ?sd6:0, ?sd7:0
+set ?sc1:0, ?sc2:0, ?sc3:0, ?sc4:0, ?sc5:0, ?sc6:0, ?sc7:0
+;
+set lcr:0,v1:0,v4:0,maj:0,min:0,opt:0,lbrn:0,?bdr:0,?bcr:0
+set v2:0
+set finsw:0
+set page:1,print:0,?dr:0,?cr:0,nbr:0,i999:999,nummon:0
+set hdrsw:0
+set ?d1:0,?d2:0,?d3:0,?d4:0,?d5:0,?d6:0,?d7:0
+set ?c1:0,?c2:0,?c3:0,?c4:0,?c5:0,?c6:0,?c7:0
+string newline(1),rdate(77),money(35),acct(12),brn(3),cmin(3),key(6)
+string null(0)
+;
+define mask00:'*               :              *'
+define mask01:'  ##,###,###@.##-'
+define num:  '                 '
+define zer4:'0000',zer12:'   000000000',spc3:'   ',sl:'/'
+;
+define m02:'enter option:  0  current posted balances'
+define m02a:'1  current posted + unposted '
+define m03:'***   total   ***'
+define m04:'end of trial balance'
+define m05:'newline when ready'
+define m06:'trial balance worksheet'
+define m07:'                                             *          trial balance       *    '
+define m08:'brn   account          description           *       debit   :      credit  *    '
+define m07a:'  adjustments   *  profit and loss *  balance sheet    '
+define m08a:' debit : credit *  debit : credit  * debit : credit  '
+define m09:'enter report date'
+;
+define m10:'       :        *        :         *       :'
+define m11:'page '
+define m12:'  branch total '
+;
+format f01:c78c54
+format f02:c1
+format f03:n4
+format f04:n1n1x1n1
+format f05:d12
+format f30: n1
+ 
+format ft2: n3 c1 c6 x44 c69 c6 n3
+format ft2n: n3 c1 c6 x19 c43 c6 n3
+format ft3: x100 c100
+format ft1: x100 c100
+format f06:c3n6n3
+format f07:n3
+format f08:x1c15x1
+format f09:x15c30c33c54
+format f10:n3x12c30c33c54;   branch total
+format f11:x17c14
+format f12:c3x1n6x1c3x1c30c33c54
+format f20:c40
+;
+format fc77:c77
+ 
+end
+
+
+

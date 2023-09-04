@@ -1,0 +1,167 @@
+(recg  )
+;
+record recg(131)
+set    ?gid:0;     6 byte integer - br/maj/min  2 digits, 6 digits, 3 digits
+set   ff:0;     f1=blank - no leading char, $= if money acct print $,
+;                  if title account $= print $ on next money account.
+;                  ( = enclose in parent. if neg.
+;               f2= # of lines of overlining. (0,1,2)
+;
+set    vv:0;       v1=type acct (title,money,total,etc.)
+;                  v2=scheduled or not
+;                  v3=center title or which col. a or b
+;                  v4=total level or indicates 'c' type title
+string desc(30);   description
+set    pos:0;      entered but not posted amounts
+set    cmo:0;      current month
+set    mon2:0;     last month
+set    mon3:0;      2 months ago
+set    mon4:0;     3 months ago
+set    mon5:0;     4 months ago
+set    mon6:0
+set    mon7:0
+set    mon8:0
+set    mon9:0
+set    mona:0
+set    monb:0
+set    monc:0
+set    mond:0;     this month last year
+set    mone:0;     last month last year
+set    monf:0;     2 months ago - last year
+;
+set    ?cbal:0;    current balance (does not include post)
+set    ?pbal:0;    last years total prior to monf
+;                  (ie. if cmo is 6/76 - mond=6/75, mone=5/75, mond=4/75,
+;                   and ?pbal is total as of 3/75)
+set     usef:0;    0=no postings, 1=print whether postings or not, 2=postings
+set     ?inv:0;  this will be used in e account for 13th month
+;
+endrec
+;
+record headb(131)
+string client(40);   clients name
+string coment(50); disclaimer
+set    month:0;      current postings are (yymm) (date of cmo)
+set    yrend:0;      month of fiscal year end (mm)
+set    post:0;       if post=3 retain all details to end of year.
+set    ?bsea:0;       balance sheet ending account #
+set    ?plact:0;      profit loss accout #
+set  hh:0; haflg=h accts?, h0=neg in paren, h1=dig.in brn, h2=maj, h3=min, h4=sub, h5=posting to p/r
+set  mnum:0;         # of months of postings in current year
+set acnt:0; accountant
+string xa(1); special sw
+endrec
+;
+file gmst:sys0,class=2,rnd,recsiz=131,key=rel0
+;
+;
+(headb )
+;
+record headb (131)
+string client(40);   clients name
+string coment(50); disclaimer
+set    month:0;      current postings are (mmyy) (date of cmo)
+set    yrend:0;      month of fiscal year end (mm)
+set    post:0;       if post=3 retain all details to end of year.
+set    ?bsea:0;       balance sheet ending account #
+set    ?plact:0;      profit loss accout #
+set hh:0; haflg=0 no h accounts, h0=neg in paren., h1=dig.in br.,h2=maj, h3=min,h4=sub,h5=1 post to p/r.
+set  mnum:0;         # of months of postings in current year
+set acnt:0; accountant
+string xa(1); special sw
+endrec
+;
+; p/r header adding prbnk 3/18
+;
+(head2 )
+;
+record head2(131)
+string dum(1)
+set dolflg:0
+set   ?clib:0
+set   ?nwor:0
+set   ?ctax:0;    city tax
+set   ?g1:0;     gross income account numbers
+set   ?g2:0
+set ?g3:0
+set   ?g4:0
+set   ?g5:0
+set   ?g6:0
+set   ?g7:0
+set   ?g8:0
+set   ?g9:0
+;
+set   ?fica:0
+set   ?fwt:0;    fed. withholding
+set   ?swt:0;    state w/h
+set   ?ot1:0;    other 1
+set   ?ot2:0;    other 2
+set   ?mea:0;    meals
+set   ?tips:0;   tips
+set   ?mtded:0;  meals and tips contra account
+set  prbnk:0;  just maj/min
+;    130 bytes
+endrec
+;
+;
+;
+;
+;
+(hd3   )
+;
+; 3rd header
+record hd3(64)
+set    ?meal2:0;  dr meals
+set    ?tips2:0;
+set    ?mtded2:0;
+set   tmeal:0,ttips:0,tmtded:0
+set ?ret:0; retained earnings
+set ?invcon:0;   inventory contra account
+set ?binv:0;     beginning inventory account
+set ?einv:0;     ending inventory
+set ?eic:0;     eic account
+set teic:0;     total eic amt
+endrec
+;
+(list  )
+;
+record listb(10)
+set    ?lid:0;       list of account numbers (6 byte index number)
+set    rel0:0;       relative key for the 6 byte random access g/l
+endrec
+;
+file list:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+(gdet  )
+;
+record gdet(76)
+set   ?acct:0;       br/maj/min (6 bytes)
+set   ?sub:0;         sub account number
+set   jrn:0;         journal number
+set  sorpnt:0;         field added for sorting starts as the pointer number
+set   ref:0;         reference number
+set   date:0;        detail date (mo,da,yr)
+set   emp:0;         employee number
+string ddesc(30);     description entry for detail
+set   amt:0;         amount entered
+set jdte:0; journal date
+set rel:0
+;    75 bytes used
+endrec
+;
+(brec  )
+;
+;
+record brec(131)
+set   ?bid:0;      budget account number
+table bud(24) ;      24 months of budget
+edbud:
+set btest:0;   if d account 0=print d & schedule on bud., 1=print d only, 2=print sch. only
+endrec
+;
+record budh(131)
+table mon(4,48);     holds jan,feb, etc. starting with first month of fiscal year
+endrec
+
+
