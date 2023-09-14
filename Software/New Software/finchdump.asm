@@ -1,19 +1,35 @@
-* Finch Dump based on GOS by Ren14500
-        TITLE   'FIDUMP'
-ZFIDMP  BEGIN   X'0100'
+********************************************************************************
+*                                Finch Dump                                    *
+********************************************************************************
 *
-* MUX constants. 
+* The assembly in this Finch Dump program was heavily inspired by GOS and
+* Ren14500's excellent guidance. Additionally, all the DMA and drive/FFC related
+* control was learned from Gecho, who was extra patient with me.
+* Thank you both so much for walking me through this!
+*
+        TITLE   'FIDUMP'
+ZFIDMP  BEGIN   X'0300'
+*
+********************************************************************************
+*                                 Constants                                    *
+********************************************************************************
+* X'0100' -> RTZ Command String
+* X'0200' -> Seek and Read Command String
+* X'0300' -> Where this program lives
+* X'1000' -> Where the read data will go
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
-MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address.
-MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address.
-MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address.
-MUX3DATA  EQU       X'F207'        ; Fourth MUX port control MMIO address.
-MUX0CB    EQU       X'C5'          ; First MUX port at 9,600 7E1.
-MUX3CB    EQU       X'F6'          ; Third MUX port at 19,200 8N1.
+MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
+MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
+MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
+MUX3DATA  EQU       X'F207'        ; Fourth MUX port control MMIO address
+MUX0CB    EQU       X'C5'          ; First MUX port at 9,600 7E1
+MUX3CB    EQU       X'F6'          ; Third MUX port at 19,200 8N1
 *
-* Entry point.
-ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO.
+********************************************************************************
+*                               Entry point                                    *
+********************************************************************************
+ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
 * Initialize MUX ports
           LDAB=     MUX0CB         ; Load Mux 0 Control Byte into A
           STAB/     MUX0CTRL       ; Store A into MUX0CTRL, MMIO port for MUX0
@@ -27,10 +43,20 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO.
           DW        X'8D8A'
           DB        0              ; Null terminator
 *
+********************************************************************************
+*                       Comand String Initial Setup                            *
+********************************************************************************
+*
 *
 *
 ********************************************************************************
-*                               SUBROUTINES                                    *          
+*                               Do The Read                                    *
+********************************************************************************
+*
+*
+*
+********************************************************************************
+*                               SUBROUTINES                                    *
 ********************************************************************************
 *
 * Print the null-terminated string at X to the CRT

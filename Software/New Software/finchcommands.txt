@@ -1,0 +1,23 @@
+DMA Command String
+
+81 -> Unit Select, followed by one byte (0, 2, 4, 8)
+84 -> Disk Select, followed by one byte (0, 1, 2, 3, etc.)
+82 -> RTZ, not followed by anything (skip when doing consecutive reads)
+83 -> Seek, followed by two bytes ()
+8A -> Read?, followed by four bytes (1000)
+    First two bytes: Location to store the read data?
+    Next two bytes: Number of bytes to read (X'0190')
+
+Example command for reading Unit 1, Disk 0, Track 00, and storing to X'0300'
+M0100: 81 02 84 00 82 83 00 00 8A 03 00 01 90
+
+To DMA string out
+
+DMA SCT,XXXX -> How many bytes to read in command string
+DMA SAD,XXXX -> Where to start reading bytes from?
+DMA SDV,3?   -> Set DMA device to 3?
+DMA EAB      -> Enable DMA
+43           -> Execute DMA? Must be stored into X'F800'
+
+
+
