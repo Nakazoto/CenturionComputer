@@ -1,0 +1,26 @@
+DMA Command String
+(Floppy has 29 Sectors per track, 605 tracks per disk, 4 disks
+
+81 -> Unit Select, followed by one byte (0, 2, 4, 8)
+84 -> Disk Select, followed by one byte (0, 1, 2, 3, etc.)
+82 -> RTZ, followed by X'FF'? (skip when doing consecutive reads)
+83 -> Seek, followed by two bytes (X'0000' ~ X'025C')
+8A -> Read?, followed by four bytes (X'1000' and X'0190' in DIAG?)
+    First two bytes: Sector and something?
+    Next two bytes: Number of bytes to read (X'0190')
+
+Example command for reading Unit 1, Disk 0, Track 00
+M0100: 81 02 84 00 82 FF 83 00 00 8A 10 00 01 90
+
+To DMA string out
+
+DMA SCT,XXXX -> How many bytes to read in command string (FFFF - count)
+DMA SAD,XXXX -> Where to start reading bytes from
+DMA SDV,3?   -> Set DMA device to 3?
+DMA EAB      -> Enable DMA
+43           -> Send command. Must be stored into X'F800'?
+* Wait for FFC status bit to confirm done *
+DMA SCT,XXXX -> How many bytes will be read over DMA (FFFF - count)
+DMA SAD,XXXX -> Where to store the read bytes to
+DMA EAB      -> Enable DMA
+45           -> Execute command. Must be stored into X'F800'?
