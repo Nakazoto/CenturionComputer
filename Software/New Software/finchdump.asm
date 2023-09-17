@@ -47,9 +47,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      DMARTZ
 LOOP      JSR/      DMARED
           JSR/      DMPDATA
-          JSR/      PRINTNULL
-          DC        '.'
-          DB        0              ; Null terminator
+          
           JSR/      INCRMENT
           < INSERT LOPP STUFF HERE!!! >
 *
@@ -121,7 +119,7 @@ DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
           RSR
 * Status register is at F801 -> if 0000 then all good?
 CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
-          BNZ       CHKSTAT        ; Loop back to CHKSTAT is status is not 00
+<!>       BNZ       CHKSTAT        ; Loop back to CHKSTAT is status is not 00
           RSR
 *
 ********************************************************************************
@@ -145,8 +143,11 @@ INCRMENT  LDA/      X'0208'        ; Load the sector count? into A
 SECTINC   XFR       Y,A            ; Move incremented sector back into A
           STA/      X'0208'        ; Drop A back into command string
           RSR                      ; Return back to main loop
-TRAKINC   XFR       Y,A            ; Move incremented sector back into A
-          STA/      X'0208'        ; Drop A back into command string
+TRAKINC   < DROP NEW VALUE BACK INTO COMMAND STRING!!! >
+          JSR/      PRINTNULL
+          DC        'X'0974' TRACKS TOTAL: TRACK '
+          <PRINT A VARIABLE?>
+          DB        0              ; Null terminator
           RSR                      ; Return back to main loop
 *
 ********************************************************************************
@@ -171,6 +172,9 @@ PNEND     LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
+          JSR/      PRINTNULL
+          DC        '.'            ; Print a '.' to denote a completed sector
+          DB        0
           RSR                      ; Return
 *          
 * Dump data out CRT3
