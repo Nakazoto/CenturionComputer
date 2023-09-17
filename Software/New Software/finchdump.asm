@@ -134,15 +134,20 @@ CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
 * Finch has 4 Disks, 605 Tracks per Disk, 29 Sectors per Track
 INCRMENT  LDA/      X'0208'        ; Load the sector count? into A
           INR       A              ; Increase by 1
-          LDB=      X'101E'        ; Load max sector count + 1 into B
-          SUB       B,A            ; Subtract A from B
-          <GOTTA PUT A BACK INTO THE COMMAND STRING!!!>
-          BNZ       ALLDONE        ; Branch if not Zero to RSR
+          XFR       A,Y
+          LDA=      X'101E'        ; Load max sector count + 1 into B
+          SUB       Y,A            ; Subtract A from B
+          BNZ       SECTINC        ; Branch if not Zero to RSR
           LDA=      X'1000'        ; Reset sector count to 0
           STA/      X'0208'
 
 
-ALLDONE   RSR
+SECTINC   XFR       Y,A            ; Move incremented sector back into A
+          STA/      X'0208'        ; Drop A back into command string
+          RSR                      ; Return back to main loop
+TRAKINC   XFR       Y,A            ; Move incremented sector back into A
+          STA/      X'0208'        ; Drop A back into command string
+          RSR                      ; Return back to main loop
 *
 ********************************************************************************
 *                             PRINT SUBROUTINES                                *
