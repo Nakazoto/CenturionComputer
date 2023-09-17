@@ -170,12 +170,22 @@ DISKINC   LDAB/     SRDCMDST+3     ; Load the disk count into AL
           INRB      AL             ; Increment the disk number
           STAB/     SRDCMDST+3     ; Store back into command string
           JMP/      PRPROG         ; Jump to print progress
-PRPROG    JSR/      PRINTNULL
+DSKDIGITS EQU       2              ; Digits to display for the disk.
+TRKDIGITS EQU       4              ; Digits to display for the track.
+PRPROG    MVF       (DSKDIGITS)='#@',/PRPROGDSK   ; Set the disk format.
+          MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format.
+          LDAB=     DSKDIGITS      ; AL = digits to display for the disk.
+          LDBB=     '0'            ; BL = padding character.
+          CFB       /PRPROGDSK(16),/SRDCMDST+3(1) ; Convert SRDCMDST+3(b) to hex
+          LDAB=     TRKDIGITS      ; AL = digits to display for the track.
+          LDBB=     '0'            ; BL = padding character.
+          CFB       /PRPROGTRK(16),/SRDCMDST+5(1) ; Convert SRDCMDST+5(w) to hex
+          JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed        
           DC        'DISK: '
-<!>       DB        SRDCMDST+3
+PRPROGDSK DS        DSKDIGITS
           DC        ', TRACK: '
-<!>       DW        SRDCMDST+5
+PRPROGTRK DS        TRKDIGITS
           DC        ', SECTOR: '
           DB        0              ; Null terminator
           RSR                      ; Return back to main loop
@@ -202,10 +212,6 @@ PNEND     LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
-          JSR/      PRINTNULL
-          DC        '.'            ; Print a '.' to denote a completed sector
-          DB        0
-          RSR                      ; Return
 *          
 * Dump data out CRT3
 DMPDATA   STAB-     S-             ; Push AL to the stack
@@ -213,8 +219,8 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
           LDX=      READDATA       ; Start of 400 bytes of DMA'd data
-          XFR       X+X'0190',Z    ; Add X'0190' to X and store in Z
-          LDX=      READDATA       ; Start of 400 bytes of DMA'd data
+          XFR       X,Z            ; Transfer X over to Z
+          ADD=      X'0190',Z      ; Add X'0190' to Z (400 bytes)
 DCHECK    XFR       X,Y            ; Transfer X into Y
           SUB       Z,Y            ; Subtracts Z-Y -> 0x190 - Counter
           BZ        DEND           ; Branch is zero to da end yo
