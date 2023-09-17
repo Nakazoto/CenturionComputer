@@ -1,5 +1,5 @@
 DMA Command String
-(Floppy has 29 Sectors per track, 605 tracks per disk, 4 disks
+(Finch has 29 Sectors per track, 605 tracks per disk, 4 disks)
 
 81 -> Unit Select, followed by one byte (0, 2, 4, 8)
 84 -> Disk Select, followed by one byte (0, 1, 2, 3, etc.)

@@ -1,5 +1,5 @@
 ********************************************************************************
-*                             FINCH DUMP                                       *
+*                                  FINCH DUMP                                  *
 ********************************************************************************
 *
 * The assembly in this Finch Dump program was heavily inspired by GOS and
@@ -13,12 +13,11 @@ ZFIDMP    BEGIN     X'0300'
 ********************************************************************************
 *                                  CONSTANTS                                   *
 ********************************************************************************
-* X'0100' -> RTZ Command String
-* X'0200' -> Seek and Read Command String
-* X'0300' -> Where this program lives
-* X'1000' -> Where the read data will go
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
+RTZCMDST  EQU       X'0100'        ; Where the RTZ command string lives
+SRDCMDST  EQU       X'0200'        ; Where the Seek and Read command string live
+READDATA  EQU       X'1000'        ; Where the Read data will go
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
@@ -31,7 +30,7 @@ MUX3CB    EQU       X'F6'          ; Third MUX port at 19,200 8N1
 ********************************************************************************
 ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
 * Initialize MUX ports
-          DAB=      MUX0CB         ; Load Mux 0 Control Byte into A
+          LDAB=     MUX0CB         ; Load Mux 0 Control Byte into A
           STAB/     MUX0CTRL       ; Store A into MUX0CTRL, MMIO port for MUX0
           LDAB=     MUX3CB         ; Load Mux 3 Control Byte into A
           STAB/     MUX3CTRL       ; Store A into MUX3CTRL, MMIO port for MUX3
@@ -50,14 +49,15 @@ LOOP      JSR/      DMARED
           JSR/      DMPDATA
           JSR/      PRINTNULL
           DC        '.'
-          JSR/      INCREMENT
+          DB        0              ; Null terminator
+          JSR/      INCRMENT
           < INSERT LOPP STUFF HERE!!! >
 *
 ********************************************************************************
 *                        COMAND STRING INITIAL SETUP                           *
 ********************************************************************************
 *
-RTZCMND   LDA=      X'0100'        ; Location of bytes to read for DMA
+RTZCMND   LDA=      RTZCMDST       ; Location of bytes to read for DMA
           XAY                      ; Transfer A to Y
           LDA=      X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
           STA+      Y+             ; Store A indexed, direct, post-incremented
@@ -65,7 +65,7 @@ RTZCMND   LDA=      X'0100'        ; Location of bytes to read for DMA
           STA+      Y+             ; Store A indexed, direct, post-incremented
           LDAB=     X'82FF         ; 82 = RTZ
           STAB+     Y+             ; Store AL indexed, direct, post-incremented
-READCMD   LDA=      X'0200'        ; Location of bytes to read for DMA
+READCMD   LDA=      SRDCMDST       ; Location of bytes to read for DMA
           XAY
           LDA=      X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
           STA+      Y+             ; Store A indexed, direct, post-incremented
@@ -79,7 +79,7 @@ READCMD   LDA=      X'0200'        ; Location of bytes to read for DMA
           STAB+     Y+             ; Store A indexed, direct, post-incremented
           LDA=      X'1000'        ; 1000 = I don't know, it's what DIAG does
           STA+      Y+             ; Store A indexed, direct, post-incremented
-          LDA=      X'0190'        ; 1000 = I don't know, it's what DIAG does
+          LDA=      X'0190'        ; 0190 = I don't know, it's what DIAG does
           STA+      Y+             ; Store A indexed, direct, post-incremented
           RSR
 *
@@ -87,32 +87,62 @@ READCMD   LDA=      X'0200'        ; Location of bytes to read for DMA
 *                             DMA SUBROUTINES                                  *
 ********************************************************************************
 *
-DMARTZ    LDA=      X'FFF9'        ; Num. bytes to count for DMA (FFFF-FFF9=06)
-          LDB=      X'0000'        ; FFC and CPU on same page about # of bytes
-          < NEED A THIRD ONE FOR LOCATION!!! >
-          JMP       DMAIT
-DMARED    LDA=      X'FFF3'        ; Num. bytes to count for DMA (FFFF-FFF9=0C)
-          LDB=      X'0190'        ; FFC and CPU on same page about # of bytes
-          < NEED A THIRD ONE FOR LOCATION!!! >
+DMARTZ    LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
+          STA-      S-             ; Push A to the stack
+          LDA=      RTZCMDST       ; Where the RTZ command string is
+          STA-      S-             ; Push A to the stack
+          LDA=      X'FFFF'-6      ; How many bytes to read in command string
+          STA-      S-             ; Push A to the stack
+          JMP       DMAIT          ; Jump ahead skipping the next section
+DMARED    LDA=      X'0190'        ; Should read back 400 bytes/1 sector
+          STA-      S-             ; Push A to the stack
+          LDA=      SRDCMDST       ; Where the RTZ command string is
+          STA-      S-             ; Push A to the stack
+          LDA=      X'FFFF'-12     ; How many bytes to read in command string
+          STA-      S-             ; Push A to the stack
 DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
-          < LOAD PROPER VALUE HERE!!! >
+          LDA+      S+             ; Pop A from the stack (FFFX or FFFX)
           DMA       SCT,A          ; Load DMA Count from A word register
-          < LOAD PROPER VALUE HERE!!! >
+          LDA+      S+             ; Pop A from the stack (RTZCMDST or SRDCMDST)
           DMA       SAD,A          ; Tell FFC where the command bytes are
           DMA       SDV,3          ; Set DMA device to 3 (FFC?)
           DMA       EAB            ; Enable DMA
           LDAB=     X'43'          ; 43 = Transfer command to FFC
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
           JSR/      CHKSTAT        ; Check that FFC is ready
-          < LOAD PROPER VALUE HERE!!! >
+          LDA+      S+             ; Pop A from the stack (0000 or 0190)
+          DMA       SCT,A          ; Load DMA Count from A word register
+          LDA=      READDATA       ; Store all read bytes to this address
           DMA       SAD,A          ; FFC and CPU on same page about # of bytes
           DMA       SDV,3          ; Set DMA device to 3 (FFC?)
           DMA       EAB            ; Enable DMA
           LDAB=     X'45'          ; 43 = Execute
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
           RSR
-CHKSTAT   
+* Status register is at F801 -> if 0000 then all good?
+CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
+          BNZ       CHKSTAT        ; Loop back to CHKSTAT is status is not 00
+          RSR
+*
+********************************************************************************
+*                           INCREMENT SUBROUTINE                               *
+********************************************************************************
+*
+* X'0200': 81 02 84 00 83 00 00 8A 10 00 01 90
+* 81 = Unit Select, 02 = Unit 2 (Finch 0), 84 = Disk Select, 00 = Disk 0
+* 83 = Seek, 0000 = Track 0000, 8A = Read, 1000 = ??, 0190 = 400 bytes of what?
+* Finch has 4 Disks, 605 Tracks per Disk, 29 Sectors per Track
+INCRMENT  LDA/      X'0208'        ; Load the sector count? into A
+          INR       A              ; Increase by 1
+          LDB=      X'101E'        ; Load max sector count + 1 into B
+          SUB       B,A            ; Subtract A from B
+          <GOTTA PUT A BACK INTO THE COMMAND STRING!!!>
+          BNZ       ALLDONE        ; Branch if not Zero to RSR
+          LDA=      X'1000'        ; Reset sector count to 0
+          STA/      X'0208'
 
+
+ALLDONE   RSR
 *
 ********************************************************************************
 *                             PRINT SUBROUTINES                                *
@@ -143,8 +173,8 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDX=      X'1000'        ; Start of 400 bytes of DMA'd data
-          XFR=      X'1190',Z      ; Set max address for data into Z reg
+          LDX=      READDATA       ; Start of 400 bytes of DMA'd data
+<!>       XFR=      X+X'0190',Z    ; Set max address for data into Z reg
 DCHECK    XFR       X,Y            ; Transfer X into Y
           SUB       Z,Y            ; Subtracts Z-Y -> 0x190 - Counter
           BZ        DEND           ; Branch is zero to da end yo
