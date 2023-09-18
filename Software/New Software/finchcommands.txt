@@ -3,14 +3,15 @@ DMA Command String
 
 81 -> Unit Select, followed by one byte (0, 2, 4, 8)
 84 -> Disk Select, followed by one byte (0, 1, 2, 3, etc.)
-82 -> RTZ, followed by X'FF'? (skip when doing consecutive reads)
+82 -> RTZ (skip when doing consecutive reads)
 83 -> Seek, followed by two bytes (X'0000' ~ X'025C')
-8A -> Read?, followed by four bytes (X'1000' and X'0190' in DIAG?)
-    First two bytes: Sector and something?
+8A -> Read, followed by three bytes (X'00' and X'0190' in DIAG?)
+    First byte: Sector (00 ~ 1D)
     Next two bytes: Number of bytes to read (X'0190')
+FF -> Command string needs to finish with FF
 
-Example command for reading Unit 1, Disk 0, Track 00
-M0100: 81 02 84 00 82 FF 83 00 00 8A 10 00 01 90
+Example command for reading Unit 01, Disk 00, Track 00, Sector 00
+81 02 84 00 83 00 00 8A 00 01 90 FF
 
 To DMA string out
 

@@ -1,0 +1,10 @@
+Hawk DMA commands
+
+STAB/     X'F140'        ; Store unit select register (00 = Drive 1 platter 0)
+STA/      X'F141'        ; Store cylinder, head and sector
+DMA       SDV,0          ; Set DMA device to 0
+DMA       EAB            ; Enable DMA
+DMA       SAD,X'XXXX'    ; Where to put the bytes, bootstrap sets to X'0100'
+DMA       SCT,X'XXXX'    ; No. of bytes to read, bootstrap sets to X'EA1F'
+STAB/     X'F148'        ; MMIO command, bootstrap uses "00", a read command
+LDAB/     X'F144'        ; Check read status

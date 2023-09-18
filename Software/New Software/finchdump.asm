@@ -8,15 +8,13 @@
 * Thank you both so much for walking me through this!
 *
           TITLE     'FIDUMP'
-ZFIDUMP   BEGIN     X'0300'
+ZFIDUMP   BEGIN     X'0100'
 *
 ********************************************************************************
 *                                  CONSTANTS                                   *
 ********************************************************************************
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
-RTZCMDST  EQU       X'0100'        ; Where the RTZ command string lives
-SRDCMDST  EQU       X'0200'        ; Where the Seek and Read command string live
 READDATA  EQU       X'1000'        ; Where the Read data will go
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
@@ -45,7 +43,8 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DB        0              ; Null terminator
 * Start Doing Productive Stuff
           JSR/      DMARTZ
-LOOP      JSR/      DMARED
+          JSR/      PRPROG
+LOOP      JSR/      DMAREAD
           JSR/      DMPDATA
           JSR/      INCRMNT1
           JSR/      CHKESC
@@ -65,6 +64,7 @@ READCMD   DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
           DB        X'8A'          ; 8A = Read
           DB        X'00'          ; 00 = Sector (Up to 1D)
           DW        X'0190'        ; 0190 = Number of bytes
+          DB        X'FF'
 *
 ********************************************************************************
 *                             DMA SUBROUTINES                                  *
@@ -72,21 +72,21 @@ READCMD   DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
 *
 DMARTZ    LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
           STA-      S-             ; Push A to the stack
-          LDA=      RTZCMDST       ; Where the RTZ command string is
+          LDA=      RTZCMD         ; Where the RTZ command string is
           STA-      S-             ; Push A to the stack
           LDA=      X'FFFF'-6      ; How many bytes to read in command string
           STA-      S-             ; Push A to the stack
           JMP       DMAIT          ; Jump ahead skipping the next section
-DMARED    LDA=      X'0190'        ; Should read back 400 bytes/1 sector
+DMAREAD   LDA=      X'0190'        ; Should read back 400 bytes/1 sector
           STA-      S-             ; Push A to the stack
-          LDA=      SRDCMDST       ; Where the RTZ command string is
+          LDA=      READCMD        ; Where the RTZ command string is
           STA-      S-             ; Push A to the stack
           LDA=      X'FFFF'-12     ; How many bytes to read in command string
           STA-      S-             ; Push A to the stack
 DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
           LDA+      S+             ; Pop A from the stack (FFFX or FFFX)
           DMA       SCT,A          ; Load DMA Count from A word register
-          LDA+      S+             ; Pop A from the stack(RTZCMDST or SRDCMDST)
+          LDA+      S+             ; Pop A from the stack(RTZCMD or READCMD)
           DMA       SAD,A          ; Tell FFC where the command bytes are
           DMA       SDV,3          ; Set DMA device to 3 (FFC?)
           DMA       EAB            ; Enable DMA
@@ -111,46 +111,46 @@ CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
 *                           INCREMENT SUBROUTINE                               *
 ********************************************************************************
 *
-* X'0200': 81 02 84 00 83 00 00 8A 10 00 01 90
+* Command string: 81 02 84 00 83 00 00 8A 00 01 90 FF
 * 81 = Unit Select, 02 = Unit 2 (Finch 0), 84 = Disk Select, 00 = Disk 0
 * 83 = Seek, 0000 = Track 0000, 8A = Read, 00 = Sector, 0190 = 400 bytes
 * Finch has 4 Disks, 605 Tracks per Disk, 29 Sectors per Track
-INCRMNT1  LDAB/     SRDCMDST+8     ; Load the sector count? into A
-          XFRB      A,Y            ; Transfer it over to Y
-          LDAB=     X'1D'          ; Load max sector count? into A
-          SUBB      Y,A            ; Subtract A from Y
+INCRMNT1  LDAB/     READCMD+8      ; Load the sector count into AL
+          XFRB      AL,YL          ; Transfer it over to YL
+          LDAB=     X'1D'          ; Load max sector count into AL
+          SUBB      Y,A            ; Subtract AL from YL
           BNZ       SECTINC        ; Branch if not Zero to Sector Increment
           LDAB=     X'00'          ; Reset sector count to 0
-          STA/      SRDCMDST+8     ; Store back into command string
+          STA/      READCMD+8      ; Store back into command string
           JMP/      INCRMNT2       ; Jump to Increment 2
-SECTINC   LDA/      SRDCMDST+8     ; Load the sector count? into A
-          INR       A              ; Increment by one
-          STA/      SRDCMDST+8     ; Store back into command string
+SECTINC   LDAB/     READCMD+8      ; Load the sector count into AL
+          INRB      A              ; Increment by one
+          STAB/     READCMD+8      ; Store back into command string
           JSR/      PRINTNULL      ; Print a '.' to denote sector progress
           DC        '.'
           DB        0
           RSR                      ; Return to main loop
-INCRMNT2  LDA/      SRDCMDST+5     ; Load the track count into A
+INCRMNT2  LDA/      READCMD+5      ; Load the track count into A
           XFR       A,Y            ; Transfer it over to Y
           LDA=      X'025D'        ; Load max track count into A
           SUB       Y,A            ; Subtract A from Y
           BNZ       TRACKINC       ; Branch if not Zero to Track Increment
           LDA=      X'0000'        ; Reset sector count to 0
-          STA/      SRDCMDST+5     ; Store back into command string
+          STA/      READCMD+5      ; Store back into command string
           JMP/      INCRMNT3       ; Jump to Increment 3
-TRACKINC  LDA/      SRDCMDST+5     ; Load the track count into A
+TRACKINC  LDA/      READCMD+5      ; Load the track count into A
           INR       A              ; Increment by one
-          STA/      SRDCMDST+5     ; Store back into command string
+          STA/      READCMD+5      ; Store back into command string
           JMP/      PRPROG         ; Jump to print progress
-INCRMNT3  LDAB/     SRDCMDST+3     ; Load the disk count into AL
+INCRMNT3  LDAB/     READCMD+3      ; Load the disk count into AL
           XFRB      AL,YL          ; Transfer it over to YL
           LDAB=     X'03'          ; Load max disk count into AL
           SUBB      YL,AL          ; Subtract AL from YL
           BNZ       DISKINC        ; Branch if not Zero to Disk Increment
           JMP/      THEEND
-DISKINC   LDAB/     SRDCMDST+3     ; Load the disk count into AL
+DISKINC   LDAB/     READCMD+3      ; Load the disk count into AL
           INRB      AL             ; Increment the disk number
-          STAB/     SRDCMDST+3     ; Store back into command string
+          STAB/     READCMD+3      ; Store back into command string
           JMP/      PRPROG         ; Jump to print progress
 DSKDIGITS EQU       2              ; Digits to display for the disk.
 TRKDIGITS EQU       4              ; Digits to display for the track.
@@ -158,10 +158,10 @@ PRPROG    MVF       (DSKDIGITS)='#@',/PRPROGDSK   ; Set the disk format.
           MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format.
           LDAB=     DSKDIGITS      ; AL = digits to display for the disk.
           LDBB=     '0'            ; BL = padding character.
-          CFB       /PRPROGDSK(16),/SRDCMDST+3(1) ; Convert SRDCMDST+3(b) to hex
+          CFB       /PRPROGDSK(16),/READCMD+3(1) ; Convert READCMD+3(b) to hex
           LDAB=     TRKDIGITS      ; AL = digits to display for the track.
           LDBB=     '0'            ; BL = padding character.
-          CFB       /PRPROGTRK(16),/SRDCMDST+5(1) ; Convert SRDCMDST+5(w) to hex
+          CFB       /PRPROGTRK(16),/READCMD+5(1) ; Convert READCMD+5(w) to hex
           JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed        
           DC        'DISK: '
@@ -242,7 +242,11 @@ THEEND    JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed
           DC        'Press any key to return to loader.'
           DB        0
-GOODBYE   LDAB/     MUX0CTRL       ; Check MUX to see if rx byte is available
-          BNZ       X'FC00'        ; Jump to bootstrap ROM
-          JMP/      GOODBYE        ; Loopity loop
+GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
+          XAYB                     ; AL -> YL
+          LDAB/     MUX0CTRL       ; AL = MUX status byte
+          SUBB      YL,AL          ; Subtract AL from YL
+          BZ        LOADER         ; If zero then rx byte available, time to go
+          JMP/      GOODBYE        ; Otherwise, loop back to checking for rx
+LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
           END       ENTRY          ; Set the entry point
