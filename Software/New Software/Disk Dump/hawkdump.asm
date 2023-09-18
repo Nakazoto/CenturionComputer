@@ -15,11 +15,8 @@ ZHKDUMP   BEGIN     X'0100'
 ********************************************************************************
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
-UNIT      EQU       X'F140'        ; Unit select register
-SECT      EQU       X'F141'        ; Sector address register
-STAT      EQU       X'F144'        ; Status register (four bytes)
-CMND      EQU       X'F148'        ; Command register
 REDATA    EQU       X'1000'        ; Where the read data goes
+NUBYTE    EQU       X'0190'        ; How many bytes to read
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
@@ -44,25 +41,25 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DW        X'8D8A'
           DB        0              ; Null terminator
 * Start Doing Productive Stuff
-< MAIN LOOP HERE NEEDS CHANGING!!! >
-          JSR/      DMARTZ
-          JSR/      PRPROG
-LOOP      JSR/      DMAREAD
-          JSR/      DMPDATA
-          JSR/      INCRMNT1
-          JSR/      CHKESC
-          JMP/      LOOP
+          JSR/      PICKDR         ; Pick your drive and platter
+          JSR/      HWKRTZ         ; RTZ the Hawk
+          JSR/      PRPROG         ; Print track 0
+LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
+          JSR/      DMPDATA        ; Dump memory to CRT3
+          JSR/      INCRMNT1       ; Inncrement the track
+          JSR/      CHKESC         ; Check if user pressed escape sequene
+          JMP/      LOOP           ; What it says on the tin
 *
 ********************************************************************************
 *                               UNIT SETUP                                     *
 ********************************************************************************
 *
 HWKCMD    DB        X'00'          ; Unit select
-          DW        X'0000'        ; Sector address
+HWKSCT    DW        X'0000'        ; Sector address
 PICKDR    JSR/      PRINTNULL
           DC        'CENTURION COUNTS TOP DOWN'
           DW        X'8D8A'
-          DC        'PLATTER 0 = DRIVE 0 REMOVABLE, PLATTER 1 = DRIVE 0 FIXED, ETC.'
+          DC        'PLAT0 = DRIVE 0 REMOVABLE, PLAT1 = DRIVE 0 FIXED, ETC.'
           DW        X'8D8A'
           DC        'ENTER PLATTER NUMBER (0 ~ 7): '
           DB        0
@@ -72,19 +69,54 @@ WAITRX    XAYB                     ; AL -> YL
           SUBB      YL,AL          ; Subtract AL from YL
           BZ        GRABRX         ; If zero, then receive bit set
           JMP/      WAITRX         ; If not zero, then loop
+RXMASK    DW        X'B0B1'        ; B0 = 0, B1 = 1, B2 = 2, etc.
+          DW        X'B2B3'
+          DW        X'B4B5'
+          DW        X'B6B7'
+MIC       DB        X'00'
+          LDAB=     RXMASK+MIC
 GRABRX    LDBB/     MUX0DATA       ; Read in the receive byte to the B register
-          
-          
-          
-          
-          
-          
+          SUBB      BL,AL          ; Subtract AL from BL
+          BZ        STORDR         ; If it's zero, let's go!
+          LDAB/     MIC            ; If not, load MIC into A
+          INRB      A              ; Increase by one
+          STAB/     MIC            ; Put A back into MIC
+          LDAB=     X'08'          ; If MIC has counted more than 8 times, error
+          LDBB=     MIC            ; Load MIC
+          SUBB      B,A            ; A quick subtract
+          BGZ       PICKDR         ; Jump back to top and pick the correct value
+          JMP/      GRABRX         ; Loop back and try again
+STORDR    LDAB/     MIC            ; Load byte at MIC
+          STAB/     HWKCMD         ; Store that byte into HWKCMD
+          RSR                      ; Back to main loop
 *
 ********************************************************************************
 *                            HAWK SUBROUTINES                                  *
 ********************************************************************************
 *
-HWKRTZ    < FILL THIS STUFF OUT!!! >
+HWKRTZ    LDAB=     HWKCMD         ; Load in the Hawk unit select
+          STAB/     F'140'         ; Stab it into F140, the MMIO register
+          LDAB=     X'03'          ; Load in the RTZ command byte
+          STAB/     F'148'         ; Stab it into F148, the MMIO cmd register
+          RSR
+DMAREAD   JSR/      CHKSTAT        ; Check status to make sure its good
+          LDA=      HWKSCT         ; Load sector count into A
+          STA/      X'F141'        ; Stab it into F141, the MMIO register
+          LDAB=     X'02'          ; Load seek command into A
+          STAB/     F'148'         ; Stab it into F148, the MMIO cmd register
+          JSR/      CHKSTAT        ; Check status to make sure its good
+          DMA       SDV,0          ; Set DMA device to 0
+          DMA       EAB            ; Enable DMA
+          DMA       SAD,REDATA     ; Where to put the bytes (X'1000')
+          DMA       SCT,NUBYTE     ; How many bytes to read (X'0190')
+          LDAB=     X'00'          ; Load read command into A
+          STAB/     F'148'         ; Stab it into F148, the MMIO cmd register
+          JSR/      CHKRED         ; Jump to see if the read data worked
+          RSR
+CHKSTAT   
+
+CHKRED    LDAB/     X'F144'
+
 *
 ********************************************************************************
 *                           INCREMENT SUBROUTINE                               *
