@@ -57,6 +57,7 @@ LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
 *
 HWKCMD    DB        X'00'          ; Unit select
 HWKSCT    DW        X'0000'        ; Sector address
+PRTSCT    DW        X'0000'        ; Printable sector count
 PICKDR    JSR/      PRINTNULL
           DC        'CENTURION COUNTS TOP DOWN'
           DW        X'8D8A'
@@ -129,10 +130,12 @@ INCRMNT1  LDA=      MAXCYL         ; Load max cylinder count into A
           XFR       A,Z            ; Transfer A over to Z
           LDA=      HWKSCT         ; Load current sector into A
           INR       A              ; Increment it by one
+          STA/      HWKSCT         ; Store it back in memory
           SUB       Z,A            ; Subtract A from Z
           BNZ       INCRMNT2       ; If we haven't reached maxcyl yet, proceed
           JMP/      THEEND         ; If we have reached maxcyl, all done
-INCRMNT2  LDAB/     HWKSCT+1       ; Load the lowest byte into A (CCCH SSSS)
+INCRMNT2  LDA=      HWKSCT         ; Load the printable sector
+          
           
           
           
