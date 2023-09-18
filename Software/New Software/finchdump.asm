@@ -43,8 +43,6 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DC        'PRESS CONTROL + C TO QUIT'
           DW        X'8D8A'
           DB        0              ; Null terminator
-* Initiliaze the Command Strings
-          JSR/      RTZCMND
 * Start Doing Productive Stuff
           JSR/      DMARTZ
 LOOP      JSR/      DMARED
@@ -57,32 +55,16 @@ LOOP      JSR/      DMARED
 *                        COMAND STRING INITIAL SETUP                           *
 ********************************************************************************
 *
-RTZCMND   LDA=      RTZCMDST       ; Location of bytes to read for DMA
-          XAY                      ; Transfer A to Y
-          LDA=      X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
-          STA+      Y+             ; Store A indexed, direct, post-incremented
-          LDA=      X'8400'        ; 84 = Disk Select, 00 = Disk 0
-          STA+      Y+             ; Store A indexed, direct, post-incremented
-          LDA=      X'82FF'        ; 82 = RTZ
-          STA+      Y+             ; Store AL indexed, direct, post-incremented
-READCMD   LDA=      SRDCMDST       ; Location of bytes to read for DMA
-          XAY
-          LDA=      X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
-          STA+      Y+             ; Store A indexed, direct, post-incremented
-          LDA=      X'8400'        ; 84 = Disk Select, 00 = Disk 0
-          STA+      Y+             ; Store A indexed, direct, post-incremented
-          LDAB=     X'83'          ; 83 = Seek
-          STAB+     Y+             ; Store AL indexed, direct, post-incremented
-          LDA=      X'0000'        ; 0000 = Track 0000
-          STA+      Y+             ; Store A indexed, direct, post-incremented
-          LDAB=     X'8A'          ; 8A = Read
-          STAB+     Y+             ; Store A indexed, direct, post-incremented
-          LDA=      X'1000'        ; 1000 = I don't know, it's what DIAG does
-          STA+      Y+             ; Store A indexed, direct, post-incremented
-          LDA=      X'0190'        ; 0190 = I don't know, it's what DIAG does
-          STA+      Y+             ; Store A indexed, direct, post-incremented
-          JSR/      PRPROG         ; Print Disk 0, Track 0, Sector 0
-          RSR
+RTZCMD    DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
+          DW        X'8400'        ; 84 = Disk Select, 00 = Disk 0
+          DW        X'82FF'        ; 82 = RTZ
+READCMD   DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
+          DW        X'8400'        ; 84 = Disk Select, 00 = Disk 0
+          DB        X'83'          ; 83 = Seek
+          DW        X'0000'        ; 0000 = Track 0000
+          DB        X'8A'          ; 8A = Read
+          DB        X'00'          ; 00 = Sector (Up to 1D)
+          DW        X'0190'        ; 0190 = Number of bytes
 *
 ********************************************************************************
 *                             DMA SUBROUTINES                                  *
@@ -131,14 +113,14 @@ CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
 *
 * X'0200': 81 02 84 00 83 00 00 8A 10 00 01 90
 * 81 = Unit Select, 02 = Unit 2 (Finch 0), 84 = Disk Select, 00 = Disk 0
-* 83 = Seek, 0000 = Track 0000, 8A = Read, 1000 = ??, 0190 = 400 bytes of what?
+* 83 = Seek, 0000 = Track 0000, 8A = Read, 00 = Sector, 0190 = 400 bytes
 * Finch has 4 Disks, 605 Tracks per Disk, 29 Sectors per Track
-INCRMNT1  LDA/      SRDCMDST+8     ; Load the sector count? into A
-          XFR       A,Y            ; Transfer it over to Y
-          LDA=      X'101F'        ; Load max sector count? into A
-          SUB       Y,A            ; Subtract A from Y
+INCRMNT1  LDAB/     SRDCMDST+8     ; Load the sector count? into A
+          XFRB      A,Y            ; Transfer it over to Y
+          LDAB=     X'1D'          ; Load max sector count? into A
+          SUBB      Y,A            ; Subtract A from Y
           BNZ       SECTINC        ; Branch if not Zero to Sector Increment
-          LDA=      X'1000'        ; Reset sector count to 0
+          LDAB=     X'00'          ; Reset sector count to 0
           STA/      SRDCMDST+8     ; Store back into command string
           JMP/      INCRMNT2       ; Jump to Increment 2
 SECTINC   LDA/      SRDCMDST+8     ; Load the sector count? into A
