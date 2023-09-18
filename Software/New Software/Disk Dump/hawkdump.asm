@@ -17,6 +17,7 @@ ZHKDUMP   BEGIN     X'0100'
 * Data address = control address + 1
 REDATA    EQU       X'1000'        ; Where the read data goes
 NUBYTE    EQU       X'0190'        ; How many bytes to read
+MAXCYL    EQU       X'3200'        ; The highest we can count for cylinders
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
@@ -46,7 +47,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      PRPROG         ; Print track 0
 LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
           JSR/      DMPDATA        ; Dump memory to CRT3
-          JSR/      INCRMNT1       ; Inncrement the track
+          JSR/      INCRMNT1       ; Increment the track
           JSR/      CHKESC         ; Check if user pressed escape sequene
           JMP/      LOOP           ; What it says on the tin
 *
@@ -113,56 +114,35 @@ DMAREAD   JSR/      CHKSTAT        ; Check status to make sure its good
           STAB/     F'148'         ; Stab it into F148, the MMIO cmd register
           JSR/      CHKRED         ; Jump to see if the read data worked
           RSR
-CHKSTAT   
+CHKSTAT   < NEED TO FIGURE OUT STATUS CHECKING!!!>
 
-CHKRED    LDAB/     X'F144'
+CHKRED    < NEED TO FIGURE OUT STATUS CHECKING!!!>
 
 *
 ********************************************************************************
 *                           INCREMENT SUBROUTINE                               *
 ********************************************************************************
 *
-* Command string: 81 02 84 00 83 00 00 8A 00 01 90 FF
-* 81 = Unit Select, 02 = Unit 2 (Finch 0), 84 = Disk Select, 00 = Disk 0
-* 83 = Seek, 0000 = Track 0000, 8A = Read, 00 = Sector, 0190 = 400 bytes
-* Finch has 4 Disks, 605 Tracks per Disk, 29 Sectors per Track
-INCRMNT1  LDAB/     READCMD+8      ; Load the sector count into AL
-          XFRB      AL,YL          ; Transfer it over to YL
-          LDAB=     X'1D'          ; Load max sector count into AL
-          SUBB      Y,A            ; Subtract AL from YL
-          BNZ       SECTINC        ; Branch if not Zero to Sector Increment
-          LDAB=     X'00'          ; Reset sector count to 0
-          STA/      READCMD+8      ; Store back into command string
-          JMP/      INCRMNT2       ; Jump to Increment 2
-SECTINC   LDAB/     READCMD+8      ; Load the sector count into AL
-          INRB      A              ; Increment by one
-          STAB/     READCMD+8      ; Store back into command string
+* Hawk has X'0190' cylinders, 2 tracks per cyl., 16 sectors per track
+* Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'
+INCRMNT1  LDA=      MAXCYL         ; Load max cylinder count into A
+          XFR       A,Z            ; Transfer A over to Z
+          LDA=      HWKSCT         ; Load current sector into A
+          INR       A              ; Increment it by one
+          SUB       Z,A            ; Subtract A from Z
+          BNZ       INCRMNT2       ; If we haven't reached maxcyl yet, proceed
+          JMP/      THEEND         ; If we have reached maxcyl, all done
+INCRMNT2  LDAB/     HWKSCT+1       ; Load the lowest byte into A (CCCH SSSS)
+          
+          
+          
           JSR/      PRINTNULL      ; Print a '.' to denote sector progress
           DC        '.'
           DB        0
           RSR                      ; Return to main loop
-INCRMNT2  LDA/      READCMD+5      ; Load the track count into A
-          XFR       A,Y            ; Transfer it over to Y
-          LDA=      X'025D'        ; Load max track count into A
-          SUB       Y,A            ; Subtract A from Y
-          BNZ       TRACKINC       ; Branch if not Zero to Track Increment
-          LDA=      X'0000'        ; Reset sector count to 0
-          STA/      READCMD+5      ; Store back into command string
-          JMP/      INCRMNT3       ; Jump to Increment 3
-TRACKINC  LDA/      READCMD+5      ; Load the track count into A
-          INR       A              ; Increment by one
-          STA/      READCMD+5      ; Store back into command string
-          JMP/      PRPROG         ; Jump to print progress
-INCRMNT3  LDAB/     READCMD+3      ; Load the disk count into AL
-          XFRB      AL,YL          ; Transfer it over to YL
-          LDAB=     X'03'          ; Load max disk count into AL
-          SUBB      YL,AL          ; Subtract AL from YL
-          BNZ       DISKINC        ; Branch if not Zero to Disk Increment
-          JMP/      THEEND
-DISKINC   LDAB/     READCMD+3      ; Load the disk count into AL
-          INRB      AL             ; Increment the disk number
-          STAB/     READCMD+3      ; Store back into command string
-          JMP/      PRPROG         ; Jump to print progress
+
+
+
 DSKDIGITS EQU       2              ; Digits to display for the disk.
 TRKDIGITS EQU       4              ; Digits to display for the track.
 PRPROG    MVF       (DSKDIGITS)='#@',/PRPROGDSK   ; Set the disk format.
