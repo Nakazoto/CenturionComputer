@@ -256,6 +256,11 @@ CHKRX     LDAB=     X'03'          ; Set mask to check if rx byte is ctrl+c
           RSR                      ; If not zero, then go back to business
 THEEND    JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed
-          DC        'All done!'    
+          DC        'All done!'
+          DW        X'8D8A'        ; Carriage return and line feed
+          DC        'Press any key to return to loader.'
           DB        0
+GOODBYE   LDAB/     MUX0CTRL       ; Check MUX to see if rx byte is available
+          BNZ       X'FC00'        ; Jump to bootstrap ROM
+          JMP/      GOODBYE        ; Loopity loop
           END       ENTRY          ; Set the entry point
