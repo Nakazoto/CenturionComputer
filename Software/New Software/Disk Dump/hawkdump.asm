@@ -40,6 +40,11 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DB        X'8C'
           DC        'HAWK DUMP PROGRAM'
           DW        X'8D8A'
+          DC        'CENTURION COUNTS TOP DOWN'
+          DW        X'8D8A'
+          DC        'PLAT0 = DRIVE 0 REMOVABLE, PLAT1 = DRIVE 0 FIXED, ETC.'
+          DW        X'8D8A'
+          DC        'ENTER PLATTER NUMBER (0 ~ 7): '
           DB        0              ; Null terminator
 * Start Doing Productive Stuff
           JSR/      PICKDR         ; Pick your drive and platter
@@ -56,19 +61,12 @@ LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
 *                               UNIT SETUP                                     *
 ********************************************************************************
 *
-PICKDR    JSR/      PRINTNULL
-          DC        'CENTURION COUNTS TOP DOWN'
-          DW        X'8D8A'
-          DC        'PLAT0 = DRIVE 0 REMOVABLE, PLAT1 = DRIVE 0 FIXED, ETC.'
-          DW        X'8D8A'
-          DC        'ENTER PLATTER NUMBER (0 ~ 7): '
-          DB        0
-WAITRX    LDAB=     B'01'          ; Set mask to check if rx byte available
+PICKDR    LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
           SUBB      YL,AL          ; Subtract AL from YL
           BZ        GRABRX         ; If zero, then receive bit set
-          JMP/      WAITRX         ; If not zero, then loop
+          JMP/      PICKDR         ; If not zero, then loop
 GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B register
           ANDB      AL,X'0F'       ; And with 0000 1111, looking at low nibble
           STAB/     X'F140'        ; Stab it into F140, the MMIO register
