@@ -246,7 +246,6 @@ GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
           SUBB      YL,AL          ; Subtract AL from YL
-          BZ        LOADER         ; If zero then rx byte available, time to go
-          JMP/      GOODBYE        ; Otherwise, loop back to checking for rx
+          BNZ       GOODBYE        ; If not zero, loop back to checking for rx
 LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
           END       ENTRY          ; Set the entry point
