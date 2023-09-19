@@ -61,13 +61,14 @@ LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
 *                               UNIT SETUP                                     *
 ********************************************************************************
 *
-PICKDR    LDAB=     B'01'          ; Set mask to check if rx byte available
+PICKDR    LDAB=     X'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
-          SUBB      YL,AL          ; Subtract AL from YL
-          BZ        GRABRX         ; If zero, then receive bit set
+          ANDB      YL,AL          ; Subtract AL from YL
+          BNZ       GRABRX         ; If not zero, then receive bit set
           JMP/      PICKDR         ; If not zero, then loop
-GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B register
+GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B 
+          STAB/     MUX0DATA       ; Echo that digit back
           ANDB      AL,X'0F'       ; And with 0000 1111, looking at low nibble
           STAB/     X'F140'        ; Stab it into F140, the MMIO register
           RSR                      ; Back to main loop
