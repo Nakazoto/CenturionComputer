@@ -194,7 +194,8 @@ PNEND     LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
-*          
+          RSR
+*
 * Dump data out CRT3
 DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack

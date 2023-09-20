@@ -52,7 +52,6 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      PRPROG         ; Print track 0
 LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
           JSR/      DMPDATA        ; Dump memory to CRT3
-          JSR/      DOTORX         ; Print a DOT or X
           JSR/      INCRMNT1       ; Increment the track
           JSR/      CHKESC         ; Check if user pressed escape sequene
           JMP/      LOOP           ; What it says on the tin
@@ -69,7 +68,9 @@ PICKDR    LDAB=     X'01'          ; Set mask to check if rx byte available
           JMP/      PICKDR         ; If not zero, then loop
 GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B 
           STAB/     MUX0DATA       ; Echo that digit back
-          ANDB      AL,X'0F'       ; And with 0000 1111, looking at low nibble
+          XAYB                     ; AL -> YL
+          LDAB=     X'0F'          ; Load B with 0000 1111
+          ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
           STAB/     X'F140'        ; Stab it into F140, the MMIO register
           RSR                      ; Back to main loop
 *
@@ -81,6 +82,10 @@ HWKSCT    DW        X'0000'        ; Sector address
 PRTSCT    DW        X'0000'        ; Printable sector count
 HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
+          JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'HAWK RTZ INITIATED'
+          DB        0
           RSR
 DMAREAD   JSR/      CHKSTAT        ; Check status to make sure its good
           LDA=      HWKSCT         ; Load sector count into A
@@ -99,22 +104,30 @@ DMAREAD   JSR/      CHKSTAT        ; Check status to make sure its good
           JSR/      CHKRED         ; Jump to see if the read data worked
           RSR
 CHKSTAT   LDAB/     X'F145'        ; Load the drive status
-          ANDB      A,X'CF'        ; And with '1100 1111' (Inverse of goal)
+          XAYB                     ; AL -> YL
+          LDAB=     X'CF'          ; Load AL with '1100 1111' (Inverse of goal)
+          ANDB      YL,AL          ; And with '1100 1111'
           BNZ       CHKSTAT        ; Loop back, waiting for drive to be ready
           RSR
 CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
-          LDBB=     X'00'          ; Load B with X'00' all good mask
-          SUBB      A,B            ; Subtract B from A
+          XAYB                     ; AL -> YL
+          LDAB=     X'FF'          ; Load A with X'FF' inverse of all good
+          ANDB      YL,AL          ; AND AL and YL
           BNZ       CHKWHY         ; If not zero, check why it's not zero
-          LDAB=     X'AE'          ; Load the ASCI code for a '.'
-          STAB/     DOX            ; Store into DOX so we can print a '.'
+          JSR/      PRINTNULL      ; Print a '.' to denote sector progress
+          DC        '.'
+          DB        0
           RSR
 CHKWHY    LDAB/     X'F144'        ; Load the status register of the Hawk
-          LDBB=     X'01'          ; Load B with X'00' all good mask
+          XAYB                     ; AL -> YL
+          LDAB=     X'FE'          ; Load A with X'FE' inverse of busy
+          ANDB      YL,AL          ; AND AL and YL, should give zero
           BNZ       REDERR         ; If it's not zero, then we got a problem
           JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
-REDERR    LDAB=     X'D8'          ; Load the ASCI code for a 'X'
-          STAB/     DOX            ; Store into DOX so we can print a 'X'
+          RSR
+REDERR    JSR/      PRINTNULL      ; Print a 'X' to denote read error
+          DC        'X'
+          DB        0
           RSR
 *
 ********************************************************************************
@@ -174,6 +187,7 @@ PNEND     LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
+          RSR
 *          
 * Dump data out CRT3
 DMPDATA   STAB-     S-             ; Push AL to the stack
@@ -199,10 +213,6 @@ DEND      LDAB+     S+             ; Pop YL from the stack
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
           RSR                      ; Return
-* Print the sector progress bar
-DOTORX    JSR/      PRINTNULL      ; Print a '.' to denote sector progress
-DOX       DC        '.'
-          DB        0
 *
 ********************************************************************************
 *                        ESCAPE AND END SUBROUTINES                            *
@@ -231,5 +241,5 @@ GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           LDAB/     MUX0CTRL       ; AL = MUX status byte
           SUBB      YL,AL          ; Subtract AL from YL
           BNZ       GOODBYE        ; If not zero, loop back to checking for rx
-LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
           END       ENTRY          ; Set the entry point
+LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
