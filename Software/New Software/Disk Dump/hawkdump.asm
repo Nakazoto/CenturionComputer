@@ -51,7 +51,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      HWKRTZ         ; RTZ the Hawk
           JSR/      PRPROG         ; Print track 0
 LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
-*          JSR/      DMPDATA        ; Dump memory to CRT3
+          JSR/      DMPDATA        ; Dump memory to CRT3
           JSR/      INCRMNT1       ; Increment the track
           JSR/      CHKESC         ; Check if user pressed escape sequence
           JMP/      LOOP           ; What it says on the tin
@@ -109,7 +109,7 @@ CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
           LDAB=     X'FF'          ; Load A with X'FF' inverse of all good
           ANDB      YL,AL          ; AND AL and YL
           BZ        PRINTDOT       ; Success, print dot and go
-          LDAB=     X'F6'          ; Load A with X'F6' inverse of busy
+          LDAB=     X'F0'          ; Load A with X'F0' to check for errors
           ANDB      YL,AL          ; AND AL and YL, should give zero
           BNZ       PRINTEX        ; If not 0, then we have an error
           JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
@@ -186,21 +186,23 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
+          LDA=      X'0190'        ; Total number of bytes to count
+          XFR       A,Z            ; Transfer result of ADD to Z
           LDA=      REDATA         ; Start of 400 bytes of DMA'd data
-          XAY                      ; Transfer A over to Y
-          LDA=      X'0190'
-          ADD       A,Y            ; Add X'0190' to Z (400 bytes)
-          
-DCHECK    
-          SUB       Y,A            ; Subtracts Z-Y -> 0x190 - Counter
+          ADD       A,Z            ; Add X'0190' to Z (400 bytes)
+          XFR       A,X            ; Transfer A -> X
+          XAY                      ; Transfer A -> Y
+DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
           BZ        DEND           ; Branch is zero to da end yo
           LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
 DWAIT     LDAB/     MUX3CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Check if transmit buffer empty
           BZ        DWAIT          ; If not empty, loop
-          STBB/     MUX3DATA       ; Store the character to the MUX data
+          LDAB+     X              ; Load byte at address pointed to by X
+          STAB/     MUX3DATA       ; Store the character to the MUX data
           INR       X              ; Increment X
+          XFR       X,Y            ; Transfer X -> Y
           JMP       DCHECK         ; Go to the next character
 DEND      LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL

@@ -116,7 +116,7 @@ CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
 * 83 = Seek, 0000 = Track 0000, 8A = Read, 00 = Sector, 0190 = 400 bytes
 * Finch has 4 Disks, 605 Tracks per Disk, 29 Sectors per Track
 INCRMNT1  LDAB/     READCMD+8      ; Load the sector count into AL
-          XFRB      AL,YL          ; Transfer it over to YL
+          XAYB                     ; Transfer it over to YL
           LDAB=     X'1D'          ; Load max sector count into AL
           SUBB      Y,A            ; Subtract AL from YL
           BNZ       SECTINC        ; Branch if not Zero to Sector Increment
@@ -201,19 +201,23 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDX=      READDATA       ; Start of 400 bytes of DMA'd data
-          XFR       X,Z            ; Transfer X over to Z
-          ADD=      X'0190',Z      ; Add X'0190' to Z (400 bytes)
-DCHECK    XFR       X,Y            ; Transfer X into Y
-          SUB       Z,Y            ; Subtracts Z-Y -> 0x190 - Counter
+          LDA=      X'0190'        ; Total number of bytes to count
+          XFR       A,Z            ; Transfer result of ADD to Z
+          LDA=      READDATA       ; Start of 400 bytes of DMA'd data
+          ADD       A,Z            ; Add X'0190' to Z (400 bytes)
+          XFR       A,X            ; Transfer A -> X
+          XAY                      ; Transfer A -> Y
+DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
           BZ        DEND           ; Branch is zero to da end yo
           LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
 DWAIT     LDAB/     MUX3CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Check if transmit buffer empty
           BZ        DWAIT          ; If not empty, loop
-          STBB/     MUX3DATA       ; Store the character to the MUX data
+          LDAB+     X              ; Load byte at address pointed to by X
+          STAB/     MUX3DATA       ; Store the character to the MUX data
           INR       X              ; Increment X
+          XFR       X,Y            ; Transfer X -> Y
           JMP       DCHECK         ; Go to the next character
 DEND      LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
