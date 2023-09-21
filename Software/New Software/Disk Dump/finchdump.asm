@@ -3,9 +3,10 @@
 ********************************************************************************
 *
 * The assembly in this Finch Dump program was heavily inspired by GOS and
-* Ren14500's excellent guidance. Additionally, all the DMA and drive/FFC related
-* control was learned from Gecho, who was extra patient with me.
-* Thank you both so much for walking me through this!
+* Ren14500's excellent guidance. Additionally, Gecho and Meisaka provided a 
+* a massive amount of help with figuring out assembly, DMA and other drive
+* shenanigans.
+* Thank you all so much for walking me through this!
 *
           TITLE     'FIDUMP'
 ZFIDUMP   BEGIN     X'0100'

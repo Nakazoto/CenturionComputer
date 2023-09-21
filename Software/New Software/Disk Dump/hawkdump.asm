@@ -2,9 +2,11 @@
 *                                  HAWK DUMP                                   *
 ********************************************************************************
 *
-* The assembly in this Hawk Dump program was heavily inspired by GOS and
-* Ren14500's excellent guidance. Additionally, all the DMA and drive related
-* control was learned from Gecho and Ken Romaine, who were very patient with me.
+* The assembly in this Finch Dump program was heavily inspired by GOS and
+* Ren14500's excellent guidance. Additionally, Gecho and Meisaka provided a 
+* a massive amount of help with figuring out assembly, DMA and other drive
+* shenanigans. And of course, Ken Romaine is an absolute legend for remembering
+* so much about the Centurion and the Hawk.
 * Thank you everyone so much for walking me through this!
 *
           TITLE     'HKDUMP'
