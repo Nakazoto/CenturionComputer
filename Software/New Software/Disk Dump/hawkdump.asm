@@ -42,7 +42,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DW        X'8D8A'
           DC        'CENTURION COUNTS TOP DOWN'
           DW        X'8D8A'
-          DC        'PLAT0 = DRIVE 0 REMOVABLE, PLAT1 = DRIVE 0 FIXED, ETC.'
+          DC   'PLATTER 0 = DRIVE 0 REMOVABLE, PLATTER 1 = DRIVE 0 FIXED, ETC.'
           DW        X'8D8A'
           DC        'ENTER PLATTER NUMBER (0 ~ 7): '
           DB        0              ; Null terminator
@@ -51,9 +51,9 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      HWKRTZ         ; RTZ the Hawk
           JSR/      PRPROG         ; Print track 0
 LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
-          JSR/      DMPDATA        ; Dump memory to CRT3
+*          JSR/      DMPDATA        ; Dump memory to CRT3
           JSR/      INCRMNT1       ; Increment the track
-          JSR/      CHKESC         ; Check if user pressed escape sequene
+          JSR/      CHKESC         ; Check if user pressed escape sequence
           JMP/      LOOP           ; What it says on the tin
 *
 ********************************************************************************
@@ -87,12 +87,15 @@ HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
           DC        'HAWK RTZ INITIATED'
           DB        0
           RSR
-DMAREAD   JSR/      CHKSTAT        ; Check status to make sure its good
-          LDA=      HWKSCT         ; Load sector count into A
+DMAREAD   LDAB/     X'F145'        ; Load the drive status
+          XAYB                     ; AL -> YL
+          LDAB=     X'CF'          ; Load AL with '1100 1111' (Inverse of goal)
+          ANDB      YL,AL          ; And with '1100 1111'
+          BNZ       DMAREAD        ; Loop back, waiting for drive to be ready
+DMASTART  LDA=      HWKSCT         ; Load sector count into A
           STA/      X'F141'        ; Stab it into F141, the MMIO register
           LDAB=     X'02'          ; Load seek command into A
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          JSR/      CHKSTAT        ; Check status to make sure its good
           DMA       SDV,0          ; Set DMA device to 0
           DMA       EAB            ; Enable DMA
           LDA=      REDATA         ; Load location where to put bytes
@@ -101,31 +104,20 @@ DMAREAD   JSR/      CHKSTAT        ; Check status to make sure its good
           DMA       SCT,A          ; How many bytes to read (X'0190')
           LDAB=     X'00'          ; Load read command into A
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          JSR/      CHKRED         ; Jump to see if the read data worked
-          RSR
-CHKSTAT   LDAB/     X'F145'        ; Load the drive status
-          XAYB                     ; AL -> YL
-          LDAB=     X'CF'          ; Load AL with '1100 1111' (Inverse of goal)
-          ANDB      YL,AL          ; And with '1100 1111'
-          BNZ       CHKSTAT        ; Loop back, waiting for drive to be ready
-          RSR
 CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
           XAYB                     ; AL -> YL
           LDAB=     X'FF'          ; Load A with X'FF' inverse of all good
           ANDB      YL,AL          ; AND AL and YL
-          BNZ       CHKWHY         ; If not zero, check why it's not zero
-          JSR/      PRINTNULL      ; Print a '.' to denote sector progress
+          BZ        PRINTDOT       ; Success, print dot and go
+          LDAB=     X'F6'          ; Load A with X'F6' inverse of busy
+          ANDB      YL,AL          ; AND AL and YL, should give zero
+          BNZ       PRINTEX        ; If not 0, then we have an error
+          JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
+PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
           DC        '.'
           DB        0
           RSR
-CHKWHY    LDAB/     X'F144'        ; Load the status register of the Hawk
-          XAYB                     ; AL -> YL
-          LDAB=     X'FE'          ; Load A with X'FE' inverse of busy
-          ANDB      YL,AL          ; AND AL and YL, should give zero
-          BNZ       REDERR         ; If it's not zero, then we got a problem
-          JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
-          RSR
-REDERR    JSR/      PRINTNULL      ; Print a 'X' to denote read error
+PRINTEX   JSR/      PRINTNULL      ; Print a 'X' to denote read error
           DC        'X'
           DB        0
           RSR
@@ -188,17 +180,19 @@ PNEND     LDAB+     S+             ; Pop YL from the stack
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
           RSR
-*          
+*
 * Dump data out CRT3
 DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDX=      REDATA         ; Start of 400 bytes of DMA'd data
-          XFR       X,Z            ; Transfer X over to Z
-          ADD=      X'0190',Z      ; Add X'0190' to Z (400 bytes)
-DCHECK    XFR       X,Y            ; Transfer X into Y
-          SUB       Z,Y            ; Subtracts Z-Y -> 0x190 - Counter
+          LDA=      REDATA         ; Start of 400 bytes of DMA'd data
+          XAY                      ; Transfer A over to Y
+          LDA=      X'0190'
+          ADD       A,Y            ; Add X'0190' to Z (400 bytes)
+          
+DCHECK    
+          SUB       Y,A            ; Subtracts Z-Y -> 0x190 - Counter
           BZ        DEND           ; Branch is zero to da end yo
           LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
