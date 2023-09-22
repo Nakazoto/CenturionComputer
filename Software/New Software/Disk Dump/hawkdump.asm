@@ -18,7 +18,7 @@ ZHKDUMP   BEGIN     X'0100'
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
 REDATA    EQU       X'1000'        ; Where the read data goes
-NUBYTE    EQU       X'0190'        ; How many bytes to read
+NUBYTE    EQU       X'FFFF'-X'0190'; How many bytes to read
 MAXCYL    EQU       X'3200'        ; The highest we can count for cylinders
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
@@ -89,11 +89,12 @@ HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
           DC        'HAWK RTZ INITIATED'
           DB        0
           RSR
-DMAREAD   LDAB/     X'F145'        ; Load the drive status
+DMAREAD   LDAB=     B'00110000'    ; Load AL with '0011 0000'
           XAYB                     ; AL -> YL
-          LDAB=     X'CF'          ; Load AL with '1100 1111' (Inverse of goal)
-          ANDB      YL,AL          ; And with '1100 1111'
-          BNZ       DMAREAD        ; Loop back, waiting for drive to be ready
+CHKONCYL  LDAB/     X'F145'        ; Load the drive status
+          ANDB      YL,AL          ; clear all the other bits
+          EORB      YL,AL          ; desired bits will both be zero when ready
+          BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
 DMASTART  LDA=      HWKSCT         ; Load sector count into A
           STA/      X'F141'        ; Stab it into F141, the MMIO register
           LDAB=     X'02'          ; Load seek command into A
