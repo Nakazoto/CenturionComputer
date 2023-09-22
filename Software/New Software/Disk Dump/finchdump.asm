@@ -138,11 +138,12 @@ CHKLOOP   INR       Z              ; Increment Z register
           LDA=      X'FFFF'        ; Load A with all F's
           SUB       Z,A            ; Subtract Z from A
           BZ        FIERROR        ; If counted all the way up to FFFF, error
-          LDAB/     X'F801'        ; Load A register with F801 status byte
+          LDAB=     B'00000001'    ; Load with the mask
           XAYB                     ; Transfer it over to Y
-          LDAB=     X'01'          ; Load with the mask
+          LDAB/     X'F801'        ; Load A register with F801 status byte
           ANDB      YL,AL          ; AND AL and YL and store in AL
-          BZ        CHKLOOP        ; Loop back to CHKSTAT if status is 00
+          OREB      YL,AL          ; Desired bits will both be zero when ready
+          BNZ       CHKLOOP        ; Loop back to CHKSTAT if status is 00
           RSR                      ; I HAVE NO IDEA IF THIS IS RIGHT!!!
 FIERROR   JSR/      PRINTNULL
           DW        X'8D8A'
