@@ -206,7 +206,7 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           XFR       A,Z            ; Transfer result of ADD to Z
           LDA=      READDATA       ; Start of 400 bytes of DMA'd data
           ADD       A,Z            ; Add X'0190' to Z (400 bytes)
-          XFR       A,X            ; Transfer A -> X
+          XFR       A,B            ; Transfer A -> B
           XAY                      ; Transfer A -> Y
 DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
           BZ        DEND           ; Branch is zero to da end yo
@@ -215,10 +215,10 @@ DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
 DWAIT     LDAB/     MUX3CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Check if transmit buffer empty
           BZ        DWAIT          ; If not empty, loop
-          LDAB+     X              ; Load byte at address pointed to by X
+          LDAB+     B              ; Load byte at address pointed to by B
           STAB/     MUX3DATA       ; Store the character to the MUX data
-          INR       X              ; Increment X
-          XFR       X,Y            ; Transfer X -> Y
+          INR       B              ; Increment B
+          XFR       B,Y            ; Transfer B -> Y
           JMP       DCHECK         ; Go to the next character
 DEND      LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL

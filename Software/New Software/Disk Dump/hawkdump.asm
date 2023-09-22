@@ -18,7 +18,7 @@ ZHKDUMP   BEGIN     X'0100'
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
 REDATA    EQU       X'1000'        ; Where the read data goes
-NUBYTE    EQU       X'FFFF'-X'0190'; How many bytes to read
+NUBYTE    EQU       X'FE6F'        ; How many bytes to read X'FFFF'-X'0190'
 MAXCYL    EQU       X'3200'        ; The highest we can count for cylinders
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
@@ -37,7 +37,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           LDAB=     MUX3CB         ; Load Mux 3 Control Byte into A
           STAB/     MUX3CTRL       ; Store A into MUX3CTRL, MMIO port for MUX3
 * Print Welcome Screen
-* 8D = CR, 8A = LF, 8C = Clear?
+* 8D = CR, 8A = LF, 8C = Clear
           JSR/      PRINTNULL
           DB        X'8C'
           DC        'HAWK DUMP PROGRAM'
@@ -89,16 +89,12 @@ HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
           DC        'HAWK RTZ INITIATED'
           DB        0
           RSR
-DMAREAD   LDAB=     B'00110000'    ; Load AL with '0011 0000'
-          XAYB                     ; AL -> YL
-CHKONCYL  LDAB/     X'F145'        ; Load the drive status
-          ANDB      YL,AL          ; clear all the other bits
-          EORB      YL,AL          ; desired bits will both be zero when ready
-          BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
-DMASTART  LDA=      HWKSCT         ; Load sector count into A
+DMAREAD   JSR/      CHKREADY
+          LDA/      HWKSCT         ; Load sector count into A
           STA/      X'F141'        ; Stab it into F141, the MMIO register
           LDAB=     X'02'          ; Load seek command into A
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
+          JSR/      CHKREADY
           DMA       SDV,0          ; Set DMA device to 0
           DMA       EAB            ; Enable DMA
           LDA=      REDATA         ; Load location where to put bytes
@@ -124,6 +120,13 @@ PRINTEX   JSR/      PRINTNULL      ; Print a 'X' to denote read error
           DC        'X'
           DB        0
           RSR
+CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
+          XAYB                     ; AL -> YL
+CHKONCYL  LDAB/     X'F145'        ; Load the drive status
+          ANDB      YL,AL          ; clear all the other bits
+          OREB      YL,AL          ; Desired bits will both be zero when ready
+          BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
+          RSR
 *
 ********************************************************************************
 *                           INCREMENT SUBROUTINE                               *
@@ -133,25 +136,26 @@ PRINTEX   JSR/      PRINTNULL      ; Print a 'X' to denote read error
 * Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'
 INCRMNT1  LDA=      MAXCYL         ; Load max cylinder count into A
           XFR       A,Z            ; Transfer A over to Z
-          LDA=      HWKSCT         ; Load current sector into A
+          LDA/      HWKSCT         ; Load current sector into A
           INR       A              ; Increment it by one
           STA/      HWKSCT         ; Store it back in memory
           SUB       Z,A            ; Subtract A from Z
           BNZ       INCRMNT2       ; If we haven't reached maxcyl yet, proceed
           JMP/      THEEND         ; If we have reached maxcyl, all done
-INCRMNT2  LDA=      HWKSCT         ; Load the printable sector
+INCRMNT2  LDB/      PRTSCT         ; Load the printable sector
+          LDA/      HWKSCT         ; Load the current hawk sector
           SRR       A,5            ; Shift A 5-bits to the right (high bit = 0)
-          SUB       A,PRTSCT       ; Subtract that from PRTSCT to see if diff.
+          SUB       A,B            ; Subtract that from PRTSCT to see if diff.
           BNZ       PREPRPROG      ; If so, then update and print
           RSR                      ; Return to main loop
 TRKDIGITS EQU       4              ; Digits to display for the track.
-PREPRPROG LDA=      HWKSCT         ; Load the Hawk sectors into A
+PREPRPROG LDA/      HWKSCT         ; Load the Hawk sectors into A
           SRR       A,5            ; Shift right 5 times to just get the cyl.
           STA/      PRTSCT         ; Store that new value into PRTSCT
 PRPROG    MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format.
           LDAB=     TRKDIGITS      ; AL = digits to display for the track.
           LDBB=     '0'            ; BL = padding character.
-          CFB       /PRPROGTRK(16),/PRTSCT(1) ; Convert READCMD+5(w) to hex
+          CFB       /PRPROGTRK(16),/PRTSCT(2) ; Convert READCMD+5(w) to hex
           JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed        
           DC        'TRACK: '
@@ -193,7 +197,7 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           XFR       A,Z            ; Transfer result of ADD to Z
           LDA=      REDATA         ; Start of 400 bytes of DMA'd data
           ADD       A,Z            ; Add X'0190' to Z (400 bytes)
-          XFR       A,X            ; Transfer A -> X
+          XFR       A,B            ; Transfer A -> B
           XAY                      ; Transfer A -> Y
 DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
           BZ        DEND           ; Branch is zero to da end yo
@@ -202,10 +206,10 @@ DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
 DWAIT     LDAB/     MUX3CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Check if transmit buffer empty
           BZ        DWAIT          ; If not empty, loop
-          LDAB+     X              ; Load byte at address pointed to by X
+          LDAB+     B              ; Load byte at address pointed to by B
           STAB/     MUX3DATA       ; Store the character to the MUX data
-          INR       X              ; Increment X
-          XFR       X,Y            ; Transfer X -> Y
+          INR       B              ; Increment B
+          XFR       B,Y            ; Transfer B -> Y
           JMP       DCHECK         ; Go to the next character
 DEND      LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
@@ -220,9 +224,9 @@ DEND      LDAB+     S+             ; Pop YL from the stack
 CHKESC    LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
-          SUBB      YL,AL          ; Subtract AL from YL
-          BZ        CHKRX          ; If zero, then receive bit set
-          RSR                      ; If not zero, then go back to business
+          ANDB      YL,AL          ; Subtract AL from YL
+          BNZ       CHKRX          ; If not zero, then receive bit set
+          RSR                      ; If zero, then go back to business
 CHKRX     LDAB=     X'03'          ; Set mask to check if rx byte is ctrl+c
           XAYB                     ; AL -> YL          
           LDAB/     MUX0DATA       ; Read in the receive byte
