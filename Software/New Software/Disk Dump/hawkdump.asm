@@ -224,7 +224,7 @@ DEND      LDAB+     S+             ; Pop YL from the stack
 CHKESC    LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Subtract AL from YL
+          ANDB      YL,AL          ; AND AL and YL
           BNZ       CHKRX          ; If not zero, then receive bit set
           RSR                      ; If zero, then go back to business
 CHKRX     LDAB=     X'03'          ; Set mask to check if rx byte is ctrl+c
@@ -242,7 +242,7 @@ THEEND    JSR/      PRINTNULL
 GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
-          SUBB      YL,AL          ; Subtract AL from YL
-          BNZ       GOODBYE        ; If not zero, loop back to checking for rx
+          ANDB      YL,AL          ; AND AL and YL
+          BZ        GOODBYE        ; If not zero, loop back to checking for rx
           END       ENTRY          ; Set the entry point
 LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
