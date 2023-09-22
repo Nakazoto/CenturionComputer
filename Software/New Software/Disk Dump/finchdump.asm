@@ -39,17 +39,39 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DB        X'8C'
           DC        'FINCH DUMP PROGRAM'
           DW        X'8D8A'
-          DC        'PRESS CONTROL + C TO QUIT'
+          DC        'PRESS CONTROL + C TO QUIT DURING DATA DUMP'
           DW        X'8D8A'
+          DW        X'8D8A'
+          DC        'ENTER NUMBER LOGICAL DISKS (1 ~ 4): '
           DB        0              ; Null terminator
 * Start Doing Productive Stuff
-          JSR/      DMARTZ
-          JSR/      PRPROG
-LOOP      JSR/      DMAREAD
-          JSR/      DMPDATA
-          JSR/      INCRMNT1
-          JSR/      CHKESC
-          JMP/      LOOP
+          JSR/      PICKDR         ; Pick max number of disks
+          JSR/      DMARTZ         ; RTZ the Finch
+          JSR/      PRPROG         ; Print disk 0, track 0, sector 0
+LOOP      JSR/      DMAREAD        ; Get to reading
+          JSR/      DMPDATA        ; Dump out 400 bytes of data
+          JSR/      INCRMNT1       ; Increment to next sector/track/disk
+          JSR/      CHKESC         ; Check for CTRL+C
+          JMP/      LOOP           ; Back to the top
+*
+********************************************************************************
+*                               UNIT SETUP                                     *
+********************************************************************************
+*
+PICKDR    LDAB=     X'01'          ; Set mask to check if rx byte available
+          XAYB                     ; AL -> YL
+          LDAB/     MUX0CTRL       ; AL = MUX status byte
+          ANDB      YL,AL          ; Subtract AL from YL
+          BNZ       GRABRX         ; If not zero, then receive bit set
+          JMP/      PICKDR         ; If not zero, then loop
+GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B 
+          STAB/     MUX0DATA       ; Echo that digit back
+          XAYB                     ; AL -> YL
+          LDAB=     X'0F'          ; Load B with 0000 1111
+          ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
+          < NEED TO SUBTRACT 1 AROUND HERE! >
+          STAB/     MAXDISK        ; Stab it into MAXDISK used by INCRMNT3
+          RSR                      ; Back to main loop
 *
 ********************************************************************************
 *                        COMAND STRING INITIAL SETUP                           *
@@ -103,9 +125,12 @@ DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
           LDAB=     X'45'          ; 43 = Execute
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
           RSR
-* Status register is at F801 -> if 0000 then all good?
+* Status register is at F801 -> if XXX1 then all good?
 CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
-          BNZ       CHKSTAT        ; Loop back to CHKSTAT is status is not 00
+          XAYB                     ; Transfer it over to Y
+          LDAB=     X'01'          ; Load with the mask
+          ANDB      YL,AL          ; AND AL and YL and store in AL
+          BZ        CHKSTAT        ; Loop back to CHKSTAT if status is 00
           RSR                      ; I HAVE NO IDEA IF THIS IS RIGHT!!!
 *
 ********************************************************************************
@@ -122,7 +147,7 @@ INCRMNT1  LDAB/     READCMD+8      ; Load the sector count into AL
           SUBB      Y,A            ; Subtract AL from YL
           BNZ       SECTINC        ; Branch if not Zero to Sector Increment
           LDAB=     X'00'          ; Reset sector count to 0
-          STA/      READCMD+8      ; Store back into command string
+          STAB/     READCMD+8      ; Store back into command string
           JMP/      INCRMNT2       ; Jump to Increment 2
 SECTINC   LDAB/     READCMD+8      ; Load the sector count into AL
           INRB      A              ; Increment by one
@@ -132,7 +157,7 @@ SECTINC   LDAB/     READCMD+8      ; Load the sector count into AL
           DB        0
           RSR                      ; Return to main loop
 INCRMNT2  LDA/      READCMD+5      ; Load the track count into A
-          XFR       A,Y            ; Transfer it over to Y
+          XAY                      ; Transfer it over to Y
           LDA=      X'025D'        ; Load max track count into A
           SUB       Y,A            ; Subtract A from Y
           BNZ       TRACKINC       ; Branch if not Zero to Track Increment
@@ -143,16 +168,16 @@ TRACKINC  LDA/      READCMD+5      ; Load the track count into A
           INR       A              ; Increment by one
           STA/      READCMD+5      ; Store back into command string
           JMP/      PRPROG         ; Jump to print progress
+MAXDISK   DB        3              ; Max number of disks
 INCRMNT3  LDAB/     READCMD+3      ; Load the disk count into AL
-          XFRB      AL,YL          ; Transfer it over to YL
-          LDAB=     X'03'          ; Load max disk count into AL
+          XAYB                     ; Transfer it over to YL
+          LDAB/     MAXDISK        ; Load max disk count into AL
           SUBB      YL,AL          ; Subtract AL from YL
           BNZ       DISKINC        ; Branch if not Zero to Disk Increment
           JMP/      THEEND
 DISKINC   LDAB/     READCMD+3      ; Load the disk count into AL
           INRB      AL             ; Increment the disk number
           STAB/     READCMD+3      ; Store back into command string
-          JMP/      PRPROG         ; Jump to print progress
 DSKDIGITS EQU       2              ; Digits to display for the disk.
 TRKDIGITS EQU       4              ; Digits to display for the track.
 PRPROG    MVF       (DSKDIGITS)='#@',/PRPROGDSK   ; Set the disk format.
@@ -233,9 +258,9 @@ DEND      LDAB+     S+             ; Pop YL from the stack
 CHKESC    LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
-          SUBB      YL,AL          ; Subtract AL from YL
-          BZ        CHKRX          ; If zero, then receive bit set
-          RSR                      ; If not zero, then go back to business
+          ANDB      YL,AL          ; AND AL and YL
+          BNZ       CHKRX          ; If not zero, then receive bit set
+          RSR                      ; If zero, then go back to business
 CHKRX     LDAB=     X'03'          ; Set mask to check if rx byte is ctrl+c
           XAYB                     ; AL -> YL          
           LDAB/     MUX0DATA       ; Read in the receive byte
@@ -251,7 +276,7 @@ THEEND    JSR/      PRINTNULL
 GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
-          SUBB      YL,AL          ; Subtract AL from YL
-          BNZ       GOODBYE        ; If not zero, loop back to checking for rx
-LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
+          ANDB      YL,AL          ; AND AL and YL
+          BZ        GOODBYE        ; If not zero, loop back to checking for rx
           END       ENTRY          ; Set the entry point
+LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
