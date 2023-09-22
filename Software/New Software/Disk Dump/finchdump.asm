@@ -69,7 +69,9 @@ GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load B with 0000 1111
           ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
-          < NEED TO SUBTRACT 1 AROUND HERE! >
+          XAYB                     ; Toss it back into Y
+          LDAB=     X'01'          ; Load A with 0001
+          SUBB      YL,AL          ; Subtract YL - AL and store in AL
           STAB/     MAXDISK        ; Stab it into MAXDISK used by INCRMNT3
           RSR                      ; Back to main loop
 *
@@ -93,7 +95,11 @@ READCMD   DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
 *                             DMA SUBROUTINES                                  *
 ********************************************************************************
 *
-DMARTZ    LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
+DMARTZ    JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FINCH RTZ INITIATED'
+          DB        0
+          LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
           STA-      S-             ; Push A to the stack
           LDA=      RTZCMD         ; Where the RTZ command string is
           STA-      S-             ; Push A to the stack
@@ -126,12 +132,25 @@ DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
           RSR
 * Status register is at F801 -> if XXX1 then all good?
-CHKSTAT   LDAB/     X'F801'        ; Load A register with F801 status byte
+CHKSTAT   LDA=      X'0000'        ; Load A with all zeros
+          XFR       A,Z            ; Transfer A over to Z
+CHKLOOP   INR       Z              ; Increment Z register
+          LDA=      X'FFFF'        ; Load A with all F's
+          SUB       Z,A            ; Subtract Z from A
+          BZ        FIERROR        ; If counted all the way up to FFFF, error
+          LDAB/     X'F801'        ; Load A register with F801 status byte
           XAYB                     ; Transfer it over to Y
           LDAB=     X'01'          ; Load with the mask
           ANDB      YL,AL          ; AND AL and YL and store in AL
-          BZ        CHKSTAT        ; Loop back to CHKSTAT if status is 00
+          BZ        CHKLOOP        ; Loop back to CHKSTAT if status is 00
           RSR                      ; I HAVE NO IDEA IF THIS IS RIGHT!!!
+FIERROR   JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FINCH ERROR'
+          DW        X'8D8A'
+          DC        'DUMP PROGRAM CANCELLED, PRESS ANY KEY TO RETURN TO LOADER'
+          DB        0
+          JMP/      GOODBYE
 *
 ********************************************************************************
 *                           INCREMENT SUBROUTINE                               *
