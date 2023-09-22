@@ -106,14 +106,22 @@ DMARTZ    JSR/      PRINTNULL
           LDA=      X'FFFF'-6      ; How many bytes to read in command string
           STA-      S-             ; Push A to the stack
           JMP       DMAIT          ; Jump ahead skipping the next section
-DMAREAD   LDA=      X'0190'        ; Should read back 400 bytes/1 sector
+DMAREAD   JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FINCH READ INITIATED'
+          DB        0
+          LDA=      X'0190'        ; Should read back 400 bytes/1 sector
           STA-      S-             ; Push A to the stack
           LDA=      READCMD        ; Where the RTZ command string is
           STA-      S-             ; Push A to the stack
           LDA=      X'FFFF'-12     ; How many bytes to read in command string
           STA-      S-             ; Push A to the stack
-DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
-          LDA+      S+             ; Pop A from the stack (FFFX or FFFX)
+DMAIT     JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FINCH DMA INITIATED'
+          DB        0
+          JSR/      CHKSTAT        ; Check that FFC is ready
+          LDA+      S+             ; Pop A from the stack (FFFF-12 or FFFF-6)
           DMA       SCT,A          ; Load DMA Count from A word register
           LDA+      S+             ; Pop A from the stack(RTZCMD or READCMD)
           DMA       SAD,A          ; Tell FFC where the command bytes are
@@ -121,6 +129,10 @@ DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
           DMA       EAB            ; Enable DMA
           LDAB=     X'43'          ; 43 = Transfer command to FFC
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
+          JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FINCH COMMAND TRANSFERRED'
+          DB        0
           JSR/      CHKSTAT        ; Check that FFC is ready
           LDA+      S+             ; Pop A from the stack (0000 or 0190)
           DMA       SCT,A          ; Load DMA Count from A word register
@@ -130,6 +142,10 @@ DMAIT     JSR/      CHKSTAT        ; Check that FFC is ready
           DMA       EAB            ; Enable DMA
           LDAB=     X'45'          ; 43 = Execute
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
+          JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FINCH COMMAND EXECUTE TRANSFERRED'
+          DB        0
           RSR
 * Status register is at F801 -> if XXX1 then all good?
 CHKSTAT   LDA=      X'0000'        ; Load A with all zeros
@@ -138,11 +154,10 @@ CHKLOOP   INR       Z              ; Increment Z register
           LDA=      X'FFFF'        ; Load A with all F's
           SUB       Z,A            ; Subtract Z from A
           BZ        FIERROR        ; If counted all the way up to FFFF, error
-          LDAB=     B'00000001'    ; Load with the mask
+          LDAB=     X'FF'          ; Load with the mask
           XAYB                     ; Transfer it over to Y
           LDAB/     X'F801'        ; Load A register with F801 status byte
           ANDB      YL,AL          ; AND AL and YL and store in AL
-          OREB      YL,AL          ; Desired bits will both be zero when ready
           BNZ       CHKLOOP        ; Loop back to CHKSTAT if status is 00
           RSR                      ; I HAVE NO IDEA IF THIS IS RIGHT!!!
 FIERROR   JSR/      PRINTNULL
