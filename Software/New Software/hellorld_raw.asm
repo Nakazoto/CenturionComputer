@@ -1,8 +1,13 @@
-JSR       PRINTNULL                ; Jump relative to PC (within 128, so ok)
+          TITLE     'HELLORLD'
+ZHELLORLD BEGIN     X'0100'
+ENTRY     LDAB=     X'C5'          ; Load Mux 0 Control Byte into A
+          STAB/     X'F200'        ; Store A into MUX0CTRL, MMIO port for MUX0
+          JSR       PRINTNULL      ; Jump relative to PC (within 128, so ok)
+          DW        X'8D8A'
           DC        'HELLORLD!'
           DB        0
-LOOP      JMP       LOOP
-PRINTNULL LDAB=     B'10'          ; Set mask to check for tx buffer empty
+          HLT
+PRINTNULL LDAB=     B'00000010'    ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
 PNLOOP    LDBB+     X+             ; Load the next byte
           BZ        PNEND          ; If 0, we are done
@@ -12,9 +17,21 @@ PNWAIT    LDAB/     X'F200'        ; AL = MUX status byte
           STBB/     X'F201'        ; Store the character to the MUX data
           JMP       PNLOOP         ; Go to the next character
 PNEND     RSR
-
-7B XX
-C8 E5 EC EC EF F2 EC E4 A1 8D 8A 00
-73 81
-80 00 02 
+          END       ENTRY          ; Set the entry point
+80 C5
+A1 F2 00
+7B 0D
+8D 8A 
+C8 C5 CC CC CF D2 CC C4 A1
+00
+00
+80 02
 4C
+C5 41
+14 0C
+81 F2 00
+42 71
+14 F9
+E1 F2 01
+73 F0
+09
