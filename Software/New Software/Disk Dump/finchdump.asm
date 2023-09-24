@@ -120,7 +120,7 @@ DMAIT     JSR/      PRINTNULL
           DW        X'8D8A'
           DC        'FINCH DMA INITIATED'
           DB        0
-          JSR/      CHKSTAT        ; Check that FFC is ready
+          JSR/      CHKFIN         ; Check that FFC is ready
           LDA+      S+             ; Pop A from the stack (FFFF-12 or FFFF-6)
           DMA       SCT,A          ; Load DMA Count from A word register
           LDA+      S+             ; Pop A from the stack(RTZCMD or READCMD)
@@ -133,7 +133,7 @@ DMAIT     JSR/      PRINTNULL
           DW        X'8D8A'
           DC        'FINCH COMMAND TRANSFERRED'
           DB        0
-          JSR/      CHKSTAT        ; Check that FFC is ready
+          JSR/      CHKFIN         ; Check that FFC is ready
           LDA+      S+             ; Pop A from the stack (0000 or 0190)
           DMA       SCT,A          ; Load DMA Count from A word register
           LDA=      READDATA       ; Store all read bytes to this address
@@ -148,18 +148,43 @@ DMAIT     JSR/      PRINTNULL
           DB        0
           RSR
 * Status register is at F801 -> if XXX1 then all good?
-CHKSTAT   LDA=      X'0000'        ; Load A with all zeros
-          XFR       A,Z            ; Transfer A over to Z
-CHKLOOP   INR       Z              ; Increment Z register
-          LDA=      X'FFFF'        ; Load A with all F's
-          SUB       Z,A            ; Subtract Z from A
-          BZ        FIERROR        ; If counted all the way up to FFFF, error
-          LDAB=     X'FF'          ; Load with the mask
-          XAYB                     ; Transfer it over to Y
-          LDAB/     X'F801'        ; Load A register with F801 status byte
-          ANDB      YL,AL          ; AND AL and YL and store in AL
-          BNZ       CHKLOOP        ; Loop back to CHKSTAT if status is 00
-          RSR                      ; I HAVE NO IDEA IF THIS IS RIGHT!!!
+CHKFIN    LDA=      X'1000'        ; Load A with a countdown counter
+          XAY                      ; Move that over to Y
+FINLOOP   LDAB/     X'F801'        ; Load the Finch status in
+          SRAB                     ; Shift the status bit over to link
+          SRAB                     ; Shift the status bit over to link
+          BNL       CHKBSY         ; If link isn't set, FIN is okay
+          DLY                      ; Chill for 4.55ms
+          DCR       Y              ; Drop our timer down by one
+          LDAB=     X'0000'        ; Clear A
+          SUB       Y,A            ; Subtract A from Y store in A
+          BZ        FIERROR        ; Branch to error message
+          JMP       FINLOOP        ; Loop back annd try again
+CHKBSY    LDA=      X'1000'        ; Load A with a countdown counter
+          XAY                      ; Move that over to Y
+BSYLOOP   LDAB/     X'F801'        ; Load the Finch status in
+          LDBB=     B'00001000'    ; Load the mask into B register
+          NABB                     ; AND AL register and BL register
+          BZ        CHKOUT         ; If zero, busy cleared, continue on
+          DLY
+          DCR       Y              ; Drop our timer down by one
+          LDAB=     X'0000'        ; Clear A
+          SUB       Y,A            ; Subtract A from Y store in A
+          BZ        FIERROR        ; Branch to error message
+          JMP       BSYLOOP        ; Loop back annd try again
+CHKOUT    LDA=      X'1000'        ; Load A with a countdown counter
+          XAY                      ; Move that over to Y
+OUTLOOP   LDAB/     X'F801'        ; Load the Finch status in
+          SRAB                     ; Shift the out bit into the link
+          BL        ALLGOOD        ; If link is set, righteous
+          DLY
+          DCR       Y              ; Drop our timer down by one
+          LDAB=     X'0000'        ; Clear A
+          SUB       Y,A            ; Subtract A from Y store in A
+          BZ        FIERROR        ; Branch to error message
+          JMP       OUTLOOP        ; Loop back annd try again
+ALLGOOD   RF                       ; Reset fault. Necessary? DIAG does it...
+          RSR                      ; Status is good, go back and proceed
 FIERROR   JSR/      PRINTNULL
           DW        X'8D8A'
           DC        'FINCH ERROR'
