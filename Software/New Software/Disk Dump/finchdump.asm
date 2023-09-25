@@ -154,7 +154,7 @@ BSYLOOP   LDAB/     X'F801'        ; Load the Finch status in
           JMP       BSYLOOP        ; Loop back annd try again
 *CHKOUT    LDA=      X'0100'        ; Load A with a countdown counter
 *          XAY                      ; Move that over to Y
-*OUTLOOP   LDAB/     X'F800'        ; Load the Finch status in
+*OUTLOOP   LDAB/     X'F801'        ; Load the Finch status in
 *          SRAB                     ; Shift the out bit into the link
 *          BL        ALLGOOD        ; If link is set, righteous
 *          DLY
@@ -227,7 +227,7 @@ PRPROG    MVF       (DSKDIGITS)='#@',/PRPROGDSK   ; Set the disk format.
           CFB       /PRPROGDSK(16),/READCMD+3(1) ; Convert READCMD+3(b) to hex
           LDAB=     TRKDIGITS      ; AL = digits to display for the track.
           LDBB=     '0'            ; BL = padding character.
-          CFB       /PRPROGTRK(16),/READCMD+5(1) ; Convert READCMD+5(w) to hex
+          CFB       /PRPROGTRK(16),/READCMD+5(2) ; Convert READCMD+5(w) to hex
           JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed        
           DC        'DISK: '
