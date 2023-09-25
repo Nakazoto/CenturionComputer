@@ -148,7 +148,7 @@ DMAIT     JSR/      PRINTNULL
           DB        0
           RSR
 * Status register is at F801 -> if XXX1 then all good?
-CHKFIN    LDA=      X'1000'        ; Load A with a countdown counter
+CHKFIN    LDA=      X'0100'        ; Load A with a countdown counter
           XAY                      ; Move that over to Y
 FINLOOP   LDAB/     X'F801'        ; Load the Finch status in
           SRAB                     ; Shift the status bit over to link
@@ -160,9 +160,13 @@ FINLOOP   LDAB/     X'F801'        ; Load the Finch status in
           SUB       Y,A            ; Subtract A from Y store in A
           BZ        FIERROR        ; Branch to error message
           JMP       FINLOOP        ; Loop back annd try again
-CHKBSY    LDA=      X'1000'        ; Load A with a countdown counter
+CHKBSY    LDA=      X'0100'        ; Load A with a countdown counter
           XAY                      ; Move that over to Y
-BSYLOOP   LDAB/     X'F801'        ; Load the Finch status in
+BSYLOOP   JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FIN CLEARED'
+          DB        0
+          LDAB/     X'F801'        ; Load the Finch status in
           LDBB=     B'00001000'    ; Load the mask into B register
           NABB                     ; AND AL register and BL register
           BZ        CHKOUT         ; If zero, busy cleared, continue on
@@ -172,9 +176,13 @@ BSYLOOP   LDAB/     X'F801'        ; Load the Finch status in
           SUB       Y,A            ; Subtract A from Y store in A
           BZ        FIERROR        ; Branch to error message
           JMP       BSYLOOP        ; Loop back annd try again
-CHKOUT    LDA=      X'1000'        ; Load A with a countdown counter
+CHKOUT    JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'BUSY CLEARED'
+          DB        0
+          LDA=      X'0100'        ; Load A with a countdown counter
           XAY                      ; Move that over to Y
-OUTLOOP   LDAB/     X'F801'        ; Load the Finch status in
+OUTLOOP   LDAB/     X'F800'        ; Load the Finch status in
           SRAB                     ; Shift the out bit into the link
           BL        ALLGOOD        ; If link is set, righteous
           DLY
