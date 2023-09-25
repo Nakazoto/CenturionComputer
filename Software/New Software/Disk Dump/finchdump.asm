@@ -95,32 +95,20 @@ READCMD   DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
 *                             DMA SUBROUTINES                                  *
 ********************************************************************************
 *
-DMARTZ    JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'FINCH RTZ INITIATED'
-          DB        0
-          LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
+DMARTZ    LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
           STA-      S-             ; Push A to the stack
           LDA=      RTZCMD         ; Where the RTZ command string is
           STA-      S-             ; Push A to the stack
           LDA=      X'FFFF'-6      ; How many bytes to read in command string
           STA-      S-             ; Push A to the stack
           JMP       DMAIT          ; Jump ahead skipping the next section
-DMAREAD   JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'FINCH READ INITIATED'
-          DB        0
-          LDA=      X'0190'        ; Should read back 400 bytes/1 sector
+DMAREAD   LDA=      X'0190'        ; Should read back 400 bytes/1 sector
           STA-      S-             ; Push A to the stack
           LDA=      READCMD        ; Where the RTZ command string is
           STA-      S-             ; Push A to the stack
           LDA=      X'FFFF'-12     ; How many bytes to read in command string
           STA-      S-             ; Push A to the stack
-DMAIT     JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'FINCH DMA INITIATED'
-          DB        0
-          JSR/      CHKFIN         ; Check that FFC is ready
+DMAIT     JSR/      CHKFIN         ; Check that FFC is ready
           LDA+      S+             ; Pop A from the stack (FFFF-12 or FFFF-6)
           DMA       SCT,A          ; Load DMA Count from A word register
           LDA+      S+             ; Pop A from the stack(RTZCMD or READCMD)
@@ -129,10 +117,6 @@ DMAIT     JSR/      PRINTNULL
           DMA       EAB            ; Enable DMA
           LDAB=     X'43'          ; 43 = Transfer command to FFC
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
-          JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'FINCH COMMAND TRANSFERRED'
-          DB        0
           JSR/      CHKFIN         ; Check that FFC is ready
           LDA+      S+             ; Pop A from the stack (0000 or 0190)
           DMA       SCT,A          ; Load DMA Count from A word register
@@ -142,10 +126,6 @@ DMAIT     JSR/      PRINTNULL
           DMA       EAB            ; Enable DMA
           LDAB=     X'45'          ; 43 = Execute
           STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
-          JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'FINCH COMMAND EXECUTE TRANSFERRED'
-          DB        0
           RSR
 * Status register is at F801 -> if XXX1 then all good?
 CHKFIN    LDA=      X'0100'        ; Load A with a countdown counter
@@ -162,35 +142,27 @@ FINLOOP   LDAB/     X'F801'        ; Load the Finch status in
           JMP       FINLOOP        ; Loop back annd try again
 CHKBSY    LDA=      X'0100'        ; Load A with a countdown counter
           XAY                      ; Move that over to Y
-BSYLOOP   JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'FIN CLEARED'
-          DB        0
-          LDAB/     X'F801'        ; Load the Finch status in
+BSYLOOP   LDAB/     X'F801'        ; Load the Finch status in
           LDBB=     B'00001000'    ; Load the mask into B register
           NABB                     ; AND AL register and BL register
-          BZ        CHKOUT         ; If zero, busy cleared, continue on
+          BZ        ALLGOOD        ; If zero, busy cleared, continue on
           DLY
           DCR       Y              ; Drop our timer down by one
           LDAB=     X'0000'        ; Clear A
           SUB       Y,A            ; Subtract A from Y store in A
           BZ        FIERROR        ; Branch to error message
           JMP       BSYLOOP        ; Loop back annd try again
-CHKOUT    JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'BUSY CLEARED'
-          DB        0
-          LDA=      X'0100'        ; Load A with a countdown counter
-          XAY                      ; Move that over to Y
-OUTLOOP   LDAB/     X'F800'        ; Load the Finch status in
-          SRAB                     ; Shift the out bit into the link
-          BL        ALLGOOD        ; If link is set, righteous
-          DLY
-          DCR       Y              ; Drop our timer down by one
-          LDAB=     X'0000'        ; Clear A
-          SUB       Y,A            ; Subtract A from Y store in A
-          BZ        FIERROR        ; Branch to error message
-          JMP       OUTLOOP        ; Loop back annd try again
+*CHKOUT    LDA=      X'0100'        ; Load A with a countdown counter
+*          XAY                      ; Move that over to Y
+*OUTLOOP   LDAB/     X'F800'        ; Load the Finch status in
+*          SRAB                     ; Shift the out bit into the link
+*          BL        ALLGOOD        ; If link is set, righteous
+*          DLY
+*          DCR       Y              ; Drop our timer down by one
+*          LDAB=     X'0000'        ; Clear A
+*          SUB       Y,A            ; Subtract A from Y store in A
+*          BZ        FIERROR        ; Branch to error message
+*          JMP       OUTLOOP        ; Loop back annd try again
 ALLGOOD   RF                       ; Reset fault. Necessary? DIAG does it...
           RSR                      ; Status is good, go back and proceed
 FIERROR   JSR/      PRINTNULL
