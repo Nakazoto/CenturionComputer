@@ -1,8 +1,6 @@
           TITLE     'HELLORLD'
 ZHELLORLD BEGIN     X'0100'
-ENTRY     LDAB=     X'C5'          ; Load Mux 0 Control Byte into A
-          STAB/     X'F200'        ; Store A into MUX0CTRL, MMIO port for MUX0
-          JSR       PRINTNULL      ; Jump relative to PC (within 128, so ok)
+ENTRY     JSR       PRINTNULL      ; Jump relative to PC (within 128, so ok)
           DW        X'8D8A'
           DC        'HELLORLD!'
           DB        0
@@ -18,8 +16,6 @@ PNWAIT    LDAB/     X'F200'        ; AL = MUX status byte
           JMP       PNLOOP         ; Go to the next character
 PNEND     RSR
           END       ENTRY          ; Set the entry point
-80 C5
-A1 F2 00
 7B 0D
 8D 8A 
 C8 C5 CC CC CF D2 CC C4 A1
