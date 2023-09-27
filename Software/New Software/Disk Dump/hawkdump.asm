@@ -113,15 +113,17 @@ CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
           BZ        PRINTDOT       ; Success, print dot and go
           LDAB=     X'F0'          ; Load A with X'F0' to check for errors
           ANDB      YL,AL          ; AND AL and YL, should give zero
-          BNZ       PRINTEX        ; If not 0, then we have an error
+          BNZ       WEGOTERR       ; If not 0, then we have an error
           JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
 PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
           DC        '.'
           DB        0
           RSR
-PRINTEX   JSR/      PRINTNULL      ; Print a 'X' to denote read error
+WEGOTERR  JSR/      PRINTNULL      ; Print a 'X' to denote read error
           DC        'X'
           DB        0
+          FIL (200)=X'FF',/REDATA  ; Fill the 400 byte buffer in memory with FF
+          FIL (200)=X'FF',/REDATA+200
           RSR
 CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
           XAYB                     ; AL -> YL
