@@ -17,7 +17,7 @@ PNWAIT    LDAB/     X'F200'        ; AL = MUX status byte
 PNEND     RSR
           END       ENTRY          ; Set the entry point
 7B 0D
-8D 8A 
+8D 8A
 C8 C5 CC CC CF D2 CC C4 A1
 00
 00
