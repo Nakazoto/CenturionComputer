@@ -16,6 +16,8 @@ PNWAIT    LDAB/     X'F200'        ; AL = MUX status byte
           JMP       PNLOOP         ; Go to the next character
 PNEND     RSR
           END       ENTRY          ; Set the entry point
+
+<! MUST BE ABOVE ADDRESS X'0500' TO WORK IN TOS6 !>
 7B 0D
 8D 8A
 C8 C5 CC CC CF D2 CC C4 A1
