@@ -1,5 +1,5 @@
           TITLE     'HELLORLD'
-ZHELLORLD BEGIN     X'0100'
+ZHELLORLD BEGIN     X'1000'
 ENTRY     JSR       PRINTNULL      ; Jump relative to PC (within 128, so ok)
           DW        X'8D8A'
           DC        'HELLORLD!'
