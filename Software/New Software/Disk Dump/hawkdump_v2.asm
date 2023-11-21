@@ -142,7 +142,7 @@ CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
           LDAB=     X'F0'          ; Load A with X'F0' to check for errors
           ANDB      YL,AL          ; AND AL and YL, should give zero
           BNZ       WEGOTERR       ; If not 0, then we have an error
-          JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
+          JMP       CHKRED         ; If value is '01', DSK is busy, so loop
 PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
           DC        '.'
           DB        0
