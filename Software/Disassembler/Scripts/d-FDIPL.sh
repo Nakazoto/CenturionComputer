@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./scripts/disassm.py platters/ssdd_sectors/t00s00.4095B.bin -rom -base 0x0100 -entry 0x0003 -force "0x0100 0x0393 0x054f" -subs '0x0503:0;;0x05b2:2;;0x044d:1;;0x04df:2;;0x02df:1' $*
+
