@@ -59,7 +59,7 @@ LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
           JSR/      CALCCRC        ; Calculate the CRC of the 400 bytes
           JSR/      SNDMARK        ; Send the current address marker
           JSR/      DMPDATA        ; Dump memory to CRT3
-          JSR/      SENDCRC        ; Calculate and send the CRC data
+          JSR/      SNDCRC         ; Calculate and send the CRC data
           JSR/      INCRMNT1       ; Increment the track
           JSR/      CHKESC         ; Check if user pressed escape sequence
           JMP/      LOOP           ; What it says on the tin
@@ -144,25 +144,20 @@ SNDMARK   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDA=      X'0002'        ; Total number of bytes to count
-          XFR       A,Z            ; Transfer result of ADD to Z
-          LDA=      HWKSCT         ; Start of marker bytes
-          <! THIS IS WRONG!!!>
-          ADD       A,Z            ; Add marker number to Z (0002 bytes)
-          XFR       A,B            ; Transfer A -> B
-          XAY                      ; Transfer A -> Y
-MARKCHK   SUB       Z,Y            ; Subtracts Z-Y and stores in Y
-          BZ        MARKEND        ; Branch is zero to da end yo
-          LDAB=     B'10'          ; Set mask to check for tx buffer empty
+          LDAB=     X'01'          ; Total number of bytes to send (0, 1 = 2b)
+          XAZB                     ; Transfer result of ADD to Z
+          LDAB/     HWKSCT+ZL      ; Load A with byte to send
+          XABB                     ; Transfer A -> B
+MARKCHK   LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
 MARKWAIT  LDAB/     MUX3CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Check if transmit buffer empty
           BZ        MARKWAIT       ; If not empty, loop
-          LDAB+     B              ; Load byte at address pointed to by B
-          STAB/     MUX3DATA       ; Store the character to the MUX data
-          INR       B              ; Increment B
-          XFR       B,Y            ; Transfer B -> Y
-          JMP       MARKCHK        ; Go to the next character
+          STBB/     MUX3DATA       ; Store the character to the MUX data
+          XFRB      ZL,AL          ; Tranfer Z into A
+          BZ        MARKEND        ; Branch to end if zero
+          DCRB      ZL             ; Decrement Z
+          JMP       MARKCHK        ; Go to the next byte
 MARKEND   LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
           LDBB+     S+             ; Pop BL from the stack
@@ -201,30 +196,25 @@ SKIPPOLY  SRA                      ; A >>= 1.
 CRCEND    POP       A,10           ; Pop Z,Y,X,B,A from the stack
           RSR
 *
-SENDCRC   STAB-     S-             ; Push AL to the stack
+SNDCRC    STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDA=      X'0002'        ; Total number of bytes to count
-          XFR       A,Z            ; Transfer result of ADD to Z
-          LDA=      CRCINT         ; Start of CRC bytes
-          <! THIS IS WRONG!!!>
-          ADD       A,Z            ; Add marker number to Z (0002 bytes)
-          XFR       A,B            ; Transfer A -> B
-          XAY                      ; Transfer A -> Y
-CRCCHK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
-          BZ        CRCEND         ; Branch is zero to da end yo
-          LDAB=     B'10'          ; Set mask to check for tx buffer empty
+          LDAB=     X'01'          ; Total number of bytes to send (0, 1 = 2b)
+          XAZB                     ; Transfer result of ADD to Z
+          LDAB/     CRCINT+ZL      ; Load A with byte to send
+          XABB                     ; Transfer A -> B
+CRCCHK    LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
 CRCWAIT   LDAB/     MUX3CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Check if transmit buffer empty
-          BZ        CRCWAIT       ; If not empty, loop
-          LDAB+     B              ; Load byte at address pointed to by B
-          STAB/     MUX3DATA       ; Store the character to the MUX data
-          INR       B              ; Increment B
-          XFR       B,Y            ; Transfer B -> Y
-          JMP       CRCCHK        ; Go to the next character
-CRCEND    LDAB+     S+             ; Pop YL from the stack
+          BZ        CRCWAIT        ; If not empty, loop
+          STBB/     MUX3DATA       ; Store the character to the MUX data
+          XFRB      ZL,AL          ; Tranfer Z into A
+          BZ        SCEND          ; Branch to end if zero
+          DCRB      ZL             ; Decrement Z
+          JMP       CRCCHK         ; Go to the next byte
+SCEND     LDAB+     S+             ; Pop YL from the stack
           XAYB                     ; AL -> YL
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
