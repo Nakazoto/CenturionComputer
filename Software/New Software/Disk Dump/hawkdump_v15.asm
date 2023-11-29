@@ -17,7 +17,9 @@ ZHKDUMP   BEGIN     X'0100'
 ********************************************************************************
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
-REDATA    EQU       X'1000'        ; Where the read data goes
+MKDATA    EQU       X'1000'        ; Where the marker data is placed
+REDATA    EQU       X'1002'        ; Where the read data goes
+CRCDATA   EQU       X'1192'        ; Where the CRC data goes
 NUBYTE    EQU       X'FE6F'        ; How many bytes to read X'FFFF'-X'0190'
 MAXCYL    EQU       X'3200'        ; The highest we can count for cylinders
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
@@ -56,10 +58,8 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      HWKRTZ         ; RTZ the Hawk
           JSR/      PRPROG         ; Print track 0
 LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
-          JSR/      CALCCRC        ; Calculate the CRC of the 400 bytes
-          JSR/      SNDMARK        ; Send the current address marker
+          JSR/      CRCMARK        ; Calculate the CRC and create marker
           JSR/      DMPDATA        ; Dump memory to CRT3
-          JSR/      SNDCRC         ; Calculate and send the CRC data
           JSR/      INCRMNT1       ; Increment the track
           JSR/      CHKESC         ; Check if user pressed escape sequence
           JMP/      LOOP           ; What it says on the tin
@@ -140,40 +140,14 @@ CHKONCYL  LDAB/     X'F145'        ; Load the drive status
 *                         MARKER AND CRC SUBROUTINE                            *
 ********************************************************************************
 *
-SNDMARK   STAB-     S-             ; Push AL to the stack
-          STBB-     S-             ; Push BL to the stack
-          XFRB      YL,AL          ; YL -> AL
-          STAB-     S-             ; Push YL to the stack
-          LDAB=     X'01'          ; Total number of bytes to send (0, 1 = 2b)
-          XAZB                     ; Transfer result of ADD to Z
-          LDAB/     HWKSCT+ZL      ; Load A with byte to send
-          XABB                     ; Transfer A -> B
-MARKCHK   LDAB=     B'10'          ; Set mask to check for tx buffer empty
-          XAYB                     ; AL -> YL
-MARKWAIT  LDAB/     MUX3CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Check if transmit buffer empty
-          BZ        MARKWAIT       ; If not empty, loop
-          STBB/     MUX3DATA       ; Store the character to the MUX data
-          XFRB      ZL,AL          ; Tranfer Z into A
-          BZ        MARKEND        ; Branch to end if zero
-          DCRB      ZL             ; Decrement Z
-          JMP       MARKCHK        ; Go to the next byte
-MARKEND   LDAB+     S+             ; Pop YL from the stack
-          XAYB                     ; AL -> YL
-          LDBB+     S+             ; Pop BL from the stack
-          LDAB+     S+             ; Pop AL from the stack
-          RSR                      ; Return
-*
-CALCCRC   CLA                      ; A = 0.
 CRCINT    DW        0              ; Define CRCINT as 0
+CRCMARK   STK       X,2            ; Push return address (X reg) onto stack
+          CLA                      ; A = 0.
           STA/      CRCINT         ; A -> *CRCINT
-CRCCNT    DW        X'0190'        ; All out of registers, so using memory
-          STK       A,10           ; Push A,B,X,Y,Z to the stack.
-NXTCRC    LDB=      CRCINT         ; Total number of bytes to count
-          LDA=      REDATA         ; Start of 400 bytes of DMA'd data
-          ADD       A,B            ; Add X'0190' to B and store in B
-          LDAB+     B              ; Load A with the byte pointed at by B
-          XFRB      AL,ZL          ; Transfer it to ZL, where we will do calc.
+          LDA=      REDATA         ; Load A with the location of the read data
+          XAY                      ; Transfer that over to Y
+NEXTCRC   LDAB+     Y              ; Load A with the value pointed at by Y
+          XAZB                     ; Transfer AL into ZL
           LDA=      X'80'          ; A = 0x80.
           LDB/      CRCINT         ; *CRCINT -> B.
 CRCLOOP   AND=      X'8000',B,X    ; 0x8000 & B -> X.
@@ -188,37 +162,20 @@ SKIPXOR   SLR       B              ; B <<= 1.
 SKIPPOLY  SRA                      ; A >>= 1.
           BNZ       CRCLOOP        ; If not zero, do the next bit.
           STB/      CRCINT         ; B -> *CRCINT.
-          LDA/      CRCCNT         ; Load A with CRC counter
-          BZ        CRCEND         ; If A is zero, branch to the end
-          DCA                      ; Decrement A
-          STA/      CRCCNT         ; Store newly decremented A back in mem.
-          JMP       NXTCRC         ; Jump back up to the next CRC
-CRCEND    POP       A,10           ; Pop Z,Y,X,B,A from the stack
-          RSR
-*
-SNDCRC    STAB-     S-             ; Push AL to the stack
-          STBB-     S-             ; Push BL to the stack
-          XFRB      YL,AL          ; YL -> AL
-          STAB-     S-             ; Push YL to the stack
-          LDAB=     X'01'          ; Total number of bytes to send (0, 1 = 2b)
-          XAZB                     ; Transfer result of ADD to Z
-          LDAB/     CRCINT+ZL      ; Load A with byte to send
-          XABB                     ; Transfer A -> B
-CRCCHK    LDAB=     B'10'          ; Set mask to check for tx buffer empty
-          XAYB                     ; AL -> YL
-CRCWAIT   LDAB/     MUX3CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Check if transmit buffer empty
-          BZ        CRCWAIT        ; If not empty, loop
-          STBB/     MUX3DATA       ; Store the character to the MUX data
-          XFRB      ZL,AL          ; Tranfer Z into A
-          BZ        SCEND          ; Branch to end if zero
-          DCRB      ZL             ; Decrement Z
-          JMP       CRCCHK         ; Go to the next byte
-SCEND     LDAB+     S+             ; Pop YL from the stack
-          XAYB                     ; AL -> YL
-          LDBB+     S+             ; Pop BL from the stack
-          LDAB+     S+             ; Pop AL from the stack
-          RSR                      ; Return
+CHECKY    LDA=      X'0190'        ; Load A with hex '0190'
+          LDB=      REDATA         ; Load B with start of read data
+          ADD       A,B            ; Add X'0190' with the start of read data
+          XFR       Y,A            ; Transfer Y register into A
+          SUB       B,A            ; Subtract B from A and store in A
+          BZ        CRCEND         ; Branch to the end of CRC junk if A is zero
+          INR       Y              ; Increment Y by 1
+          JMP       NEXTCRC        ; Jump back up and go again
+CRCEND    POP       X,2            ; Pop X back off of stack so we can return
+          LDA/      HWKSCT         ; Load the Hawk sectors into A
+          STA/      MKDATA         ; Store it into memory for transfer out
+          LDA/      CRCINT         ; Load calculated CRC into A
+          STA/      CRCDATA        ; Store it into memory for transfer out
+          RSR                      ; Return back to main loop
 *
 ********************************************************************************
 *                           INCREMENT SUBROUTINE                               *
@@ -285,9 +242,9 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDA=      X'0190'        ; Total number of bytes to count
+          LDA=      X'0194'        ; Total number of bytes to count
           XFR       A,Z            ; Transfer result of ADD to Z
-          LDA=      REDATA         ; Start of 400 bytes of DMA'd data
+          LDA=      MKDATA         ; Start of 404 bytes of DMA'd data
           ADD       A,Z            ; Add X'0190' to Z (400 bytes)
           XFR       A,B            ; Transfer A -> B
           XAY                      ; Transfer A -> Y
