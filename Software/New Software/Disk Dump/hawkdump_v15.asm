@@ -17,9 +17,6 @@ ZHKDUMP   BEGIN     X'0100'
 ********************************************************************************
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
-MKDATA    EQU       X'1000'        ; Where the marker data is placed
-REDATA    EQU       X'1002'        ; Where the read data goes
-CRCDATA   EQU       X'1192'        ; Where the CRC data goes
 NUBYTE    EQU       X'FE6F'        ; How many bytes to read X'FFFF'-X'0190'
 MAXCYL    EQU       X'3200'        ; The highest we can count for cylinders
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
@@ -140,6 +137,13 @@ CHKONCYL  LDAB/     X'F145'        ; Load the drive status
 *                         MARKER AND CRC SUBROUTINE                            *
 ********************************************************************************
 *
+MARKER    DC 'HAWKDUMP'.XOR.X'80A0A0A080A0A0A0'  ; Marker "HawkDump"
+          DW X'0D0A'               ; CR, LF to terminate marker
+MKDATA    DS 2                     ; 2 byte sector address
+REDATA    DS 400                   ; 400 bytes of sector data
+CRCDATA   DS 2                     ; 2 byte CRC
+          DW X'0D0A'               ; CR, LF to terminate sector data
+DUMPLEN   EQU *-MARKER             ; Amount of data to dump
 CRCINT    DW        0              ; Define CRCINT as 0
 CRCMARK   STK       X,2            ; Push return address (X reg) onto stack
           CLA                      ; A = 0.
@@ -242,10 +246,10 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDA=      X'0194'        ; Total number of bytes to count
+          LDA=      DUMPLEN        ; Total number of bytes to count
           XFR       A,Z            ; Transfer result of ADD to Z
-          LDA=      MKDATA         ; Start of 404 bytes of DMA'd data
-          ADD       A,Z            ; Add X'0190' to Z (400 bytes)
+          LDA=      MARKER         ; Start Marker which is followed by data/crc
+          ADD       A,Z            ; Add total length to start
           XFR       A,B            ; Transfer A -> B
           XAY                      ; Transfer A -> Y
 DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y

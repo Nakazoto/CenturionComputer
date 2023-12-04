@@ -16,7 +16,6 @@ ZFIDUMP   BEGIN     X'0100'
 ********************************************************************************
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
-READDATA  EQU       X'1000'        ; Where the Read data will go
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
@@ -49,6 +48,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      DMARTZ         ; RTZ the Finch
           JSR/      PRPROG         ; Print disk 0, track 0, sector 0
 LOOP      JSR/      DMAREAD        ; Get to reading
+          JSR/      CRCMARK        ; Calculate the CRC and create marker
           JSR/      DMPDATA        ; Dump out 400 bytes of data
           JSR/      INCRMNT1       ; Increment to next sector/track/disk
           JSR/      CHKESC         ; Check for CTRL+C
@@ -58,6 +58,7 @@ LOOP      JSR/      DMAREAD        ; Get to reading
 *                               UNIT SETUP                                     *
 ********************************************************************************
 *
+MAXDISK   DB        3              ; Max number of disks
 PICKDR    LDAB=     X'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
@@ -120,7 +121,7 @@ DMAIT     JSR/      CHKFIN         ; Check that FFC is ready
           JSR/      CHKFIN         ; Check that FFC is ready
           LDA+      S+             ; Pop A from the stack (0000 or 0190)
           DMA       SCT,A          ; Load DMA Count from A word register
-          LDA=      READDATA       ; Store all read bytes to this address
+          LDA=      REDATA         ; Store all read bytes to this address
           DMA       SAD,A          ; FFC and CPU on same page about # of bytes
           DMA       SDV,3          ; Set DMA device to 3 (FFC?)
           DMA       EAB            ; Enable DMA
@@ -164,6 +165,58 @@ FIERROR   JSR/      PRINTNULL
           JMP/      GOODBYE
 *
 ********************************************************************************
+*                         MARKER AND CRC SUBROUTINE                            *
+********************************************************************************
+*
+MARKER    DC 'FINCHDUMP'.XOR.X'80A0A0A0A080A0A0A0' ; Marker "FinchDump"
+          DW X'0D0A'               ; CR, LF to terminate marker
+MKDATA    DS 2+1+1                 ; 2 byte track, 1 byte disk, 1 byte sector
+REDATA    DS 400                   ; 400 bytes of sector data
+CRCDATA   DS 2                     ; 2 byte CRC
+          DW X'0D0A'               ; CR, LF to terminate sector data
+DUMPLEN   EQU *-MARKER             ; Amount of data to dump
+CRCINT    DW        0              ; Define CRCINT as 0
+CRCMARK   STK       X,2            ; Push return address (X reg) onto stack
+          CLA                      ; A = 0.
+          STA/      CRCINT         ; A -> *CRCINT
+          LDA=      REDATA         ; Load A with the location of the read data
+          XAY                      ; Transfer that over to Y
+NEXTCRC   LDAB+     Y              ; Load A with the value pointed at by Y
+          XAZB                     ; Transfer AL into ZL
+          LDA=      X'80'          ; A = 0x80.
+          LDB/      CRCINT         ; *CRCINT -> B.
+CRCLOOP   AND=      X'8000',B,X    ; 0x8000 & B -> X.
+          XFRB      ZL,ZU          ; ZL -> ZU.
+          ANDB      AL,ZU          ; AL & ZU -> ZU.
+          BZ        SKIPXOR        ; If 0, don't XOR with high bit.
+          ORE=      X'8000',X      ; 0x8000 ^ X -> X.
+SKIPXOR   SLR       B              ; B <<= 1.
+          XFR       X,X            ; X -> X.
+          BZ        SKIPPOLY       ; If 0, don't XOR with poly.
+          ORE=      X'1021',B      ; 0x1021 ^ B -> B.
+SKIPPOLY  SRA                      ; A >>= 1.
+          BNZ       CRCLOOP        ; If not zero, do the next bit.
+          STB/      CRCINT         ; B -> *CRCINT.
+CHECKY    LDA=      X'0190'        ; Load A with hex '0190'
+          LDB=      REDATA         ; Load B with start of read data
+          ADD       A,B            ; Add X'0190' with the start of read data
+          XFR       Y,A            ; Transfer Y register into A
+          SUB       B,A            ; Subtract B from A and store in A
+          BZ        CRCEND         ; Branch to the end of CRC junk if A is zero
+          INR       Y              ; Increment Y by 1
+          JMP       NEXTCRC        ; Jump back up and go again
+CRCEND    POP       X,2            ; Pop X back off of stack so we can return
+          LDA/      READCMD+5      ; Load the current track word into A
+          STA/      MKDATA         ; Store it into memory for transfer out
+          LDAB/     READCMD+3      ; Load the current disk byte into A
+          STAB/     MKDATA+2       ; Store it into memory for transfer out
+          LDAB/     READCMD+8      ; Load the current sector byte into A
+          STAB/     MKDATA+3       ; Store it into memory for transfer out
+          LDA/      CRCINT         ; Load calculated CRC into A
+          STA/      CRCDATA        ; Store it into memory for transfer out
+          RSR                      ; Return back to main loop
+*
+********************************************************************************
 *                           INCREMENT SUBROUTINE                               *
 ********************************************************************************
 *
@@ -186,28 +239,28 @@ SECTINC   LDAB/     READCMD+8      ; Load the sector count into AL
           DC        '.'
           DB        0
           RSR                      ; Return to main loop
-INCRMNT2  LDA/      READCMD+5      ; Load the track count into A
-          XAY                      ; Transfer it over to Y
-          LDA=      X'025D'        ; Load max track count into A
-          SUB       Y,A            ; Subtract A from Y
-          BNZ       TRACKINC       ; Branch if not Zero to Track Increment
-          LDA=      X'0000'        ; Reset sector count to 0
-          STA/      READCMD+5      ; Store back into command string
-          JMP/      INCRMNT3       ; Jump to Increment 3
-TRACKINC  LDA/      READCMD+5      ; Load the track count into A
-          INR       A              ; Increment by one
-          STA/      READCMD+5      ; Store back into command string
-          JMP/      PRPROG         ; Jump to print progress
-MAXDISK   DB        3              ; Max number of disks
-INCRMNT3  LDAB/     READCMD+3      ; Load the disk count into AL
+INCRMNT2  LDAB/     READCMD+3      ; Load the disk count into AL
           XAYB                     ; Transfer it over to YL
           LDAB/     MAXDISK        ; Load max disk count into AL
           SUBB      YL,AL          ; Subtract AL from YL
           BNZ       DISKINC        ; Branch if not Zero to Disk Increment
-          JMP/      THEEND
+          LDAB=     X'00'          ; Reset sector count to 0
+          STAB/     READCMD+3      ; Store back into command string
+          JMP/      INCRMNT3       ; Jump to Increment 3          
 DISKINC   LDAB/     READCMD+3      ; Load the disk count into AL
           INRB      AL             ; Increment the disk number
           STAB/     READCMD+3      ; Store back into command string
+          JMP/      PRPROG         ; Jump to print progress
+INCRMNT3  LDA/      READCMD+5      ; Load the track count into A
+          XAY                      ; Transfer it over to Y
+          LDA=      X'025D'        ; Load max track count into A
+          SUB       Y,A            ; Subtract A from Y
+          BNZ       TRACKINC       ; Branch if not Zero to Track Increment
+          JMP/      THEEND
+TRACKINC  LDA/      READCMD+5      ; Load the track count into A
+          INR       A              ; Increment by one
+          STA/      READCMD+5      ; Store back into command string
+          JMP/      PRPROG         ; Jump to print progress
 DSKDIGITS EQU       2              ; Digits to display for the disk.
 TRKDIGITS EQU       4              ; Digits to display for the track.
 PRPROG    MVF       (DSKDIGITS)='#@',/PRPROGDSK   ; Set the disk format.
@@ -257,10 +310,10 @@ DMPDATA   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDA=      X'0190'        ; Total number of bytes to count
+          LDA=      DUMPLEN        ; Total number of bytes to count
           XFR       A,Z            ; Transfer result of ADD to Z
-          LDA=      READDATA       ; Start of 400 bytes of DMA'd data
-          ADD       A,Z            ; Add X'0190' to Z (400 bytes)
+          LDA=      MARKER         ; Start Marker which is followed by data/crc
+          ADD       A,Z            ; Add total length to start
           XFR       A,B            ; Transfer A -> B
           XAY                      ; Transfer A -> Y
 DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
