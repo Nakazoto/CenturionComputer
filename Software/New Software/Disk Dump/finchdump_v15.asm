@@ -168,7 +168,11 @@ FIERROR   JSR/      PRINTNULL
 *                         MARKER AND CRC SUBROUTINE                            *
 ********************************************************************************
 *
-MARKER    DC 'FINCHDUMP'.XOR.X'80A0A0A0A080A0A0A0' ; Marker "FinchDump"
+MARKER    DW 'FI'.XOR.X'80A0'
+          DW 'NC'.XOR.X'A0A0'
+          DW 'HD'.XOR.X'A080'
+          DW 'UM'.XOR.X'A0A0'
+          DB 'P'.XOR.X'A0'         ; Marker "FinchDump"
           DW X'0D0A'               ; CR, LF to terminate marker
 MKDATA    DS 2+1+1                 ; 2 byte track, 1 byte disk, 1 byte sector
 REDATA    DS 400                   ; 400 bytes of sector data
@@ -181,7 +185,7 @@ CRCMARK   STK       X,2            ; Push return address (X reg) onto stack
           STA/      CRCINT         ; A -> *CRCINT
           LDA=      REDATA         ; Load A with the location of the read data
           XAY                      ; Transfer that over to Y
-NEXTCRC   LDAB+     Y              ; Load A with the value pointed at by Y
+NEXTCRC   LDAB+     Y+             ; Load value pointed at by Y and incrmnt Y
           XAZB                     ; Transfer AL into ZL
           LDA=      X'80'          ; A = 0x80.
           LDB/      CRCINT         ; *CRCINT -> B.
@@ -197,13 +201,9 @@ SKIPXOR   SLR       B              ; B <<= 1.
 SKIPPOLY  SRA                      ; A >>= 1.
           BNZ       CRCLOOP        ; If not zero, do the next bit.
           STB/      CRCINT         ; B -> *CRCINT.
-CHECKY    LDA=      X'0190'        ; Load A with hex '0190'
-          LDB=      REDATA         ; Load B with start of read data
-          ADD       A,B            ; Add X'0190' with the start of read data
-          XFR       Y,A            ; Transfer Y register into A
-          SUB       B,A            ; Subtract B from A and store in A
+CHECKY    LDA=      CRCDATA        ; A = one past end of sector data
+          SUB       Y,A            ; Compare Y to one past the end
           BZ        CRCEND         ; Branch to the end of CRC junk if A is zero
-          INR       Y              ; Increment Y by 1
           JMP       NEXTCRC        ; Jump back up and go again
 CRCEND    POP       X,2            ; Pop X back off of stack so we can return
           LDA/      READCMD+5      ; Load the current track word into A

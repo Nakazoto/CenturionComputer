@@ -1,24 +1,21 @@
 ********************************************************************************
-*                                  HAWK DUMP                                   *
+*                                  FINCH DUMP                                  *
 ********************************************************************************
 *
-* The assembly in this Hawk Dump program was heavily inspired by GOS and
+* The assembly in this Finch Dump program was heavily inspired by GOS and
 * Ren14500's excellent guidance. Additionally, Gecho and Meisaka provided a 
 * a massive amount of help with figuring out assembly, DMA and other drive
-* shenanigans. And of course, Ken Romaine is an absolute legend for remembering
-* so much about the Centurion and the Hawk.
-* Thank you everyone so much for walking me through this!
+* shenanigans.
+* Thank you all so much for walking me through this!
 *
-          TITLE     'HKDUMP'
-ZHKDUMP   BEGIN     X'0100'
+          TITLE     'FIDUMP'
+ZFIDUMP   BEGIN     X'0100'
 *
 ********************************************************************************
 *                                  CONSTANTS                                   *
 ********************************************************************************
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
-NUBYTE    EQU       X'FE6F'        ; How many bytes to read X'FFFF'-X'0190'
-MAXCYL    EQU       X'3200'        ; The highest we can count for cylinders
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
@@ -36,113 +33,177 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           LDAB=     MUX3CB         ; Load Mux 3 Control Byte into A
           STAB/     MUX3CTRL       ; Store A into MUX3CTRL, MMIO port for MUX3
 * Print Welcome Screen
-* 8D = CR, 8A = LF, 8C = Clear
+* 8D = CR, 8A = LF, 8C = Clear?
           JSR/      PRINTNULL
           DB        X'8C'
-          DC        'HAWK DUMP PROGRAM'
+          DC        'FINCH DUMP PROGRAM'
           DW        X'8D8A'
           DC        'PRESS CONTROL + C TO QUIT DURING DATA DUMP'
           DW        X'8D8A'
           DW        X'8D8A'
-          DC        'CENTURION COUNTS TOP DOWN'
-          DW        X'8D8A'
-          DC   'PLATTER 0 = DRIVE 0 REMOVABLE, PLATTER 1 = DRIVE 0 FIXED, ETC.'
-          DW        X'8D8A'
-          DC        'ENTER PLATTER NUMBER (0 ~ 7): '
+          DC        'ENTER NUMBER LOGICAL DISKS (1 ~ 4): '
           DB        0              ; Null terminator
 * Start Doing Productive Stuff
-          JSR/      PICKDR         ; Pick your drive and platter
-          JSR/      HWKRTZ         ; RTZ the Hawk
-          JSR/      PRPROG         ; Print track 0
-LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
+          JSR/      PICKDR         ; Pick max number of disks
+          JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'THE FINCH HAS 025D TOTAL TRACKS'
+          DW        X'8D8A'
+          DC        'ENTER START TRACK IN HEX: '
+          DB        0
+          JSR/      PICKST         ; Pick the starting track
+          DW        X'8D8A'
+          DC        'ENTER ENDING TRACK IN HEX: '
+          DB        0
+          JSR/      PICKEND        ; Pick the ending track
+          JSR/      DMARTZ         ; RTZ the Finch
+          JSR/      PRPROG         ; Print disk 0, track 0, sector 0
+LOOP      JSR/      DMAREAD        ; Get to reading
           JSR/      CRCMARK        ; Calculate the CRC and create marker
-          JSR/      DMPDATA        ; Dump memory to CRT3
-          JSR/      INCRMNT1       ; Increment the track
-          JSR/      CHKESC         ; Check if user pressed escape sequence
-          JMP/      LOOP           ; What it says on the tin
+          JSR/      DMPDATA        ; Dump out 400 bytes of data
+          JSR/      INCRMNT1       ; Increment to next sector/track/disk
+          JSR/      CHKESC         ; Check for CTRL+C
+          JMP/      LOOP           ; Back to the top
 *
 ********************************************************************************
 *                               UNIT SETUP                                     *
 ********************************************************************************
 *
+MAXDISK   DB        3              ; Max number of disks
 PICKDR    LDAB=     X'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Subtract AL from YL
-          BNZ       GRABRX         ; If not zero, then receive bit set
+          BNZ       GRABDRX        ; If not zero, then receive bit set
           JMP/      PICKDR         ; If not zero, then loop
-GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B 
+GRABDRX   LDAB/     MUX0DATA       ; Read in the receive byte to the B 
           STAB/     MUX0DATA       ; Echo that digit back
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load B with 0000 1111
           ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
-          STAB/     X'F140'        ; Stab it into F140, the MMIO register
+          XAYB                     ; Toss it back into Y
+          LDAB=     X'01'          ; Load A with 0001
+          SUBB      YL,AL          ; Subtract YL - AL and store in AL
+          STAB/     MAXDISK        ; Stab it into MAXDISK used by INCRMNT3
           RSR                      ; Back to main loop
+<! NEW STUFF HERE !>
+PICKST    LDAB=     X'01'          ; Set mask to check if rx byte available
+          XAYB                     ; AL -> YL
+          LDAB/     MUX0CTRL       ; AL = MUX status byte
+          ANDB      YL,AL          ; Subtract AL from YL
+          BNZ       GRABSRX        ; If not zero, then receive bit set
+          JMP/      PICKDR         ; If not zero, then loop
+GRABSRX   LDAB/     MUX0DATA       ; Read in the receive byte to the B 
+          STAB/     MUX0DATA       ; Echo that digit back
+          XAYB                     ; AL -> YL
+          
+          
+          
+          
+          RSR                      ; Back to main loop
+
+
+PICKEND   
 *
 ********************************************************************************
-*                            HAWK SUBROUTINES                                  *
+*                        COMAND STRING INITIAL SETUP                           *
 ********************************************************************************
 *
-HWKSCT    DW        X'0000'        ; Sector address
-PRTSCT    DW        X'0000'        ; Printable sector count
-HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
-          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'HAWK RTZ INITIATED'
-          DB        0
-          RSR
-DMAREAD   JSR/      CHKREADY
-          LDA/      HWKSCT         ; Load sector count into A
-          STA/      X'F141'        ; Stab it into F141, the MMIO register
-          LDAB=     X'02'          ; Load seek command into A
-          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          JSR/      CHKREADY
-          DMA       SDV,0          ; Set DMA device to 0
+RTZCMD    DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
+          DW        X'8400'        ; 84 = Disk Select, 00 = Disk 0
+          DW        X'82FF'        ; 82 = RTZ
+READCMD   DW        X'8102'        ; 81 = Unit Select, 02 = Unit 2 (Finch 0)
+          DW        X'8400'        ; 84 = Disk Select, 00 = Disk 0
+          DB        X'83'          ; 83 = Seek
+          DW        X'0000'        ; 0000 = Track 0000
+          DB        X'8A'          ; 8A = Read
+          DB        X'00'          ; 00 = Sector (Up to 1D)
+          DW        X'0190'        ; 0190 = Number of bytes
+          DB        X'FF'
+*
+********************************************************************************
+*                             DMA SUBROUTINES                                  *
+********************************************************************************
+*
+DMARTZ    LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
+          STA-      S-             ; Push A to the stack
+          LDA=      RTZCMD         ; Where the RTZ command string is
+          STA-      S-             ; Push A to the stack
+          LDA=      X'FFFF'-6      ; How many bytes to read in command string
+          STA-      S-             ; Push A to the stack
+          JMP       DMAIT          ; Jump ahead skipping the next section
+DMAREAD   LDA=      X'0190'        ; Should read back 400 bytes/1 sector
+          STA-      S-             ; Push A to the stack
+          LDA=      READCMD        ; Where the RTZ command string is
+          STA-      S-             ; Push A to the stack
+          LDA=      X'FFFF'-12     ; How many bytes to read in command string
+          STA-      S-             ; Push A to the stack
+DMAIT     JSR/      CHKFIN         ; Check that FFC is ready
+          LDA+      S+             ; Pop A from the stack (FFFF-12 or FFFF-6)
+          DMA       SCT,A          ; Load DMA Count from A word register
+          LDA+      S+             ; Pop A from the stack(RTZCMD or READCMD)
+          DMA       SAD,A          ; Tell FFC where the command bytes are
+          DMA       SDV,3          ; Set DMA device to 3 (FFC?)
           DMA       EAB            ; Enable DMA
-          LDA=      REDATA         ; Load location where to put bytes
-          DMA       SAD,A          ; Where to put the bytes (X'1000')
-          LDA=      NUBYTE         ; Load how many bytes to drop down
-          DMA       SCT,A          ; How many bytes to read (X'0190')
-          LDAB=     X'00'          ; Load read command into A
-          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
-          XAYB                     ; AL -> YL
-          LDAB=     X'FF'          ; Load A with X'FF' inverse of all good
-          ANDB      YL,AL          ; AND AL and YL
-          BZ        PRINTDOT       ; Success, print dot and go
-          LDAB=     X'F0'          ; Load A with X'F0' to check for errors
-          ANDB      YL,AL          ; AND AL and YL, should give zero
-          BNZ       WEGOTERR       ; If not 0, then we have an error
-          JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
-PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
-          DC        '.'
+          LDAB=     X'43'          ; 43 = Transfer command to FFC
+          STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
+          JSR/      CHKFIN         ; Check that FFC is ready
+          LDA+      S+             ; Pop A from the stack (0000 or 0190)
+          DMA       SCT,A          ; Load DMA Count from A word register
+          LDA=      REDATA         ; Store all read bytes to this address
+          DMA       SAD,A          ; FFC and CPU on same page about # of bytes
+          DMA       SDV,3          ; Set DMA device to 3 (FFC?)
+          DMA       EAB            ; Enable DMA
+          LDAB=     X'45'          ; 43 = Execute
+          STAB/     X'F800'        ; F800 = MMIO of FFC related stuff?
+          JSR/      CHKFIN         ; Check that FFC is ready
+          RSR
+* Status register is at F801 -> if XXX1 then all good?
+CHKFIN    LDA=      X'0100'        ; Load A with a countdown counter
+          XAY                      ; Move that over to Y
+FINLOOP   LDAB/     X'F801'        ; Load the Finch status in
+          SRAB                     ; Shift the status bit over to link
+          SRAB                     ; Shift the status bit over to link
+          BNL       CHKBSY         ; If link isn't set, FIN is okay
+          DLY                      ; Chill for 4.55ms
+          DCR       Y              ; Drop our timer down by one
+          CLA                      ; Clear A
+          SUB       Y,A            ; Subtract A from Y store in A
+          BZ        FIERROR        ; Branch to error message
+          JMP       FINLOOP        ; Loop back annd try again
+CHKBSY    LDA=      X'0100'        ; Load A with a countdown counter
+          XAY                      ; Move that over to Y
+BSYLOOP   LDAB/     X'F801'        ; Load the Finch status in
+          LDBB=     B'00001000'    ; Load the mask into B register
+          NABB                     ; AND AL register and BL register
+          BZ        ALLGOOD        ; If zero, busy cleared, continue on
+          DLY
+          DCR       Y              ; Drop our timer down by one
+          CLA                      ; Clear A
+          SUB       Y,A            ; Subtract A from Y store in A
+          BZ        FIERROR        ; Branch to error message
+          JMP       BSYLOOP        ; Loop back annd try again
+ALLGOOD   RF                       ; Reset fault. Necessary? DIAG does it...
+          RSR                      ; Status is good, go back and proceed
+FIERROR   JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'FINCH ERROR'
+          DW        X'8D8A'
+          DC        'DUMP PROGRAM CANCELLED, PRESS ANY KEY TO RETURN TO LOADER'
           DB        0
-          RSR
-WEGOTERR  JSR/      PRINTNULL      ; Print a 'X' to denote read error
-          DC        'X'
-          DB        0
-          FIL (200)=X'FF',/REDATA  ; Fill the 400 byte buffer in memory with FF
-          FIL (200)=X'FF',/REDATA+200
-          RSR
-CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
-          XAYB                     ; AL -> YL
-CHKONCYL  LDAB/     X'F145'        ; Load the drive status
-          ANDB      YL,AL          ; clear all the other bits
-          OREB      YL,AL          ; Desired bits will both be zero when ready
-          BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
-          RSR
+          JMP/      GOODBYE
 *
 ********************************************************************************
 *                         MARKER AND CRC SUBROUTINE                            *
 ********************************************************************************
 *
-MARKER    DW 'HA'.XOR.X'80A0'
-          DW 'WK'.XOR.X'A0A0'
-          DW 'DU'.XOR.X'80A0'
-          DW 'MP'.XOR.X'A0A0'      ; Marker "HawkDump"
+MARKER    DW 'FI'.XOR.X'80A0'
+          DW 'NC'.XOR.X'A0A0'
+          DW 'HD'.XOR.X'A080'
+          DW 'UM'.XOR.X'A0A0'
+          DB 'P'.XOR.X'A0'         ; Marker "FinchDump"
           DW X'0D0A'               ; CR, LF to terminate marker
-MKDATA    DS 2                     ; 2 byte sector address
+MKDATA    DS 2+1+1                 ; 2 byte track, 1 byte disk, 1 byte sector
 REDATA    DS 400                   ; 400 bytes of sector data
 CRCDATA   DS 2                     ; 2 byte CRC
           DW X'0D0A'               ; CR, LF to terminate sector data
@@ -174,8 +235,12 @@ CHECKY    LDA=      CRCDATA        ; A = one past end of sector data
           BZ        CRCEND         ; Branch to the end of CRC junk if A is zero
           JMP       NEXTCRC        ; Jump back up and go again
 CRCEND    POP       X,2            ; Pop X back off of stack so we can return
-          LDA/      HWKSCT         ; Load the Hawk sectors into A
+          LDA/      READCMD+5      ; Load the current track word into A
           STA/      MKDATA         ; Store it into memory for transfer out
+          LDAB/     READCMD+3      ; Load the current disk byte into A
+          STAB/     MKDATA+2       ; Store it into memory for transfer out
+          LDAB/     READCMD+8      ; Load the current sector byte into A
+          STAB/     MKDATA+3       ; Store it into memory for transfer out
           LDA/      CRCINT         ; Load calculated CRC into A
           STA/      CRCDATA        ; Store it into memory for transfer out
           RSR                      ; Return back to main loop
@@ -184,33 +249,62 @@ CRCEND    POP       X,2            ; Pop X back off of stack so we can return
 *                           INCREMENT SUBROUTINE                               *
 ********************************************************************************
 *
-* Hawk has X'0190' cylinders, 2 tracks per cyl., 16 sectors per track
-* Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'
-INCRMNT1  LDA=      MAXCYL         ; Load max cylinder count into A
-          XFR       A,Z            ; Transfer A over to Z
-          LDA/      HWKSCT         ; Load current sector into A
-          INR       A              ; Increment it by one
-          STA/      HWKSCT         ; Store it back in memory
-          SUB       Z,A            ; Subtract A from Z
-          BNZ       INCRMNT2       ; If we haven't reached maxcyl yet, proceed
-          JMP/      THEEND         ; If we have reached maxcyl, all done
-INCRMNT2  LDB/      PRTSCT         ; Load the printable sector
-          LDA/      HWKSCT         ; Load the current hawk sector
-          SRR       A,5            ; Shift A 5-bits to the right (high bit = 0)
-          SUB       A,B            ; Subtract that from PRTSCT to see if diff.
-          BNZ       PREPRPROG      ; If so, then update and print
+* Command string: 81 02 84 00 83 00 00 8A 00 01 90 FF
+* 81 = Unit Select, 02 = Unit 2 (Finch 0), 84 = Disk Select, 00 = Disk 0
+* 83 = Seek, 0000 = Track 0000, 8A = Read, 00 = Sector, 0190 = 400 bytes
+* Finch has 4 Disks, 605 Tracks per Disk, 29 Sectors per Track
+INCRMNT1  LDAB/     READCMD+8      ; Load the sector count into AL
+          XAYB                     ; Transfer it over to YL
+          LDAB=     X'1D'          ; Load max sector count into AL
+          SUBB      Y,A            ; Subtract AL from YL
+          BNZ       SECTINC        ; Branch if not Zero to Sector Increment
+          LDAB=     X'00'          ; Reset sector count to 0
+          STAB/     READCMD+8      ; Store back into command string
+          JMP/      INCRMNT2       ; Jump to Increment 2
+SECTINC   LDAB/     READCMD+8      ; Load the sector count into AL
+          INRB      A              ; Increment by one
+          STAB/     READCMD+8      ; Store back into command string
+          JSR/      PRINTNULL      ; Print a '.' to denote sector progress
+          DC        '.'
+          DB        0
           RSR                      ; Return to main loop
+INCRMNT2  LDAB/     READCMD+3      ; Load the disk count into AL
+          XAYB                     ; Transfer it over to YL
+          LDAB/     MAXDISK        ; Load max disk count into AL
+          SUBB      YL,AL          ; Subtract AL from YL
+          BNZ       DISKINC        ; Branch if not Zero to Disk Increment
+          LDAB=     X'00'          ; Reset sector count to 0
+          STAB/     READCMD+3      ; Store back into command string
+          JMP/      INCRMNT3       ; Jump to Increment 3          
+DISKINC   LDAB/     READCMD+3      ; Load the disk count into AL
+          INRB      AL             ; Increment the disk number
+          STAB/     READCMD+3      ; Store back into command string
+          JMP/      PRPROG         ; Jump to print progress
+INCRMNT3  LDA/      READCMD+5      ; Load the track count into A
+          XAY                      ; Transfer it over to Y
+          LDA=      X'025D'        ; Load max track count into A
+          SUB       Y,A            ; Subtract A from Y
+          BNZ       TRACKINC       ; Branch if not Zero to Track Increment
+          JMP/      THEEND
+TRACKINC  LDA/      READCMD+5      ; Load the track count into A
+          INR       A              ; Increment by one
+          STA/      READCMD+5      ; Store back into command string
+          JMP/      PRPROG         ; Jump to print progress
+DSKDIGITS EQU       2              ; Digits to display for the disk.
 TRKDIGITS EQU       4              ; Digits to display for the track.
-PREPRPROG LDA/      HWKSCT         ; Load the Hawk sectors into A
-          SRR       A,5            ; Shift right 5 times to just get the cyl.
-          STA/      PRTSCT         ; Store that new value into PRTSCT
-PRPROG    MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format.
+PRPROG    MVF       (DSKDIGITS)='#@',/PRPROGDSK   ; Set the disk format.
+          MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format.
+          LDAB=     DSKDIGITS      ; AL = digits to display for the disk.
+          LDBB=     '0'            ; BL = padding character.
+          CFB       /PRPROGDSK(16),/READCMD+3(1) ; Convert READCMD+3(b) to hex
           LDAB=     TRKDIGITS      ; AL = digits to display for the track.
           LDBB=     '0'            ; BL = padding character.
-          CFB       /PRPROGTRK(16),/PRTSCT(2) ; Convert READCMD+5(w) to hex
+          CFB       /PRPROGTRK(16),/READCMD+5(2) ; Convert READCMD+5(w) to hex
           JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed        
-          DC        'TRACK: '
+          DC        'DISK: '
+PRPROGDSK DS        DSKDIGITS
+          DC        ', TRACK: '
 PRPROGTRK DS        TRKDIGITS
           DC        ', SECTOR: '
           DB        0              ; Null terminator
