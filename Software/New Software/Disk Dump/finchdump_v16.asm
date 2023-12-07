@@ -70,14 +70,9 @@ LOOP      JSR/      DMAREAD        ; Get to reading
 ********************************************************************************
 *
 MAXDISK   DB        3              ; Max number of disks
-PICKDR    LDAB=     X'01'          ; Set mask to check if rx byte available
-          XAYB                     ; AL -> YL
-          LDAB/     MUX0CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Subtract AL from YL
-          BNZ       GRABDRX        ; If not zero, then receive bit set
-          JMP/      PICKDR         ; If not zero, then loop
-GRABDRX   LDAB/     MUX0DATA       ; Read in the receive byte to the B 
-          STAB/     MUX0DATA       ; Echo that digit back
+STRACK    DW        X'0000'        ; Define starting track
+ETRACK    DW        X'025D'        ; Define ending track
+PICKDR    JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load B with 0000 1111
           ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
@@ -86,24 +81,33 @@ GRABDRX   LDAB/     MUX0DATA       ; Read in the receive byte to the B
           SUBB      YL,AL          ; Subtract YL - AL and store in AL
           STAB/     MAXDISK        ; Stab it into MAXDISK used by INCRMNT3
           RSR                      ; Back to main loop
-<! NEW STUFF HERE !>
-PICKST    LDAB=     X'01'          ; Set mask to check if rx byte available
+PICKST    JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB       ; Jump to subroutine to convert byte
+          STAB/     STRACK
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB       ; Jump to subroutine to convert byte
+          STAB/     STRACK+2
+          LDA/      STRACK         ; Load the now updated starting track into A
+          STA/      READCMD+5      ; Store A into the DMA read command string
+          RSR                      ; Return to main loop
+PICKEND   JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB       ; Jump to subroutine to convert byte
+          STAB/     ETRACK
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB       ; Jump to subroutine to convert byte
+          STAB/     ETRACK+2
+          RSR     
+CHKBYTE   LDAB=     X'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Subtract AL from YL
-          BNZ       GRABSRX        ; If not zero, then receive bit set
-          JMP/      PICKDR         ; If not zero, then loop
-GRABSRX   LDAB/     MUX0DATA       ; Read in the receive byte to the B 
+          BZ        CHKBYTE        ; If zero, then receive bit not set
+          LDAB/     MUX0DATA       ; Read in the receive byte to the B 
           STAB/     MUX0DATA       ; Echo that digit back
-          XAYB                     ; AL -> YL
+          RSR                      ; Receive bit was set, return back
+CONVERTB  <! CONVERT A REGISTER FROM ASCII TO BYTE !>
           
-          
-          
-          
-          RSR                      ; Back to main loop
-
-
-PICKEND   
+          RSR
 *
 ********************************************************************************
 *                        COMAND STRING INITIAL SETUP                           *
@@ -134,7 +138,7 @@ DMARTZ    LDA=      X'0000'        ; Since it's an RTZ, no bytes will be read
           JMP       DMAIT          ; Jump ahead skipping the next section
 DMAREAD   LDA=      X'0190'        ; Should read back 400 bytes/1 sector
           STA-      S-             ; Push A to the stack
-          LDA=      READCMD        ; Where the RTZ command string is
+          LDA=      READCMD        ; Where the read command string is
           STA-      S-             ; Push A to the stack
           LDA=      X'FFFF'-12     ; How many bytes to read in command string
           STA-      S-             ; Push A to the stack
@@ -282,7 +286,7 @@ DISKINC   LDAB/     READCMD+3      ; Load the disk count into AL
           JMP/      PRPROG         ; Jump to print progress
 INCRMNT3  LDA/      READCMD+5      ; Load the track count into A
           XAY                      ; Transfer it over to Y
-          LDA=      X'025D'        ; Load max track count into A
+          LDA/      ETRACK         ; Load max track count into A
           SUB       Y,A            ; Subtract A from Y
           BNZ       TRACKINC       ; Branch if not Zero to Track Increment
           JMP/      THEEND
