@@ -18,7 +18,6 @@ ZHKDUMP   BEGIN     X'0100'
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
 NUBYTE    EQU       X'FE6F'        ; How many bytes to read X'FFFF'-X'0190'
-MAXCYL    EQU       X'3200'        ; The highest we can count for cylinders
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
@@ -41,7 +40,12 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DB        X'8C'
           DC        'HAWK DUMP PROGRAM'
           DW        X'8D8A'
-          DC        'PRESS CONTROL + C TO QUIT DURING DATA DUMP'
+          DC        'PRESS SELECT ON FRONT PANEL TO RETURN TO LOADER'
+          DW        X'8D8A'
+          DW        X'8D8A'
+          DC        'CAUTION! THIS PROGRAM HAS NO ERROR HANDLING'
+          DW        X'8D8A'
+          DC        'INPUT SANE VALUES ARE YOU WILL GET GARBAGE OUT'
           DW        X'8D8A'
           DW        X'8D8A'
           DC        'CENTURION COUNTS TOP DOWN'
@@ -52,6 +56,18 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DB        0              ; Null terminator
 * Start Doing Productive Stuff
           JSR/      PICKDR         ; Pick your drive and platter
+          JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'THE HAWK HAS X'3200' TOTAL TRACKS'
+          DW        X'8D8A'
+          DC        'ENTER START TRACK IN HEX: '
+          DB        0
+          JSR/      PICKST         ; Pick the starting track
+          JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'ENTER ENDING TRACK IN HEX: '
+          DB        0
+          JSR/      PICKEND        ; Pick the ending track
           JSR/      HWKRTZ         ; RTZ the Hawk
           JSR/      PRPROG         ; Print track 0
 LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
@@ -65,19 +81,44 @@ LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
 *                               UNIT SETUP                                     *
 ********************************************************************************
 *
-PICKDR    LDAB=     X'01'          ; Set mask to check if rx byte available
-          XAYB                     ; AL -> YL
-          LDAB/     MUX0CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Subtract AL from YL
-          BNZ       GRABRX         ; If not zero, then receive bit set
-          JMP/      PICKDR         ; If not zero, then loop
-GRABRX    LDAB/     MUX0DATA       ; Read in the receive byte to the B 
-          STAB/     MUX0DATA       ; Echo that digit back
+ETRACK    DW        X'3200'        ; Define ending track
+INSTRING  DW        X'0000'        ; This is the area where we store
+          DW        X'0000'        ; the incoming ASCII bytes
+INLENGTH  DB        4              ; Used to tell CTB how many bytes to check
+INVALUE   DW        X'0000'        ; Where CTB stores the converted bytes
+PICKDR    JSR/      CHKBYTE
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load B with 0000 1111
           ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
           STAB/     X'F140'        ; Stab it into F140, the MMIO register
           RSR                      ; Back to main loop
+PICKST    JSR/      FILLSTR        ; Jump to routine that fills incoming ASCII
+          STA/      HWKSCT         ; Store A (starting track) into read cmd str
+          STA/      PRTSCT         ; Store A (starting track) into print cmd str
+          RSR                      ; Return to main loop
+PICKEND   JSR/      FILLSTR        ; Jump to routine that fills incoming ASCII
+          STA/      ETRACK         ; Store A (ending track) into memory
+          RSR                      ; Return to main loop
+FILLSTR   JSR/      CHKBYTE        ; Grab the 1st incoming ASCII byte
+          STAB/     INSTRING       ; Drop it into location 0 of INSTRING
+          JSR/      CHKBYTE        ; Grab the 2nd incoming ASCII byte
+          STAB/     INSTRING+1     ; Drop it into location 1 of INSTRING
+          JSR/      CHKBYTE        ; Grab the 3rd incoming ASCII byte
+          STAB/     INSTRING+2     ; Drop it into location 2 of INSTRING
+          JSR/      CHKBYTE        ; Grab the 4th incoming ASCII byte
+          STAB/     INSTRING+3     ; Drop it into location 3 of INSTRING
+          JSR/      CONVERTB       ; Jump to subroutine to convert byte
+          RSR                      ; Return to main loop
+CHKBYTE   LDAB/     MUX0CTRL       ; Load MUX status byte in to AL
+          SRAB                     ; Shift AL to the right by 1
+          BNL       CHKBYTE        ; Loop back to top if Link is not set
+          LDAB/     MUX0DATA       ; Read in the receive byte
+          STAB/     MUX0DATA       ; Echo that digit back
+          RSR
+CONVERTB  LDAB/     INLENGTH       ; AL = string length
+          CTB       /INSTRING(16),/INVALUE(2) 
+          LDA/      INVALUE        ; The integer value represented by string
+          RSR
 *
 ********************************************************************************
 *                            HAWK SUBROUTINES                                  *
@@ -186,14 +227,14 @@ CRCEND    POP       X,2            ; Pop X back off of stack so we can return
 *
 * Hawk has X'0190' cylinders, 2 tracks per cyl., 16 sectors per track
 * Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'
-INCRMNT1  LDA=      MAXCYL         ; Load max cylinder count into A
+INCRMNT1  LDA=      ETRACK         ; Load max cylinder (ETRACK) count into A
           XFR       A,Z            ; Transfer A over to Z
           LDA/      HWKSCT         ; Load current sector into A
           INR       A              ; Increment it by one
           STA/      HWKSCT         ; Store it back in memory
           SUB       Z,A            ; Subtract A from Z
-          BNZ       INCRMNT2       ; If we haven't reached maxcyl yet, proceed
-          JMP/      THEEND         ; If we have reached maxcyl, all done
+          BNZ       INCRMNT2       ; If we haven't reached ETRACK yet, proceed
+          JMP/      THEEND         ; If we have reached ETRACK, all done
 INCRMNT2  LDB/      PRTSCT         ; Load the printable sector
           LDA/      HWKSCT         ; Load the current hawk sector
           SRR       A,5            ; Shift A 5-bits to the right (high bit = 0)

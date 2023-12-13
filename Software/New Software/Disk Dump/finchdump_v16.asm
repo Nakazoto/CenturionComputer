@@ -54,7 +54,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      PICKDR         ; Pick max number of disks
           JSR/      PRINTNULL
           DW        X'8D8A'
-          DC        'THE FINCH HAS 025D TOTAL TRACKS'
+          DC        'THE FINCH HAS X'025D' TOTAL TRACKS'
           DW        X'8D8A'
           DC        'ENTER START TRACK IN HEX: '
           DB        0
@@ -113,7 +113,7 @@ CHKBYTE   LDAB/     MUX0CTRL       ; Load MUX status byte in to AL
           BNL       CHKBYTE        ; Loop back to top if Link is not set
           LDAB/     MUX0DATA       ; Read in the receive byte
           STAB/     MUX0DATA       ; Echo that digit back
-          RSR  
+          RSR
 CONVERTB  LDAB/     INLENGTH       ; AL = string length
           CTB       /INSTRING(16),/INVALUE(2) 
           LDA/      INVALUE        ; The integer value represented by string
