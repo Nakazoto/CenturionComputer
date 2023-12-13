@@ -34,18 +34,13 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           STAB/     MUX3CTRL       ; Store A into MUX3CTRL, MMIO port for MUX3
 * Print Welcome Screen
 * 8D = CR, 8A = LF, 8C = Clear?
-          JSR/      PRINTNULL
+TOP       JSR/      PRINTNULL
           DB        X'8C'
           DC        'FINCH DUMP PROGRAM'
           DW        X'8D8A'
           DC        'PRESS CONTROL + C TO QUIT DURING DATA DUMP'
           DW        X'8D8A'
           DC        'PRESS SELECT ON FRONT PANEL TO RETURN TO LOADER'
-          DW        X'8D8A'
-          DW        X'8D8A'
-          DC        'CAUTION! THIS PROGRAM HAS NO ERROR HANDLING'
-          DW        X'8D8A'
-          DC        'INPUT SANE VALUES ARE YOU WILL GET GARBAGE OUT'
           DW        X'8D8A'
           DW        X'8D8A'
           DC        'ENTER NUMBER LOGICAL DISKS (1 ~ 4): '
@@ -78,11 +73,8 @@ LOOP      JSR/      DMAREAD        ; Get to reading
 ********************************************************************************
 *
 MAXDISK   DB        3              ; Max number of disks
+STRACK    DW        X'0000'        ; Define starting track
 ETRACK    DW        X'025D'        ; Define ending track
-INSTRING  DW        X'0000'        ; This is the area where we store
-          DW        X'0000'        ; the incoming ASCII bytes
-INLENGTH  DB        4              ; Used to tell CTB how many bytes to check
-INVALUE   DW        X'0000'        ; Where CTB stores the converted bytes
 PICKDR    JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load B with 0000 1111
@@ -92,31 +84,73 @@ PICKDR    JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
           SUBB      YL,AL          ; Subtract YL - AL and store in AL
           STAB/     MAXDISK        ; Stab it into MAXDISK used by INCRMNT3
           RSR                      ; Back to main loop
-PICKST    JSR/      FILLSTR        ; Jump to routine that fills incoming ASCII
-          STA/      READCMD+5      ; Store A (starting track) into read cmd str
+PICKST    JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          SLRB      AL,4
+          LDBB=     X'F0'
+          ANDB      BL,AL
+          XAYB
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          LDBB=     X'0F'
+          ANDB      BL,AL
+          ORIB      YL,AL
+          STAB/     STRACK
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          SLRB      AL,4
+          LDBB=     X'F0'
+          ANDB      BL,AL
+          XAYB
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          LDBB=     X'0F'
+          ANDB      BL,AL
+          ORIB      YL,AL
+          STAB/     STRACK+1
+          LDA/      STRACK
+          STA/      READCMD+5      ; Store A into the DMA read command string
           RSR                      ; Return to main loop
-PICKEND   JSR/      FILLSTR        ; Jump to routine that fills incoming ASCII
-          STA/      ETRACK         ; Store A (ending track) into memory
-          RSR                      ; Return to main loop
-FILLSTR   JSR/      CHKBYTE        ; Grab the 1st incoming ASCII byte
-          STAB/     INSTRING       ; Drop it into location 0 of INSTRING
-          JSR/      CHKBYTE        ; Grab the 2nd incoming ASCII byte
-          STAB/     INSTRING+1     ; Drop it into location 1 of INSTRING
-          JSR/      CHKBYTE        ; Grab the 3rd incoming ASCII byte
-          STAB/     INSTRING+2     ; Drop it into location 2 of INSTRING
-          JSR/      CHKBYTE        ; Grab the 4th incoming ASCII byte
-          STAB/     INSTRING+3     ; Drop it into location 3 of INSTRING
-          JSR/      CONVERTB       ; Jump to subroutine to convert byte
+PICKEND   JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          SLRB      AL,4
+          LDBB=     X'F0'
+          ANDB      BL,AL
+          XAYB
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          LDBB=     X'0F'
+          ANDB      BL,AL
+          ORIB      YL,AL
+          STAB/     ETRACK
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          SLRB      AL,4
+          LDBB=     X'F0'
+          ANDB      BL,AL
+          XAYB
+          JSR/      CHKBYTE        ; Jump to subroutine that checks rx byte
+          JSR/      CONVERTB
+          LDBB=     X'0F'
+          ANDB      BL,AL
+          ORIB      YL,AL
+          STAB/     ETRACK+1
           RSR                      ; Return to main loop
 CHKBYTE   LDAB/     MUX0CTRL       ; Load MUX status byte in to AL
           SRAB                     ; Shift AL to the right by 1
           BNL       CHKBYTE        ; Loop back to top if Link is not set
-          LDAB/     MUX0DATA       ; Read in the receive byte
+          LDAB/     MUX0DATA       ; Read in the receive byte to the B 
           STAB/     MUX0DATA       ; Echo that digit back
           RSR  
-CONVERTB  LDAB/     INLENGTH       ; AL = string length
-          CTB       /INSTRING(16),/INVALUE(2) 
-          LDA/      INVALUE        ; The integer value represented by string
+CONVERTB  LDBB=     X'B9'          ; Load B register with mask
+          SUBB      AL,BL          ; Subtract AL-BL and store in BL
+          BL        SKIPPY         ; If link is set, then ASCII is 0 ~ 9
+          LDBB=     X'07'
+          SUBB      AL,BL
+          XAYB      BL,AL
+SKIPPY    LDBB=     X'80'
+          SUBB      AL,BL
+          XAYB      BL,AL     
           RSR
 *
 ********************************************************************************
@@ -404,6 +438,5 @@ GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           LDAB/     MUX0CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; AND AL and YL
           BZ        GOODBYE        ; If not zero, loop back to checking for rx
-          LDAB/     MUX0DATA       ; Read in the receive byte to the B 
-LOADER    JMP/      ENTRY          ; Jump to top of program
+LOADER    JMP/      TOP            ; Jump to top of program
           END       ENTRY          ; Set the entry point
