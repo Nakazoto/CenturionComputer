@@ -58,7 +58,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           JSR/      PICKDR         ; Pick your drive and platter
           JSR/      PRINTNULL
           DW        X'8D8A'
-          DC        'THE HAWK HAS X'3200' TOTAL TRACKS'
+          DC        'THE HAWK HAS X3200 TOTAL TRACKS'
           DW        X'8D8A'
           DC        'ENTER START TRACK IN HEX: '
           DB        0
@@ -330,12 +330,13 @@ THEEND    JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed
           DC        'All done!'
           DW        X'8D8A'        ; Carriage return and line feed
-          DC        'Press any key to return to loader.'
+          DC        'Press any key to return to top of program.'
           DB        0
 GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           XAYB                     ; AL -> YL
           LDAB/     MUX0CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; AND AL and YL
           BZ        GOODBYE        ; If not zero, loop back to checking for rx
+          LDAB/     MUX0DATA       ; Read in the receive byte to the B 
+LOADER    JMP/      ENTRY          ; Jump to top of program
           END       ENTRY          ; Set the entry point
-LOADER    JMP/      X'FC00'        ; Jump to bootstrap ROM
