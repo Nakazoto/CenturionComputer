@@ -56,7 +56,7 @@ ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
           DB        0              ; Null terminator
 * Start Doing Productive Stuff
           JSR/      PICKDR         ; Pick your drive and platter
-          JSR/      PRINTNULL
+TOP       JSR/      PRINTNULL
           DW        X'8D8A'
           DC        'THE HAWK HAS X3200 TOTAL TRACKS'
           DW        X'8D8A'
@@ -338,5 +338,8 @@ GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           ANDB      YL,AL          ; AND AL and YL
           BZ        GOODBYE        ; If not zero, loop back to checking for rx
           LDAB/     MUX0DATA       ; Read in the receive byte to the B 
-LOADER    JMP/      ENTRY          ; Jump to top of program
+          JSR/      PRINTNULL
+          DB        X'8C'          ; Clear the screen
+          DB        0
+          JMP/      TOP            ; Jump to top of program
           END       ENTRY          ; Set the entry point
