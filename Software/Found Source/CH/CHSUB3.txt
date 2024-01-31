@@ -1,0 +1,270 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                            code master file
+/                 key: 100      disk: 1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - enter/update activities master file
+/                    2 - print activities master file
+/
+/                    3 - enter/update sunday school class master file
+/                    4 - print sunday school class master file
+/
+/                    5 - enter/update occupation master file
+/                    6 - print occupation master file
+/
+/                    7 - enter/update affiliation code master file
+/                    8 - print affiliation code master file
+/
+/                    9 - ENTER/UPDATE PARTICIPATION CODE MASTER FILE
+/                   10 - PRINT PARTICIPATION CODE MASTER FILE
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 11 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+.use ch#0i  ON 1 for sys0 shar
+.use CH.CHsm32 on 1 for sys1 shar
+.setc 4 eq ch#0i
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt2
+/  standby for creation of new list file
+.seta upsi=0
+.use CH.CHsm32 on 1 for sys0 shar
+.use ch#0i  ON 1 for sys1 shar
+.use ch#0i  ON 1 for sys3 shar
+.use ch#0j  ON 1 for sys2
+.run asmlib.xxtrct on 1
+data 1/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.skipr 0
+.pause
+.use ch#0j  ON 1 for sys1 shar
+.use ch#0j  ON 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  8
+key=(5,4,bi),/*
+.end
+.use CH.CHrm35 on 1 for sys0 shar
+.use CH#0i  ON 1 for sys1
+.use ch#0j  ON 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt3
+.use ch#0k  ON 1 for sys0 shar
+.use CH.CHsm33 on 1 for sys1 shar
+.setc 4 eq ch#0k
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt4
+/  standby for creation of new list file
+.seta upsi=0
+.use CH.CHsm33 on 1 for sys0 shar
+.use ch#0k  ON 1 for sys1 shar
+.use ch#0k  ON 1 for sys3 shar
+.use ch#0l  ON 1 for sys2
+.run asmlib.xxtrct on 1
+data 1/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0l  ON 1 for sys1 shar
+.use ch#0l  ON 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,8,ch),/*
+.end
+.use CH.CHrm36 on 1 for sys0 shar
+.use ch#0k  ON 1 for sys1
+.use ch#0l  ON 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt5
+.use ch#0g  ON 1 for sys0 shar
+.use CH.CHsm31 on 1 for sys1 shar
+.setc 4 eq ch#0g
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt6
+/  standby for creation of new list file
+.seta upsi=0
+.use CH.CHsm31 on 1 for sys0 shar
+.use ch#0g  ON 1 for sys1 shar
+.use ch#0g  ON 1 for sys3 shar
+.use ch#0h  ON 1 for sys2
+.run asmlib.xxtrct on 1
+data 1/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0h  ON 1 for sys1 shar
+.use ch#0h  ON 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 8
+key=(5,4,bi),/*
+.end
+.use CH.CHrm34 on 1 for sys0 shar
+.use ch#0g  ON 1 for sys1
+.use ch#0h  ON 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt7
+.use ch#0s  ON 1 for sys0 shar
+.use CH.CHsm37 on 1 for sys1 shar
+.setc 4 eq ch#0s
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt8
+/  standby for creation of new list file
+.seta upsi=0
+.use CH.CHsm37 on 1 for sys0 shar
+.use ch#0s  ON 1 for sys1 shar
+.use ch#0s  ON 1 for sys3 shar
+.use ch#0t  ON 1 for sys2
+.run asmlib.xxtrct on 1
+data 1/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0t  ON 1 for sys1 shar
+.use ch#0t  ON 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,8,ch),/*
+.end
+.use CH.CHrm42 on 1 for sys0 shar
+.use ch#0s  ON 1 for sys1
+.use ch#0t  ON 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=OPT9
+* ENTER/UPDATE PARTICIPATION CODE MASTER FILE
+.uSe ch#0C  ON 1 for sys0 shar
+.use CH.CHsm36 on 1 for sys1 shar
+.setc 4 eq ch#0C
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt10
+* PRINT PARTICIPATION CODE MASTER FILE
+/  standby for creation of new list file
+.seta upsi=0
+.use CH.CHsm36 on 1 for sys0 shar
+.use ch#0C  ON 1 for sys1 shar
+.use ch#0C  ON 1 for sys3 shar
+.use ch#0D  ON 1 for sys2
+.run asmlib.xxtrct on 1
+data 1/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0D  ON 1 for sys1 shar
+.use ch#0D  ON 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 15
+key=(5,11,ch),/*
+.end
+.use CH.CHrm39 on 1 for sys0 shar
+.use ch#0C  ON 1 for sys1
+.use ch#0D  ON 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt97
+CH.CHurch

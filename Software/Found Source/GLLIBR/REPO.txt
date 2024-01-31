@@ -1,0 +1,23 @@
+.job glrepo
+.seta cc=0, upsi=0
+=setup
+.use gl#0a on #1 sys0 shar
+.use gl#0j on #1 for sys1 shar
+.use crt#v syslst
+.seta upsi=2
+.skip to ok if crt eq #2
+=prt
+.use prt#2 syslst
+.seta upsi=3
+=ok
+.run gl.xgl503
+.skip to fin if #c ne 0
+.skip 1 if glmenu eq #4
+.skip to fin if glrepo ne #4
+glmenu
+=fin
+.end
+s.con
+*   9/29/78...adding expand option for h account list file(gl#0m)...ns
+*   5/02/79...split out of glmast...ns
+

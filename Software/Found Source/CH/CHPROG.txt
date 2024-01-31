@@ -1,0 +1,83 @@
+^m5
+^p
+^s5
+menu / jcl section
+------------------
+church - main application menu
+chsub1 - general master file information
+chsub2 - special address master file
+chsub3 - code master files
+chsub4 - reports
+chsub5 - labels
+CHSUB6 - PRINT INFORMATION SHEETS
+activity - update activity codes in church master
+CHACT - PRINT MEMBERS WITH ACTIVITY CODES
+chmove - backup and restore of church and pledge files
+chdoc - documentation for church staff
+^s1
+chprog - program documentation
+conver - convert general master file
+zch100 - cpl program to convert general master file
+ZCH200 - PRINT AVAILABLE MEMBER NUMBERS
+^s1
+\program documentation\
+:---------:---------------------------------------:--------:--------:--------:
+: screen  : screen map                            : alt 1  : alt 2  : alt 3  :
+: map #   : description                           : map #  : map #  : map #  :
+:---------:---------------------------------------:--------:--------:--------:
+: chsa20  : general master file              a,b  :        :        :        :
+  chsa30  : heading master file              e,f  :        :        :        :
+: chsa31  : occupation master file           g,h  :        :        :        :
+: chsa32  : activities master file           i,j  :        :        :        :
+: chsa33  : sunday school master file        k,l  :        :        :        :
+: chsa34  : college student master file      m,n  : chsm20 :        :        :
+: chsa35  : mailing list master file         o,p  :        :        :        :
+: CHSA36  : PARTICIPATION CODE MASTER FILE   C,D  :        :        :        :
+: chsa37  : affiliation code master file     s,t  :        :        :        :
+: chsa38  : relative day number              u,v  :        :        :        :
+:         : AVAIL MEMBER # LIST FILE         Y    :        :        :        :
+: chsa92  : activity codes transaction file  z    : chsm20 :        :        :
+:-------------------------------------------------:--------:--------:--------:
+^p
+^s5
+:---------:-----------------------------:---------:--------:--------:--------:
+: report  : report                      : primary : alt 1  : alt 2  : alt 3  :
+: map #   : description                 : map #   : map #  : map #  : map #  :
+:---------:-----------------------------:---------:--------:--------:--------:
+: CHRA20  : INFORMATION SHEETS          :   20    :   33   :   36   :   37   :
+: chra30  : birthdate report            :   20    :   30   :        :        :
+: chra31  : standard name & address     :   20    :   30   :        :        :
+: chra32  : church master - mem# fam#   :   20    :   30   :        :        :
+: chra33  : mem,fam,alpha,fam name      :   20    :        :        :        :
+: chra34  : occupation master           :   31    :        :        :        :
+: chra35  : activites master            :   32    :        :        :        :
+: chra36  : sunday school master        :   33    :        :        :        :
+: chra37  : college student master      :   34    :   20   :        :        :
+: chra38  : mailing list master         :   35    :        :        :        :
+: CHRA39  : PARTICIPATION CODE MASTER   :   36    :        :        :        :
+: chra40  : sunday school list          :   20    :   30   :        :        :
+: chra41  : family list                 :   20    :   30   :        :        :
+: chra42  : affiliation code            :   37    :        :        :        :
+: chra43  : fan,mem,alpha,fam name      :   20    :        :        :        :
+: chra44  : membership date report      :   20    :    30  :        :        :
+: chra45  : name labels                 :   20    :        :        :        :
+: chra46  : to the parent labels        :   20    :        :        :        :
+: chra47  : mailing list labels         :   35    :        :        :        :
+: chra48  : college student labels      :   34    :   20   :        :        :
+: chra49  : bulletin labels             :   20    :        :        :        :
+: chra50  : members by geographic loc.  :   20    :  30    :        :        :
+: chra51  : labels-pledge cards-family  :   20    :        :        :        :
+: chra52  : labels-pledge cards-indivi  :   20    :        :        :        :
+: chra53  : zip code totals-mailing list:   35    :        :        :        :
+: chra54  : zip code totals-bulletins   :   20    :        :        :        :
+: chra55  : sunday school list          :   20    :   33   :        :        :
+: CHRA80  : MEMBERS WITH ACTIVITY CODES :   20    :        :        :        :
+: chra92  : activity transaction edit   :   92    :   20   :        :        :
+:---------:-----------------------------:---------:--------:--------:--------:
+^s1
+:---------:-----------------------------:---------:--------:
+: posting : posting                     : trans   : master :
+: map #   : map description             : file #  : file # :
+:---------:-----------------------------:---------:--------:
+: chpa93  : activity codes to church fle:   92    :   20   :
+:---------:-----------------------------:---------:--------:

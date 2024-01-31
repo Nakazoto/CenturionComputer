@@ -1,0 +1,186 @@
+.job glmdat
+.setc 5='  '
+.fspec s on #d 6=size
+.skip 1 if 0 eq #6
+.setc 5='s.'
+.use gl#0a  on #1 for sys0 shar
+.fspec gl#0a  on #2 6=size
+=check
+.skip to ok if 0 eq #6
+.log
+*   key number #0 is already on disk #2
+*   do you wish to copy files anyway? (y/n)
+.nolog
+.enter 6
+.skip to fin if n eq #6
+.skipr to check if y ne #6
+.del gl#0a on #2
+=ok
+.fspec gl#0a  on #1  6=size  9=type
+.new gl#0a  on #2 '#9' #6s
+.use gl#0a  on #2 for sys1
+.run #5xcoput
+.end
+.use gl#0e  on #1 for sys0 shar
+.fspec gl#0e  on #2 6=size
+.skip 1 if 0 eq #6
+.del gl#0e on #2
+.fspec gl#0e  on #1  6=size  9=type
+.new gl#0e  on #2 '#9' #6s
+.use gl#0e  on #2 for sys1
+.run #5xcoput
+.end
+.use gl#0d  on #1 for sys0 shar
+.fspec gl#0d  on #2 6=size
+.skip 1 if 0 eq #6
+.del gl#0d on #2
+.fspec gl#0d  on #1  6=size  9=type
+.new gl#0d  on #2 '#9' #6s
+.use gl#0d  on #2 for sys1
+.run #5xcoput
+.end
+.use gl#0j  on #1 for sys0 shar
+.fspec gl#0j  on #2 6=size
+.skip 1 if 0 eq #6
+.del gl#0j on #2
+.fspec gl#0j  on #1  6=size  9=type
+.new gl#0j  on #2 '#9' #6s
+.use gl#0j  on #2 for sys1
+.run #5xcoput
+.end
+.fspec gl#0b on #1 6=size
+.skip to ok if 0 eq #6
+.use gl#0b on #1 for sys0 shar
+.fspec gl#0b  on #2 6=size
+.skip 1 if 0 eq #6
+.del gl#0b on #2
+.fspec gl#0b  on #1  6=size  9=type
+.new gl#0b  on #2 '#9' #6s
+.use gl#0b  on #2 for sys1
+.run #5xcoput
+.end
+=ok
+.fspec gl#0c on #1 6=size
+.skip to ok if 0 eq #6
+.use gl#0c  on #1 for sys0 shar
+.fspec gl#0c  on #2 6=size
+.skip 1 if 0 eq #6
+.del gl#0c on #2
+.fspec gl#0c  on #1  6=size  9=type
+.new gl#0c  on #2 '#9' #6s
+.use gl#0c  on #2 for sys1
+.run #5xcoput
+.end
+.use gl#0f  on #1 for sys0 shar
+.fspec gl#0f  on #2 6=size
+.skip 1 if 0 eq #6
+.del gl#0f on #2
+.fspec gl#0f  on #1  6=size  9=type
+.new gl#0f  on #2 '#9' #6s
+.use gl#0f  on #2 for sys1
+.run #5xcoput
+.end
+=ok
+.fspec gl#0l on #1 6=size
+.skip to ok if 0 eq #6
+.use gl#0l on #1 for sys0 shar
+.fspec gl#0l on #2 6=size
+.skip 1 if 0 eq #6
+.del gl#0l on #2
+.new gl#0l on #2 'a' 1
+.use gl#0l on #2 for sys1 shar
+.run #5xcoput
+.end
+=ok
+.fspec pr#0a on #1 6=size
+.skip to ok if 0 eq #6
+.use pr#0a on #1 for sys0 shar
+.fspec pr#0a  on #2 6=size
+.skip 1 if 0 eq #6
+.del pr#0a on #2
+.fspec pr#0a  on #1  6=size  9=type
+.new pr#0a  on #2 '#9' #6s
+.use pr#0a  on #2 for sys1
+.run #5xcoput
+.end
+.use pr#0b  on #1 for sys0 shar
+.fspec pr#0b  on #2 6=size
+.skip 1 if 0 eq #6
+.del pr#0b on #2
+.fspec pr#0b  on #1  6=size  9=type
+.new pr#0b  on #2 '#9' #6s
+.use pr#0b  on #2 for sys1
+.run #5xcoput
+.end
+.use pr#0d  on #1 for sys0 shar
+.fspec pr#0d  on #2 6=size
+.skip 1 if 0 eq #6
+.del pr#0d on #2
+.fspec pr#0d  on #1  6=size  9=type
+.new pr#0d  on #2 '#9' #6s
+.use pr#0d  on #2 for sys1
+.run #5xcoput
+.end
+=ok
+.log
+* delete data files on disk #1? (y/n)
+.nolog
+.enter 3
+.skip to fin if y ne #3
+.fspec gl#0a  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0a  on #1
+.fspec gl#0b on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0b  on #1
+.fspec gl#0c  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0c  on #1
+.fspec gl#0d  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0d  on #1
+.fspec gl#0e  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0e  on #1
+.fspec gl#0f on #1  6=size
+.skip 1 if #6 eq 0
+.del gl#0f  on #1
+.fspec gl#0g  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0g  on #1
+.fspec gl#0h  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0h  on #1
+.fspec gl#0i  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0i  on #1
+.fspec gl#0j  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0j  on #1
+.fspec gl#0k  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0k  on #1
+.fspec gl#0l  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0l  on #1
+.fspec pr#0a on #1 6=size
+.skip 1 if 0 eq #6
+.del pr#0a on #1
+.fspec pr#0b on #1 6=size
+.skip 1 if 0 eq #6
+.del pr#0b on #1
+.fspec pr#0d on #1 6=size
+.skip 1 if 0 eq #6
+.del pr#0d on #1
+*
+=fin
+.skip 2 if glmenu ne #4
+#4
+.end
+s.con
+*   6/20/79..got rid of gl#0g, h, i, k, & m..ns
+*    7/03/79...added question about writing over existing file..ns
+*    11/28/79...modified for cpu-6...kag
+*    04/09/80...added deleting of pr files...kag
+
+

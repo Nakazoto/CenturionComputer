@@ -1,0 +1,144 @@
+system  (exp=d)
+;
+define m00: 'zcH100 02/17/84  PUT CONSTANT 1 IN CHURCH MASTER FILE '
+;
+;*****************************************************************************
+;*       files:
+;*       sys#      file-name     rec-name       description
+;*        0        listfile      listrec        LIST FILE TYPE B
+;*        1        CHfile        CHrec          CHURCH MASTER FILE - TYPE C
+;****************************************************************************
+;*                           program linkage
+;****************************************************************************
+;
+external cget,stat,getk,getr,putr,IOERR,MSG
+call msg                     ; this is to force linkage of f90 ?
+entrypoint crt
+;
+;****************************************************************************
+;*                           files
+;****************************************************************************
+;
+         file crt : sysipt
+;
+         file listfile : sys0,class=2,seq,filtyp=b,lsr=4,buffer=400,*
+;
+         file CHfile : sys1,class=2,ind,recsiz=453,key=CHKEY
+                   set CHkey : 0
+;
+;*****************************************************************************
+;*                           records
+;*****************************************************************************
+;
+record listrec (8)                     ;record layout for b file
+         set relkey:0                  ;relative record (argument)
+         set Lkey:0                    ;key to CHFILE
+endrec
+;
+record CHREC (452)                     ;record layout for CHURCH MASTER
+          set CHKEYX:0                 ;key
+          set FLD2:0
+         STRING FLD3 (1)
+         STRING FLD4 (1)
+         SET FLD5 :0
+         STRING FLD6 (25)
+         STRING FLD7 (25)
+         STRING FLD8 (35)
+         STRING FLD9 (25)
+         STRING FLD10 (25)
+         STRING FLD11 (25)
+         STRING FLD12 (10)
+         STRING FLD13 (4)
+         SET FLD14 :0
+         STRING FLD15 (12)
+         STRING FLD16 (1)
+         STRING FLD17 (1)
+         SET FLD18 :0
+         SET FLD19 :0
+         STRING FLD20 (1)
+         SET FLD21 :0
+         SET FLD22 :0
+         STRING FLD23 (23)
+         STRING FLD24 (35)
+         STRING FLD25 (35)
+         STRING FLD26 (3)
+         SET CONSNT :0
+         SET FLD28 :0
+         SET FLD29 :0
+         STRING FLD30 (11)
+         SET FLD31 :0
+         SET FLD32 :0
+         STRING FLD33 (2)
+         SET FLD34 :0
+         SET FLD35 :0
+         SET FLD36 :0
+         SET FLD37 :0
+         SET FLD38 :0
+         SET FLD39 :0
+         SET FLD40 :0
+         SET FLD41 :0
+         SET FLD42 :0
+         SET FLD43 :0
+         SET FLD44 :0
+         SET FLD45 :0
+         SET FLD46 :0
+         SET FLD47 :0
+         SET FLD48 :0
+         SET FLD49 :0
+         SET FLD50 :0
+         SET FLD51 :0
+         SET FLD52 :0
+         SET FLD53 :0
+ENDREC
+;
+eject
+;
+;*****************************************************************************
+;*                           logic
+;****************************************************************************
+;
+         entry
+;
+initialization:
+;
+         open io (crt,listfile,CHfile)
+;
+mainline:
+         CALL RDBLST                             ; READ LIST FILE
+         IF (STATUS) GO TO FINAL                 ; END OF FILE
+         CHKEY = LKEY                            ; GET KEY FROM LISTFILE
+         CALL RDKCHFILE                          ; GET CHURCH RECORD
+         CALL RDRCHFILE                          ; READ CHURCH RECORD
+         CONSNT = 1
+         CALL WRRCHFILE                          ; WRITE CHURCH RECORD
+         GOTO MAINLINE
+;
+final:
+          CLOSE CRT,LISTFILE,CHFILE
+          stop 0
+;
+eject
+;****************************************************************************
+;*
+;*            input/output routines
+;*
+;*****************************************************************************
+;
+RDBLST:
+         readb (listfile,listrec) \ go to ioret1
+;
+rdkCHfile:
+         call getk (CHfile,Lkey) \ goto ioret1
+rdrCHfile:
+         call getr (CHfile,CHrec)
+         call stat(1)
+         return
+;
+wrrCHfile:
+         call putr (CHfile,CHrec) \ call stat(1) \ return
+;
+ioret1:
+         if (status.gt.1) goto ioerr
+         return
+;
+     END

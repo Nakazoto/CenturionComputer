@@ -1,0 +1,55 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/               first united methodist membership application
+/                 key: 100      disk: 1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - general master file information
+/                    2 - special address master files
+/                    3 - code master files
+/                    4 - reports
+/                    5 - labels
+/
+/                    6 - relative day number
+/
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  7 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+CH.CHsub1
+=opt2
+CH.CHsub2
+=opt3
+CH.CHsub3
+=opt4
+CH.CHsub4
+=opt5
+CH.CHsub5
+=opt6
+.use ch#0u  ON 1 for sys0 shar
+.use CH.CHsm38 on 1 for sys1 shar
+.setc 4 eq ch#0u
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0

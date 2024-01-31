@@ -1,0 +1,308 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                       general master file information
+/                 key: 100      disk: 1      printer: #2
+/==============================================================================
+/  enter function:  1 - enter/update general master file
+/
+/                   2 - print general master file listing (member number order)
+/                   3 - print general master file listing (alphabetic order)
+/
+/                   4 - print general master file listing (family number order)
+/                   5 - print general master file listing (alpha by family)
+/
+/                   6 - print names and addresses in alphabetic order
+/                   7 - print information sheets
+/
+/                  97 - return to main menu
+/                  98 - change printer
+/                  99 - end processing
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip to opt97 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skipr 0 if 0 ge #9
+.skipr 0 if 8 le #9
+.skip to opt1 if 1 eq #9
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 15t
+.new sort3#i on 1 'b' 15t
+.new sort4#i on 1 'b' 15t
+.skip to opt#9
+=chg
+/  enter printer
+.enter 2
+.skipr 0
+=opt7
+ch.chsub6 on 1
+.end
+=opt1
+* enter/update general master file
+.use ch#0a  on 1 for sys0 shar
+.use ch.chsm20 on 1 for sys1 shar
+.setc 4 eq ch#0a
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+/
+/  if you have added, deleted, or changed names in the church master file
+/    you must make the same changes to the pledge method of payment file.
+/    newline to continue.
+/
+.pause
+.skipr 0
+=opt6
+* print names and addresses in general master file (alphabetically)
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning membership number
+skip 4 if #0 le "0"
+in 1#4enter ending membership number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr 0
+define 1#4 "9999"
+da 7
+select 1 ge #0 and 1 le #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch.chrm31 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0e on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt5
+* print general master file listing (alphabetic by family)
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0@1enter affiliation code
+in 1@1enter affiliation code
+skip 2 if #0 ne " "
+skip 1 if #1 ne " "
+skipr 0
+da 7 2
+select 4 eq #0 or 4 eq #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 34
+key=(5,5,ch,31,4,bi,5,26,ch),/*
+.end
+.use ch.chrm43 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt3
+* print general master file listing (alphabetically)
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning membership number
+skip 4 if #0 le "0"
+in 1#4enter ending membership number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr 0
+define 1#4 "9999"
+da 7
+select 1 ge #0 and 1 le #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch.chrm33 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt2
+* print general master file listing (member number order)
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a on 1 for sys1 shar
+.use ch#0a on 1 for sys3 shar
+.use ch#0b on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning membership number
+skip 4 if #0 le "0"
+in 1#4enter ending membership number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr 0
+define 1#4 "9999"
+da 1
+select 1 ge #0 and 1 le #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b on 1 for sys1 shar
+.use ch#0b on 1 for sys0 shar
+.use sort1#i on 1 for sys2
+.use sort2#i on 1 for sys3
+.use sort3#i on 1 for sys4
+.use sort4#i on 1 for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=38
+key=(5,4,bi),/*
+.end
+.use ch.chrm33 on 1 for sys0 shar
+.use ch#0a on 1 for sys1 shar
+.use ch#0b on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt4
+* print general master file listing (family number order)
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a on 1 for sys1 shar
+.use ch#0a on 1 for sys3 shar
+.use ch#0b on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning family number
+skip 4 if #0 le "0"
+in 1#4enter ending family number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr 0
+define 1#4 "9999"
+da 2
+select 2 ge #0 and 2 le #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b on 1 for sys1 shar
+.use ch#0b on 1 for sys0 shar
+.use sort1#i on 1 for sys2
+.use sort2#i on 1 for sys3
+.use sort3#i on 1 for sys4
+.use sort4#i on 1 for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=8
+key=(5,4,bi)/*
+.end
+.use ch.chrm43 on 1 for sys0 shar
+.use ch#0a on 1 for sys1 shar
+.use ch#0b on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt97
+ch.church

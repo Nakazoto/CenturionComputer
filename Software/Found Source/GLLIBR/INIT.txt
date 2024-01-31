@@ -1,0 +1,124 @@
+.job glinit
+.seta upsi=0
+.seta cc=0
+.run s.xeject
+.log
+*
+*   create files for gla key number #0 on disk #1
+*        approx #2 accounts
+*
+.nolog
+.seta 2 = #2/43+1
+.fspec gl#0a on #1 7=size 8=type
+.skip to ok if 0 eq #7
+.skip to del if c ne #8
+.log
+*
+*   chart of account files are already initialized for client #0
+*
+.nolog
+.setc 3=n
+.skip to budg
+=del
+.del gl#0a on #1
+=ok
+.new gl#0a on #1 'c' #2
+.use gl#0a on #1 for sys0
+.run s.x?rint
+recsiz=131,paddng=25
+/*
+.skip to fin if #c ne 0
+=budg
+.fspec gl#0b on #1 7=size 8=type
+.skip to ok if 0 eq #7
+.skip to del if c ne #8
+.log
+*
+*   budget files are already initialized for client #0
+*
+.nolog
+.setc 5=n
+.skip to subacc
+=del
+.del gl#0b on #1
+=ok
+.log
+*
+*   do you plan to use budget comparisons? (y/n)
+*
+.nolog
+.enter 5
+.skip to subacc if n = #5
+.fspec gl#0b on #1 7=size 8=type
+.skip 2 if 0 eq #7
+.skip to subacc if c eq #8
+.del gl#0b on #1
+.new gl#0b on #1 'c' #2
+.use gl#0b on #1 for sys0
+.run s.x?rint
+recsiz=131,paddng=25
+/*
+.skip to fin if #c ne 0
+=subacc
+.seta 2=#2/2+1
+.fspec gl#0c on #1 7=size 8=type
+.skip to ok if 0 eq #7
+.skip to del if c ne #8
+.log
+*
+*   subaccount files are already initialized for client #0
+*
+.nolog
+.setc 6=n
+.skip to norm
+=del
+.del gl#0c on #1
+=ok
+.log
+*
+*   do you plan to use subaccounts? (y/n)
+*
+.nolog
+.enter 6
+.skip to norm if n = #6
+.fspec gl#0c on #1 7=size 8=type
+.skip 2 if 0  eq #7
+.skip to norm  if c eq #8
+.del gl#0c on #1
+.new gl#0c on #1 'c' #2
+.use gl#0c on #1 for sys0
+.run s.x?rint
+recsiz=43,paddng=25
+/*
+.fspec gl#0f on #1 7=size
+.skip 1 if #7 ne 0
+.new gl#0f on #1 'b' 1
+=norm
+.fspec gl#0d on #1 7=size
+.skip 1 if 0 ne #7
+.new gl#0d on #1 'b' 1
+.fspec gl#0e on #1 7=size
+.skip 1 if 0 ne #7
+.new gl#0e on #1 'c' #2
+.fspec gl#0j on #1 7=size
+.skip 1 if 0 ne #7
+.new gl#0j on #1 'b' 1
+.fspec glaa on #1 6=size
+.skip to ok if 0 eq #6
+.log
+*   do you want to create header from standard header? (y/n)
+.nolog
+.enter 5
+.skip to ok if y ne #5
+.use glaa on #1 sys0 shar
+.use gl#0a on #1 sys1
+.seta upsi=1
+.run gl.xgl514
+=ok
+.skip 1 if glmenu ne #4
+glmenu
+.end
+s.con
+*   9/27/78...added gl#0m - list for h accounts...ns
+*   06/11/79...taking out gl#0g, h, i, k, m..ns
+

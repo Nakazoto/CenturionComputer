@@ -1,0 +1,193 @@
+.job glaudt
+.seta cc=0
+.skip to post if post eq #3
+.seta upsi = 0
+.run s.xeject
+=test
+.fspec gl#0e on #1 7=use
+.skip to go if 1 eq #7
+.log
+*
+*   transaction file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.skipr to test
+=go
+.log
+*
+*   do you need to sort transaction file into journal number order?  (y/n)
+*
+.nolog
+.enter 8
+.skip to nosort if n eq #8
+.log
+*
+*   standby while transaction file is sorted
+*
+.nolog
+.use gl#0e on #1 for sys0
+.use sort1#i on #s sys2
+.use sort2#i on #s sys3
+.use sort3#i on #s sys4
+.use sort4#i on #s sys5
+.run s.dsort
+print=no,input=1,filtyp=c,recsiz=77
+work=4,output=inp,key=(13,4,bi,68,4,bi,21,4,bi,25,4,bi,17,4,bi)
+inpmod=(,xaisrt)
+/*
+**
+** sort: jrn,jdte,ref,date, orig detail order
+**
+.log
+*   end transaction file sort
+.nolog
+=nosort
+.seta upsi=0
+.use crt#v for syslst
+.seta upsi=2
+.skip to ok if #2 eq crt
+.use prt#2 for syslst
+=ok
+.use gl#0a on #1 sys0 shar
+.seta cc=0
+.use @scrc#i on #s sys1 shar
+.use gl#0e on #1 sys2
+.fspec gl#0n on #1 7=size
+.skip 1 if 0 ne #7
+.new gl#0n on #1 'b' 1
+.use gl#0n on #1 for sys3
+.use @scrb#i on #s for sys4
+*   rejected details
+.run gl.xgl534
+.skip to err if #c ne 0
+.skip to ok if #u eq 0
+.log
+*   out of balance condition
+.nolog
+.skip to fin
+=ok
+*test
+/    do you want to post details to accounts now ?  (y/n) 
+.enter 5
+.skip to recall if y ne #5
+.log
+*
+*   standby while transaction file is sorted
+*
+.nolog
+.use gl#0n on #1 sys1
+.use sort1#i on #s sys2
+.use sort2#i on #s sys3
+.use sort3#i on #s sys4
+.use sort4#i on #s sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=77
+work=4,output=inp,key=(1,6,bi,68,4,bi,7,6,bi,13,4,bi,25,4,bi,21,4,bi)
+/*
+* sort acct,jdate,sub,jrn#,date,reference number
+.log
+*   end transaction file sort
+*
+.nolog
+.seta upsi=2
+.run s.xopt
+=post
+.use dummy for syslst
+.skip to ok if no eq #2
+.use crt#v for syslst
+.skip to ok if crt eq #2
+.use prt#2 for syslst
+=ok
+.job glpost
+.fspec glscr#i on #1 5=size
+.skip 1 if 0 eq #5
+.del glscr#i on  #1
+.fspec gl#0n on #1 5=size
+.fspec gl#0d on #1 7=size
+.seta 6=#5+#7
+.seta 6=#6/16
+.fspec gl#0f on #1 7=size
+.skip to aroun if 0 eq #7
+.seta 7=#5+#7
+.seta 7=#7/16
+=aroun
+.seta 5=#6+#7
+.vspec #1 7=avail
+.skip to noroom if #7 lt #5
+.fspec gl#0d on #1 6=size
+.seta 6=#6/16
+.new glscr#i on #1 'b' #6
+.use gl#0a on #1 for sys0
+.use gl#0j on #1 for sys1
+.use gl#0d on #1 for sys2
+.use gl#0n on #1 for sys3
+.use gl#0e on #1 for sys4
+.use @scrb#i on #s for sys5
+.use glscr#i on #1 sys6
+.fspec gl#0f on #1 7=size
+.skip to sub if #7 ne 0
+.del sort1#i on #s
+.new sort1#i on #s 'b' 1
+.use sort1#i on #s sys7
+.use sort2#i on #s sys8
+.skip to subok
+=sub
+.use gl#0f on #1 sys7
+.fspec glsc2#i on #1 5=size
+.skip 1 if 0 eq #5
+.del glsc2#i on #1
+.new glsc2#i on #1 'b' #7s
+.use glsc2#i on #1 sys8
+=subok
+.run gl.xgl536
+.skip to err if #c ne 0
+.del gl#0d on #1
+.nam glscr#i on #1 gl#0d
+.fspec gl#0f on #1 7=size
+.skip 2 if #7 eq 0
+.del gl#0f on #1
+.nam glsc2#i on #1 gl#0f
+.del gl#0n on #1
+=recall
+.skip 1 if glmenu eq #4
+.skip 1 if glrepo ne #4
+glmenu
+.skip to fin
+=err
+.skip to fin if #c eq 25
+.log
+*
+*   error encountered during processing
+*
+.nolog
+.skip to fin
+=noroom
+.log
+*
+*   insufficient disk space for posting operation
+*
+.nolog
+=fin
+.end
+s.con
+*   7/26/78...cleanup...ns
+*   6/19/79...glrepo goes back..ns
+*   11/28/79...modified for cpu-6...kag
+*   02/26/80...changed sort around to save time...kag
+*   06/01/81...change sort order: jrn, jdte, ref, date...dl
+*   07/14/82...change the size of glscr#1 to be set to gl#0n plus gl#0d
+*              track...pln479...mgb
+*    1/27/83...added xnew when creating glscr#i to optimize file size, fsi
+*              pln0615...pmr
+*    03/29/83...added parameters (21,4,bi) to last sort.  references by the
+*               reference number within the transaction date...jg...pbl#639
+*    09/23/83...set work in second sort to 4 from 6..jg pbl#744
+*   11/15/83...at job glpost corrected file size..jh pbl#818
+*   04/26/84...chged method of checking for available disk space..jwb
+*   07/12/84...corrected sort parameters to sort by journal number order
+*              sa#84011...dle
+*   07/26/84...corrected creation size of scratch file glscr#i...jwb
+
+

@@ -1,0 +1,637 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                                reports
+/                 key: 100      disk: 1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - print list of families
+/                    2 - print sunday school class list
+/                    3 - print choir list
+/                    4 - print board list
+/                    5 - print specific activity list
+/                    6 - print specific affiliation code list
+/                    7 - print names and addresses by geographic location
+/                    8 - print special selection by birthdate
+/                    9 - print special select with membership date
+/                   10 - print special selection  (without dates)
+/                   11 - print available member numbers
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip to opt97 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skipr 0 if 0 ge #9
+.skipr 0 if 12 le #9
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 15t
+.new sort3#i on 1 'b' 15t
+.new sort4#i on 1 'b' 15t
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+***** list of families *****
+/  standby for creation of new list file
+.seta upsi=1
+/  to print the list of families remember to select the affiliation
+/  codes wanted.  for example:
+/     select 3 eq "h" and (4 eq "m" or 4 eq "r"...)
+/     data 7 /*
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch.chrm41 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt2
+***** sunday school class list *****
+/
+/     to select sunday school lists for one or more classes
+/     enter when asked:
+/          select 33 eq "01" or 33 eq "02"......
+/          data 33 7 /*
+/     or to print all sunday school class lists,
+/     enter when asked:
+/          select 33 ne "  "
+/          data 33 7 /*
+/
+/  standby for creation of new list file
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 33
+key=(5,3,ch,8,26,ch),/*
+.end
+.use ch.chrm55 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0k on 1 for sys2
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt3
+***** choir list *****
+/
+/     the activity codes for choir are in field 34 or field 46.
+/     the list will be printed alphabetically by choir.
+/     to ask for choir list, enter one of the following options :
+/
+/          select 34 eq "201" or 34 eq "202" .....
+/          data 34 7 /*
+/     or:
+/          select 46 eq "201" or 46 eq "202".....
+/          data 46 7 /*
+/
+/  standby for creation of new list file
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 34
+key=(5,4,ch,9,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch#0a  on 1 for sys1 shar
+.use ch.chrm31 on 1 for sys0 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt4
+***** board list *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#3enter board number
+data 7
+select 38 eq #0 or 42 eq #0 or 46 eq #0
+    or 35 eq #0 or 39 eq #0 or 43 eq #0
+    or 47 eq #0 or 51 eq #0
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch#0a  on 1 for sys1 shar
+.use ch.chrm31 on 1 for sys0 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt5
+***** print specific activity list *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 1#3enter activity number
+da 7
+select 35 eq #1 or 36 eq #1 or 37 eq #1 or
+39 eq #1 or 40 eq #1 or 41 eq #1 or
+43 eq #1 or 44 eq #1 or 45 eq #1 or
+47 eq #1 or 48 eq #1 or 49 eq #1 or
+51 eq #1 or 52 eq #1 or 53 eq #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch#0a  on 1 for sys1 shar
+.use ch.chrm31 on 1 for sys0 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt6
+***** print specific affiliation code list *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 1@1enter affiliation code
+da 7
+select 4 eq #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch.chrm31 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt7
+***** print names and addresses by geographic location *****
+/  do you want to print all geographic areas for heads of household - y/n?
+/
+.enter 9
+.skip to special if y ne #9
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+select 3 eq "h"
+data 13 14 7/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.skip to sort
+=special
+/  standby for creation of list file
+/
+/  print names and addresses by geographic location
+/  to select special fields, enter when asked:
+/      select 3 eq "h" etc.
+/      data 13 14 7 /*
+/
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+=sort
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 37
+key=(5,5,ch,10,4,bi,14,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch.chrm50 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0e on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt8
+***** print special selection by birthdate *****
+.use ch#0u on 1 for sys0 shar
+.use ch.chsm38 on 1 for sys1 shar
+.setc 4 eq ch#0u
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+/  standby for creation of new list file
+/
+/  print special selection by birthdate
+/  to select special fields, enter when asked:
+/     select (18 ge "000000" and 18 le "999999") and etc.
+/     data 18 7 /*
+/   where 000000 is the beginning relative day wanted
+/   and 999999 is the ending relative day wanted
+/
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 34
+key=(5,4,bi,9,26,ch),/*
+.end
+.run s.xeject
+/
+/  at crt prompt enter report heading
+/
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch.chrm30 on 1 for sys0 shar
+.use ch#0a on 1 for sys1 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt9
+***** print special selection with membership date *****
+/  standby for creation of new list file
+/
+/  print special selection with membership date
+/  to select special fields, enter when asked
+/     select ........
+/     data 7 /*
+/
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+/
+.run s.xeject
+/
+/     at crt prompt enter report heading
+/
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch.chrm44 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt10
+***** print special selection without dates *****
+.setc 7 = chrm31
+/
+/     do you want the report with family name - y/n?
+/
+.enter 9
+.skip 3 if #9 ne y
+.setc 7 = chrm41
+/     remember to ----- select 3 eq "h" etc. -----
+/
+/  standby for creation of new list file
+/
+/  print special selection (without dates)
+/  to select special fields, enter when asked:
+/     select ..........
+/     data 7 /*
+/
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch#0e on 1 for sys0 shar
+.use ch.chsm30 on 1 for sys1 shar
+.setc 4 eq ch#0e
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use ch.#7 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0e  on 1 for sys2 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt11
+***** print available member numbers *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0y  on 1 for sys2
+.run asmlib.xxtrct on 1
+data 1 /*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0y  on 1 for sys1 shar
+.use ch#0y  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 8
+key=(5,4,bi),/*
+.end
+.use ch#0y on 1 for sys0 shar
+.use crt#v for sysipt
+.use prtq for syslst
+.run ch.xch200 on 1
+.end
+.skipr 0
+=opt97
+ch.church

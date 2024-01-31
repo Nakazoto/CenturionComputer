@@ -1,0 +1,123 @@
+.job submst
+.use crt#v syslst
+.skip to ok if crt eq #2
+.use prt#2 syslst
+=ok
+.skip to print if 8 eq #u
+.log
+*   enter option:  1  create the chart of subaccounts
+*                  2  change the chart of subaccounts
+.nolog
+.skip to opt if #u eq 3
+.log
+*                  3  print the chart of subaccounts
+.nolog
+=opt
+.enter cc
+.skip 1 if 0 ge #c
+.skip to ok if 4 gt #c
+.log
+*
+*   invalid option selected
+*   newline to continue
+*
+.nolog
+.pause
+.run s.xeject
+.skipr 0
+=ok
+.seta upsi=0
+.skip to mst if #c ne 3
+=print
+.log
+*
+*   standby while subaccount master file is sorted
+*
+.nolog
+.seta upsi=0
+.use gl#0c on #1 for sys0
+.use @scrb#i on #s sys1
+.run s.x?wtag
+.use @scrb#i on #s sys1
+.use sort1#i on #s sys2
+.use sort2#i on #s sys3
+.use sort3#i on #s sys4
+.use sort4#i on #s sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=10
+work=4,output=inp,key=(1,6,bi)
+/*
+.seta upsi=3
+=mst
+.seta cc=0
+.use gl#0a on #1 for sys0 shar
+.use gl#0c on #1 for sys1 shar
+.use @scrb#i on #s sys2
+.run gl.xgl560
+.skip to ok1 if #c = 0
+.skip to ok if #c < 110
+.fspec gl#0c on #1 5=use, 7=size
+.skip to go if 1 eq #5
+.log
+*
+*   subaccount master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition expand subaccount master file ? (y/n)
+*
+.nolog
+.enter 9
+.skip to sub if y eq #9
+=go
+.seta 7= #7/16
+.seta 7=#7*125/100+1
+.vspec #1 9=avail
+.seta 9=#9/16
+.skip to err if #9 lt #7
+.new glc#i on #1 'c' #7
+.seta upsi=0
+.seta cc=0
+.use gl#0c on #1 sys0
+.use @scrb#i on #s sys1
+.run s.x?wtag
+.use glc#i on #1 sys0
+.run s.x?rint
+recsiz=43,paddng=25
+/*
+.skip to fin if #c ne 0
+.use gl#0c on #1 sys0
+.use glc#i on #1 sys1
+.use @scrb#i  on #s sys2
+.run gl.xgl565
+.skip to fin if #c ne 0
+.del gl#0c on #1
+.nam glc#i on #1 gl#0c
+=sub
+.skipr 0
+=err
+.log
+*
+*   insufficient disk space to expand subaccount master file
+*
+.nolog
+.skip to fin
+=ok
+.skip to ok1 if #c <>50
+gl.mast
+=ok1
+.skip to fin if #c ne 0
+=recall
+.skip 1 if glrepo eq #4
+.skip 1 if glmenu ne #4
+glmenu
+=fin
+.end
+s.con
+*   7/07/78...cleanup..ns
+*   6/8/79...removed gl#0h from system..ns
+*   11/05/79...modified for cpu-6...kag
+

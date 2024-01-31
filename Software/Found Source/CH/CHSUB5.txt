@@ -1,0 +1,657 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                                  labels
+/                 key: 100      disk: 1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - bulletin labels
+/                    2 - mailing list labels
+/                    3 - college student labels
+/                    4 - sunday school labels with individual's name
+/                    5 - sunday school labels with family name
+/                    6 - sunday school labels  (to parents)
+/                    7 - choir labels
+/                    8 - board labels
+/                    9 - specific activity labels
+/                   10 - specific activity labels  (to parents)
+/                   11 - pledge card labels
+/                   12 - labels for a special selection
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip to opt97 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skipr 0 if 0 ge #9
+.skipr 0 if 13 le #9
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 15t
+.new sort3#i on 1 'b' 15t
+.new sort4#i on 1 'b' 15t
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+***** bulletin labels *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+select 3 eq "h" and (4 eq "m" or 4 eq "c" or 4 eq "r" or 4 eq "x")
+data 12 7/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 41
+key=(5,11,ch,16,26,ch),/*
+.end
+/
+/   place labels on printer
+/   newline to continue
+/
+.pause
+.use ch.chrm49 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+/
+/     place standard paper on printer to print zip code totals
+/     newline to continue
+/
+.pause
+.use ch.chrm54 on 1 for sys0 shar
+.use ch#0a on 1 for sys1 shar
+.use ch#0b on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt2
+***** mailing list labels *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm35 on 1 for sys0 shar
+.use ch#0o  on 1 for sys1 shar
+.use ch#0o  on 1 for sys3 shar
+.use ch#0p  on 1 for sys2
+.run asmlib.xxtrct on 1
+select 8 ne "n"
+data 7 3/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0p  on 1 for sys1 shar
+.use ch#0p  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 41
+key=(5,11,ch,16,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm47 on 1 for sys0 shar
+.use ch#0o  on 1 for sys1
+.use ch#0p  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+/
+/     place standard paper on printer to print zip code totals
+/     newline to continue
+/
+.pause
+.use ch.chrm53 on 1 for sys0 shar
+.use ch#0o on 1 for sys1
+.use ch#0p on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt3
+***** college student labels *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm34 on 1 for sys0 shar
+.use ch#0m  on 1 for sys1 shar
+.use ch#0m  on 1 for sys3 shar
+.use ch#0n  on 1 for sys2
+.run asmlib.xxtrct on 1
+select 8 ne "n"
+data 7/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0n  on 1 for sys1 shar
+.use ch#0n  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm48 on 1 for sys0 shar
+.use ch#0m  on 1 for sys1
+.use ch#0a  on 1 for sys2 shar
+.use ch#0n  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt4
+***** sunday school labels *****
+/
+/     to select sunday school labels for one or more classes
+/     enter when asked:
+/          select 33 eq "01" or 33 eq "02" ......
+/          data 33 7 /*
+/     or to print labels for all sunday school classes,
+/     enter when asked:
+/          select 33 ne "  "
+/          data 33 7 /*
+/
+/  standby for creation of new list file
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 33
+key=(5,3,ch,8,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm45 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt5
+***** sunday school labels for adults *****
+/
+/     to select sunday school labels for one or more classes
+/     enter when asked:
+/           select 33 eq "01" or 33 eq "02" .......
+/           data 33 7/*
+/     or to print all sunday school classes,
+/     enter when asked:
+/           select 33 ne "  "
+/           data 33 7 /*
+/
+/  standby for creation of new list file
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 33
+key=(5,3,ch,8,26,ch),/*
+.end
+/
+/   place labels on printer
+/   newline to continue
+/
+.pause
+.use ch.chrm49 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt6
+***** sunday school labels to parents *****
+/
+/     to select sunday school labels for one or more classes
+/     enter when asked:
+/         select 33 eq "01" or 33 eq "02" ......
+/         data 33 7/*
+/
+/  standby for creation of new list file
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 33
+key=(5,3,ch,8,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm46 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt7
+***** choir labels *****
+/
+/     the activity codes for choir are in field 34 or field 46.
+/     the labels will be printed alphabetically by choir.
+/     to ask for choir labels enter one of the following options :
+/
+/          select 34 eq "201" or 34 eq "202" .....
+/          data 34 7 /*
+/     or:
+/          select 46 eq "201" or 46 eq "202".....
+/          data 46 7 /*
+/
+/  standby for creation of new list file
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 34
+key=(5,4,ch,9,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm45 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt8
+***** board labels *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#3enter board number
+data 7
+select 38 eq #0 or 42 eq #0 or 46 eq #0
+    or 35 eq #0 or 39 eq #0 or 43 eq #0
+    or 47 eq #0 or 51 eq #0
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm45 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt9
+*****  specific activity labels *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#3enter activity number
+da 7
+select  35 eq #0 or 36 eq #0 or 37 eq #0 or
+39 eq #0 or 40 eq #0 or 41 eq #0 or
+43 eq #0 or 44 eq #0 or 45 eq #0 or
+47 eq #0 or 48 eq #0 or 49 eq #0 or
+51 eq #0 or 52 eq #0 or 53 eq #0
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm45 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt10
+*****  specific activity labels to parents *****
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#3enter activity number
+da 7
+select 35 eq #0 or 36 eq #0 or 37 eq #0 or
+39 eq #0 or 40 eq #0 or 41 eq #0 or
+43 eq #0 or 44 eq #0 or 45 eq #0 or
+47 eq #0 or 48 eq #0 or 49 eq #0 or
+51 eq #0 or 52 eq #0 or 53 eq #0
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+/
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.chrm46 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt11
+*****  pledge card labels *****
+/
+/     do you want pledge card labels with the family name - y/n?
+/
+.enter 9
+.skip 3 if #9 ne y
+.setc 7 = chrm51
+/     remember to ---- select 3 eq "h" etc. ----
+.skip to labels
+/
+/     do you want pledge cards labels with the individual's name - y/n?
+/
+.enter 9
+.skipr 0 if #9 ne y
+.setc 7 = chrm52
+.skip to labels
+=opt12
+***** labels for a special selection *****
+.setc 7 = chrm45
+/
+/     do you want the labels printed with the family name - y/n?
+/
+.enter 9
+.skip 3 if #9 ne y
+.setc 7 = chrm49
+/     remember to  ---- select 3 eq "h" etc. ----
+/
+=labels
+/     do you want labels to print in zip code order - y/n?
+.enter 8
+/  standby for creation of new list file
+/
+/    labels for special selection
+/    to select special fields, enter when asked:
+/       select ...........
+/       data 12 7 /*
+/
+/
+.seta upsi=1
+.use ch.chsm20 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys3 shar
+.use ch#0b  on 1 for sys2
+.run asmlib.xxtrct on 1
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.skip to sort if y eq #8
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 41
+key=(16,26,ch),/*
+.end
+.skip to ok
+=sort
+.use ch#0b  on 1 for sys1 shar
+.use ch#0b  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 41
+key=(5,11,ch,16,26,ch),/*
+.end
+=ok
+/     place labels on printer
+/     newline to continue
+/
+.pause
+.use ch.#7 on 1 for sys0 shar
+.use ch#0a  on 1 for sys1 shar
+.use ch#0b  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt97
+ch.church

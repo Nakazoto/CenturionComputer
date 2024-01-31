@@ -1,0 +1,73 @@
+.job glddat
+.log
+*
+*   this program will   delete   all files for
+*   generl ledger key number #0 on disk #1
+*
+*   do you wish to continue? (y/n)
+*
+.nolog
+.enter 5
+.skip to fin if y ne #5
+.fspec gl#0a on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0a  on #1
+.fspec gl#0b on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0b  on #1
+.fspec gl#0c  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0c  on #1
+.fspec gl#0d  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0d  on #1
+.fspec gl#0e  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0e  on #1
+.fspec gl#0f on #1  6=size
+.skip 1 if #6 eq 0
+.del gl#0f  on #1
+.fspec gl#0g  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0g  on #1
+.fspec gl#0h  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0h  on #1
+.fspec gl#0i  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0i  on #1
+.fspec gl#0j  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0j  on #1
+.fspec gl#0k  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0k  on #1
+.fspec gl#0l  on #1 6=size
+.skip 1 if #6 eq 0
+.del gl#0l  on #1
+=pay
+.log
+*   do you wish to delete the payroll files
+*   for key number #0 on disk #1?  (y/n)
+.nolog
+.enter 6
+.skip to fin if n eq #6
+.skipr to pay if y ne #6
+.fspec pr#0a on #1 6=size
+.skip 1 if #6 eq 0
+.del pr#0a on #1
+.fspec pr#0b on #1 6=size
+.skip 1 if #6 eq 0
+.del pr#0b on #1
+.fspec pr#0d on #1 6=size
+.skip 1 if #6 eq 0
+.del pr#0d on #1
+*
+=fin
+.skip 2 if glmenu ne #4
+#4
+.end
+s.con
+*   6/12/79...written..ns
+*   8/06/79...added deletion of payroll files as optional feature..ns
+

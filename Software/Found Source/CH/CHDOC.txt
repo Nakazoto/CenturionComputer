@@ -1,0 +1,999 @@
+^P
+^S4
+^M5
+/==============================================================================
+/                    FIRST UNITED METHODIST CHURCH
+/                       MEMBERSHIP APPLICATION
+/==============================================================================
+^S1
+1.  The menu is called by entering:     CHURCH
+2.  The operator should enter 98 to change the printer to Q.
+^s1
+** MAIN MENU OPTIONS **
+/=============================================================================
+/  enter function:   1 - GENERAL MASTER FILE INFORMATION
+/                    2 - SPECIAL ADDRESS MASTER FILES
+/                    3 - CODE MASTER FILES
+/                    4 - REPORTS
+/                    5 - LABELS
+/
+/                    6 - RELATIVE DAY NUMBER
+/
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^S1
+** GENERAL MASTER FILE INFORMATION **
+/==============================================================================
+/  enter function:  1 - ENTER/UPDATE GENERAL MASTER FILE
+/
+/                   2 - PRINT GENERAL MASTER FILE LISTING (MEMBER NUMBER ORDER)
+/                   3 - PRINT GENERAL MASTER FILE LISTING (ALPHABETIC ORDER)
+/
+/                   4 - PRINT GENERAL MASTER FILE LISTING (FAMILY NUMBER ORDER)
+/                   5 - PRINT GENERAL MASTER FILE LISTING (ALPHABETIC BY FAMILY)
+/
+/                   6 - PRINT NAMES AND ADDRESSES IN ALPHABETIC ORDER
+/                   7 - PRINT INFORMATION SHEETS
+/
+/                  97 - return to main menu
+/                  98 - change printer
+/                  99 - end processing
+/==============================================================================
+^s1
+** PRINT INFORMATION SHEETS **
+/==============================================================================
+/  enter function:  1 - PRINT INFORMATION SHEETS IN MEMBER NUMBER ORDER
+/                   2 - PRINT INFORMATION SHEETS IN ALPHABETIC ORDER
+/
+/                   3 - PRINT INFORMATION SHEETS IN FAMILY NUMBER ORDER
+/                   4 - PRINT INFORMATION SHEETS ALPHABETIC BY FAMILY
+/
+/                  97 - return to main menu
+/                  98 - change printer
+/                  99 - end processing
+/=============================================================================
+^P
+^s1
+** SPECIAL ADDRESS MASTER FILE
+/==============================================================================
+/  enter function:   1 - ENTER/UPDATE COLLEGE STUDENT MASTER FILE
+/                    2 - PRINT COLLEGE STUDENT MASTER FILE
+/
+/                    3 - ENTER/UPDATE MAILING LIST MASTER FILE
+/                    4 - PRINT MAILING LIST MASTER FILE
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^s1
+** CODE MASTER FILE **
+/==============================================================================
+/  enter function:   1 - ENTER/UPDATE ACTIVITIES MASTER FILE
+/                    2 - PRINT ACTIVITIES MASTER FILE
+/
+/                    3 - ENTER/UPDATE SUNDAY SCHOOL CLASS MASTER FILE
+/                    4 - PRINT SUNDAY SCHOOL CLASS MASTER FILE
+/
+/                    5 - ENTER/UPDATE OCCUPATION MASTER FILE
+/                    6 - PRINT OCCUPATION MASTER FILE
+/
+/                    7 - ENTER/UPDATE AFFILIATION CODE MASTER FILE
+/                    8 - PRINT AFFILIATION CODE MASTER FILE
+/
+/                    9 - ENTER/UPDATE PARTICIPATION CODE MASTER FILE
+/                   10 - PRINT PARTICIPATION CODE MASTER FILE
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^S1
+** REPORTS **
+/==============================================================================
+/  enter function:   1 - PRINT LIST OF FAMILIES
+/                    2 - PRINT SUNDAY SCHOOL CLASS LIST
+/                    3 - PRINT CHOIR LIST
+/                    4 - PRINT BOARD LIST
+/                    5 - PRINT SPECIFIC ACTIVITY LIST
+/                    6 - PRINT SPECIFIC AFFILIATION CODE LIST
+/                    7 - PRINT NAMES AND ADDRESSES BY GEOGRAPHIC LOCATION
+/                    8 - PRINT SPECIAL SELECTION BY BIRTHDATE
+/                    9 - PRINT SPECIAL SELECT WITH MEMBERSHIP DATE
+/                   10 - PRINT SPECIAL SELECTION  (WITHOUT DATES)
+/                   11 - PRINT AVAILABLE MEMBER NUMBERS
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^p
+^S1
+** LABELS **
+/==============================================================================
+/  enter function:   1 - BULLETIN LABELS
+/                    2 - MAILING LIST LABELS
+/                    3 - COLLEGE STUDENT LABELS
+/                    4 - SUNDAY SCHOOL LABELS WITH INDIVIDUAL'S NAME
+/                    5 - SUNDAY SCHOOL LABELS WITH FAMILY NAME
+/                    6 - SUNDAY SCHOOL LABELS  (TO PARENTS)
+/                    7 - CHOIR LABELS
+/                    8 - BOARD LABELS
+/                    9 - SPECIFIC ACTIVITY LABELS
+/                   10 - SPECIFIC ACTIVITY LABELS  (TO PARENTS)
+/                   11 - PLEDGE CARD LABELS
+/                   12 - LABELS FOR A SPECIAL SELECTION
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^P
+** MAIN MENU OPTIONS **
+^M9 63
+^S1
+^^This menu allows the operator to call the sub-menus in the CHURCH MEMBERSHIP
+APPLICATION.  It also calculates the relative day number.^^
+^s1
+^m5
+1 - GENERAL MASTER FILE INFORMATION
+^M9
+^^Please see the associated menu documentation.^^
+^M5
+^s1
+2 - SPECIFIC ADDRESS MASTER FILES
+^M9
+^^Please see the associated menu documentation.^^
+^s1
+^m5
+3 - CODE MASTER FILES
+^M9
+^^Please see the associated menu documentation.^^
+^s1
+^m5
+4 - REPORTS
+^M9
+^^Please see the associated menu documentation.^^
+^s1
+^m5
+5 - LABELS
+^M9
+^^Please see the associated menu documentation.^^
+^s1
+^m5
+6 - RELATIVE DAY NUMBER
+^M9 63
+^^This option allows the operator to find the relative day number
+for any date.  The relative day number is used for special selection
+of reports and labels.^^
+^s1
+^^The operator enters 1, then enters the date in field 2.  The relative
+day is displayed in field 3.^^
+^p
+^m5
+** GENERAL MASTER FILE INFORMATION **
+^M9 63
+^S1
+^^This menu allows the operator to enter information in the GENERAL MASTER FILE,
+and to print reports numerically and alphabetically.^^
+^S1
+^M5
+1 - ENTER/UPDATE GENERAL MASTER FILE
+^M9 63
+^^This option allows the operator to enter and update information for each
+member and visitor in the GENERAL MASTER FILE.^^
+^s1
+^^*** If a person gives money
+to the church that is accounted for through the PLEDGE APPLICATION, they
+must be entered in the GENERAL MASTER FILE.  Each time a record is added,
+deleted or the names changed in the GENERAL MASTER FILE, the operator
+must also update the PLEDGE METHOD OF PAYMENT MASTER FILE. ***^^
+^S5
+^M5
+GENERAL MASTER FILE FOR FIRST UNITED METHODIST CHURCH
+^s1
+( 1) MEM. #.. /####  ( 2) FAM. #.. /#### ( 3) FAM.HEAD /@      ( 4) AFFIL... /@
+( 5) P/CODE.. /####                      (18) BIRTHDAY /######
+( 6) NAME.... /@@@@@@@@@@@@@@@@@@@@@@@@@ (19) BAPTISM. /###### (20) YES/NO.. /@
+( 7) ALPHA... /@@@@@@@@@@@@@@@@@@@@@@@@@ (21) MEM.DATE /######
+( 8) FAM.NAME /@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+( 9) ADD. 1.. /@@@@@@@@@@@@@@@@@@@@@@@@@
+(10) ADD. 2.. /@@@@@@@@@@@@@@@@@@@@@@@@@ (22) OCCUP... /###
+(11) ADD. 3.. /@@@@@@@@@@@@@@@@@@@@@@@@@ (23) EMPLOYER /@@@@@@@@@@@@@@@@@@@@@@@
+(12) ZIP CODE /@@@@@@@@@@    (24) DESCRIPT /@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+(13) GEO.CODE /@@@@          (25) DESCRIPT /@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+(14) ZONE.... /###
+(15) PHONE... /@@@@@@@@@@@@  (26) BLD.TYPE /@@@
+(16) SEX..... /@             (27) CONSTANT /#####    (30) PARTICIP /@@@@@@@@@@@
+(17) MAR.STAT /@             (28) AGE GR.. /#####    (31) FUTURE.. /#####
+                             (29) FUTURE.. /#####    (32) FUTURE.. /#####
+(33) SUN SCH. /@@
+(34) CHOIRS.. /###  (35) ACTIVITY /###   (36) ACTIVITY /###  (37) ACTIVITY /###
+(38) BOARDS.. /###  (39) ACTIVITY /###   (40) ACTIVITY /###  (41) ACTIVITY /###
+(42) BOARDS.. /###  (43) ACTIVITY /###   (44) ACTIVITY /###  (45) ACTIVITY /###
+(46) MISC.... /###  (47) ACTIVITY /###   (48) ACTIVITY /###  (49) ACTIVITY /###
+(50) OFFICE.. /###  (51) ACTIVITY /###   (52) ACTIVITY /###  (53) ACTIVITY /###
+^P
+^M9 63
+^^MEMBERSHIP NUMBER - is the key to the file.  Each person entered into the
+master file must have a unique number.  This is a 4 digit field.^^
+^s1
+^^FAMILY NUMBER - each family will be assigned a unique family number.
+The GENERAL MASTER FILE may be be printed in family number order, or a list
+of families (one record per family) may be printed.^^
+^s1
+^^FAMILY HEAD - the head of the household (usually the father) should have an
+H entered in this field.^^
+^s1
+^^AFFILIATION CODE  - is a one-letter code indicating if the person is a member, constituent, etc.
+A list of the affiliation codes can be obtained from the CODE MASTER menu.^^
+^s1
+^^P/CODE - this field contains the fund pledge code that is calculated when
+the pledges are posted.  For example, a code of 111 would mean that the
+member has made a pledge to the operating budget, building fund and the church
+development fund.  See the PLEDGE APPLICATION documentation for more information.
+The operator does not enter this information, it is posted to this field when
+the pledges are posted.^^
+^s1
+^^NAME - the person's name should be entered in this field.  The name can be
+up to 25 characters.^^
+^s1
+^^ALPHA - the name should be entered last name, first name, middle initial.
+This field is used to sort the file alphabetically.^^
+^s1
+^^FAMILY NAME - the family mailing name should be entered here (Mr. and Mrs.,
+Miss, Dr. and Mrs., etc.)  Children should have their parent's name entered
+in this field.  The operator may decide to enter the children's name in parentheses after the parent's name.^^
+
+^s1
+^^ADDRESS LINES - there are three lines provided for the address.  If a street
+and a P.O. Box number are used, the P.O. Box number should preceed the city and
+state.^^
+^s1
+^^ZIP CODE - the zip code should be entered.  Provisions have been made for the
+9 digit zip code with a hyphen.^^
+^s1
+^^GEOGRAPHIC CODE - each person should have a code entered to indicate where
+they live in the city of Lakeland.  It is a 4-digit field.^^
+^s1
+^^ZONE - the geographic area can be broken down into zones if needed.  The zone
+is a three digit field.^^
+^s1
+^^PHONE - the phone number, including area code, is entered in this field.
+This field is automatically duplicated by hitting NEWLINE.^^
+^s1
+^^SEX - a letter should be entered to indicate if the person is male or female.^^
+^s1
+^^MARITAL STATUS - a letter should be entered to indicate the marital status.
+For example, M for married, W for widow, D for divorced, S for single.^^
+^s1
+^^BIRTHDAY - a birthdate should be entered if known.  Reports can be selected
+by birthdate.^^
+^s1
+^^BAPTISM - the date of the baptism, if known, should be entered.^^
+^s1
+^^YES/NO - a Y or N should be entered to indicate if the person has been baptised.^^
+^s1
+^^MEMBERSHIP DATE - the date of membership, if known, should be entered.^^
+^s1
+^^OCCUPATION - a numeric code should be entered to indicate the person's occupation.
+A list of the occupation codes may be obtained from the CODE MASTER FILE menu.^^
+^s1
+^^EMPLOYER - the company that the person is employed by should be entered in this field.  The field is 23 characters lon
+^s1
+^^DESCRIPTION - two fields have been provided for individual information.^^
+^s1
+^^BLOOD TYPE - the person's blood type, if known, should be entered.  RH positive should be
+entered as RHP, RH negative should be entered as RHN.  A list of persons with
+a particular blood type could be generated from the special selection reports.^^
+^s1
+^^CONSTANT - this field contains a one for all records.  It is used to count
+records.  It is field-protected.^^
+^s1
+^^AGE GROUP - the age group, if known, should be entered.  A numeric value
+for each age group should be set-up.  For example, 1 for under 18, 2 for 18
+to 30, 3 for over 30.^^
+^s1
+^^PARTICIP - the participation code should be entered.  A list of the
+participation codes can be obtained from the CODE MASTER menu.^^
+^s1
+^^FUTURE - three fields has been provided for future use.^^
+^s1
+^^SUNDAY SCHOOL CLASS - a number should be entered to indicate the Sunday
+School Class that the person belongs to.  The field is alpha-numeric (i.e.
+1 and 01 are not equal).  A list of the Sunday School Classes can be obtained
+from the CODE MASTER FILE menu.^^
+^s1
+^^CHOIRS - a numeric code should be entered to indicate the choir that a
+person belongs to.  If a person is in two choirs, the operator should
+use the miscellaneous field.  Choir lists and labels can be printed, see
+the report menus.  Refer to the Activity Code List for the codes to use.^^
+^s1
+^^BOARDS - two fields have been set-up to enter the boards a person is on.
+If a person is on more boards, use the miscellaneous field, and activity
+fields 35,39,43,47 and 51.  This is the first column of activities on the
+CRT.
+Board lists and labels are available to be printed.  Refer to the Activity
+Code List for the codes to use.^^
+^s1
+^^MISCELLANEOUS - this field is set-up for the overflow for choirs, boards
+and office.  For example, if a person if on two choirs, this field would be
+used.  Refer to the Activity Code List for the codes to use.^^
+^s1
+^^OFFICE - this field is reserved for office use.^^
+^s1
+^^ACTIVITY - fifteen fields have been provided for activities.  Refer to the
+Activity Code List for the codes to use.  Labels and
+lists can be printed for specified activities.^^
+^s1
+^m5
+2 - PRINT GENERAL MASTER FILE LISTING (MEMBER NUMBER ORDER)
+^M9 63
+^^This option will print the GENERAL MASTER FILE in membership number order.
+The report will print the membership number, family number, alpha, family name,
+fund pledge code, affiliation code and a record count.^^
+^s1
+^^The operator has the option to print the entire file, or a range of membership
+numbers.  The operator will be asked to enter a beginning membership number.
+If the entire file is wanted, the operator should NEWLINE.  For selected members, the
+operator should enter a beginning number followed by an ending number.  If no ending number is known, the
+operator can hit NEWLINE.  The membership file from the beginning number through
+the last number in the file will be printed.^^
+^s1
+^m5
+3 - PRINT GENERAL MASTER FILE LISTING (ALPHABETIC ORDER)
+^M9 63
+^^This option will print the GENERAL MASTER FILE in alphabetic order.  The
+report will print the membership number, family number, alpha, family name,
+fund pledge code, affiliation and a record count.^^
+^s1
+^^The same options apply as the previous report as to printing all or part
+of the GENERAL MASTER FILE.^^
+^s1
+^m5
+4 - PRINT GENERAL MASTER FILE LISTING (FAMILY NUMBER ORDER)
+^M9 63
+^^This option will print the GENERAL MASTER FILE in family number order.
+All the members of the family will be printed.
+The report will print the family number, membership number, alpha, family name,
+and a record count.^^
+^s1
+^^The operator has the option to print the entire membership file or a range
+of family numbers.  The operator will be asked to enter a beginning family number.
+If the entire file is wanted, the operator should NEWLINE.  For selected families, the operator should
+enter a beginning family number followed by a ending family number.  If no
+ending number is known, the operator can hit NEWLINE.  The membership file
+from the beginning family number through the end of the file will be printed.^^
+^s1
+^m5
+5 - PRINT GENERAL MASTER FILE LISTING (ALPHABETIC BY FAMILY)
+^m9 63
+^^This option will print the GENERAL MASTER FILE in alphabetic order by family.
+All the members of the family will be printed.  The report will print the
+family number, membership number, alpha, family name, and a record count.^^
+^s1
+^THE PROGRAM ASKS THE OPERATOR TO ENTER THE AFFILIATION CODE TWICE.  TO PRINT
+THE ENTIRE FILE, ENTER "M" AND "N".
+^s1
+6 - PRINT NAMES AND ADDRESSES IN ALPHABETIC ORDER
+^m5
+^m9 63
+^^This option will print the names and addresses from the GENERAL MASTER FILE in alphabetic order.
+The report will print affiliation code, family number, membership number, name, address, zip code,
+phone and a record count.^^
+^s1
+^^The operator has the option to print the entire file, or a range of membership numbers.
+The operator will be asked to enter a beginning membership number.  If the
+entire file is wanted, the operator should NEWLINE.  For selected members,
+the operator should enter a beginning membership number followed by a ending
+number.  If no ending number is known, the operator can hit NEWLINE.  The
+membership file from the beginning number through the last number in the file
+will be printed.^^
+^s1
+^^The operator will enter a heading for this report.  When the CRT prompts,
+the operator should enter 1.  The report heading should
+be keyed into field 2.  When the heading is entered correctly, the operator
+should NEWLINE three times.^^
+^S1
+^m5
+7 - PRINT INFORMATION SHEETS
+^m9 63
+^^This option will display the PRINT INFORMATION SHEET menu.  See the
+associated menu documentation.^^
+^p
+^m5
+** PRINT INFORMATION SHEETS **
+^m9 63
+^S1
+^^This menu is used to print the information sheets.  The operator has
+four different ways to select the sheets.^^
+^s1
+^m5
+1 - PRINT INFORMATION SHEETS IN MEMER NUMBER ORDER
+^m9 63
+^^This option allows the operator to print the information sheets in member
+number order.  The program will prompt the operator for beginning and ending
+member numbers.  To print the entire file, the operator should NEWLINE.
+The operator has the option to print the entire file, or a range of membership
+numbers.  The operator will be asked to enter a beginning membership number.
+If the entire file is wanted, the operator should NEWLINE.  For selected
+members, the operator should enter a beginning number and a ending number.
+If no ending number is known, the operator can hit NEWLINE.  The file from
+the beginning number through the end of the file will be printed.^^
+^s1
+^m5
+2 - PRINT INFORMATION SHEETS IN ALPHABETIC ORDER.
+^m9 63
+^^This option allows the operator to print the information sheets in member
+alphabetic order.  The operator has the option to print the entire file, or
+a range of membership numbers.^^
+^s1
+^m5
+3 - PRINT INFORMATION SHEETS IN FAMILY NUMBER ORDER
+^m9 63
+^^This option allows the operator to print the information sheets in family
+number order.  The operator has the option to print the entire file, or a
+range of FAMILY numbers.^^
+^s1
+^m5
+4 - PRINT INFORMATION SHEETS IN ALPHABERIC ORDER BY FAMILY
+^m9 63
+^^This option allows the operator to print information sheets in alphabetic
+ order by family.  The operator has the option to print the entire file, or
+a range of FAMILY numbers.^^
+^p
+^m5
+** SPECIAL ADDRESS MASTER FILE **
+^S1
+^M9 63
+^^This menu is used to enter/update and print the COLLEGE STUDENT MASTER FILE,
+and to enter/update and print the MAILING LIST MASTER FILE.^^
+^s1
+^m5
+1 - ENTER/UPDATE COLLEGE STUDENT MASTER FILE
+^m9 63
+^^This option allows the operator to enter/update college student information.^^
+^s1
+^^COLLEGE NUMBER - is the key to the file.  The college number MUST be the same as
+the student's membership number.  This number will access the GENERAL MASTER
+FILE and pull the student's name, alpha sort, and family name.^^
+^S1
+^^MAILING CODE - an N should be entered in this field if no mail should
+be sent to the specific individual.^^
+^s1
+^^COLLEGE ADDRESS LINES - there are three lines provided for the address.  If
+a street and P.O. Box number are used, the P.O. Box number should immediately
+preceed the city and state.^^
+^s1
+^^ZIP CODE - the zip code should be entered.  Provision has been made for a
+9-digit zip code with a hyphen.^^
+^s1
+^^COLLEGE OR UNIVERSITY - the operator will enter the college or university
+that the student attends.^^
+^s1
+^^YEAR HIGH SCHOOL GRADUATION - the operator will enter the year that the
+student graduated from high school.^^
+^s1
+^^DESCRIPTION - this field can be used possibly to list the status of the
+student (sophmore, junior, etc.).^^
+^s1
+^m5
+2 - PRINT COLLEGE STUDENT MASTER FILE
+^M9 63
+^^This option will print the COLLEGE STUDENT MASTER FILE in alphabetical order.
+The report prints the college number, name, family name, college address, zip
+code, college attended, year graduated high school, description and record count.^^
+^s1
+^^The operator has the option to print the entire file, or a range of membership
+numbers.  The operator will be asked to enter a beginning membership number.  If
+the entire file is wanted, the operator should NEWLINE.  For selected students,
+the operator should enter a beginning number followed by an ending number.
+If no ending number is known, the operator can hit NEWLINE.  The college student
+file from the beginning number through the end of the file will be printed.^^
+^p
+^m5
+3 - ENTER/UPDATE MAILING LIST MASTER FILE
+^m9 63
+^^This option allows the operator to store names and addresses for people
+on the church mailing list.^^
+^s1
+^^MAILING NUMBER - is the key to the file.  Each person entered in the file will
+be assigned a unique mailing number.  It is a 4-digit field.^^
+^s1
+^^NAME - the person's or organization's name should be entered in this field.
+The field length is 25 characters.^^
+^s1
+^^ALPHA SORT - the name should be entered last name, first name, middle initial.
+This field is used to sort the file alphabetically.^^
+^s1
+^^ADDRESS LINES - there are three lines provided for the address.  If a street
+and a P.O. Box are used, the P.O. Box must preceed the city and state.^^
+^s1
+^^ZIP CODE - the zip code should be entered.  Provision has been made for
+a 9-digit zip code with a hyphen.^^
+^s1
+^^MAILING CODE - an N should be entered in this field if no mail is to be
+sent to the specific individual (i.e. winter visitors when they are in Lakeland).^^
+^s1
+^^DESCRIPTION - this field is provided to indicate why the individual is
+on the mailing list.  This field may be left blank.^^
+^s1
+^m5
+4 - PRINT MAILING LIST MASTER FILE
+^m9 63
+^^This option will print the MAILING LIST MASTER FILE in alphabetical order.
+The report prints the mailing number, name, address, zip code, mailing code,
+description and record count.^^
+^s1
+^^The operator has the option to print the entire file, or a range of
+mailing list numbers.  The operator will be asked to enter a beginning
+mailing number.  If the entire file is wanted, the operator should NEWLINE.
+For selected numbers, the operator should enter a beginning number followed
+by an ending number.  If no ending number is known, the operator can hit
+NEWLINE.  The mailing list file from the beginning number through the
+end of the file will be printed.^^
+^p
+^m5
+** CODE MASTER FILE **
+^s1
+^m9 63
+^^This menu allows the operator to enter/update and print the ACTIVITIES MASTER
+FILE, SUNDAY SCHOOL CLASS MASTER FILE, OCCUPATION MASTER FILE and the AFFILIATION
+CODE MASTER FILE.^^
+^S1
+^M5
+1 - ENTER/UPDATE ACTIVITIES MASTER FILE
+^M9 63
+^^This option allows the operator to enter up to 999 different activities and
+descriptions.  The activity number is a 3-digit field, and the description
+is a 30-character field.^^
+^s1
+^m5
+2 - PRINT ACTIVITIES MASTER FILE
+^m9 63
+^^This option will print the ACTIVITIES MASTER FILE in numerical order.  The
+report prints the activity code and description.^^
+^s1
+^m5
+3 - ENTER/UPDATE SUNDAY SCHOOL CLASS MASTER FILE
+^m9 63
+^^This option allows the operator to enter to 99 different Sunday School Class
+numbers and names of classes.  Remember, the class number is an alphabetic
+field (i.e. 1 and 01 are not equal).  Therefore, be consistent in entering
+the class numbers in the GENERAL MASTER FILE.  Since the sunday school class
+field in the GENERAL MASTER FILE is only 2 characters, use only 2 characters
+in the sunday school class number.^^
+^s1
+^m5
+4 - PRINT SUNDAY SCHOOL CLASS MASTER FILE
+^m9 63
+^^This option will print the SUNDAY SCHOOL CLASS MASTER FILE in class number order.
+The report prints the class number and name.^^
+^s1
+^m5
+5 - ENTER/UPDATE OCCUPATION MASTER FILE
+^M9 63
+^^This option allows the operator to enter up to 999 different occupations
+and descriptions.  The occupation number is a 3-digit field and the description
+is a 30-character field.^^
+^s1
+^m5
+6 - PRINT OCCUPATION MASTER FILE
+^m9 63
+^^This option will print the OCCUPATION MASTER FILE in numeric order.  The
+report prints the occupation number and description.^^
+^s1
+^m5
+7 - ENTER/UPDATE AFFILIATION CODE MASTER FILE
+^m9 63
+^^This option allows the operator to enter up to 36 different affiliations and
+descriptions.  The affiliation code is a 1 character field.  Therefore, the codes
+can be A-Z and 0-9.  The description field is 30 characters.^^
+^s1
+^m5
+8 - PRINT AFFILIATION CODE MASTER FILE
+^m9 63
+^^This option will print the AFFILIATION CODE MASTER FILE in alphabetic order.
+The report prints the affiliation code and description.^^
+^s1
+^m5
+9 - ENTER/UPDATE PARTICIPATION CODE MASTER FILE
+^M9 63
+^^This option allows the operator to enter participation codes and descriptions.
+The participation code is an 11 character field.  The description field is
+30 characters.^^
+^s1
+^m5
+10 - PRINT PARTICIPATION CODE MASTER FILE
+^M9 63
+^^ This option will print the PARTICIPATION CODE MASTER FILE in alphabetic
+order.  The report prints the participation code and description.^^
+^p
+^m5
+** REPORTS **
+^s1
+^m9 63
+^^This menu allows the operator to print reports from the GENERAL MASTER FILE.^^
+^S1
+^M5
+1 - PRINT LIST OF FAMILIES
+^M9 63
+^^This option allows the operator to print a list of families in the GENERAL
+MASTER FILE.  This report will print only the head of the household for each
+family.^^
+^s1
+^^The operator is instructed to select the affiliation codes that she wants
+printed.  The instructions read:^^
+^s1
+     TO PRINT THE LIST OF FAMILIES REMEMBER TO SELECT
+     THE AFFILIATION CODES WANTED.  FOR EXAMPLE:
+       SELECT 3 EQ "H" AND (4 EQ "M" OR 4 EQ "R"...)
+       DATA 7 /*
+^S1
+^^The operator will enter a heading for this report (i.e. to list the affiliation codes asked for).
+When the CRT prompts, the operator should enter a 1.  The report heading should be
+keyed in field 2.  When the heading is entered correctly, the operator should
+NEWLINE three times.^^
+^s1
+^^The report will print the family number, membership number, affiliation,
+family name, address, zip code, phone and a record count.  The report is
+printed in alphabetical order.^^
+^s1
+^m5
+2 - PRINT SUNDAY SCHOOL CLASS LIST
+^M9 63
+^^This option allows the operator to print sunday school class lists for
+one or more of the classes from the GENERAL MASTER FILE.^^
+^s1
+^^The operator is instructed to select the classes that she wants printed.
+The instructions read:^^
+^s1
+     TO SELECT SUNDAY SCHOOL CLASS LISTS FOR ONE OR
+     MORE CLASSES, ENTER WHEN ASKED:
+        SELECT 33 EQ "01" OR 33 EQ "02" .....
+        DATA 33 7 /*
+     OR TO PRINT ALL THE SUNDAY SCHOOL CLASS LISTS,
+     ENTER WHEN ASKED:
+        SELECT 33 NE "  "                (NOTE:  TWO BLANK SPACES)
+        DATA 33 7 /*
+^S1
+^^The report will print the membership number, family number, affiliation,
+name, address, zip code, phone, birthday, and family name.  The report will print in alphabetic
+order by class, with a page break between classes.^^
+^s1
+^m5
+3 - PRINT CHOIR LIST
+^M9 63
+^^This option allows the operator to print choir lists for one or more of the
+choirs from the GENERAL MASTER FILE.^^
+^s1
+^^The operator is instructed to select the choirs that she wants printed.
+The instructions read:^^
+^s1
+     THE ACTIVITY CODES FOR CHOIR ARE IN FIELD 34 OR
+     FIELD 46.  THE LIST WILL BE PRINTED ALPHABETICALLY
+     BY CHOIR.  TO PRINT THE CHOIR LIST, ENTER ONE OF
+     THE FOLLOWING OPTIONS:
+^S1
+        SELECT 34 EQ "201" OR 34 EQ "202"....
+        DATA 34 7 /*
+     OR:
+        SELECT 46 EQ "201" OR 46 EQ "202"....
+        DATA 46 7 /*
+^S1
+^^The operator will enter a heading for this report (i.e. a list of choirs that are selected).
+When the CRT prompts, the operator should enter a 1.  The report heading
+should be keyed in field 2.  When the heading is entered correctly, the operator
+should NEWLINE three times.^^
+^s1
+^^The report will print the family number, membership number, name, address,
+zip code, phone and record count.  The report will print alphabetically by
+choir.^^
+^m5
+^s1
+4 - PRINT BOARD LIST
+^m9 63
+^^This option allows the operator to print a board list from the GENERAL MASTER FILE.  The operator will
+be asked to enter the board number.  The program will search the board fields, miscellaneous field and the
+first column of activity fields.  Only one board list may be run at a time.^^
+^s1
+^^The operator will enter a heading for this report (i.e. board name).  When the CRT prompts,
+the operator should enter a 1.  The report heading should be entered in field 2.
+When the heading is entered correctly, the operator should NEWLINE three times.^^
+^s1
+^^The report will print family number, membership number, name, address, zip code, phone and a record
+count.  The report will print in alphabetic order.^^
+^s1
+^m5
+5 - PRINT SPECIFIC ACTIVITY LIST
+^m9 63
+^^This option allows the operator to print a specific activity list from the
+GENERAL MASTER FILE.^^
+^s1
+^^The operator will be asked to enter the activity number.
+The program will search the activity fields for that activity.  It will not
+look in the choir, boards, miscellaneous or office fields.  Only one activity
+may be printed at a time.^^
+^s1
+^^The operator will enter a heading for this report (i.e. activity description).
+When the CRT prompts, the operator should enter a 1.  The report heading should
+be entered in field 2.  When the heading is entered correctly, the operator should
+NEWLINE three times.^^
+^s1
+^^The report will print family number, membership number, name, address, zip code, phone
+and a record count.  The report will print in alphabetical order.^^
+^p
+^m5
+6 - PRINT SPECIFIC AFFILIATION CODE LIST
+^m9 63
+^^This option allows the operator to print a specific affiliation list from the
+GENERAL MASTER FILE.  The operator will be asked to enter the affiliation code.^^
+^s1
+^^The operator will enter a heading for this report (i.e. affiliation code).
+When the CRT prompts, the operator should enter a 1.  The report heading should
+be entered in field 2.  When the heading is entered correctly, the operator
+should  NEWLINE three times.^^
+^s1
+^^The report will print family number, membership number, name, address, zip code, phone and a record count.
+The report is printed in alphabetical order.^^
+^s1
+^m5
+7 - PRINT NAMES AND ADDRESSES BY GEOGRAPHIC LOCATION
+^m9 63
+^^This option allows the operator to print names and addresses by geographic
+location from the GENERAL MASTER FILE.  The operator has the choice of printing heads of household for all
+areas or to select the records to be printed.^^
+^s1
+^^If the operator wants to select the records to be printed, the instructions read:^^
+^s1
+     PRINT NAMES AND ADDRESSES BY GEOGRAPHIC LOCATION
+     TO SELECT SPECIAL FIELDS, ENTER WHEN ASKED:
+        SELECT 3 EQ "H" ETC.
+        DATA 13 14 7 /*
+^S1
+^^This allows the operator to select the report various ways.  She may want
+only a particular area or zone, or specific affiliations within an area, etc.
+The operator should select the fields that make what she wants unique.
+See the SPECIAL SELECTION documentation for further instructions.^^
+^s1
+^^The operator will enter a heading for this report.  When the CRT prompts,
+the operator should enter a 1.  The report heading should be entered in field 2.
+When the heading is entered correctly, the operator should NEWLINE three times.^^
+^s1
+^^The report will print family number, membership number, affiliation, name,
+address, zip code, phone, geographic area, zone and a record count.  The
+report spaces 5 lines between each area.  The report will print in alphabetic
+order by geographic area and zone.^^
+^s1
+^m5
+8 - PRINT SPECIAL SELECTION BY BIRTHDATE
+^m9 63
+^^This option allows the operator to select members from the GENERAL MASTER
+FILE by birthdate and other parameters.  The report prints the membership number, family number,
+name, address, zip code, phone, birthdate and a record count.  The report
+is sorted alphabetical by date.^^
+^s1
+^^It is necessary for the operator to find the relative day for the beginning and ending birthdates wanted.
+The operator is asked to enter the key.  The key is ALWAYS 1.
+The operator then enters the beginning birthdate in field 2.  The relative day is
+displayed in field 3.  She writes down the relative day for later use.
+Then, she enters the ending birthdate in field 2, and the relative day is
+displayed in field 3.  She writes the ending relative day for later use.
+To exit the program, the operator NEWLINES twice.^^
+^s1
+^^For example, if the operator wanted to find out who was born between 1970
+and 1980, the operator would enter 010170 (January 1, 1970) in field 2.
+The relative day, 25569, would be displayed in field 3.  The operator would then
+enter 123180 (December 31, 1980) in field 2.  The ending relative day, 29586,
+would be displayed in field 3.  She would then NEWLINE twice to exit the program.^^
+^s1
+^^The next step is to select the fields that the operator wants to print.
+The instructions read:^^
+^s1
+     PRINT SPECIAL SELECTION BY BIRTHDATE
+     TO SELECT SPECIAL FIELDS, ENTER WHEN ASKED:
+       SELECT (18 GE "000000" AND 18 LE "999999") AND ETC.
+       DATA 18 7 /*
+     WHERE 000000 IS THE BEGINNING RELATIVE DAY WANTED
+     AND 999999 IS THE ENDING RELATIVE DAY WANTED
+^S1
+^^This allows the operator to select between two birthdates and to select
+various other fields.  For example, the other field could be members only
+(4 eq "m").  See the SPECIAL SELECTION documentation for further instructions
+on fields available to selection.^^
+^s1
+^^The operator will enter a heading for this report (i.e. dates requested).
+When the CRT prompts, the operator should enter a 1.  The report heading
+should be entered in field 2.  When the heading is entered correctly, the
+operator should NEWLINE three times.^^
+^s1
+^m5
+9 - PRINT SPECIAL SELECT WITH MEMBERSHIP DATE
+^m9 63
+^^This option allows the operator to select members from the GENERAL MASTER
+FILE by a variety of parameters.  The report prints the membership number,
+family number, name, address, zip code, phone, membership date and a record
+count.  The report is in alphabetical order.^^
+^s1
+^^The operator needs to select the fields she wants printed.  The instructions
+read:^^
+^s1
+     PRINT SPECIAL SELECT WITH MEMBERSHIP DATE
+     TO SELECT SPECIAL FIELDS, ENTER WHEN ASKED:
+        SELECT ...........
+        DATA 7 /*
+^S1
+^^This allows the operator to select any fields from the GENERAL MASTER FILE
+that she wants.  See the SPECIAL SELECTION documentation for futher instructions.^^
+^s1
+^^The operator will enter a heading for this report (i.e. special fields selected).
+When the CRT prompts, the operator should enter a 1.  The report heading should
+be entered in field 2.  When the heading is entered correctly, the operator
+should NEWLINE three times.^^
+^s1
+^m5
+10 - PRINT SPECIAL SELECTION (WITHOUT DATES)
+^m9 63
+^^This option allows the operator the select members from the GENERAL MASTER FILE
+by a variety of parameters.  The operator has two report formats to chose
+from.  If the operator wants the report with the family name, she must
+remember to select 3 eq "H".  The report prints the family number, membership
+number, affiliation, family name, address, zip code, phone and a record count.
+The other report format prints the family number, membership number, name,
+address, zip code, phone and a record count.  The reports print in alphabetical
+order.^^
+^s1
+^^The operator needs to select the fields she wants printed.  The instructions
+read:^^
+^s1
+     PRINT SPECIAL SELECTION (WITHOUT DATES)
+     TO SELECT SPECIAL FIELDS, ENTER WHEN ASKED:
+        SELECT ......
+        DATA 7 /*
+^S1
+^^This allows the operator to select any fields from the GENERAL MASTER FILE
+that she wants.  See the SPECIAL SELECTION documentation for further instructions.^^
+^s1
+^^The operator will enter a heading for this report (i.e. special fields selected).
+When the CRT prompts, the operator should enter a 1.  When the report heading
+is entered correctly, the operator should NEWLINE three times.^^
+^p
+^m5
+** LABELS **
+^s1
+^m9 63
+^^This menu allows the operator to print labels from the GENERAL MASTER FILE, MAILING LIST MASTER FILE, and
+COLLEGE STUDENT MASTER FILE.^^
+^S1
+^M5
+1 - BULLETIN LABELS
+^m9 63
+^^This option allows the operator to print bulletin labels from the GENERAL
+MASTER FILE.  Labels are printed for thoses members who are heads-of-households, and have an affiliation code
+of M, C, R, OR X (members, constituents, preachers and person's desiring newsletter.^^
+^s1
+^^The labels will print the membership number, family name, address and
+zip code.  The labels are sorted by zip code and alpha sort.  The program
+will remind the operator to put the labels on the printer.^^
+^s1
+^^After the labels are printed, the operator will be reminded to put
+standard paper on the printer.  The zip code total report will then be
+printed.  This report prints the total number of labels for each
+zip code and a grand total.  This report is useful for bulk mailing.^^
+^s1
+^m5
+2 - MAILING LIST LABELS
+^m9 63
+^^This option allows the operator to print labels from the MAILING LIST MASTER
+FILE.  Labels will be printed for all records that do not have an N in
+mailing code.^^
+^s1
+^^The labels will print the name, address and zip code.  The labels are
+sorted by zip code and alpha sort.  The program will remind the operator
+to put the labels on the printer.^^
+^s1
+^^After the labels are printed, the operator will be reminded to put standard
+paper on the printer.  The zip code total report will then be printed.  This
+report prints the total number of labels for each zip code and a grand total.
+This report is useful for bulk mailing.^^
+^s1
+^m5
+3 - COLLEGE STUDENT LABELS
+^m9 63
+^^This option allows the operator to print labels from the COLLEGE STUDENT
+MASTER FILE.  Labels will be printed for all records that do not have a N
+in mailing code.^^
+^S1
+^^The labels will print the name, college address and zip code.  The labels
+are printed in alphabetical order.  The program will remind the operator
+to put labels on the printer.^^
+^s1
+^m5
+4 - SUNDAY SCHOOL LABELS WITH INDIVIDUAL'S NAME
+^m9 63
+^^This option allows the operator to print sunday school labels with the individual's name
+for one or more classes from the GENERAL MASTER FILE.  These labels are usually used for youth classes,
+but the can be used for any of the sunday school classes.^^
+^s1
+^^The operator
+is instructed to select the classes she wants.  The instructions read:^^
+^s1
+     TO SELECT SUNDAY SCHOOL LABELS FOR ONE OR
+     MORE CLASSES, ENTER WHEN ASKED:
+        SELECT 33 EQ "01" OR 33 EQ "02"....
+        DATA 33 7 /*
+     OR TO PRINT LABELS FOR ALL SUNDAY SCHOOL CLASSES,
+     ENTER WHEN ASKED:
+        SELECT 33 NE "  "
+        DATA 33 7 /*
+^S1
+^^The labels will print name, address and zip code.  The labels are printed
+in alphabetic order by class.  The operator is reminded to put the labels on
+the printer.^^
+^s1
+^m5
+5 - SUNDAY SCHOOL LABELS WITH FAMILY NAME
+^M9 63
+^^This option allows the operator to print sunday school labels with the
+family name for one or more classes from the GENERAL MASTER FILE.  These
+labels are usually used for the adult classes, but may be used for any of
+the sunday school classes.^^
+^s1
+^^The operator is instructed to select the classes she wants.  The instructions read:^^
+^s1
+     TO SELECT SUNDAY SCHOOL LABELS FOR ONE OR
+     MORE CLASSES, ENTER WHEN ASKED:
+         SELECT 33 EQ "01" OR 33 EQ "02"....
+         DATA 33 7 /*
+     OR TO PRINT ALL THE SUNDAY SCHOOL CLASSES,
+     ENTER WHEN ASKED:
+         SELECT 33 NE "  "
+         DATA 33 7 /*
+^S1
+^^The labels will print the family name, address and zip code.  The labels
+are printed in alphabetical order by zip code.  The operator is reminded
+to put the labels on the printer.^^
+^s1
+^m5
+6 - SUNDAY SCHOOL LABELS (TO PARENTS)
+^M9 63
+^^This option allows the operator to print sunday school labels addressed
+to the parents of the class member for one or more classes from the GENERAL
+MASTER FILE.^^
+^S1
+^^The operator is instructed to select the classes she wants.  The instructions
+read:^^
+^s1
+     TO SELECT SUNDAY SCHOOL LABELS FOR ONE OR
+     MORE CLASSES, ENTER WHEN ASKED:
+        SELECT 33 EQ "01" OR 33 EQ "02".....
+        DATA 33 7 /*
+^S1
+^^The labels will print TO THE PARENTS OF on the first line, then the
+name, address and zip code.  The labels are sorted alphabetically by class.
+The operator is reminded to put the labels on the printer.^^
+^p
+^m5
+7 - CHOIR LABELS
+^m9 63
+^^This option allows the operator to print labels for one or more choirs
+from the GENERAL MASTER FILE.  The operator is instructed to select the
+choirs that she wants.  The instructions read:^^
+^s1
+     THE ACTIVITY CODES FOR CHOIR ARE IN FIELD 34 OR
+     FIELD 46.  THE LABELS WILL BE PRINTED ALPHABETICALLY
+     BY CHOIR.  TO PRINT THE CHOIR LABELS, ENTER ONE OF
+     THE FOLLOWING OPTIONS:
+^S1
+        SELECT 34 EQ "201" OR 34 EQ "202"....
+        DATA 34 7 /*
+     OR:
+        SELECT 46 EQ "201" OR 46 EQ "202"....
+        DATA 46 7 /*
+^S1
+^^The labels will print the name, address, and zip code.
+The labels will print alphabetically by
+choir.  The operator is reminded to put the labels on the printer.^^
+^s1
+^m5
