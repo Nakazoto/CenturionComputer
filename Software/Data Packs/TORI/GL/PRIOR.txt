@@ -1,0 +1,17 @@
+.job glprio
+*   allows the operator to enter previous months info for comparison
+.use gl#0a on #1 sys0
+.use gl#0j on #1 sys1
+.run gl.xgl506
+.skip to fin if #c ne 0
+.skip 1 if glmenu ne #4
+glmenu
+=fin
+.end
+s.con
+*   4/25/78...changed to new standards..ns
+*   7/18/78..cleanup..ns
+
+
+
+

@@ -1,0 +1,137 @@
+^m5
+^s5
+menu / jcl section
+------------------
+pledge - main application menu
+plsub1 - master file service
+plsub5 - FILE balancing reports
+plsub6 - pledge method of payment menu
+plsub7 - new pledges at the beginning of the year
+plsub8 - pledge information (1985)
+plsub10 - statement information (1985)
+plsub11 - weekly contribution data entry (1985)
+plsub12 - beginning of a new quarter (1985)
+plsub13 - new pledges/adjustments during the year (1985)
+plsub14 - display and print pledge transactions
+^s1
+plprog - program documentation
+pldoc  - documentation for church staff
+^s1
+cpl programs
+------------
+zpl100 - create ytd transactions from pledge master file
+zpl101 - pull pledge balances and original pledge amounts from previous year
+ZPL102 - PULL PLEDGE BALANCES AND ORIG PLEDGES FROM 84 - CHANGE FUND CODES
+ZPL103 - CHANGE PLEDGE TX FROM 40 TO 60
+ZPL104 - CHANGE DATE IN QUARTERLY STATEMENT MASTER FILE
+^s1
+\program documentation\
+:---------:---------------------------------------:--------:--------:--------:
+: screen  : screen map                            : alt 1  : alt 2  : alt 3  :
+: map #   : description                           : map #  : map #  : map #  :
+:---------:---------------------------------------:--------:--------:--------:
+: plsa01  : envelope master file             c,d  : chsm20 :        :        :
+: plsa02  : fund description master file     e,f  :        :        :        :
+: plsa03  : pledge transaction file          g    : chsm20 : plsm02 :        :
+:*plsa03  : pledge transaction file new year h    : chsm20 : plsm02 :        :
+:*PLSA03  : PLEDGE TX FILE DURING YEAR       A    : CHSM20 : PLSM02 :        :
+: plsa04  : pledge master file               i,j  : chsm20 : plsm02 :        :
+: plsa05  : quarterly statement master file  k,l  : chsm20 :        :        :
+:*plsa08  : ytd contributions transaction    u    : chsm20 : plsm02 : plsm04 :
+:*plsa09  : original pledge transactions     t    : chsm20 : plsm02 :        :
+:*plsa10  : y-t-d contribution correction tx r    : plsm13 : plsm02 : plsm04 :
+:*plsa11  : ytd contributions master file    m,n  : chsm20 : plsm02 :        :
+:*plsa12  : pledge transaction master file   o,p  : chsm20 : plsm02 :        :
+: plsa13  : pledge method of payment file    y,z  : CHSM20 :        :        :
+: plsa14  : weekly transaction file          s    : plsm13 : plsm02 : plsm04 :
+: plsa14  : weekly contribution correction   x    : plsm13 : plsm02 : plsm04 :
+:*plsa15  : general fd method of payment tx  q    : chsm20 :        :        :
+:*plsa16  : buidling fd method of payment tx q    : chsm20 :        :        :
+:*plsa17  : cdf method of payment tx         q    : chsm20 :        :        :
+: plsa20  : same as church master file       none :        :        :        :
+: plsa25  : message file                     v,w  :        :        :        :
+:-------------------------------------------------:--------:--------:--------:
+^s1
+* - these files come and go during the year
+^p
+^s5
+:---------:-----------------------------:---------:--------:--------:--------:
+: report  : report                      : primary : alt 1  : alt 2  : alt 3  :
+: map #   : description                 : map #   : map #  : map #  : map #  :
+:---------:-----------------------------:---------:--------:--------:--------:
+: plra01  : envelope master file        :   01    : chsm20 :        :        :
+: plra02  : fund master description file:   02    :        :        :        :
+: plra03  : pledge transaction file     :   03    : chsm20 : plsm02 :        :
+: plra04  : pledge master file          :   04    : chsm20 : plsm02 :        :
+: plra05  : y-t-d contribution correct  :   10    : chsm20 : plsm02 :        :
+: plra06  : weekly transaction file     :   14    : chsm20 : plsm02 : PLSM04 :
+: plra07  : quarterly statements        :   05    : chsm20 : plsm02 : plsm25 :
+: plra08  : y-t-d contribution corr summ:   10    : plsm02 :        :        :
+: plra09  : weekly tx - not sorted      :   14    : chsm20 : plsm02 :        :
+: plra12  : people pledge to certain fd :   03    : chsm20 : plsm02 :        :
+: plra13  : weekly contributions summary:   14    : plsm02 :        :        :
+: plra14  : envelope labels             :   01    : chsm20 :        :        :
+: PLRA15  : MEMBER # EXPLANATION LABELS :   01    :        :        :        :
+: plra16  : quarterly stmt details      :   05    : chsm20 : plsm02 :        :
+: plra17  : pledge master file - sorted :   04    : chsm20 : plsm02 :        :
+: plra18  : pledge master file - orig pl:   04    : chsm20 : plsm02 :        :
+: plra19  : pledge master-orig pl-sorted:   04    : chsm20 : plsm02 :        :
+: plra20  : pledge confirmation letter  :   04    : chsm20 : plsm02 :        :
+: plra21  : pledge method of payment    :   13    : chsm20 :        :        :
+: plra22  : original pledge tx edit     :   09    : chsm20 : plsm02 :        :
+: plra23  : pledge master summary report:   04    :        :        :        :
+: plra24  : pledge qtrly stmt summary   :   05    :        :        :        :
+: plra25  : quarterly details for one fd:   05    :        :        :        :
+: plra26  : ytd contributions report    :   11    : chsm20 : plsm02 :        :
+: plra27  : general fd method of payment:   15    : chsm20 :        :        :
+: plra28  : building fd method of paymnt:   16    : chsm20 :        :        :
+: plra29  : cdf method of payment       :   17    : chsm20 :        :        :
+: plra30  : pledge bal & orig pl edit   :   12    :        :        :        :
+: plra31  : pledge master one fund      :   04    :        :        :        :
+: PLRA32  : PLEDGE MASTER FILE          :   04    : CHSM20 : PLSM02 :        :
+: PLRA36  : UNPLEDGED STMT DETAIL LIST  :   05    : CHSM20 : PLSM02 :        :
+:---------:-----------------------------:---------:--------:--------:--------:
+^p
+^s5
+:----------:--------------------------------------:--------:
+: clearing : clearing                             : master :
+:    map # : map description (function)           :  map # :
+:----------:--------------------------------------:--------:
+: plca09   : clear pledge field - church master   : chsm20 :
+: plca01   : clear ytd contirubtions - fund master: plsa02 :
+: plca02   : clear general fd - method of payment : plsa13 :
+: plca03   : clear building fd - method of payment: plsa13 :
+: plca04   : clear cdf - method of payment        : plsa13 :
+:----------:--------------------------------------:--------:
+^s1
+:---------:--------------------------------------:--------:--------:
+: posting : posting                              :  trans : master :
+:   map # : map description                      :   file :   file :
+:         :                                      :  map # :  map # :
+:---------:--------------------------------------:--------:--------:
+: plpa01  : pledge code to general master        :   03   :   20   :
+: plpa02  : pledge tx to pledge master           :   03   :   04   :
+: plpa03  : pledge tx to quarterly stmt          :   03   :   05   :
+: plpa05  : weekly tx to pledge master           :   14   :   04   :
+: plpa06  : weekly tx to quarterly stmt          :   14   :   05   :
+: plpa08  : ytd contributions to quarterly stmt  :   08   :   05   :
+: plpa10  : weekly tx to fund master             :   14   :   02   :
+: plpa11  : orig pledge to pledge master         :   09   :   04   :
+: plpa12  : gf method to method of payment file  :   15   :   13   :
+: plpa13  : bldg fd method to method of payment  :   16   :   13   :
+: plpa14  : cdf method of method of payment file :   17   :   13   :
+: plpa15  : pledge tx to pledge tx master file   :   03   :   12   :
+:---------:--------------------------------------:--------:--------:
+^s5
+
+
+
+
+
+
+
+
+
+
+
+

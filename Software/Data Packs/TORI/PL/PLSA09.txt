@@ -1,0 +1,29 @@
+:          enter original pledges for pledge master file:2: 0:16: 2:
+: 4: 4:membership #....:n: 4: 0: 4: 1:
+: 4:40:name............:e: 1: 6:16:
+: 5:40:family name.....:e: 1: 8:16:
+: 6:40:address.........:e: 1: 9:16:
+: 7:40:address.........:e: 1:10:16:
+: 8:40:address.........:e: 1:11:16:
+: 9:40:zip code........:e: 1:12:16:
+:11: 4:fund code.......:n: 2: 0: 5: 2:
+:11:40:fund description:e: 2: 3:16:
+:12: 4:sort sequence...:e: 2: 2: 8:
+:14: 4:original pledge.:n: 8: 2: 0:
+:16: 4:pledge mast. key:n:    5: 0:10: 1:0:*: 0:10:+:10:0:
+:-1:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,271 @@
+.nolog
+.notime
+.run s.xeject
+/============================================================================
+/                         backup procedures
+/============================================================================
+/
+/     enter funcion:    1.  endday - shrink system files
+/                       2.  backup system
+/                       3.  backup payroll
+/                       4.  backup church and pledge files
+/                       5.  backup general ledger files
+/                       6.  backup accounts payable files
+/                       7.  backup memorial gift files
+/                       8.  shrink gl d files (for each key number)
+/
+/                      99.  end of backup procedures
+/
+/============================================================================
+/      awaiting response
+.enter upsi
+.seta 9 = #u
+.seta upsi = 0
+.skip 1 if 99 ne #9
+s.con
+.skip 2 if 0 ge #9
+.skip 1 if 9 le #9
+.skip to opt#9
+.skipr 0
+=opt1
+/
+/     are you ready to shrink the system files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/**   scratch file reduction
+/
+/     what disk?
+.enter upsi
+.seta 0 = #u
+/     how many partitions are to be deleted?
+.enter upsi
+.seta 1 = #u
+/     how many partitions are to be set up again?
+.enter upsi
+.seta 2 = #u
+/     ready?  (y/n)
+.enter 9
+.seta 3=0
+.skip to eoj if y ne #9
+/
+/     are you ready to shrink the @spool file- y/n?
+/     this will erase any reports on the spooler
+/     the start routine cannot be running
+/
+.enter 9
+.skip to nogo if y ne #9
+.del @spool 1
+.new @spool on 1 'q' 80t
+=nogo
+.skip to new if 0 ge #1
+=del
+.fspec @scr#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 16
+.del @scr#3 on #0
+.fspec @scrb#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del @scrb#3 on #0
+.fspec @scrc#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 16
+.del @scrc#3 on #0
+.fspec @scre#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del @scre#3 on #0
+.fspec @lst#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 16
+.del @lst#3 on #0
+.fspec sort1#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort1#3 on #0
+.fspec sort2#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort2#3 on #0
+.fspec sort3#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort3#3 on #0
+.fspec sort4#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort4#3 on #0
+.fspec @xref#3 on #0 8=size
+.skip 1 if #8 eq 0
+.del @xref#3 on #0
+.seta 3=#3+1
+.skipr to del if #3 lt #1
+.seta 3=0
+=new
+.skip to eoj if #3 ge #2
+.fspec @scr#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scr#3  on #0 'a' 1t fsi=1t
+.fspec @scrb#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scrb#3 on #0 'b' 1 fsi=1
+.fspec @scrc#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scrc#3 on #0 'c' 1t
+.fspec @scre#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scre#3 on #0 'e' 4s fsi=4s
+.fspec @lst#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @lst#3 on #0 'a' 1t fsi=1t
+.fspec sort1#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort1#3 on #0 'b' 4s fsi=4s
+.fspec sort2#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort2#3 on #0 'b' 4s fsi=4s
+.fspec sort3#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort3#3 on #0 'b' 4s fsi=4s
+.fspec sort4#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort4#3 on #0 'b' 4s fsi=4s
+.seta 3=#3+1
+.skipr to new
+=eoj
+.end
+.skipr 0
+=opt8
+* shrink the gl d file
+/  enter key number
+.enter 9
+.fspec gl#9d on 1 4=size
+.skip to nogo if 0 = #4
+.new gl999 on 1 'b' 16t
+.use gl999 on 1 for sys1
+.use gl#9d on 1 for sys0
+.run s.xcoput on 1
+.skip to ok if #c eq 0
+=err1
+/********* copy error ********
+/  newline to acknowledge
+.pause
+.skipr 0
+=ok
+.end
+.del gl#9d 1
+.nam gl999 1 gl#9d
+.end
+/  finished
+.skipr 0
+=nogo
+/ file gl#0d does not exist on disk 1
+/ newline to acknowledge
+.pause
+.end
+.skipr 0
+=opt2
+/
+/     are you ready to backup the complete system - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/     place the correct diskette in the diskette drive
+/     this job will take approximately 12 diskettes
+/     newline to continue
+.pause
+.noguard 0
+.backup 1 to 0
+.guard 0
+.end
+/  newline to acknowledge
+.pause
+.skipr 0
+=opt3
+/
+/     are you ready to backup the payroll files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     place the correct diskette in the diskette drive
+/     this job will take only one diskette
+/     newline to continue
+.pause
+.noguard 0
+.backup 1 to 0 include=rvmove
+.guard 0
+.end
+/  newline to acknowledge
+.pause
+.skipr 0
+=opt4
+/
+/     are you ready to backup the church and pledge files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     place the correct diskette in the diskette drive
+/     this job may take several diskettes
+/     newline to continue
+.pause
+.noguard 0
+.backup 1 to 0 include=chmove
+.guard 0
+.end
+/  newline to acknowledge
+.pause
+.skipr 0
+=opt5
+/
+/     are you ready to backup the general ledger files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     place the correct diskette in the diskette drive
+/     this job may take several diskettes
+/     newline to continue
+.pause
+.noguard 0
+.backup 1 to 0 include=glmove
+.guard 0
+.end
+/     newline to acknowledge
+.pause
+.skipr 0
+=opt6
+/
+/     are you ready to backup the accounts payable files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     place the correct diskette in the diskette drive
+/     this job will take only one floppy
+/     newline to continue
+.pause
+.noguard 0
+.backup 1 to 0 include=apmove
+.guard 0
+.end
+/     newline to acknowledge
+.pause
+.skipr 0
+=opt7
+/
+/     are you ready to backup the memorial gift files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     place the correct diskette in the diskette drive
+/     this job should take only one diskette
+/     newline to continue
+.pause
+.noguard 0
+.backup 1 to 0 include=mnmove
+.guard 0
+.end
+/     newline to acknowledge
+.pause
+.skipr 0
+
+
+

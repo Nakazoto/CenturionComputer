@@ -1,0 +1,11 @@
+.nolog
+.job smhdr
+/     enter smart file name /
+.enter 0
+/     enter disk number for "#0" /
+.enter 1
+.use #0 on #1 sys0 shar
+.run xsmhdr
+.end
+s.con
+

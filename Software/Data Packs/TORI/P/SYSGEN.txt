@@ -1,0 +1,72 @@
+.nolog
+.job sysgen abort=cancel memory=wait
+.notime
+.setc 7=#0
+=start
+.setc 6='.'
+/
+/     enter configuration library name or "newline" for no library
+/
+.enter 5
+.skip 1 if ? le #5
+.setc 5='' 6=''
+/
+/     enter configuration file name
+/
+.enter 0
+/
+/     enter disk number of configuration file
+/
+.enter 1
+.fspec #5#6#0 on #1 8=size 9=type
+.skip to ask if 0 ge #8
+.skip to msg1 if 12 gt #8
+.skip to ok if c eq #9
+/
+/     file #5#6#0 on disk#1 is not type 'c'
+/
+.skip to noprt
+=msg1
+/
+/     file #5#6#0 on disk#1 is less than 12s
+/
+.skip to noprt
+=ask
+.skip to ask1 if print ne #7
+/
+/     file #5#6#0 not found on disk#1
+/
+.skip to noprt
+=ask1
+/
+/     file #5#6#0 not found on disk#1
+/     do you want to create this file ? (y/n)
+/
+.enter 8
+.skipr to start if n eq #8
+.skipr to start if y ne #8
+.new #5#6#0 on #1 'c' 12s fsi=4s
+=ok
+.skip to prt if print eq #7
+.use #5#6#0 on #1 sys0
+.run p.xsgmain
+/
+/     do you want a listing of the
+/     configuration file? (y/n)
+/
+.enter 8
+.skip to noprt if y ne #8
+=prt
+.use #5#6#0 on #1 sys0
+/
+/     enter print device name
+/
+.enter 8
+.use #8 syslst
+.run p.xsgprt
+.use crt#v syslst
+=noprt
+.end
+s.con
+
+

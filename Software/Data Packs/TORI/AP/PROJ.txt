@@ -1,0 +1,60 @@
+.job approj
+.log
+*
+*   enter option:  1  vendor and due date order
+*                  2  dept order
+*
+.nolog
+.enter 9
+.skip to dept if 2 eq #9
+.skipr 0 if 1 ne #9
+.skip to doit
+=dept
+.seta upsi=0
+.use @scrb#i on #s for sys0
+.use ap#0q on #1 for sys1
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=47
+work=4,output=new,key=(9,4,bi,25,4,bi)
+/*
+.skip to vend
+=doit
+.seta upsi=0
+.use @scrb#i on #s for sys0
+.use ap#0q on #1 for sys1
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=47
+work=4,output=new,key=(1,4,bi,25,4,bi)
+/*
+=vend
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if no eq #2
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if type eq #2
+.seta upsi = 2
+.skip to go if crt eq #2
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use ap#0a on #1 for sys0
+.use @scrb#i on #s for sys1
+.use ap#0d on #1 for sys2
+.use ap#0e on #1 for sys3
+.run ap.xap270
+.skip 1 if #c ne 0
+apmenu
+.end
+s.con
+* 08/07/78...initial release...seh
+* 11/30/79...modified for cpu-6...kag
+

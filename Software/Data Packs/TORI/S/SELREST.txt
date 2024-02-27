@@ -1,0 +1,81 @@
+.nolog
+.notime
+.job selrest abort=cancel
+.seta upsi=0, cc=0
+/   enter source disk /
+.enter 0
+/   enter target disk /
+.enter 1
+/     selective restore requires the index file (@sind0) be restored first.
+/     insert disk containing the index file (normally the last disk).
+/     newline to continue /
+.pause
+.fspec @sind0 on #1 9=size
+.skip to redo if #9 gt 0
+.new @sind0 #1 'c' 1t
+=redo
+.use @sind0 on #1 sys0
+.restore #0 to #1
+.skip to prompt if #c eq 0
+.skip to end    if #c ne 99
+/    index file "@sind0 is not on this disk,
+/    insert previous disk
+/    newline to continue /
+.pause
+.skipr to redo
+=prompt
+/   do you want to enter file names from the crt ?  (y/n or end to exit) /
+.enter 9
+.skip to key if y   eq #9
+.skip to end if end eq #9
+.skip to fil if n   eq #9
+.skipr prompt
+=fil
+.seta upsi=1
+/   enter input file name /
+.enter 7
+/   enter disk number for "#7" /
+.enter 8
+.fspec #7 on #8 9=size
+.skip to ok if #9 gt 0
+/   error !   file "#7" is not on disk #8
+/
+.skipr to fil
+=ok
+.use #7 on #8 sys0
+=key
+.fspec @scr#i on #1 9=size
+.skip 1 if #9 gt 0
+.new @scr#i #1 'a' 1
+.use @sind0 on #1 sys1 shar
+.use @scr#i on #1 sys2
+/   enter output device /
+.enter 9
+.use #9 syslog
+/   mount first input for restore newline when ready /
+.pause
+.run s.xselrest on #s
+.skip to end if #c ne 0
+.run s.xhead on #s
+/name      typ      size     date       backup#
+/
+/
+.seta upsi=2
+.seta 6=0
+@scr#i on #1 #0 #1
+=end
+.end
+s.con on #s
+
+
+
+
+
+
+
+
+
+
+
+
+

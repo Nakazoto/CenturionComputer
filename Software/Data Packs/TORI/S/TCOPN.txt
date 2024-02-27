@@ -1,0 +1,76 @@
+.job tcopn
+.nolog
+.use 0 on #1 sys0
+.end
+.setc 7='#4'
+.skip 1 if ignore eq #7
+.setc 7=''
+/file name (y/n) ?
+.enter 9
+* s.tcopn <tape file#/filename> <tape unit> <filename> <disk>
+.notime
+=tcopn2
+.setc 5='.'
+/enter output library name or "newline" if no library
+.enter 4
+.skip to tcopn1 if ? le #4
+.setc 4='' 5=''
+=tcopn1
+.fspec #4#5#2 on #3 6=size 8=type
+.skip to tcopn3 if 0 ge #6
+/file #4#5#2 already exist
+/
+/cancel ?
+.enter 8
+.skip to tcopexit if y eq #8
+=tcopn4
+.use #4#5#2 on #3 for sys1
+.skip to tcopn6 if y eq #9
+/positioning to file #0 on #1
+.use #0 on #1 sys0   #7
+/positioned
+.run s.xcoput
+.skip to tcopexit
+=err1
+/file #4#5#2 on #3 does not exist
+=tcopexit
+.end
+s.con
+=tcopn3
+/enter file type
+.enter 6
+ /enter file size in tracks or sectors
+.enter 8
+/file size increment? (y/n)
+.enter 7
+.skip to tcopn5 if n eq #7
+.skip 1 if ? le #7
+.skip to tcopn5
+/enter fsi in tracks or sectors
+.enter 7
+.new #4#5#2 on #3 '#6' #8 fsi=#7
+.setc 7=''
+.skipr to tcopn4
+.end
+s.con
+=tcopn5
+.setc 7=''
+.new #4#5#2 on #3 '#6' #8
+.skipr to tcopn4
+.end
+s.con
+=tcopn6
+.use 0 on tape0 sys0
+.run s.xtcoput
+.end
+s.con
+=err2
+/*** illegal track size ****
+.end
+s.con
+=err3
+/*** illegal sector size ***
+.end
+s.con
+
+

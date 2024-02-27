@@ -1,0 +1,65 @@
+.job l#0
+.nolog
+.notime
+.seta cc=0, upsi=0
+.setc 9='.'
+/  enter library name or "newline" if no library
+.enter 6
+.skip 1 if ? lt #6
+.setc 6='',9=''
+.skip 1 if lib eq #3
+.skip to nolib if lib ne #4
+/    enter copy library name
+.enter 7
+.time
+.log
+.use #6#9z#0 on #1 for sys0
+.use @scr#i on #s for sys1
+.use #7 on #1 for sys2 shar
+.run p.xbsprp
+.use @scr#i on #s for sys0
+.skip 4
+=nolib
+.time
+.log
+.use #6#9z#0 on #1 for sys0
+.skip 1 if map eq #3
+.skip 1 if map ne #4
+.seta upsi=1
+.fspec #6#9x#0 on #1 8=size
+.skip 1 if #8 ne 0
+.new #6#9x#0 on #1 'e' 1s noclr
+.use #6#9x#0 on #1 for sys1
+.skip to lst if #2=lst
+.use #2 for sys2
+.skip to nolst
+=lst
+.use @lst#i on #s for sys2
+=nolst
+.run p.xbcom
+.skip to ask if #c=0
+* compile error(s) on a#0!!!
+.skip to txt if lst ne #2
+.use @lst#i on #s for sys0
+.use crt#v for sys1
+.run s.xscan
+=txt
+s.txtz
+=ask
+.skip to nocop if #1 eq #d
+/  do you wish to copy #6#9x#0 to the default disk(#d)?
+.nolog
+.enter 8
+.skip to nocop if #8 eq n
+.skipr to ask if #8 ne y
+=copy
+.log
+.use #6#9x#0 on #1 sys0
+.use #6#9x#0 on #d sys1
+.run s.xcoput
+.skip 1 if #c eq 0
+.pause    *************   i/o error   **************
+=nocop
+.end
+s.con
+

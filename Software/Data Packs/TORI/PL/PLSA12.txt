@@ -1,0 +1,29 @@
+:ENTER/UPDATE PLEDGE TRANSACTION MASTER - FROM LAST YEARS FILE:2: 0:16: 5:N: 5:
+: 5: 2:PLEDGE MASTER #.:K:
+: 6: 2:MEMBERSHIP #....:N: 4: 0: 4: 1:
+: 7: 2:PLEDGE CODE(1/0):N: 1: 0: 0:
+: 8: 2:FUND CODE.......:N: 2: 0: 4: 2:
+: 9: 2:SORT SEQUENCE...:E: 2: 2: 8:
+:10: 2:DATE............:N: 6: 0:33:
+:11: 2:PLEDGE AMOUNT...:N: 8: 2: 0:
+:12: 2:STATEMENT KEY...:D:12: 0:10: 2:0:*: 0:100:+: 4:0:*: 0:1000000:+: 6:0:
+:13: 2:ALPHA SORT......:E: 1: 7: 8:
+:14: 2:FUND PLEDGE CODE:E: 1: 5: 8:
+:15: 2:ORIGINAL PLEDGE.:N: 8: 2: 0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

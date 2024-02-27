@@ -1,0 +1,293 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                         pledge method of payment menu
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - enter/update method of payment master file
+/                    2 - print pledge method of payment master file
+/
+/                    3 - enter/edit/post gf method of payment transaction file
+/                    4 - enter/edit/post bf method of payment transaction file
+/                    5 - enter/edit/post cdf method of payment transaction file
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  6 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+.end
+=opt1
+.use pl#0y  on #1 for sys0 shar
+.use pl.plsm13 on #d for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.setc 4 eq pl#0y
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr 0
+=opt2
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm13 on #d for sys0 shar
+.use pl#0y  on #1 for sys1 shar
+.use pl#0y  on #1 for sys3 shar
+.use pl#0z  on #1 for sys2
+.run asmlib.xxtrct on #s
+select 12 ne "0" or 14 ne "0" or 16 ne "0"
+or 11 ne " " or 13 ne " " or 15 ne " " or 17 ne " "
+data 1 19 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 20t
+.new sort3#i on 1 'b' 25t
+.new sort4#i on 1 'b' 20t
+.use pl#0z  on #1 for sys1 shar
+.use pl#0z  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  34
+key=(9,26,ch,5,4,bi),/*
+.end
+.use pl.plrm21 on #d for sys0 shar
+.use pl#0y  on #1 for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.use pl#0z  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt3
+.fspec pl#0q on #1 4=size
+.skip 1 if 0 ne #4
+.new pl#0q on #1 'c' 2t
+.use pl#0q  on #1 for sys0 shar
+.use pl.plsm15 on #d for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.setc 4 eq pl#0q
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+/
+/     are you ready to print the edit report - y/n?
+.enter 9
+.skipr 0 if y ne #9
+.use pl.plrm27 on #d for sys0 shar
+.use pl#0q  on #1 for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+/
+/     are you ready to post the general fund methods to the master file - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     are you sure - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm13 on #d for sys0 shar
+.use pl#0y  on #1 for sys1 shar
+.use pl#0y  on #1 for sys3 shar
+.use pl#0z  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl.plcm02 on #d for sys0 shar
+.use pl#0z  on #1 for sys1 shar
+.use pl#0y  on #1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xclear on #s
+.end
+.use pl.plpm12 on #d for sys0 shar
+.use pl#0q  on #1 for sys1 shar
+.use pl#0y  on #1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on #s
+.end
+.del pl#0q #1
+.skipr 0
+=opt4
+.fspec pl#0q on #1 4=size
+.skip 1 if 0 ne #4
+.new pl#0q on #1 'c' 1t
+.use pl#0q  on #1 for sys0 shar
+.use pl.plsm16 on #d for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.setc 4 eq pl#0q
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+/
+/     are you ready to print the edit report - y/n?
+.enter 9
+.skipr 0 if y ne #9
+.use pl.plrm28 on #d for sys0 shar
+.use pl#0q  on #1 for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+/
+/     are you ready to post the building fund methods to the master file - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     are you sure - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm13 on #d for sys0 shar
+.use pl#0y  on #1 for sys1 shar
+.use pl#0y  on #1 for sys3 shar
+.use pl#0z  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl.plcm03 on #d for sys0 shar
+.use pl#0z  on #1 for sys1 shar
+.use pl#0y  on #1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xclear on #s
+.end
+.use pl.plpm13 on #d for sys0 shar
+.use pl#0q  on #1 for sys1 shar
+.use pl#0y  on #1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on #s
+.end
+.del pl#0q #1
+.skipr 0
+=opt5
+.fspec pl#0q on #1 4=size
+.skip 1 if 0 ne #4
+.new pl#0q on #1 'c' 1t
+.use pl#0q  on #1 for sys0 shar
+.use pl.plsm17 on #d for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.setc 4 eq pl#0q
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+/
+/     are you ready to print the edit report - y/n?
+.enter 9
+.skipr 0 if y ne #9
+.use pl.plrm29 on #d for sys0 shar
+.use pl#0q  on #1 for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+/
+/     are you ready to post the cdf methods to the master file - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/
+/     are you sure - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm13 on #d for sys0 shar
+.use pl#0y  on #1 for sys1 shar
+.use pl#0y  on #1 for sys3 shar
+.use pl#0z  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl.plcm04 on #d for sys0 shar
+.use pl#0z  on #1 for sys1 shar
+.use pl#0y  on #1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xclear on #s
+.end
+.use pl.plpm14 on #d for sys0 shar
+.use pl#0q  on #1 for sys1 shar
+.use pl#0y  on #1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on #s
+.end
+.del pl#0q #1
+.skipr 0
+=opt97
+pl.pledge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

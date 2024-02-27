@@ -1,0 +1,1055 @@
+title 'ap950 accounts payable check register - SCN VERSION'
+;
+system
+;
+define m01:'ap250 (accounts payable check register) 01-20-84'
+;notes:
+;
+;     5-27-75...conversion to os2....dad
+;    10-13-75...change in para. # c0600...dad
+;    10-20-75...calc. vendor gro.&disc. (c0600)...dad
+;     2-19-76...pulled two incorrect lines out of para. d0900...ns
+;     4-07-76...corr lfeed problem in para (d0700)...klm
+;     8-26-76...f11 - changed to print entire name...ns
+;    11/18/76...change - printing only one check per vendor (except one time vendor of course)..ns
+;    11/29/76...putting out message about neg. check on the register and crt..ns
+;          ....also adding option file - sends options to check writer,
+;              and adding a beep and display on negative check,
+;          and (m10a) adding option to send program back to demand program
+;         and fixing lfeed problem(d0400:  added)
+;         and  fixing alignment problem in total line f12..ns
+ ;    4/08/76...reinserted lost part of head (there was no return from it)...ns
+;    08-30-78...updated with cget, ynget and general clean up
+;               changed register print out added g/l ref. number...seh
+;
+;     11-07-78...corrected acumulation of part pay amounts...jwb
+;     11-10-78...added check print file...jwb
+;     11-27-78...corrected totals for one time vendor...jwb
+;   01-08-79...corrected grand totals...kam
+;   05-22-80...corrected write format f11b and line counting...ac
+;   08-06-80...added option to input vendor name for one time vendor
+;              invoices...dle
+;    01-20-81...corrected the print of checks with zero net amount...dle
+;    04-17-81...reversed changes made on 01-20-81, will have to research this
+                ;problem further...dle
+;    11-23-81...corrected display of demand prepaid entries on register
+                ;changed display of partial payments and accumulation of
+                ;partial pay gross and discount
+                ;eliminated feature of partial payments for prepaid invoices
+                ;...pmr
+;   07-21-82....one time vendor totals will now be cleared after each
+;               one time vendor has printed.  pl#0497   jes
+;  08-02-82....corrected to print a void check when there are offsetting
+;              charges and credits.....pl#337       jes
+;  11-24-82...corrected to not incr check num if prepaid...poole
+;  03-29-83...corrected 11-24-82 changes on prepaids...pl#640...rjm
+;  09-22-83...corrected for one time prepaid vendor print...pln740..rlk,jr.
+;  11-30-83...reinserted code to make pl#337 work..pl#800...emo
+;
+;  01-20-84...added code so trans. assigned check # would match check writer
+;             detail & checks...pln869...rlk,jr.
+;  8-26-84....CHANGED FOR BMS CHECK FORMAT - 11 INVOICES PER CHECK...SCN
+;****************************************************************************
+;
+;
+;accounts payable master  file of vendors
+;
+record mstb (30) ; reduced record size to save memory
+set ven :0     ;    vendor0number
+string  name(25)   ;    vendor name
+endrec
+;
+;  this is type'c' indexed file
+;
+file mst:sys0,class=2,rnd,recsiz=131,key=rel1
+set rel1:0
+;
+;
+;
+record headb (30) ; reduced record size to save memory
+set hvend:0   ;    zero
+string client(25);    client name
+endrec
+;
+;
+;******************************************************************
+;
+;
+;
+;
+;     this is the permanent transaction file
+;
+record detb(47)
+set vend:0            ;vendor no.
+set inv:0             ; invoice no.
+set dept:0            ; dept no.
+set idte:0            ; invoice date
+set gro:0             ; gross
+set disc:0            ; discount
+set due:0             ; due date
+set cd:0              ; code
+set glref:0
+endrec
+;
+file det:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf2
+buffer buf2(400)
+;
+file ndet:sys2,class=2,seq,lsr=4,filtyp=b,buffer=400,buf3
+buffer buf3(400)
+;
+;
+;*****************************************************
+;
+record dmd0(8)
+ set avlkey:0
+endrec
+;
+record dmd1(20)
+set  code:0    ;payment code
+set  dvnd:0    ; vendor
+set dinv:0     ; invoice
+set amt:0     ; amount
+set dmdchk:0 ; demand check no
+endrec
+;
+file demand:sys3,class=2,random,recsiz=20,key=dmdkey
+set dmdkey:0
+file option:sys4,class=2,seq,filtyp=a
+;
+;
+file prt:syslst,class=1,seq
+;
+file crt:sysipt
+;
+file ckfil: sys5, class=2, seq, lsr=4, filtyp=b, buffer=400, buf4
+buffer buf4 (400)
+;
+record ckrec (37)
+ set ckven :0
+ set cknum :0
+ set ckinv :0
+ set ckdept:0
+ set ckidte:0
+ set ckgros:0
+ set ckdisc:0
+ set netck :0
+ endrec
+ ;
+;
+;
+external cget,ynget,getkey,msg,ioerr,lfeed,pupsi,stat,gupsi,f90,move
+entrypoint crt
+;
+;
+;******************************************************
+   ;
+entry
+   ;
+   call gupsi(print)
+   call pupsi(0)
+   open io (crt, mst, det, demand, ndet, option, ckfil), output (prt)
+   call clr(mmddyy,fckno,dodate,0)
+   'dopt'='no'
+   'all'='no'
+   call msg (eject)
+   call msg(null)
+   call msg(m01); salutation
+   call msg(null)
+   readb (demand, dmd0)
+   call stat(1)
+   call getit(m03,f39,mmddyy);  check date
+   ldate(grin,mmddyy)
+   sdate(string, rdte)
+   call getit(m04,f39,fckno);  enter first check number
+   call equate (ck, fckno)
+   call equate (rstfg, 0)
+   'dmd'='yes'
+   call equate (dvnd, 0)
+   call ynget(m26)  ; pay by due date
+   if (status.ne.1) goto a0100
+   'dopt'='yes'
+   call getit(m27,f39,dodate) ;mmddyy
+   call equate (fa1, 0)
+   dodate=dodate/hund
+direct
+    xfr  y,a
+    sta/  fa1+2
+cpl
+   dodate=fa1*tthou+dodate
+   goto a0200
+   ;
+a0100:
+   ;
+   call ynget(m17)    ; pay all vendors
+   if (status.ne.1) goto a0200
+   'all'='yes'
+   ;
+a0200:
+   ;
+   if(print.ne.2) goto a0300
+   call equate (btm, 20)
+   ;
+a0300:
+   ;
+   call msg (m38)
+   write (crt,f40) m39
+   read (crt, f02) onopt
+   goto (a0350,a0350) on onopt
+   goto a0300
+   ;
+a0350:
+   ;
+   write(option,f14)mmddyy,fckno,dopt,dodate,all
+   endfile option
+   close option
+   call equate (fl2, 0)
+   call getkey(mst,zero)
+   goto (e0400,ioerr) on status
+   readb(mst,headb)
+   call stat(1)
+   call clr(tgro,tdisc,pnet,prev,page,tnet,fl2,0)
+   call bltrun (client)
+   call center (client, fc01)
+   call header (m11, fc02)
+   call head
+   ;
+a0400:
+   ;
+   call equate (fl1, 0)
+   ;
+a0500:
+   ;
+   call rone; get detail  code,dvnd,dinv,amt
+   ;
+a0600:
+   ;
+   call rtwo; get vendor  vend,al1  old master
+   if(prev.eq.vend)goto a0900
+   if(vend.eq.eof)goto d0100
+   call getkey(mst,vend)
+   goto (a0800,ioerr) on status
+   readb(mst,mstb)
+   call stat(1)
+   if(prev.ne.0)goto a0900
+   call equate (prev, vend)
+   ;
+a0700:
+   ;
+   call clr(ictr,hfl,vnet,cknet,cktr,fa6,vgro,vdisc,ckgro,ckdis,0)
+   call clr(onegro,onedis,onenet,vndgro,vndisc,vndnet,0)
+   goto a0900
+   ;
+a0800:
+   ;
+   call equate (ven, 0)
+   goto a0700
+   ;
+a0900:
+   ;
+   if(vend.ne.prev)goto d0100; close vndr
+   if(cd.eq.1) goto b0800   ; prepaid
+   if(dvnd.gt.vend)goto b0100; demand gt transactions
+   if(dvnd.eq.vend)goto b0300; match
+   goto a0400   ;demand less than transactions
+   ;
+b0100:    ; not a match on demand
+   ;
+   ifstring(all.eq.yes)goto b0800; pay all vendors
+   ifstring(dopt.eq.yes) goto b0700   ; check to see if due date right
+   ;
+b0200:
+   ;
+   writeb(ndet,detb)   ; no pay
+   call stat(1)
+   call equate (fl2, 0)
+   goto a0600
+   ;
+;========== vend match ==========
+   ;
+b0300:
+   ;
+   if(ven.eq.0) goto b0500  ; no match on master  delete reecord
+   if(dvnd.eq.eof)goto d0900; end of pay
+   if(code.eq.9)goto b0800; pay all invoices
+   if(code.eq.2)goto b0200; no pay this vend
+   if(inv.eq.dinv)goto b0400; inv match
+   if(inv.gt.dinv)goto a0400; get next detail
+   ifstring (all. eq. yes) goto b0800
+   ifstring (dopt. eq. yes) goto b0700
+   goto b0200
+   ;
+b0400:
+   ;
+   if(code.ne.5)goto b0600
+   ;
+b0500:
+   ;
+   call equate (fl2, 0)
+   goto a0400;    deletes invoice
+   ;
+b0600:
+   ;
+   if(code.ne.3)goto b0800; pay this inv
+   call equate (fl1, 0)
+   call rone
+   goto b0200
+   ;
+b0700:
+   ;
+   if (due.gt.dodate) goto b0200
+   ;
+b0800:
+   ;
+ 'al2'='null'
+   ;i(hfl.ne.0)goto b0900; already prnt hdr
+   'al2'='bf2'; '      - '
+   encode(al2,f28)vend
+   if (onopt. ne. 1) goto b0850
+   if (vend. ne. i98) goto b0850
+   call msg (null)
+   net=gro-disc
+   call msg (m40)
+   write (crt,f41) inv, gro, disc, net
+   call msg (null)
+   call getit (m41,f42,oname)
+   'al2'='al2+oname'
+   goto b0875
+   ;
+b0850:
+   ;
+   'al2'='al2+name'
+   ;
+b0875:
+   ;
+   call equate (hfl, 1)
+   call lfeed(prt,1)
+   call crq
+   ;
+b0900:
+   ;
+  ldate(grin,idte)
+  sdate(string,dte)
+  ldate(grin,due)
+  sdate(string,dtd)
+   'dat'='bf5'   ; 6 spaces
+   encode(dat,f39)idte
+   'dte'='bf1'; 00-00-76
+   decode(dat,f08)fa1,fa2,fa3
+   encode(dte,f09)fa2,fa3,fa1
+   'dtd'='bf1'
+   'ddt'='bf5'
+   encode(ddt,f39)due
+   decode(ddt,f08)fa1,fa2,fa3
+   encode(dtd,f09)fa2,fa3,fa1
+   ;
+c0100:
+   ;
+   net=gro-disc
+   call blank(ckno,six)
+   if(ictr.ne.0)goto c0200
+   call equate (savcnt, 0)
+   encode(ckno,f39)ck
+   'savchk'='ckno'
+   ;
+c0200:
+   ;
+   'desc'='bf5'
+   if(cd.eq.1) goto c0300  ; prepaid
+   if(dinv.ne.inv)goto c0500; must be pay all vend
+   if(code.ne.4)goto c0400
+   ;
+c0300:;prepaid routine
+   ;
+;
+;
+   call blank (ckno, six);blank check number
+    pgro=pgro+gro;increment vendor prepaid gross
+    pdis=pdis+disc;increment vendor prepaid discount
+    tpgro=tpgro+gro;increment final total prepaid gross
+    tpdis=tpdis+disc;increment final total prepaid discount
+ pdgro=pdgro+gro
+ pddis=pddis+disc
+    call equate (netppd, amt);11-23-81...set netppd to partial payment...pmr
+    call equate (amt, 0);11-23-81...zero amt so it won't be used again...pmr
+ ; 'ckno'='ppd';move "ppd" message to check number
+;   previous line removed for pl#640
+if (cd.eq.1) goto c0350;branch to write if prepaid on transaction entry, else continue
+   write (prt, f11a) al2, dept, inv, dte, dtd, glref, dmdchk, ckno, gro, disc, netppd
+  snodta = 1                       ;added pl#337   jes
+   goto c0550;the previous instruction includes write with prepaid check number
+c0350:
+   write (prt,f11b) al2, dept, inv, dte, dtd, glref, ppd, gro, disc, net
+     ;previous line changed pl#640   ckno to ppd
+   snodta = 1                     ; added pl#337    jes
+pdnet=pdgro-pddis
+ if (prev.ne.i98)goto c0350a    ;pln869..rlk,jr...don't write line if not a one time prepaid vendor.
+ call crq
+ write (prt,f16a)m31a,pdgro,pddis,pdnet
+c0350a:      ;pln869..rlk,jr..01/20/84..since expand 'a' won't except if-do's, code premative
+ pdgro=pddis=pdnet=0
+goto c0550;the previous instruction is write for invoices coded prepaid on transaction entry
+   ;
+c0400:
+   ;
+   if(amt.eq.0) goto c0500; branch if no partial payment
+   fa1=gro-disc-amt; calculate amount to write back to posted transactions
+   gro=amt+disc; 11-23-81...calculate gross for part pay line on register...pmr
+ckgro=ckgro+disc; 11-23-81...add discount amount to check gross...pmr
+ckdis=ckdis+disc; 11-23-81...add discount amount to check discount...pmr
+tgro=tgro+disc; 11-23-81...add discount amount to vendor gross...pmr
+tdisc=tdisc+disc; 11-23-81...add discount amount to vendor discount...pmr
+   call equate (fa6, 1); set part pay flag to 1
+   call equate (net, amt); set net to amount to be paid
+   'desc'='m29'   ; partial payment
+   ;
+c0500:
+   ;
+   write (prt, f11) al2,dept,inv,dte,dtd,glref,ckno,desc,gro,disc,net
+  snodta = 1               ; added pl#337     jes
+   if (vend. ne. i98) goto c0525; branch if not one time vendor
+ snodta = 0               ; added pl#337     jes
+   ck=ck+1; increment check number if one time vendor
+   ;
+c0525:
+   ;
+   call equate (ckven, vend)
+   decode (savchk, f39) cknum
+   call equate (ckinv, inv)
+   call equate (ckdept, dept)
+   call equate (ckidte, idte)
+   ckgros=net+disc
+   call equate (ckdisc, disc)
+   call equate (netck, net)
+   writeb (ckfil, ckrec)
+   call stat (2)
+   ;
+   call equate (work, cd)
+   call equate (cd, ck)
+   call equate (cd, work)
+   ;
+c0550:
+   ;
+   call crq
+   call equate (fl2, 0)
+   if(cd.eq.1) goto c0600
+   if(dinv.ne.inv)goto c0800
+   if(code.ne.4)goto c0700
+   ;
+c0600:
+   ;
+   vgro=vgro+gro
+   vdisc=vdisc+disc  ; vendor totals
+   ;
+c0610:
+   ;
+   tgro=tgro+gro    ; prepaid
+   tdisc=tdisc+disc
+   if(cd.eq.1) goto a0500
+   goto a0400
+   ;
+c0700:;partial payment routine
+   ;
+   if(fa6.ne.1) goto c0800   ; branch if not partial payment
+   'desc'='null'; move blanks to message area
+   call equate (gro, fa1); set gross to unpaid amount in posted transaction file
+   call equate (disc, 0); set discount to zero in posted transaction file
+   call equate (fa6, 0); set partial pay flag to zero
+   ckgro=ckgro+amt; increment check gross by amount paid
+   tgro=tgro+amt; increment total gross by amount paid
+   if(gro.le.0) goto a0400; don't rewrite if gross is zero
+   writeb(ndet,detb)  ; if partial payment rewrite the record with a reduced gross amt.
+   call stat (1)
+   goto c0900
+   ;
+c0800:
+   ;
+   ckgro=ckgro+gro
+   ckdis=ckdis+disc
+   tgro=tgro+gro
+   tdisc=tdisc+disc
+   ;
+c0900:
+   ;
+   ictr=ictr+1
+   if(prev.eq.i98)goto d0103
+   if(ictr.lt.11)goto a0500            ;CHANGE TO 11 INVOICES - SCN
+   ck=ck+1
+   call equate (savcnt, ictr)
+   call equate (ictr, 0)
+   goto a0500
+   ;
+d0100:
+   ;
+   cknet=ckgro-ckdis
+;
+; the following line was deleted on 01/20/80 by dle..
+; but was replaced on 04/17/81 by jam..
+;  the following line was again deleted on 08/01/82 by jes..  pl#337
+ ;if (ckgro. eq. 0) go to d0400   ; no check but may all be prepaids
+  if (snodta .eq. 0) go to d0800     ; added pl#337    jes
+   call lfeed(prt,1)
+   call crq
+  ;ifstring (ckno.eq.ppd) goto d0101   ; added pl#562   poole
+ ; previous line deleted for pl#640
+ ; and the next line was added
+  if (cd.eq.1) goto d0101          ; pln869..01-20-84..rlk...must be a prepaid vendor
+ ;
+d0100a:
+ if(ckgro.eq.0)goto d0101   ;pln869..rlk...01/20/84
+   write(prt,f12)m07,m109,savchk,ckgro,ckdis,cknet
+   goto d0102                          ; added pl#562    poole
+d0101:
+ if(ckgro.ne.0) goto d0100a  ;pln869..01/20/84...rlk
+   write (prt,f12) m07,m109,ppd,ckgro,ckdis,cknet  ; prepaid
+   ck = ck - 1                         ; so that check num doesn't incr
+d0102:
+  snodta = 0
+   call crq
+    cgro=cgro+ckgro
+    cdis=cdis+ckdis
+    cnet=cnet+cknet
+   if(cknet.ge.0)goto d0200
+   call msg(m05);          (beep) this is a negative check
+   write(prt,f30)m05
+   call crq
+   goto d0200
+   ;
+d0103:
+   ;
+   onegro=gro
+   onedis=disc
+   onenet=gro-disc
+   goto d0300
+   ;
+   write(prt,f30);  blank line
+   call crq
+   ;
+d0200:
+   ;
+   if (savcnt. eq. 11) goto d0250      ;CHANGE TO 11 INVOICES - SCN
+   ck=ck+1
+   ;
+d0250:
+   ;
+   call equate (savcnt, 0)
+   vnet=vnet+cknet
+   vgro=vgro+ckgro
+   vdisc=vdisc+ckdis
+   ;
+d0300:
+   ;
+   fa1=vgro-ckgro
+   ckgro=ckdis=0
+   if(prev.eq.i98)goto d0603
+   if(ictr.lt.11)goto d0500            ;CHANGE TO 11 INVOICES - SCN
+   call equate (savcnt, 0)
+   call equate (ictr, 0)
+   goto a0500
+   ;
+d0400:
+   ;
+   if(vgro.ne.ckgro)goto d0300;   to get here ckgro had to be 0
+   call equate (ckdis, 0)
+   goto d0800
+   ;
+d0500:
+   ;
+   if(fa1.eq.0)goto d0700; ck & total same
+   ;
+;======= close out vendor ========
+   ;
+d0600:
+   ;
+   if (pgro.eq.0) goto d0602
+   ppnet=pgro-pdis
+   write (prt, f16) m32, pgro, pdis, ppnet
+call crq
+   call clr (pgro, pdis, ppnet, 0)
+   ;
+d0602:
+   ;
+   if(vgro.eq.0)goto d0700
+   net=vgro-vdisc
+   write(prt,f16)m08,vgro,vdisc,net
+   vndgro=vndgro+vgro
+   vndisc=vndisc+vdisc
+   vndnet=vndnet+net
+   call crq
+   goto d0700
+   ;
+d0603:
+   ;
+   if (onegro.eq.0) goto d0700
+call crq
+   write (prt, f16) m31, onegro, onedis, onenet
+   tonegr=tonegr+onegro
+   toneds=toneds+onedis
+   tonent=tonent+onenet
+   ;
+d0700:
+   ;
+   if (vend.eq.0) goto d0800  ;  (4-07-76)
+   call lfeed(prt,2)
+   call crq
+   call crq
+   ;
+d0800:   ; (4-07-76)
+   ;
+   if(vend.eq.eof)goto d0900
+   if(prev.eq.i98)goto e0300
+   if(prev.eq.vend) goto e0300
+   call equate (prev, vend)
+   goto a0700
+   ;
+d0900:
+   ;
+   lcr=lcr+8
+   call crq
+   write (prt, f15) m33, m34, m33
+   call lfeed (prt, 1)
+   write (prt, f16) m07, cgro, cdis, cnet
+   call lfeed (prt, 1)
+   tpnet=tpgro-tpdis
+   write (prt, f16) m32, tpgro, tpdis, tpnet
+   call lfeed (prt, 1)
+   write (prt, f16) m31, tonegr, toneds, tonent
+   net=tgro-tdisc
+   call lfeed(prt,1)
+   write(prt,f16)m09,tgro,tdisc,net
+   if(btm.ne.20)goto e0100
+   call msg(m10)
+   read (crt, f39) btm
+   goto e0200
+   ;
+e0100:
+   ;
+   call msg(m10); end of register
+   ;
+e0200:
+   ;
+   close prt
+   call getit(m10a,f02,btm);   0=reg. ok,  1=return to apdmd
+   call pupsi(btm)
+   endfile ndet
+   endfile ckfil
+   close ndet,det,mst,crt,demand,ckfil
+   stop 0
+   ;
+e0300:
+   ;
+   call clr(ictr,hfl,vnet,cknet,cktr,fa6,vgro,vdisc,ckgro,ckdis,fl2,onegro,onedis,onenet,0) ;added last 3pln497  07/21/82
+   goto a0600
+   ;
+e0400:
+   ;
+   call msg(m21)
+   stop 110
+   ;
+;=======================
+subroutine getit
+;============================
+;
+;   call sequence: call getit(message,format,field)
+;
+direct
+ print on
+ lda- x+
+ sta get1+3
+ lda- x+
+ sta get1+5
+ lda- x+
+ sta get1+7
+cpl
+get1:
+call cget(zero,zero,zero)
+if(status.ne.0)goto get1
+print off
+return
+;
+;=========================
+subroutine equate
+;=========================
+;
+;       to equate two four-byte integers (for reduced memory requirements)
+;
+;       calling sequence:
+;
+;       call equate (this, that)
+;
+direct
+@p1 set *+11
+@p2 set *+16
+ lda- x+ get target integer
+ sta @p2
+ lda- x+ get source integer
+ sta @p1
+cpl
+@p2 = @p1
+return
+;
+;==========================================================================
+;                   s u b r o u t i n e s
+;==========================================================================
+;
+;=========================
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+ bz bltrx exit now if null string
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz bltrx skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+cpl
+bltrx:
+return
+;
+;=========================
+subroutine center
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 132 column print line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call center (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;=========================
+subroutine header
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string as a report header with date and page.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call header (string, fmtx); set the format
+;       write (prt, fmtx) date,string,pagemg,pageno;   write the centered string
+;
+;   where: format fmtx:x100,c100,c100,c100,n100;   values x,c,n are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb= 1 test for odd string length
+ nab
+ bnz *+3 skip if odd length
+ dca
+ ina
+ sta= *-* save even char count
+@p2 set *-2
+ ldb= 96 get header width
+ sub b,a subtract string width
+ sra divide remainder by 2
+ ldb- x+ get address of format statement
+ inr b
+ xfr b,y
+ ldb= 10 set leading space count in 'x' spec
+ stb- y+
+ inr y incr index to first 'c' spec
+ ldb= 8 get width of first 'c' spec (date message)
+ aab add half-header width
+ stb- y+ set count in first 'c' spec
+ inr y incr index to second 'c' spec
+ ldb @p2 get actual string count
+ aab add half-header length
+ stb- y+ set count in second 'c' spec
+ inr y incr index to third 'c' spec (page message)
+ ldb= 4 force char count for page
+ stb- y+
+ inr y incr index to 'n' spec (page number)
+ stb- y+ force count for page number
+cpl
+return
+;
+;===============
+subroutine rone
+;===============
+   ;
+   if(dvnd.eq.eof)goto r12
+   if(fl1.ne.0)goto r12
+   ;
+r10:
+   ;
+   dmdkey=dmdkey+1
+   if (dmdkey.gt.avlkey) goto r13
+   readb(demand,dmd1)
+   call stat(1)
+   if (dvnd. le. 0) goto r10
+   goto r12
+   ;
+r13:
+   ;
+   call equate (dvnd, eof)
+   call equate (dinv, eof)
+   ;
+r12:
+   ;
+   call equate (fl1, 1)
+   return
+   ;
+;===============
+subroutine rtwo
+;===============
+   ;
+   if(fl2.ne.0)goto r22
+   if(vend.eq.eof)goto r22
+   readb(det,detb)
+   if(status.ne.1)goto r22
+   call equate (vend, eof)
+   ;
+r22:
+   ;
+   call equate (fl2, 1)
+   return
+   ;
+;===============
+subroutine head
+;===============
+   ;
+   write (prt, f90) eject
+   call lfeed(prt,2)
+   page=page+1
+   write (prt, fc01) client
+   write (prt, fc02) rdte, m11, pagemg, page
+   if string (all.eq.yes) goto f0100
+   if string (dopt.ne.yes) goto f0200
+   call move (15, hldmsg, m36)
+   goto f0300
+   ;
+f0100:
+   ;
+   call move (15, hldmsg, m35)
+   goto f0300
+   ;
+f0200:
+   ;
+   call move (15, hldmsg, m37)
+   ;
+f0300:
+   ;
+    write (prt, f17) hldmsg
+   write (prt, f03) m101, m107, m102, m103, m104
+   write (prt, f04) m105, m106, m108, m108, m108
+   call lfeed (prt, 1)
+   call equate (lcr, 8)
+   return
+   ;
+;==============
+subroutine crq
+;==============
+   ;
+   lcr=lcr+1
+   if(lcr.lt.btm)goto cr2
+   if(btm.ne.20) goto cr1
+   call msg(m22)
+   read (crt, f39) lcr
+   call head
+   return
+   ;
+cr1:
+   ;
+   call head
+  ;
+cr2:
+   ;
+   return
+   ;
+;==============
+subroutine clr
+;================
+direct
+ lda- x+
+ bnz  *+3
+ rsr
+ sta  cl10+8
+cpl
+;
+cl10:
+cl10=0
+goto clr
+;
+;
+;===========================
+;
+subroutine blank; (al, constant)
+;================
+direct
+ lda- x+
+ xay
+ lda- x+
+ ina
+ ina
+ lda- a
+ ldbb= c' '
+bld stbb- y+
+ dca
+ bnz bld
+ stab- y
+ rsr
+cpl
+;
+;
+;=========================================
+set btm:62, savcnt:0, six:6, work:0
+set hund:100
+ set  ppdf:0 ,pdgro:0 ,pddis:0 ,pdnet:0                  ;(07-05-83)..pl#740..rlk,jr.
+set tpdnet:0
+set eof:99999,i98:99998
+set tthou:10000
+;
+   set snodta:0        ;added pl#337   jes
+;
+set fckno:0, prev:0, fl1:0, fl2:0, mmddyy:0, fa6:0
+set pnet:0, print:0
+set hfl:0, fa1:0, net:0, ictr:0, ck:0, fa2:0, fa3:0, page:0, lcr:0
+set netppd:0;net paid on invoices coded prepaid in demand entry
+set vgro:0, vdisc:0, ckgro:0, ckdis:0, tgro:0, tdisc:0, rstfg:0
+set vnet:0, cknet:0, cktr:0, tnet:0, dodate:0, pgro:0, pdis:0, ppnet:0
+set cgro:0, cdis:0, cnet:0, vndgro:0, vndisc:0, vndnet:0
+set onegro:0, onedis:0, onenet:0, tpgro:0, tpdis:0, tpnet:0
+set tonegr:0, toneds:0, tonent:0
+;
+set onopt:0
+;
+string dopt(1),savchk(6)
+string rdte(8),al2(132),dte(8),ckno(6),ddt(8),dtd(8)
+string desc(25), hldmsg(15)
+string dat(5),null(0),all(1),dmd(1)
+;
+string oname (25)
+;
+define ppd:'*ppd'
+define no:'n'
+define bf1:' 0/00/00'
+define bf2:'      '
+define bf5:'      '
+define yes:'y'
+define pagemg:'page '
+;
+define m03:'enter date (mmddyy)'
+define m04:'enter 1st check #'
+define m05:' **** this is a negative check **** '
+;
+define m07:'check total '
+define m08:'vendor total '
+define m09:'grand total        '
+define m10:'end of register...'
+define m10a:'enter 0=register ok,  1=return to apdmd'
+define m11:'accounts payable register'
+define m17:'do you want to pay all vendors ? (y/n)'
+define m21:'error - vendor master file not established'
+define m22:'more to follow, newline to continue'
+define m26: 'pay by due date ? (y/n)'
+define m27:'due date mmddyy'
+define m29:'part pay'
+define m31:'one time vendor total '
+ define m31a:'one time vendor total *ppd'
+define m32:'prepaid total'
+define m33:'======================'
+define m34:'f i n a l  t o t a l s'
+define m35:'pay all vendors'
+define m36:'pay by due date'
+define m37:'pay by demand  '
+;
+define m38: 'enter option:  1  input vendor name for one time vendors'
+define m39: '2  do not input vendor name for one time vendors'
+define m40: 'invoice          gross       discount     net amount'
+define m41: 'enter one time vendor name'
+;
+define m101:'invoice'
+define m102:'gross'
+define m103:'discount'
+define m104:'net'
+define m105:'vendor name'
+define m106:'dept invoice    date    due date   number number'
+define m107:'g/l ref  check'
+define m108:'amount'
+define m109:'chk # '
+;
+format f02:n1
+format f03:x47,c7,x12,c14,x15,c5,x6,c8,x13,c3
+format f04:c11,x21,c49,x14,c6,x6,c6,x12,c6
+format f08:n2n2n2
+format f09:n2x1n2x1n2
+format f11:c32,n4,x2,n6,x2,c8,x2,c8,x2,n7,x1,c6,x1,c8,x1,n-12.2,x1,n-12.2,x5,n-12.2
+format f11b:c32,n4,x2,n6,x2,c8,x2,c8,x2,n7,x1,c8,x8,n-12.2,x1,n-12.2,x5,n-12.2
+format f11a:c32,n4,x2,n6,x2,c8,x2,c8,x2,n7,x1,n6,x1,c8,x1,n-12.2,n-13.2,n-17.2
+format f12:x64,c13,x1,c6,c6,n-12.2,x1,n-12.2,x5,n-12.2
+format f14:n6n6c1n6c1;       options to be sent to acheck
+format f15:x64,c22,x1,c22,x1,c22
+format f16:x64,c22,x4,n-12.2,x1,n-12.2,x5,n-12.2
+ format f16a:x64 c26 n-12.2 x1 n-12.2 x5 n-12.2
+format f17:x58,c15
+format f28:n5
+format f30:x16c40
+format f39:n6
+;
+format f40: x15c64
+format f41: n7, n-15.2, n-15.2, n-15.2
+format f42: c25
+format fc01:x100,c100
+format fc02:x100,c100,c100,c100,n100
+;
+end;   ap250 (a/p register)
+;
+
+

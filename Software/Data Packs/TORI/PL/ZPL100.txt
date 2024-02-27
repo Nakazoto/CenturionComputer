@@ -1,0 +1,178 @@
+system  (exp=d)
+;
+define m00: 'zpl100 10/24/84  create ytd master file'
+;
+;*****************************************************************************
+;*       files:
+;*       sys#      file-name     rec-name       description
+;*        0        listfile      listrec        list file type b
+;*        1        plfile        plrec          pledge master file - type i
+;*        2        nwfile        nwrec          new ytd master - type i
+;****************************************************************************
+;*                           program linkage
+;****************************************************************************
+;
+external cget,stat,getk,getr,putr,ioerr,msg,newk,clrec,ynget
+call msg                     ; this is to force linkage of f90 ?
+entrypoint crt
+;
+;****************************************************************************
+;*                           files
+;****************************************************************************
+;
+         file crt : sysipt
+;
+         file listfile : sys0,class=2,seq,filtyp=b,lsr=4,buffer=400,*
+;
+         file plfile : sys1,class=2,ind,recsiz=66,key=plkey
+                   set plkey : 0
+;
+         file nwfile : sys2,class=2,ind,recsiz=60,key=nwkey
+                   set nwkey : 0
+;*****************************************************************************
+;*                           records
+;*****************************************************************************
+;
+record listrec (8)                     ;record layout for b file
+         set relkey:0                  ;relative record (argument)
+         set lkey:0                    ;key to plfile
+endrec
+;
+record plrec (66)                     ;record layout for pledge master
+         set plkeyx:0                 ;key
+         set member : 0
+         set plcode : 0
+         set fdcode : 0
+         set sortseq : 0
+         set lstdate : 0
+         set plamount : 0
+         set contribution : 0
+         set plbalance : 0
+         string alpha (25)
+         set plorig : 0
+endrec
+;
+record nwrec (60)                      ;record layout for ytd contributions master
+         set nwkeyx:0
+         set ytdmember : 0
+         set ytdplcode : 0
+         set ytdfdcode : 0
+         set ytdsortseq : 0
+         set ytddate : 0
+         set ytdcontrib : 0
+         set ?stmtkey : 0
+         string ytdalpha (25)
+endrec
+;
+     format f01 : n6
+     format f02 : n6 x2 c25
+     set nwdate : 0
+     set reldate : 0
+     define m02 : 'noroom - did not work'
+     set digit : 0
+     set first : 0
+     define m03 : 'enter date mmddyy'
+     define m04 : 'enter relative day'
+    define m05 : 'is this correct - y/n?'
+;
+eject
+;
+;*****************************************************************************
+;*                           logic
+;****************************************************************************
+;
+         entry
+;
+initialization:
+;
+         open io (crt,listfile,plfile,nwfile)
+;
+a01:
+        call cget (m03,f01,nwdate )
+        if (status.ne.0) goto a01
+        call cget (m04,f01,reldate)
+        if (status.ne.0) goto a01
+       call ynget(m05)
+       if (status.ne.1) goto a01
+;
+;
+mainline:
+         call rdblst                             ; read list file
+         if (status) go to final                 ; end of file
+         plkey = lkey                            ; get key from listfile
+         call rdkplfile                          ; get pledge record
+         call rdrplfile                          ; read pledge record
+         if (first.eq.0) do
+            first = 1
+            goto mainline
+            end do
+       call getk (nwfile,plkeyx)
+       goto (aok,ioerr) on status
+       write (crt,f02) plkeyx, 'duplicate'
+aok:
+         call newk (nwfile,plkeyx)
+         goto (noroom,ioerr) on status
+         call clrec (nwrec)
+         write (crt,f02) plkeyx
+ 
+        nwkeyx = plkeyx
+        ytdmember = member
+        ytdplcode = plcode
+        ytdfdcode = fdcode
+        ytdsortseq = sortseq
+        digit = mod (plkeyx , 10)
+        if (fdcode.ne.0) do
+            ytdfdcode = ytdfdcode  + 1
+            goto a02
+            end do
+        if (digit.eq.1) do
+           ytdfdcode = 2
+           ytdsortseq = 1
+           end do
+a02:
+        ytddate = reldate
+        ytdcontrib = contribution
+        'ytdalpha' = 'alpha'
+        ?stmtkey = member * 100 + ytdfdcode * 1000000 + reldate + 100000
+ 
+         call wrrplfile                          ; write pledge record
+         goto mainline
+;
+noroom:
+        call msg (m02)
+        go to final
+final:
+          close crt,listfile,plfile,nwfile
+          stop 0
+;
+eject
+;****************************************************************************
+;*
+;*            input/output routines
+;*
+;*****************************************************************************
+;
+rdblst:
+         readb (listfile,listrec) \ go to ioret1
+;
+rdkplfile:
+         call getk (plfile,lkey) \ goto ioret1
+rdrplfile:
+         call getr (plfile,plrec)
+         call stat(1)
+         return
+;
+wrrplfile:
+         call putr (nwfile,nwrec) \ call stat(1) \ return
+;
+ioret1:
+         if (status.gt.1) goto ioerr
+         return
+;
+     end
+
+         return
+;
+     end
+
+

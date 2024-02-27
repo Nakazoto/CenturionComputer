@@ -1,0 +1,45 @@
+.job glfcom
+*  financial comparison
+.seta cc=0
+.run s.xeject
+.use crt#v for syslst
+.skip to ok if crt eq #2
+.use prt#2 for syslst
+=ok
+.use gl#0a on #1 for sys0 shar
+.use gl#0j on #1 for sys1 shar
+.use @scr#i on #s for sys2
+.log
+*   do you want to print the double financial comparison report? (y/n)
+.nolog
+.enter 8
+.log
+*   do you want to run another financial comparison report when done ? (y/n)
+.nolog
+.enter 9
+.seta upsi=1
+.skip to comp if y = #8
+.run gl.xgl551
+.skip to eop
+=comp
+.del @scrc#i on #s
+.new @scrc#i on #s 'c' 5
+.use @scrc#i on #s sys2
+.run gl.xgl553
+=eop
+.skipr 0 if y eq #9
+.skip to recall if #c eq 0
+.skip to fin if #c ne 0
+.skipr 0
+=recall
+.skip 1 if glrepo ne #4
+glmenu
+=fin
+.end
+s.con
+*  7/21/78...cleanup..ns
+*  5/29/79...took out gl#0m & gl#0k files..ns
+*  11/05/79...modified for cpu-6..kag
+*  04-30-80...added reprinting option...kag
+
+

@@ -1,0 +1,7 @@
+.job unspoolbk
+.use @spool on #s sys0 shar
+.use prt#0 for sys1
+.run s.xunspbk
+.end
+.stop
+

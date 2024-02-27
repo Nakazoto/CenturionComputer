@@ -1,0 +1,31 @@
+.job aplook
+.use ap#0m on #1 for sys0
+.use ap#0a on #1 for sys1 shar
+.run ap.xap212
+.skip to error if #c ne 0
+.skip to recall if #u eq 0
+.seta upsi=2
+.run s.xopt
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if #2 eq type
+.seta upsi = 2
+.skip to go if #2 eq crt
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use ap#0m on #1 for sys0
+.use ap#0a on #1 for sys1 shar
+.run ap.xap218
+.skip to error if #c ne 0
+=recall
+apmenu
+=error
+.end
+s.con
+*
+* 08/7/78   updated jcl to current standards...seh
+

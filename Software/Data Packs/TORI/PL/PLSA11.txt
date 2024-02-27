@@ -1,0 +1,27 @@
+:enter/update ytd contributions master file:2: 0:16: 5:n: 5:
+: 5: 2:pledge mster #..:k:
+: 6: 2:membership #....:n: 4: 0: 4: 1:
+: 7: 2:pledge code(1/0):n: 1: 0: 0:
+: 8: 2:fund code.......:n: 2: 0: 4: 2:
+: 9: 2:sort sequence...:e: 2: 2: 8:
+:10: 2:date............:n: 6: 0:33:
+:11: 2:contributions...:n: 8: 2: 0:
+:12: 2:statement key...:d:12: 0:10: 2:0:*: 0:100:+: 4:0:*: 0:1000000:+: 6:0:+: 0:100000:
+:13: 2:alpha sort......:e: 1: 7: 8:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,75 @@
+.job avreg
+.log
+*
+*     program requires master file to be sorted.
+*     is the master file sorted ? (y/n) /fff
+.nolog
+.enter 9
+.skip to ysort if y=#9
+.skip to nsort if n=#9
+.skipr 0
+=nsort
+.seta upsi=0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.run s.xtract
+print=no,filtyp=b,arg,key
+/*
+.use rv#0l on #1 for sys0 shar
+.use rv#0l on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsize=8
+work=4,output=inp,key=(1,4,bi)
+/*
+=ysort
+***   payroll adjustments/voids register (without area taxes)
+*
+.seta upsi eq 0
+.use rv#0a on #1 for sys0
+.use rv#0e on #1 for sys1
+.use @scrb#i on #s for sys2
+.run rv.xrv545
+.skip to eoj if 100 le #c
+.seta upsi eq 0
+.use @scrb#i on #s for sys0 shar
+.use @scrb#i on #s for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1
+filtyp=b,recsiz=39,output=inp
+work=4,key=(1,4,bi,5,4,bi,13,4,bi)
+/*
+.seta upsi eq 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.use crt#v for syslst
+.skip to go if #2 eq type
+.skip to go if #2 eq crt
+.use prt#2 for syslst
+=go
+.seta upsi eq 0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.use rv#0e on #1 for sys2
+.use @scrb#i on #s for sys3
+.run rv.xrv549
+.skip to err if #c ne 0
+=eoj
+rvmenu
+=err
+.end
+s.con
+*   created  05-05-77...klf
+*   revised  11-16-77 for directory "s"...klf
+*   added menu recall 10-30-78...jwb
+*   modified to use #s for sort and scratch files 11-12-79...jwb
+*   changed all names to "rv" 02-27-80...ok
+*  added sort key and option to sort master.04/07/82..pl#0371..jes
+

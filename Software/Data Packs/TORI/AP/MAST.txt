@@ -1,0 +1,126 @@
+.job apmast
+.use crt#v for syslst
+.use ap#0a on #1 sys0 shar
+.run ap.xap200
+.skip to ok if #c eq 0
+.skip to err2 if #c ne 110
+.log
+*
+*   standby while vendor file is expanded
+*
+.nolog
+.fspec ap#0a on #1 7=use 8=size
+.skip to go if 1 eq #7
+.log
+*
+*   vendor master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition expand vendor master file ? (y/n)
+*
+.nolog
+.enter 9
+.skip to recall if y eq #9
+=go
+.seta 8=#8/16
+.seta 8=#8*125/100+1
+.vspec #1 7=avail
+.seta 7=#7/16
+.skip to err if #7 lt #8
+.new apa#0 on #1 'c' #8t
+.seta upsi=0
+.use ap#0a on #1 for sys0
+.use ap#0b on #1 for sys1
+.run s.xwtag
+.seta upsi = 0
+.use apa#0 on #1 for sys0
+.run s.xrint
+recsiz=131,paddng=25
+/*
+.use ap#0a on #1 for sys0
+.use apa#0 on #1 for sys1
+.use ap#0b on #1 for sys2
+.run ap.xap202
+.skip to err2 if #c ne 0
+.del ap#0a on #1
+.nam apa#0 on #1 ap#0a
+.skip to recall
+=ok
+.skip to recall if #u eq 0
+.skip to sort if #u eq 1
+.fspec ap#0a on #1 7=use 8=size
+.skip to go if 1 eq #7
+.log
+*
+*   vendor master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition drop deleted vendors ? (y/n)
+*
+.nolog
+.enter 9
+.skip to recall if y eq #9
+=go
+.vspec #1 7=avail
+.seta 7=#7/16  8=#8/16
+.skip to err if #7 lt #8
+.new apa#0 on #1 'c' #8t
+.seta upsi=0
+.use ap#0a on #1 for sys0
+.use ap#0b on #1 for sys1
+.run s.xwtag
+.seta upsi = 0
+.use apa#0 on #1 for sys0
+.run s.xrint
+recsiz=131,paddng=25
+/*
+.use ap#0a on #1 for sys0
+.use apa#0 on #1 for sys1
+.use ap#0b on #1 for sys2
+.run ap.xap202
+.skip to err2 if #c ne 0
+.del ap#0a on #1
+.nam apa#0 on #1 to ap#0a
+=sort
+.seta upsi=0
+.use ap#0a on #1 for sys0
+.use ap#0b on #1 for sys1
+.run s.xwtag
+.use ap#0b on #1 for sys0 shar
+.use ap#0b on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=inp,key=(1,4,bi)
+/*
+=recall
+apmenu
+=err
+.log
+*
+*   insufficient disk space to expand vendor master file
+*
+.nolog
+=err2
+.end
+s.con
+* 10/10/77   mod for new print options, directory s, removed
+             parm statement, change client # to key #, and
+             did minor clean up...nw
+*
+* 08-07-78...jcl completely written over...seh
+* 10-31-79...modified for cpu-6...jwb
+* 11-30-79...re-modified for cpu-6...kag
+*
+

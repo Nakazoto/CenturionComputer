@@ -1,0 +1,18 @@
+.job rrlook
+.use crt#v for syslst
+.seta upsi =2
+.skip to ok if crt eq #2
+.use prt#2 for syslst
+.seta upsi=3
+=ok
+.use gl#0a on #1 sys0 shar
+.use gl#0e on #1 sys3
+.use gl#0d on #1 sys2 shar
+.use glscr#i on #1 sys4 shar
+.run rr.xrr505
+.skip 1 if rrmenu ne #4
+rrmenu
+.end
+s.con
+* 8/11/78...converted from glook to rrlook..ns
+

@@ -1,0 +1,121 @@
+.nolog
+.notime
+.seta 0=100
+.seta 1=1
+.run s.xeject
+/==============================================================================
+/                      accounts payable vendor list
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - print numberical vendor listings
+/                    2 - print alphabetical vendor listing
+/
+/                   97 - return to apmenu
+/                   98 - change key/disk/printer
+/                   99 - end of menu
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 1 if 99 ne #9
+s.con
+.skip 1 if 97 ne #9
+apmenu
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  4 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter key
+.enter 0
+/  enter disk
+.enter 1
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+/  standby for creation of new list file
+.seta upsi=0
+.use aplib.apsm01 on #d for sys0 shar
+.use ap#0a  on #1 for sys1 shar
+.use ap#0a  on #1 for sys3 shar
+.use ap#0y  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ap#0y  on #1 for sys1 shar
+.use ap#0y  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  8
+key=(5,4,bi),/*
+.end
+.use aplib.aprm02 on #d for sys0 shar
+.use ap#0a  on #1 for sys1
+.use ap#0y  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt2
+/  standby for creation of new list file
+.seta upsi=0
+.use aplib.apsm01 on #d for sys0 shar
+.use ap#0a  on #1 for sys1 shar
+.use ap#0a  on #1 for sys3 shar
+.use ap#0y  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 2 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ap#0y  on #1 for sys1 shar
+.use ap#0y  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 34
+key=(9,25,ch,5,4,bi),/*
+.end
+.use aplib.aprm01 on #d for sys0 shar
+.use ap#0a  on #1 for sys1
+.use ap#0y  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+
+
+
+
+
+
+
+
+
+

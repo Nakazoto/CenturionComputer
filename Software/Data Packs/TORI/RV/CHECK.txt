@@ -1,0 +1,45 @@
+.job check
+*
+***   random access payroll - print payroll checks
+*
+.nolog
+.setc 9 = 'rv.'
+.fspec rv     on #d 8=size
+.skip to go if 0 ne #8
+.setc 9 = 'rvs.'
+.fspec rvs    on #d 8=size
+.skip to err2 if 0 eq #8
+=go
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if #2 eq type
+.seta upsi = 2
+.skip to go if #2 eq crt
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0
+.use rv#0r on #1 for sys1
+.use zipcod on #1 for sys2 shar
+.run #9xrv530
+*.run #9xnv530
+.skip to err if #c ne 0
+.setc 9=''
+rvmenu
+=err
+*
+***   abnormal ending - please consult manual for re-start procedure
+*
+=err2
+.end
+.setc 9=''
+s.con
+*   created  04-18-77  from rpsj30...klf
+*   revised  11-16-77  for utility "s"; for either "rp" or "rps"...klf
+*   added menu recall 10-24-78...jwb
+*   changed all names to "rv" 02-27-80...ok
+
+

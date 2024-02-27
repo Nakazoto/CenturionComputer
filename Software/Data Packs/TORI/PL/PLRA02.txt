@@ -1,0 +1,53 @@
+: 84: 57:  2:
+: 2:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:date:
+:               8:s:s:
+:              29:l:first united methodist church:
+:              74:l:page:
+:              79:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              29:l:fund description master file:
+:::
+:h:  0:  0:     2:l:plrm02:
+:::
+:h:  1:  0:     2:l:fund:
+:               8:l:sort:
+:              14:l:pledge:
+:              22:l:description:
+:              64:l:ytd:
+:::
+:h:  0:  1:     2:l:code:
+:               8:l:seq.:
+:              15:l:code:
+:              64:l:contributions:
+:::
+:d:  0:  0:     2:f:   1:0:
+:              10:f:   2:0:
+:              14:f:   4:0:
+:              22:f:   3:0:
+:              64:f:   5:0:
+:::
+:t:  0:  2: 1: 22:l:total:
+:              62:t:   5:0:
+:::
+:t:  0:  0:99: 22:l:grand total:
+:              62:t:   5:0:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+

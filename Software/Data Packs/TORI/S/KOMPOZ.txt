@@ -1,0 +1,124 @@
+.nolog
+.job kompoz
+.notime
+/
+/  text composition system (kompoz)
+/
+.seta cc=0
+=inp
+/  enter input file name
+.enter 9
+.skipr to inp if ? gt #9
+.setc 6='.'
+/  enter input library name or "newline" if no library
+.enter 5
+.skip 1 if ? le #5
+.setc 5='' 6=''
+/  enter disk number for file '#5#6#9'
+.enter 3
+.fspec #5#6#9 on #3 8=size
+.skip to ok if #8 gt 0
+/  file '#5#6#9' not found on disk#3
+/  do you wish to create? (y/n)
+.enter 7
+.skip to end if n eq #7
+.new #5#6#9 on #3 'a' 1t
+=ok
+.use #5#6#9 on #3 sys0 shar
+.fspec @scr#i on #s 8=size
+.skip 1 if #8 gt 0
+.new @scr#i #s 'a' 1t
+.use @scr#i on #s sys1
+.seta 7=5
+=join
+/  enter join file name or "newline" if not used
+.enter 0
+.skip to nojoin if ? gt #0
+/  enter disk number for file '#0'
+.enter 1
+.fspec #0 on #1 8=size
+.skip 2 if #8 gt 0
+/  file #0 not found on disk#1
+.skip to end
+.use #0 on #1 for sys#7 shar
+.seta 7=#7+1
+.skipr to join
+=nojoin
+/  enter inserts file name or "newline" if not used
+.enter 0
+.skip to noins if ? gt #0
+/  enter disk number for file '#0'
+.enter 1
+.fspec #0 on #1 8=size
+.skip 2 if #8 gt 0
+/  file #0 not found on disk#1
+.skip to end
+.use #0 on #1 for sys3 shar
+=noins
+/  enter output device or "newline" for @lst#i
+.enter 8
+.skip to lst if ? gt #8
+.skip to nospol if prtq ne #8
+/  enter printer form number
+.enter 1
+.job kompoz form=#1 abort=cancel
+=nospol
+.use #8 for sys4
+.skip 3
+=lst
+.use @lst#i on #s sys4
+.setc 8=@lst#i
+=go
+.run s.xkompoz
+.skip to prt if #c=0
+.skip to chk if #c gt 1
+.use @scr#i on #s sys0
+.use #5#6#9 on #3 sys1
+.run s.xcoput
+=prt
+.skip to end if #8 ne @lst#i
+/  enter printer name or "newline" if output not desired
+.enter 8
+.skip to end if ? gt #8
+.skip to noq if #8 ne prtq
+/  enter printer form number
+.enter 1
+.job kompoz form=#1 abort=cancel
+=noq
+.use #8 syslog
+.run s.xeject
+.use crt#v syslog
+.use @lst#i on #s sys0
+.use #8 sys1
+.run s.xlist
+.skip to end
+=chk
+.skip to kprt if #c eq 100
+.use @scr#i on #s sys0
+.use #5#6#9 on #3 sys1
+.run s.xcoput
+=kprt
+.skip to end if #8 ne @lst#i
+/  enter printer name or "newline" if output not desired
+.enter 8
+.skip to end if ? gt #8
+.skip to noq1 if prtq ne #8
+/  enter printer form number
+.enter 1
+.job kompoz form=#1 abort=cancel
+=noq1
+.use #8 syslog
+.run s.xeject
+.use crt#v syslog
+.use @lst#i on #s sys0
+.use #8 sys1
+.run s.xklist
+=end
+.end
+/
+/
+/  end kompoz
+/
+s.con
+
+

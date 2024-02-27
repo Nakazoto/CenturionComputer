@@ -1,0 +1,407 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                    centurion computer systems
+/                         asmart generator
+/==============================================================================
+/          key: #0     disk: #1     printer: #2     application: #3
+/==============================================================================
+/
+/              1 - create data dictionary / screen map
+/              2 - create ascii file from existing ascii file
+/              3 - create report map
+/              4 - create posting map
+/              5 - create clearing map
+/
+/              6 - s m a r t
+/
+/             95 - change file key
+/             96 - change disk
+/             97 - change printer
+/             98 - change application
+/             99 - end asmart
+/
+/==============================================================================
+/    enter function
+ 
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.seta cc=0
+.skip 1 if 99 ne #9
+s.con
+.skip 1 if 6 ne #9
+asmlib.smart
+.skip to chg4 if 98 eq #9
+.skip to chg3 if 97 eq #9
+.skip to chg2 if 96 eq #9
+.skip to chg1 if 95 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 6 le #9
+.skip to opt#9
+.skipr 0
+=chg1
+/  enter key
+.enter 0
+=chg2
+/  enter disk
+.enter 1
+=chg3
+/  enter printer or 'crt'
+.enter 2
+=chg4
+/  enter application prefix
+.enter 3
+.skipr 0
+=opt1
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3sa#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3sa#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3sa#9
+/
+/  enter dictionary name (xxsmyy) of alternate file 1
+.enter 5
+.skip to go1 if #5 = ' '
+.seta upsi=1
+.use #5 on #1 sys1
+/
+/  enter dictionary name (xxsmyy) of alternate file 2
+.enter 6
+.skip to go1 if #6 = ' '
+.seta upsi=2
+.use #6 on #1 sys2
+/
+/  enter dictionary name (xxsmyy) of alternate file 3
+.enter 7
+.skip to go1 if #7 = ' '
+.seta upsi=3
+.use #7 on #1 sys3
+=go1
+.skip to edit1 if 66 ne #c
+.seta cc=0
+.use #8 on #1 sys0
+.run asmlib.xsamap
+.run s.xeject
+=edit1
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter screen map no.
+.enter 9
+.fspec #3sm#9 on #1 4=size
+.skip 1 if 0 ne #4
+.new #3sm#9 #1 'c' 1
+.setc 4 = #3sm#9
+.use #4 on #1 sys0 pass
+.use #8 on #1 sys4
+.use asmlib.serror on #d sys5
+.skip 3 if crt ne #2
+.use crt#v sys10
+.setc 9 = crt#v
+.skip 2
+.use prt#2 sys10
+.setc 9 = prt#2
+.skip to go1#u
+=go13
+.use #7 on #1 sys3
+=go12
+.use #6 on #1 sys2
+=go11
+.use #5 on #1 sys1
+=go10
+.seta cc=0
+.run asmlib.xasmap
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.skip 2 if 0 eq #c
+.end
+.skipr 0
+.use #9 sys10
+.run asmlib.xdictn
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.end
+.skipr 0
+=opt2
+/
+/  enter map type (sa, ra, pa, ca)
+.enter 9
+.skip to go2 if sa eq #9
+.skip to go2 if ra eq #9
+.skip to go2 if pa eq #9
+.skip to go2 if ca eq #9
+.skipr to opt2
+=go2
+/
+/  enter existing ascii file no.
+.enter 8
+/
+/  enter new ascii file no.
+.enter 7
+.fspec #3#9#7 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3#9#7 #1 'a' 1
+.skip to go2a
+/
+/  #3#9#7 already exists on disk #1 ... okay to delete ? (y/n)
+.enter 6
+.skip 1 if y eq #6
+.skipr 0
+=go2a
+.use #3#9#8 on #1 sys0
+.use #3#9#7 on #1 sys1
+.run s.xcoput
+.end
+.skipr 0
+=opt3
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3ra#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3ra#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3ra#9
+/
+/  enter primary file dictionary no.
+.enter 9
+.fspec #3sm#9 on #1 4=size
+.skip 3 if 0 ne #4
+/  #3sm#9 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+.setc 4 eq #3sm#9
+/
+/  enter dictionary name (xxsmyy) of alternate file 1
+.enter 5
+.skip to go3 if #5 = ' '
+.seta upsi=1
+.use #5 on #1 sys1
+/
+/  enter dictionary name (xxsmyy) of alternate file 2
+.enter 6
+.skip to go3 if #6 = ' '
+.seta upsi=2
+.use #6 on #1 sys2
+/
+/  enter dictionary name (xxsmyy) of alternate file 3
+.enter 7
+.skip to go3 if #7 = ' '
+.seta upsi=3
+.use #7 on #1 sys3
+=go3
+.skip to edit3 if 66 ne #c
+.seta cc=0
+.use #4 on #1 sys0
+.use #8 on #1 sys4
+.run asmlib.xramap
+.run s.xeject
+=edit3
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter report map no.
+.enter 9
+.use #4 on #1 sys0 pass
+.seta cc=#u
+.fspec #3rm#9 on #1 upsi=use
+.skip 1 if 0 ne #u
+.new #3rm#9 #1 'c' 1
+.setc 9=#3rm#9
+.use #9 on #1 sys4 pass shar
+.fspec @scrc#i on #s upsi=use
+.skip 1 if 0 eq #u
+.del @scrc#i #s
+.new @scrc#i #s 'c' 1
+.use @scrc#i on #s sys5
+.seta upsi=#c
+.seta cc=0
+.use #8 on #1 sys6
+.use asmlib.serror on #d sys7
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.skip to go3#u
+=go33
+.use #7 on #1 sys3 pass
+=go32
+.use #6 on #1 sys2 pass
+=go31
+.use #5 on #1 sys1 pass
+=go30
+.run asmlib.xarmap
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.setc 6 eq #9
+.run asmlib.xrmdsp
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.end
+.skipr 0
+=opt4
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3pa#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3pa#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3pa#9
+/
+/  enter transaction file dictionary no.
+.enter 9
+.setc 5 = #3sm#9
+.fspec #5 on #1 4=size
+.skip 3 if 0 ne #4
+/  #5 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+/
+/  enter master file dictionary no.
+.enter 9
+.setc 6 = #3sm#9
+.fspec #6 on #1 4=size
+.skip 3 if 0 ne #4
+/  #6 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+.skip to edit4 if 66 ne #c
+.seta cc=0
+.use #5 on #1 sys0
+.use #6 on #1 sys1
+.use #8 on #1 sys2
+.run asmlib.xpamap
+.skip 5 if 0 eq #c
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.end
+.skipr 0
+.run s.xeject
+=edit4
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter posting map no.
+.enter 9
+.fspec #3pm#9 on #1 4=size
+.skip 1 if 0 ne #4
+.new #3pm#9 #1 'c' 1
+.use #5 on #1 sys0
+.use #6 on #1 sys1
+.setc 7=#3pm#9
+.use #7 on #1 sys2
+.use #8 on #1 sys3
+.use asmlib.serror on #d sys4
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run asmlib.xapmap
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.end
+.skipr 0
+=opt5
+/
+/  enter ascii file no.
+.enter 9
+.fspec #3ca#9 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3ca#9 #1 'a' 1
+.seta cc=66
+.setc 8 eq #3ca#9
+/
+/  enter master file dictionary no.
+.enter 9
+.setc 6 = #3sm#9
+.fspec #6 on #1 4=size
+.skip 3 if 0 ne #4
+/  #6 not found on disk #1 ... newline to return to asmart
+.pause
+.skipr 0
+.skip to edit5 if 66 ne #c
+.seta cc=0
+.use #6 on #1 sys1
+.use #8 on #1 sys2
+.run asmlib.xcamap
+.skip 5 if 0 eq #c
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.end
+.skipr 0
+.run s.xeject
+=edit5
+.use #8 on #1 sys0
+.use @scr#i on #s sys1
+.run s.xtext
+.skip 3 if 0 eq #c
+.use @scr#i on #s sys0
+.use #8 on #1 sys1
+.run s.xcoput
+/
+/  enter clearing map no.
+.enter 9
+.fspec #3cm#9 on #1 4=size
+.skip 1 if 0 ne #4
+.new #3cm#9 #1 'c' 1
+.use #6 on #1 sys1
+.setc 7=#3cm#9
+.use #7 on #1 sys2
+.use #8 on #1 sys3
+.use asmlib.serror on #d sys4
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run asmlib.xacmap
+.skip 2 if crt ne #2
+/  newline to continue
+.pause
+.end
+.skipr 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+

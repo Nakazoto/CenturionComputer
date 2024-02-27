@@ -1,0 +1,54 @@
+.job start
+.nolog
+.notime
+.run s.xeject
+.use @spool on 1 for sys0 shar
+.seta upsi=0
+.run s.xsplmt
+list
+end
+.end
+.log
+*
+*     if you expect to print any large reports today you will
+*     need a larger spool file. however, this will erase any jobs
+*     that have not printed yet!!!
+*     answer yes only if the spool file is empty!!!
+*
+*     do you want a new spool file ? (y/n)
+.nolog
+.enter 9
+.skip to dont if #9 ne y
+.del @spool 1
+.new @spool 1 'q' 128 fsi=16
+=dont
+.start p3 s.unspool 0
+.start p1 with crt1
+.start p2 with crt2
+.end
+**********************************************************
+*   the following steps start up the spool file
+.use @spool on 1 for sys0 shar
+.seta upsi=0
+.run s.xsplmt
+resume
+list
+resume
+end
+.end
+s.con
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

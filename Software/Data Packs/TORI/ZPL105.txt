@@ -1,0 +1,116 @@
+system  (exp=d)
+;
+define m00: 'zpl105 11/10/91  fix  quarterly stmt master file'
+;
+;*****************************************************************************
+;*       files:
+;*       sys#      file-name     rec-name       description
+;*        0        listfile      listrec        list file type b
+;*        1        plfile        plrec          quarterly stmt master file
+;****************************************************************************
+;*                           program linkage
+;****************************************************************************
+;
+external cget,stat,getk,getr,putr,delk,ioerr,msg
+call msg                     ; this is to force linkage of f90 ?
+entrypoint crt
+;
+;****************************************************************************
+;*                           files
+;****************************************************************************
+;
+         file crt : sysipt
+;
+         file listfile : sys0,class=2,seq,filtyp=b,lsr=4,buffer=400,*
+;
+         file plfile : sys1,class=2,ind,recsiz=60,key=?plkey
+                   set ?plkey : 0
+;
+;*****************************************************************************
+;*                           records
+;*****************************************************************************
+;
+record listrec (10)                     ;record layout for b file
+         set relkey:0                  ;relative record (argument)
+         set ?lkey:0                    ;key to plfile
+endrec
+;
+record plrec (60)                     ;record layout for stmt master
+          set ?plkeyx:0                 ;key
+          set fld2:0
+          set fld8:0
+          set fdcode:0
+          set fld10:0
+          set datefld:0
+          set fld12:0
+          set pledge:0
+          string fld14 (25)
+endrec
+          set first : 0
+;
+eject
+;
+;*****************************************************************************
+;*                           logic
+;****************************************************************************
+;
+         entry
+;
+initialization:
+;
+         open io (crt,listfile,plfile)
+;
+mainline:
+          call rdblst
+         if (status) go to final                 ; end of file
+         ?plkey = ?lkey                            ; get key from listfile
+         call rdkplfile                          ; get stmt record
+         call rdrplfile                          ; read stmt record
+         pledge = pledge / 2
+         write (crt,f01) fld2,datefld
+         call wrrplfile
+         goto mainline
+;
+final:
+          close crt,listfile,plfile
+          stop 0
+;
+eject
+;****************************************************************************
+;*
+;*            input/output routines
+;*
+;*****************************************************************************
+;
+rdblst:
+         readb (listfile,listrec) \ go to ioret1
+;
+rdkplfile:
+         call getk (plfile,?lkey) \ goto ioret1
+rdrplfile:
+         call getr (plfile,plrec)
+         call stat(1)
+         return
+;
+wrrplfile:
+         call putr (plfile,plrec) \ call stat(1) \ return
+;
+ioret1:
+         if (status.gt.1) goto ioerr
+         return
+;
+;*************************************************************************
+; working storage
+;*************************************************************************
+;
+format f01: n6 x2 n6
+;
+     end
+
+
+
+
+
+
+
+

@@ -1,0 +1,33 @@
+START      ; Some kind of print spool thing?
+ENDDAY     ; Scratch file reduction
+BACKUP     ; Backup procedures (Shrink, System, Payroll, CHurch/Pledge, GL, AP, Memorial)
+RVMENU     ; Random Access Payroll Application (Without State Tax Support)
+RRMENU     ; Payroll to General Ledger Communication
+AMORT      ; Amortization Schedules?
+GLMENU     ; General Ledger Application
+PLEDGE     ; First United Methodist Chruch Pledge Application
+CHURCH     ; First United Methodist Membership Application
+ASMART     ; ASMART Generator (Data Dictionary, Report Map, Posting Map, Clearing Map, etc.)
+SMART      ; SMART I Generator (Screen Map, Data Dictionary, Report Map, Posting Map, etc.)
+GLSHRINK   ; General Ledger shrink program?
+AP100Z     ; "102293 20984Y931022N" <- That's it
+GLASORT    ; General Ledger account file sorting application?
+APMOVE     ; Just contains a list of AP related file names
+GLMOVE     ; Just contains a list of GL related file names
+EXPAND     ; Indexed file expansion for a CPU-6 SMART file
+CLMENU     ; Customer Master File Maintenance
+RESTORE    ; Restore Procedures (System, Payroll, General Ledger, Church and Pledge)
+ACTIVITY   ; Activity Codes to Master File
+ZPL105     ; CPL source code for... something
+RVMOVE     ; Just contains a list of RV related file names
+APMENU     ; Accounts Payable Application
+VENDOR     ; Accounts Payable Vendor List
+MNMOVE     ; Just contains a list of MN related file names
+Q          ; Some kind of print spool thing?
+MEMORIAL   ; Memorial Gift System
+JSMHDR     ; Small JCL for XSMHDR
+ZSMHDR     ; CPL source code for... something
+MOVEIT     ; JCL script for moving MN related files
+PERSONNEL  ; Completely empty
+CLEAN      ; Floppy disk format tool (similar to S.NEWDSK)
+CHMOVE     ; Just contains a list of CH and PL related file names

@@ -1,0 +1,26 @@
+:ENTER/UPDATE THE GENERAL FUND PLEDGE METHOD OF PAYMENT TRANSACTION FILE:2: 0:16: 2:
+: 5: 2:MEMBERSHIP #....:N: 4: 0: 4:
+: 5:40:NAME............:E:    6:16:
+: 6:40:FAMILY NAME.....:E:    8:16:
+: 7:40:ADDRESS.........:E:    9:16:
+: 8:40:ADDRESS.........:E:   10:16:
+: 9:40:ADDRESS.........:E:   11:16:
+: 9:66:ZIP CODE........:E:   12:16:
+:11: 2:GENERAL FUND....:C: 1:    0:
+:11:40:GF AMOUNT.......:N: 8: 2: 0:
+:-1:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

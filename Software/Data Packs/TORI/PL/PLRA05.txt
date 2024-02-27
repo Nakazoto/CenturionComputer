@@ -1,0 +1,60 @@
+: 1: 0:14: 0:
+:132: 57:  5:
+:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:date:
+:               8:s:s:
+:              52:l:first united methodist church:
+:             121:l:page:
+:             128:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              55:l:y-t-d contribution correction file:
+:::
+:h:  0:  1:     2:l:plrm05:
+:              56:s:c:
+:::
+:h:  0:  1:     2:l:record:
+:              11:l:member:
+:              20:l:name:
+:              53:l:pledge:
+:              62:l:fund:
+:              76:l:description:
+:             111:l:date:
+:             119:l:contribution:
+:::
+:d:  0:  0:     3:s:#:
+:              12:f:   1:0:
+:              20:f:   6:1:
+:              56:f:  13:0:
+:              63:f:  14:0:
+:              76:f:   3:2:
+:             106:x:
+:             109:e:  20:0:
+:             119:f:  21:0:
+:::
+:t:  0:  0:99:117:l:-----------:
+:::
+:t:  0:  0:99:  1:t:   1:0:
+:              76:l:total corrections to be posted:
+:             114:t:  21:0:
+:             130:l:***:
+:::
+:t:  0:  0:99:117:l:===========:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+

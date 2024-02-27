@@ -1,0 +1,218 @@
+system  (exp=d)
+;
+define m00: 'zpl102 1/16/85  create pledge tx master file'
+;
+;*****************************************************************************
+;*       files:
+;*       sys#      file-name     rec-name       description
+;*        0        listfile      listrec        list file type b
+;*        1        plfile        plrec          pledge master file - type i
+;*        2        txfile        txrec          new pledge tx file - type i
+;****************************************************************************
+;*                           program linkage
+;****************************************************************************
+;
+external cget,stat,getk,getr,putr,ioerr,msg,newk,clrec,YNGET
+call msg                     ; this is to force linkage of f90 ?
+entrypoint crt
+;
+;****************************************************************************
+;*                           files
+;****************************************************************************
+;
+         file crt : sysipt
+;
+         file listfile : sys0,class=2,seq,filtyp=b,lsr=4,buffer=400,*
+;
+         file plfile : sys1,class=2,ind,recsiz=66,key=plkey
+                   set plkey : 0
+;
+         file txfile : sys2,class=2,ind,recsiz=68,key=txkey
+                   set txkey : 0
+;*****************************************************************************
+;*                           records
+;*****************************************************************************
+;
+record listrec (8)                     ;record layout for b file
+         set relkey:0                  ;relative record (argument)
+         set lkey:0                    ;key to plfile
+endrec
+;
+record plrec (66)                     ;record layout for pledge master
+         set plkeyx:0                 ;key
+         set member : 0
+         set plcode : 0
+         set fdcode : 0
+         set sortseq : 0
+         set lstdate : 0
+         set plamount : 0
+         set contribution : 0
+         set plbalance : 0
+         string alpha (25)
+         set plorig : 0
+endrec
+;
+record txrec (68)                      ;record layout for tx contributions master
+         set txkeyx:0
+         set txmember : 0
+         set txplcode : 0
+         set txfdcode : 0
+         set txsortseq : 0
+         set txdate : 0
+         set txpledge : 0
+         set ?stmtkey : 0
+         string txalpha (25)
+         set fdpledge : 0
+         set txorig : 0
+endrec
+;
+     format f01 : n6
+     format f02 : n6 x2 c25
+     format f03 : n2
+     set nwdate : 0
+     set reldate : 0
+     set first : 0
+     define m02 : 'noroom - did not work'
+     define m03 : 'enter date mmddyy'
+     define m04 : 'enter relative day'
+     define m05 : 'enter fund code'
+     DEFINE M06 : 'DO YOU WANT ANOTHER FUND'
+     DEFINE M07 : 'IS THIS CORRECT - Y/N'
+     set savefd : 0
+     SET ITKEY  : 0
+;
+eject
+;
+;*****************************************************************************
+;*                           logic
+;****************************************************************************
+;
+         entry
+;
+initialization:
+;
+         open io (crt,listfile,plfile,txfile)
+;
+a01:
+        call cget (m03,f01,nwdate )
+        if (status.ne.0) goto a01
+        call cget (m04,f01,reldate)
+        if (status.ne.0) goto a01
+        call cget (m05,f03,savefd)
+        if (status.ne.0) goto a01
+        CALL YNGET(M07)
+        IF (STATUS.NE.1) GOTO A01
+;
+;
+mainline:
+         call rdblst                             ; read list file
+         if (status) go to final                 ; end of file
+         plkey = lkey                            ; get key from listfile
+         call rdkplfile                          ; get pledge record
+         call rdrplfile                          ; read pledge record
+         if (first.eq.0) do
+            first = 1
+            goto mainline
+            end do
+         if (fdcode.ne.savefd) goto mainline
+         if (plbalance.le.0) goto mainline
+         IF (FDCODE.EQ.40) DO
+            ITKEY = MEMBER * 10 + 6
+            FDCODE = 60
+            SORTSEQ = 6
+            END DO
+         IF (FDCODE.EQ.50) DO
+            ITKEY = MEMBER * 10 + 7
+            FDCODE = 70
+            SORTSEQ = 7
+            END DO
+         IF (FDCODE.EQ.90) DO
+            ITKEY = PLKEYX
+            END DO
+         call getk (txfile,ITKEY)
+         goto (aok,ioerr) on status
+         write (crt,f02) ITKEY, 'duplicate'
+aok:
+         call newk (txfile,ITKEY)
+         goto (noroom,ioerr) on status
+         call clrec (txrec)
+         write (crt,f02) ITKEY
+ 
+         txkeyx = ITKEY
+         txmember = member
+         txplcode = plcode
+         txfdcode = fdcode
+         txsortseq = sortseq
+         if (fdcode.eq.60) do
+           fdpledge = 1
+           end do
+        if (fdcode.eq.70) do
+           fdpledge = 10
+           end do
+       if (fdcode.eq.90) do
+           fdpledge = 100
+           end do
+a02:
+        txdate = reldate
+        txpledge = plbalance
+        'txalpha' = 'alpha'
+        ?stmtkey = member * 100 + txfdcode * 1000000 + reldate
+        txorig = plorig
+ 
+         call wrrplfile                          ; write pledge record
+         goto mainline
+;
+noroom:
+        call msg (m02)
+        go to final
+final:
+        CALL YNGET(M06)
+        IF (STATUS.EQ.1) DO
+            CLOSE LISTFILE
+            OPEN INPUT LISTFILE
+            GOTO A01
+            END DO
+          close crt,listfile,plfile,txfile
+          stop 0
+;
+eject
+;****************************************************************************
+;*
+;*            input/output routines
+;*
+;*****************************************************************************
+;
+rdblst:
+         readb (listfile,listrec) \ go to ioret1
+;
+rdkplfile:
+         call getk (plfile,lkey) \ goto ioret1
+rdrplfile:
+         call getr (plfile,plrec)
+         call stat(1)
+         return
+;
+wrrplfile:
+         call putr (txfile,txrec) \ call stat(1) \ return
+;
+ioret1:
+         if (status.gt.1) goto ioerr
+         return
+;
+     end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

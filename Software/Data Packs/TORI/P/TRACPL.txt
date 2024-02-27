@@ -1,0 +1,117 @@
+.job #0
+.nolog
+.notime
+.seta cc=0 upsi=0
+.setc 9='.'
+/   enter storage library name or "newline" if no library
+.enter 6
+.skip 1 if ? lt #6
+.setc 6='' 9=''
+.setc 3=x 4=x 7=#3 8=#4
+.skip 1 if lib eq #7
+.skip 1 if lib ne #8
+.setc 3=lib
+.skip 1 if xref eq #7
+.skip 1 if xref ne #8
+.setc 4=xref
+.skip to nolib if lib ne #3
+/
+/   enter compile library name
+.enter 5
+.skip to nolib if ? ge #5
+.fspec #6#9#5 on #1 7=type 8=size
+.skip to go if 0 ne #8
+/
+/   library #6#9#5 is not on disk #1
+.skip to eoj
+=go
+.time
+.log
+.use #6#9#5 on #1 for sys2 shar
+.use #6#9z#0 on #1 sys0
+.use @scr#i  on #s sys1
+.run p.xclprp
+.skip to eoj if 0 ne #c
+.use @scr#i on #s sys0
+.skip to lib
+=nolib
+.time
+.log
+.use #6#9z#0 on #1 sys0
+=lib
+.use @lst#i on #s sys1
+.run p.xtrace
+.skip to eoj if 0 ne #c
+.use @lst#i on #s for sys0
+.use @scr#i on #s for sys1
+.fspec @scra#i on #s 8=size
+.skip 1 if 0 ne #8
+.new @scra#i on #s 'a' 1
+.use @scra#i on #s for sys15
+.run p.xccomd
+.skip 2 if #c=0
+/****    cpl errors on !! #0 !!
+s.txtz
+.use @scr#i on #s for sys1
+.use @scre#i on #s for sys2
+.skip 2 if lst ne #2
+.use @lst#i on #s for sys3
+.skip 1
+.use #2 for sys3
+.use dummy for sys4
+.seta upsi=0
+.skip 1 if xref ne #4
+.use @scrb#i on #s for sys4
+.run p.xassm
+.skip to lnk if #c=0
+/****   assm errors on !! #0 !!
+.skip 3 if lst ne #2
+.use @lst#i on #s for sys0
+.use crt#v for sys1
+.run s.xscan
+s.txtz
+=lnk
+.seta upsi=0
+.skip to go if prt0 eq #2
+.skip to go if prt1 eq #2
+.skip to go if prt2 eq #2
+.skip to go if prt3 eq #2
+.skip to go if prt4 eq #2
+.skip to go if prt5 eq #2
+.skip to go if prt6 eq #2
+.skip to go if prtq eq #2
+.skip to go if prtr eq #2
+.use crt#v for syslog
+.skip 4
+=go
+.use #2 for syslog
+.run s.xhead
+.log
+.fspec #6#9x#0 on #1 7=type,8=size
+.skip 2 if #8 eq 0
+.skip 2 if #7 eq e
+.del #6#9x#0 #1
+.new #6#9x#0 on #1 'e' 4s fsi=4s
+.use #6#9x#0 on #1 for sys1
+.use @scre#i on #s for sys2
+.use p.aplib6 on #d for sys3 shar
+.use p.oslib6 on #d for sys4 shar
+.use p.hicore on #d for sys5 shar
+.run p.xlink
+inc
+go
+go
+inp 3
+go
+go
+go
+log
+end
+=eoj
+.end
+.setc 9=''
+.use crt#v for syslog
+s.con
+*   calling seq: tracpl (file) (disk) (print dev) (xref opt) (lib opt)
+* re-written to correct bugs...4-21-80     poole
+

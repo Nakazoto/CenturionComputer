@@ -1,0 +1,225 @@
+.nolog
+.notime
+.seta 0=100
+.seta 1=1
+.run s.xeject
+/==============================================================================
+/                            memorial gift system
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - enter/update code master file
+/                    2 - print code master file
+/
+/                    3 - enter/update memorial name file
+/                    4 - print memorial name file
+/
+/                    5 - enter memorial transactions
+/                    6 - print memorial transaction file
+/                    7 - post memorial transactions
+/
+/                    8 - memorial master file menu
+/
+/                    9 - year end clearing
+/
+/                   98 - change printer
+/                   99 - end of processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 1 if 99 ne #9
+s.con
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 10 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+.use mn#0e  on #1 for sys0 shar
+.use mn.mnsm03 on #d for sys1 shar
+.setc 4 eq mn#0e
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr 0
+=opt2
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm03 on #d for sys0 shar
+.use mn#0e  on #1 for sys1 shar
+.use mn#0e  on #1 for sys3 shar
+.use mn#0f  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0f  on #1 for sys1 shar
+.use mn#0f  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  8
+key=(5,4,bi),/*
+.end
+.use mn.mnrm03 on #d for sys0 shar
+.use mn#0e  on #1 for sys1
+.use mn#0f  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt3
+.use mn#0c  on #1 for sys0 shar
+.use mn.mnsm02 on #d for sys1 shar
+.setc 4 eq mn#0c
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr 0
+=opt4
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm02 on #d for sys0 shar
+.use mn#0c  on #1 for sys1 shar
+.use mn#0c  on #1 for sys3 shar
+.use mn#0d  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 2 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0d  on #1 for sys1 shar
+.use mn#0d  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+/
+/  do you want the memorial name file in alphabetic order - y/n?
+/
+.enter 9
+.skip to alpha if y eq #9
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  38
+key=(5,4,bi),/*
+.end
+.skip to report
+=alpha
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=38
+key=(9,30,ch,5,4,bi),/*
+.end
+=report
+.use mn.mnrm02 on #d for sys0 shar
+.use mn#0c  on #1 for sys1
+.use mn#0d  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt5
+.use mn#0g  on #1 for sys0 shar
+.use mn.mnsm04 on #d for sys1 shar
+.use mn#0c  on #1 for sys2 shar
+.use mn#0e  on #1 for sys3 shar
+.use mn#0a on #1 for sys4 shar
+.setc 4 eq mn#0g
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr 0
+=opt6
+.use mn#0g  on #1 for sys1 shar
+.use mn#0g  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+inpmod=(,xaisrt)
+print=no,filtyp=c,input=1,work=4,output=inp
+recsiz=194
+key=(191,4,bi),/*
+.end
+.use mn.mnrm04 on #d for sys0 shar
+.use mn#0g  on #1 for sys1
+.use mn#0a  on #1 for sys2 shar
+.use mn#0c  on #1 for sys3 shar
+.use mn#0e  on #1 for sys4 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt7
+* post to master file
+/
+/     do you want to post the transactions to the master file - y/n?
+/
+.enter 9
+.skipr 0 if y ne #9
+.use mn.mnpm01 on #d for sys0 shar
+.use mn#0g  on #1 for sys1
+.use mn#0a  on #1 for sys2
+.use crt#v for sys10
+.run asmlib.xpost  on #s
+.end
+.skipr 0
+=opt8
+mn.mnsub1
+=opt9
+/
+/  this option will initialize the memorial files.
+/  please complete all printing of reports for the year
+/  before calling this option.
+/  do you want to continue - y/n?
+/
+.enter 9
+.skipr 0 if y ne #9
+*memorial name file
+.fspec mn#0c on #1 8=size
+.del mn#0c on #1
+.new mn#0c on #1 'i' #8s recsiz=247 keylen=4 paddng=10
+.end
+*memorial transaction file
+.fspec mn#0g on #1 8=size
+.del mn#0g on #1
+.new mn#0g on #1 'c' #8s
+.end
+*memorial master file
+.fspec mn#0a on #1 8=size
+.del mn#0a on #1
+.new mn#0a on #1 'i' #8s recsiz=190 keylen=4 paddng=10
+.end
+.skipr 0
+
+
+
+

@@ -1,0 +1,50 @@
+:132: 58:  0:
+:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:data:
+:               8:s:s:
+:              27:l:first united methodist church:
+:              75:l:page:
+:              79:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              33:s:c:
+:::
+:h:  0:  1:     2:l:chrm33:
+:::
+:h:  0:  0:     2:l:member:
+:               9:l:family:
+:              19:l:name:
+:              44:l:family name:
+:              80:l:pledge:
+:              90:l:affiliation:
+:::
+:h:  0:  1:     2:l:number:
+:               9:l:number:
+:              82:l:code:
+:              93:l:code:
+:::
+:d:  0:  0:     3:f:   1:0:
+:              10:f:   2:0:
+:              17:f:   7:0:
+:              44:f:   8:0:
+:              82:f:   5:0:
+:              95:f:   4:0:
+:             100:s:r:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+

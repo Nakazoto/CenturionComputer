@@ -1,0 +1,94 @@
+.job rrdet
+*   generate g/l details from rap-e register output
+.use rr#0a on #1 sys0
+.use gl#0a on #1 sys1
+.fspec glscr#i on #1 7=size
+.skip 1 if 0 ne #7
+.new glscr#i on #1 'b' 1
+.fspec rv#0r on #1 7=size
+.skip to rp if 0 eq #7
+.fspec rp#0r on #1 7=size
+.skip to dupkey if 0 ne #7
+.use rv#0r on #1 sys3
+.skip to go
+=rp
+.use rp#0r on #1 sys3
+=go
+.use glscr#i on #1 sys2
+.run rr.xrr510 
+.skip to err if 0 ne #c
+.log
+*
+*   standby for sort
+*
+.nolog
+.seta upsi=0 cc=0
+.use glscr#i on #1 sys0 shar
+.use glscr#i on #1 sys1 shar
+.use sort1#i on #s sys2
+.use sort2#i on #s sys3
+.use sort3#i on #s sys4
+.use sort4#i on #s sys5
+.run s.dsort
+print=no,input=1,recsiz=76,filtyp=b
+work=4,output=inp,key=(1,6,bi,7,6,bi,29,4,bi)
+/*
+=summ
+.use rr#0a on #1 sys0 shar
+.use gl#0a on #1 sys1 shar
+.use glscr#i on #1 sys2
+.use gl#0e on #1 sys3
+.run rr.xrr520
+.skip to fin if #c eq 0
+.fspec gle#i on #1 7=size
+.skip 1 if #7 eq 0
+.del gle#i on #1
+.use gl#0a on #1 sys0 shar
+.seta cc=0
+.use gl#0e on #1 sys1
+.run  rr.xrr525
+.fspec gl#0e on #1 7=size
+.seta 7=(#7/16)*125/100+1
+.vspec #1 6=avail
+.seta 6=#6/16
+.skip to noroom if #6 lt #7
+.new gle#i on #1 'c' #7
+.use gl#0e on #1 sys0
+.use gle#i on #1 sys1
+.run s.xcoput
+.skip to err1 if #c ne 0
+.del gl#0e on #1
+.nam gle#i on #1 gl#0e
+.skipr to summ
+=dupkey
+.log
+*   duplicate key numbers for payroll files are not allowed on the same disk.
+*   rp#0r and rv#0r are both on disk#1 and have the same key number.
+*   newline to acknowledge 
+.nolog
+.pause
+.skip to err1
+=err
+.skip to err1 if #c ne 50
+.log
+*   newline to acknowledge
+.nolog
+.pause
+=fin
+.fspec rrmenu on #d 7=size
+.skip to err1 if 0 eq #7
+rrmenu
+=noroom
+.log
+*
+*   insufficient disk space available for expand
+*
+.nolog
+=err1
+.end
+s.con
+*   1/20/78..initial release to qc..ns
+*   8/11/78...added vspec checking..ns
+*   02/27/80...modified for cpu-6...kag
+*   04-03-80...mod to use either rp or rv files and to disallow duplicate keys...ok
+

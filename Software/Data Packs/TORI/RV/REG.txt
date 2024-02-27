@@ -1,0 +1,76 @@
+.job reg
+*
+***   random access payroll register
+*
+.seta upsi eq 0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.use rv#0d on #1 for sys3
+.use @scrb#i on #s for sys4
+.fspec RV.rvfwtable on #D 8=size
+.skip 1 if 0 ne #8
+.new RV.rvfwtable on #D 'c' 1
+.run rv.xrv515
+.skip to reg if #c = 110
+.skip to err1 if #c eq 100
+.seta upsi = 0
+.use @scrb#i on #s for sys0 shar
+.use @scrb#i on #s for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=52
+work=4,output=input,key=(5,4,bi,13,4,bi)
+/*
+=reg
+.seta upsi eq 0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys2
+.use rv#0r on #1 for sys3
+.use @scrb#i on #s for sys4
+.use RV.rvfwtable on #D for sys5 shar
+.run rv.xrv520
+.skip to eoj if #c = 110
+.skip to err2 if #c = 120
+.skip to err1 if #c ne 0
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.use crt#v for syslst
+.skip to go if #2 eq type
+.skip to go if #2 eq crt
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0
+.use rv#0r on #1 for sys1
+.use @scrc#i on #s for sys2
+.run rv.xrv529
+.skip to err2 if #c ne 0
+.skip to eoj
+=err1
+.log
+*
+***   please call your dealer for assistance
+*
+.nolog
+.skip to err2
+=eoj
+rvmenu
+=err2
+.end
+s.con
+*   created  04-18-77  from rpsj20...klf
+*   revised  11-16-77 for directory "s"...klf
+*   added menu recall 10-24-78...jwb
+*   modified to use #s for sort and scratch files 11-12-79...jwb
+*   changed names to rv  02-26-80...ok
+*   added #c = 120 10-20-81...dpy
+*   changed to sort transaction code within employee # 07/05/84...jwb
+*   added file rvfwtable for fwt tables 11/28/84...jwb
+*   CHANGED RVFWTABLE TO RV.RVFWTABLE ON #D  12/21/88...SCP
+
+
+
+

@@ -1,0 +1,55 @@
+.job newdisk
+.nolog
+.notime
+/   enter disk number
+.enter 0
+.vspec #0 7=astatus 8=gstatus
+.skip to err1 if 0 ne #7
+.skip to err2 if 0 ne #8
+/   enter new disk name
+.enter 1
+=rea
+/   ready?  (y/n)
+.enter 9
+.skip to eoj if n eq #9
+.skipr to rea if y ne #9
+.format #0
+.wiplt #0
+.clr #0, vol=#1
+.vspec #0 8=used 9=avail
+.seta 8=(#8+#9)/16
+.skip to hawk if 800 lt #8
+.seta 8=16,9=8
+.skip to doit
+=hawk
+.skip to cmd if 2000 lt #8
+.seta 8=32,9=16
+.skip to doit
+=cmd
+.skip to f24m if 3000 lt #8
+.seta 8=96,9=48
+.skip to doit
+=f24m
+.skip to f32m if 4000 lt #8
+.seta 8=128,9=64
+.skip to doit
+=f32m
+.skip to f40m if 5000 lt #8
+.seta 8=160,9=80
+.skip to doit
+=f40m
+.seta 8=192,9=96
+=doit
+.clr #0 vol=#1 dsize=#8s usize=#8s fsize=#9s
+.guard #0
+.skip to eoj
+=err1
+/   disk #0 is assigned
+.skip to eoj
+=err2
+/   disk #0 is guarded
+=eoj
+.end
+s.con
+*   05/24/79...created for cpu6...klf
+

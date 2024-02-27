@@ -1,0 +1,33 @@
+:college student master file:2: 0:16: 5:n: 4:
+: 5: 4:college number..:k:
+: 5:40:membership #....:n: 4: 0: 6: 1:0:*: 0:1:
+: 7: 9:name............:m:
+: 7:27:name............:e:    6:16:
+: 8: 4:alpha sort......:e:    7: 8:
+: 9: 9:family name.....:m:
+: 9:27:family name.....:e:    8:16:
+:11: 4:mailing code....:c: 1:    0:
+:12: 4:college addr 1..:c:25:    0:
+:13: 4:college addr 2..:c:25:    0:
+:14: 4:college addr 3..:c:25:    0:
+:15: 4:zip code........:c:10:    0:
+:17: 4:college or univ.:c:30:    0:
+:18: 4:yr high sch grad:n: 2: 0: 0:
+:20: 4:description.....:c:30:    0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

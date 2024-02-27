@@ -1,0 +1,381 @@
+.nolog
+.notime
+/
+/
+/
+/
+/
+/
+/
+/   * * *   e n t e r    p a s s w o r d   * * *
+/
+/
+/
+/
+/
+/
+/
+.enter 3
+.skip 2 if #3 eq dollar
+/   * * *   i n v a l i d    p a s s w o r d  * * *
+s.con
+=again
+.run s.xeject
+/==============================================================================
+/                          statement information
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - print statements
+/
+/                    2 - file balancing menu
+/
+/                    3 - enter/update weekly contribution corrections
+/                    4 - print weekly contribution corrections journal
+/                    5 - print weekly contribution corrections summary
+/                    6 - post weekly contribution corrections
+/
+/                    7 - enter/update year-to-date contribution corrections
+/                    8 - print year-to-date contribution corrections
+/                    9 - print year-to-date contribution correction summary
+/                   10 - post year-to-date contribution corrections
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  11 le #9
+.skip to opt#9
+.skipr to again
+=chg
+/  enter printer or crt
+.enter 2
+.skipr to again
+=opt1
+* print statements
+/
+/  do you want to print statements now - y/n?
+/
+.enter 9
+.skipr to again if y ne #9
+/
+/  do you want to print statements for select members - y/n?
+/
+.enter 9
+.skip to range if y ne #9
+/
+/  you may enter up to 10 membership numbers for selection
+/  newline to continue
+.pause
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm05 on 1 for sys0 shar
+.use pl#0k on 1 for sys1 shar
+.use pl#0k on 1 for sys3 shar
+.use pl#0l on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter membership number
+in 1#4enter membership number
+in 2#4enter membership number
+in 3#4enter membership number
+in 4#4enter membership number
+in 5#4enter membership number
+in 6#4enter membership number
+in 7#4enter membership number
+in 8#4enter membership number
+in 9#4enter membership number
+data 2 10 9 11
+select 2 ne "0" and (2 eq #0 or 2 eq #1 or 2 eq #2 or 2 eq #3 or 2 eq #4 or
+2 eq #5 or 2 eq #6 or 2 eq #7 or 2 eq #8 or 2 eq #9)
+/*
+.end
+.seta upsi=0
+.skip 4 if  0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.skip to sort4
+=range
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm05 on 1 for sys0 shar
+.use pl#0k on 1 for sys1 shar
+.use pl#0k on 1 for sys3 shar
+.use pl#0l on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning membership number
+skip 4 if #0 le "0"
+in 1#4enter ending membership number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#4 "9999"
+data 2 10 9 11
+select 2 ge #0 and 2 le #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condtion #c
+/  newline to return to menu
+.pause
+.skipr to again
+=sort4
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 20t
+.new sort3#i on 1 'b' 25t
+.new sort4#i on 1 'b' 20t
+.use pl#0l on 1 for sys1 shar
+.use pl#0l on 1 for sys0 shar
+.use sort1#i on 1 for sys2
+.use sort2#i on 1 for sys3
+.use sort3#i on 1 for sys4
+.use sort4#i on 1 for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=20
+key=(5,4,bi,9,4,bi,13,4,bi,17,4,bi),/*
+.end
+=print
+/
+/  place statement paper on printer
+/  newline to continue
+.pause
+.use pl.plrm07 on 1 for sys0 shar
+.use pl#0k on 1 for sys1
+.use ch#0a on 1 for sys2 shar
+.use pl#0e on 1 for sys3 shar
+.use pl#0v on 1 for sys4 shar
+.use pl#0l on 1 for sys5 shar
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+/
+/  printing quarterly statement details on wide paper
+/  newline to continue
+.pause
+.use pl.plrm16 on 1 for sys0 shar
+.use pl#0k on 1 for sys1
+.use ch#0a on 1 for sys2 shar
+.use pl#0e on 1 for sys3 shar
+.use pl#0l on 1 for sys5 shar
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt2
+pl.plsub5 on 1
+=opt3
+* enter/update weekly contribution corrections
+/
+/     are you correcting contributions posted in the current quarter - y/n?
+/
+.enter 9
+.skip to next if y eq #9
+/
+/     if you are correcting contributions posted in a previous quarter,
+/     you need to go to option 7 - enter/update ytd contribution corrections.
+/     newline to acknowledge.
+/
+.pause
+.skipr to again
+=next
+/
+/    remember, you must use the same date and fund when you are making
+/    a correction to a weekly contribution.
+/    newline to acknowledge.
+/
+.pause
+.use pl#0x  on 1 for sys0 shar
+.use pl.plsm14 on 1 for sys1 shar
+.use pl#0y  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0i on 1 for sys4 shar
+.setc 4 eq pl#0x
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr to again
+=opt4
+* print weekly contributions correction journal
+.use pl.plrm09 on 1 for sys0 shar
+.use pl#0x  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt5
+* print weekly contribution corrections journal summary
+.use pl#0x on 1 for sys1 shar
+.use pl#0x on 1 for sys0 shar
+.use sort1#i on 1 for sys2
+.use sort2#i on 1 for sys3
+.use sort3#i on 1 for sys4
+.use sort4#i on 1 for sys5
+.run s.dsort
+inpmod=(,xaisrt)
+print=no,filtyp=c,input=1,work=4,output=inp
+recsiz= 64
+key=(9,4,bi,39,26,ch),/*
+.end
+.use pl.plrm13 on 1 for sys0 shar
+.use pl#0x on 1 for sys1
+.use pl#0e on 1 for sys2 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+* post weekly transactions
+=opt6
+* post weekly corrections to pledge master
+/
+/  are you ready to post the weekly contribution corrections - y/n?
+/
+.enter 9
+.skipr to again if y ne #9
+.use pl.plpm05 on 1 for sys0 shar
+.use pl#0x  on 1 for sys1 shar
+.use pl#0i  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+* post weekly corrections to fund master
+.use pl.plpm10 on 1 for sys0 shar
+.use pl#0x on 1 for sys1 shar
+.use pl#0e on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+* post weekly corrections to quarterly statement file
+.use pl.plpm06 on 1 for sys0 shar
+.use pl#0x  on 1 for sys1 shar
+.use pl#0k  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+.skipr to again
+=opt7
+* enter/update year-to-date contribution corrections
+/  you are entering the year-to-date contribution corrections.
+/  remember, you must use the same date and fund code as the year-to-date
+/  contribution.
+/  newline to acknowledge
+/
+.pause
+.fspec pl#0r on 1 4=size
+.skip to ok if 0 ne #4
+.new pl#0r on 1 'c' 10t
+=ok
+.use pl#0r on 1 for sys0 shar
+.use pl.plsm10 on 1 for sys1 shar
+.use pl#0y on 1 for sys2 shar
+.use pl#0e on 1 for sys3 shar
+.use pl#0i on 1 for sys4 shar
+.setc 4 eq pl#0r
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr to again
+=opt8
+* print year-to-date contribution corrections
+.use pl.plrm05 on 1 for sys0 shar
+.use pl#0r on 1 for sys1 shar
+.use ch#0a on 1 for sys2 shar
+.use pl#0e on 1 for sys3 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt9
+* print year-to-date contribution corrections summary
+.use pl#0r on 1 for sys1 shar
+.use pl#0r on 1 for sys0 shar
+.use sort1#i on 1 for sys2
+.use sort2#i on 1 for sys3
+.use sort3#i on 1 for sys4
+.use sort4#i on 1 for sys5
+.run s.dsort
+inpmod=(,xaisrt)
+print=no,filtyp=c,input=1,work=4,output=inp
+recsiz=64
+key=(9,4,bi,39,26,ch),/*
+.end
+.use pl.plrm08 on 1 for sys0 shar
+.use pl#0r on 1 for sys1
+.use pl#0e on 1 for sys2 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt10
+/
+/  are you ready to post the ytd contribution corrections - y/n?
+/
+.enter 9
+.skipr to again if y ne #9
+* post year-to-date contribution corrections
+* post ytd contribution corrections to fund master
+.use pl.plpm10 on 1 for sys0 shar
+.use pl#0r on 1 for sys1 shar
+.use pl#0e on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+* post ytd contribution corrections to pledge master
+.use pl.plpm05 on 1 for sys0 shar
+.use pl#0r on 1 for sys1 shar
+.use pl#0i on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+* post ytd contribution corrections to quarterly statements
+.use pl.plpm06 on 1 for sys0 shar
+.use pl#0r on 1 for sys1 shar
+.use pl#0k on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+.del pl#0r 1
+.end
+.skipr to again
+=opt97
+pl.pledge
+
+
+
+
+
+
+
+
+

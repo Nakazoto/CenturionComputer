@@ -1,0 +1,56 @@
+.job dump
+.nolog
+.notime
+.seta cc=0
+.sta
+/   enter source disk
+.enter 9
+/   enter target disk
+.enter 8
+/   do you want to check volume dates? (y/n)
+.enter 7
+/   do you want to check volume labels? (y/n)
+.enter 6
+/   enter print device name for copy/error log
+.enter 3
+/   ready? (y/n)
+.enter 2
+.skip to eoj if y ne #2
+.skip 1 if crt ne #3
+.setc 3 = crt#v
+.skip to go if lst ne #3
+.log
+.use @lst#i on #s for syslog
+.skip 3
+=go
+.log
+.use #3 for syslog
+.sta
+.vspec #8 5=vol
+.skip 1 if 0 lt #5
+.clr #8 vol=reorg
+.reorg from #9 to #8 date=#7 vol=#6
+.seta 2=#c
+.use crt#v for syslog
+.nolog
+.skip to ok if 0 eq #2
+/
+/**   copy error!  files have been lost
+/
+=ok
+/   do you want to guard the target disk (#8)? (y/n)
+.enter 1
+.skip 1 if n eq #1
+.guard #8
+/   do you want to noguard the source disk (#9)? (y/n)
+.enter 1
+.skip 1 if n eq #1
+.noguard #9
+=eoj
+.log
+.end
+.use crt#v for syslog
+s.con
+*   03/26/79...converted for cpu6...klf
+*   07/05/79...mod for "crt" device response; added notime...klf
+

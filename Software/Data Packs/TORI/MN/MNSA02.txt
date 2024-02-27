@@ -1,0 +1,29 @@
+:memorial name file:2: 0:16: 5:n: 4:
+: 5: 2:memorial number:k:
+: 6: 2:memorial name...:c:30:    0:
+: 7: 2:date of death...:n: 6: 0:32:
+: 9: 2:acknowledge name:c:30:    0:
+:10: 2:acknowledge add1:c:30:    0:
+:11: 2:acknowledge add2:c:30:    0:
+:12: 2:acknowledge zip.:c:10:    0:
+:14: 2:acknowledge name:c:30:    0:
+:15: 2:acknowledge add1:c:30:    0:
+:16: 2:acknowledge add2:c:30:    0:
+:17: 2:acknowledge zip.:c:10:    0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

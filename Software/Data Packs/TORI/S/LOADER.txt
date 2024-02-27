@@ -1,0 +1,22 @@
+.job loader
+.nolog
+/
+/**   write disk loader track
+/
+.nolog
+/     enter disk number
+.enter upsi
+.vspec #u 7=used, 8=avail
+.seta 7 = #7 + #8
+.skip to atn if 0 ge #7
+.wiplt #u
+.skip to eoj
+=atn
+/
+/     that disk is not online
+/
+=eoj
+.end
+s.con
+*   03/26/79...rewritten for cpu6...klf
+

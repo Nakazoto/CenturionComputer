@@ -1,0 +1,135 @@
+.job apdept
+.seta upsi=2
+.run s.xopt
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if #2 eq type
+.seta upsi = 2
+.skip to go if #2 eq crt
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use ap#0d on #1 sys0 shar
+.use ap#0e on #1 sys1
+.use ap#0a on #1 sys2 shar
+.run ap.xap280
+.skip to ok if #c eq 0
+.skip to err2 if #c ne 110
+.log
+*
+*   standby while department file is expanded
+*
+.nolog
+.fspec ap#0d on #1 7=use 8=size
+.skip to go if 1 eq #7
+.log
+*
+*   department master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition expand department master file ? (y/n)
+*
+.nolog
+.enter 9
+.skip to recall if y eq #9
+=go
+.seta 8=#8/16
+.seta 8=#8*125/100+1
+.vspec #1 7=avail
+.seta 7=#7/16
+.skip to err if #7 lt #8
+.new apd#0 on #1 'c' #8t
+.seta upsi=0
+.use ap#0d on #1 for sys0
+.use ap#0e on #1 for sys1
+.run s.xwtag
+.seta upsi = 0
+.use apd#0 on #1 for sys0
+.run s.xrint
+recsiz=29,paddng=25
+/*
+.use ap#0d on #1 for sys0
+.use apd#0 on #1 for sys1
+.use ap#0e on #1 for sys2
+.run ap.xap282
+.skip to err2 if #c ne 0
+.del ap#0d on #1
+.nam apd#0 on #1 ap#0d
+.skip to recall
+=ok
+.skip to recall if #u eq 0
+.skip to sort if #u eq 1
+.fspec ap#0d on #1 7=use 8=size
+.skip to go if 1 eq #7
+.log
+*
+*   department master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition drop deleted departments ? (y/n)
+*
+.nolog
+.enter 9
+.skip to recall if y eq #9
+=go
+.vspec #1 7=contig
+.seta 7=#7/16     8=#8/16
+.skip to err if #7 lt #8
+.new apd#0 on #1 'c' #8
+.seta upsi=0
+.use ap#0d on #1 for sys0
+.use ap#0e on #1 for sys1
+.run s.xwtag
+.seta upsi = 0
+.use apd#0 on #1 for sys0
+.run s.xrint
+recsiz=29,paddng=25
+/*
+.use ap#0d on #1 for sys0
+.use apd#0 on #1 for sys1
+.use ap#0e on #1 for sys2
+.run ap.xap282
+.skip to err2 if #c ne 0
+.del ap#0d on #1
+.nam apd#0 on #1 to ap#0d
+=sort
+.seta upsi=0
+.use ap#0d on #1 for sys0
+.use ap#0e on #1 for sys1
+.run s.xwtag
+.use ap#0e on #1 for sys0 shar
+.use ap#0e on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=inp,key=(1,4,bi)
+/*
+=recall
+apmenu
+=err
+.log
+*
+*   insufficient disk space to expand department master file
+*
+.nolog
+=err2
+.end
+s.con
+*  08-07-78...initial release...seh
+*  11-30-79...modified for cpu-6...kag
+*
+

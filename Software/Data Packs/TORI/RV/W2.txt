@@ -1,0 +1,25 @@
+.job w2
+*
+***   print w-2's / 1099's
+*
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.use crt#v for syslst
+.skip to go if #2 eq type
+.skip to go if #2 eq crt
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.use zipcod on #1 for sys2 shar
+.run rv.xrv582
+.skip to err if #c ne 0
+rvmenu
+=err
+.end
+s.con
+*   created  11/16/77 from rpsj82...klf
+*   added menu recall 10-24-78...jwb
+*   changed all names to "rv" 02-27-80...ok
+

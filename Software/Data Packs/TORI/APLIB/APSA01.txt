@@ -1,0 +1,28 @@
+:accounts payable master file:1:16: 4: 5:
+:vendor number:k:
+:vendor name:c:           25:    0:
+:addr1:c:                 25:    0:
+:addr2:c:                 25:    0:
+:addr3:c:                 25:    0:
+:ytd gross:n:              7: 2: 0:
+:ytd discount:n:           7: 2: 0:
+:territory:n:              3: 0: 0:
+:category:n:               3: 0: 0:
+:filler:c:                 6: 0: 0:
+::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,51 @@
+: 1: 0:
+:132: 57:  2:
+:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:date:
+:               8:s:s:
+:              52:l:first united methodist church:
+:             121:l:page:
+:             128:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              55:l:pledge method of payment file:
+:::
+:h:  0:  0:     2:l:plrm21:
+:              56:s:c:
+:::
+:h:  1:  1:     2:l:member:
+:              10:l:name:
+:              38:l:pledge:
+:              48:l:general fd:
+:              64:l:building fd:
+:              80:l:church dvlp:
+:              96:l:description:
+:::
+:d:  0:  0:     4:f:   1:0:
+:              10:f:  18:0:
+:              40:f:   5:1:
+:              48:f:  11:0:
+:              50:f:  12:0:
+:              64:f:  13:0:
+:              66:f:  14:0:
+:              80:f:  15:0:
+:              82:f:  16:0:
+:              96:f:  17:0:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+

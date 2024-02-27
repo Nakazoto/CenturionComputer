@@ -1,0 +1,26 @@
+:enter/update the church development pledge method of payment transaction file:2: 0:16: 2:
+: 5: 2:membership #....:n: 4: 0: 4:
+: 5:40:name............:e:    6:16:
+: 6:40:family name.....:e:    8:16:
+: 7:40:address.........:e:    9:16:
+: 8:40:address.........:e:   10:16:
+: 9:40:address.........:e:   11:16:
+: 9:66:zip code........:e:   12:16:
+:11: 2:church develop..:c: 1:    0:
+:11:40:cdf amount......:n: 8: 2: 0:
+:-1:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

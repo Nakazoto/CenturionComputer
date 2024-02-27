@@ -1,0 +1,33 @@
+.job start
+*
+***   allocate resources
+*
+.nolog
+.skip to eoj if no eq #0
+.skip to eoj if no eq #1
+.skip to eoj if 0 gt #0
+.skip 1 if 9 ge #0
+.setc 1=#0 0=4
+.seta 7 = 1
+.fspec @spool on #7 8=size
+.skip to go if #8 ne 0
+.seta 7 = 0
+.fspec @spool on #7 8=size
+.skip to go if #8 ne 0
+/     spooler file "@spool" is not on disk 0 or disk 1
+/     spooler will not be started
+.skip to eoj
+=go
+* the following line must be used for all 6.3 and earlier users
+*.load spool @spool #7 prtq
+.start p#0 s.unspool @spool #7 #1
+/     spooler started using "@spool" on disk #7
+=eoj
+.end
+.log
+.sta
+.use crt#v for sysrdr
+*   03/26/79...rewritten for cpu6...klf
+*   12/15/82...removed ".load spool" for 6.4 and latter users...rrs
+
+

@@ -1,0 +1,37 @@
+AVAILABLE:    5
+AVAILABLE:    5
+AVAILABLE:    5
+DISK  1-SYSTEM 
+DISK  1-SYSTEM 
+DISK  1-SYSTEM 
+GL100A     C   
+GL186A     C   
+GL200A     C   
+GL400A     C   
+GL500A     C   
+GL600A     C   
+LISTED:        
+LISTED:        
+LISTED:        
+NAM       TYP T
+NAM       TYP T
+NAM       TYP T
+USED:        27
+USED:        27
+USED:        27
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

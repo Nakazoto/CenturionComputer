@@ -1,0 +1,40 @@
+:weekly transaction file:2: 0:16: 2:
+: 3: 4:membership #....:n: 4: 0: 4: 1:
+: 3:40:name............:e: 1:18:16:
+: 5:40:general fund....:m:
+: 5:57:general fund....:e: 1:11:16:
+: 5:60:gf amount.......:e: 1:12:16:
+: 6:40:building fund...:m:
+: 6:57:building fund...:e: 1:13:16:
+: 6:60:bf amount.......:e: 1:14:16:
+: 7:40:church develop..:m:
+: 7:57:church develop..:e: 1:15:16:
+: 7:60:cdf amount......:e: 1:16:16:
+: 8:40:description.....:e: 1:17:16:
+:10: 4:pledge code(1/0):n: 1: 0: 0:
+:11: 4:fund code.......:n: 2: 0: 4: 2:
+:11:40:fund description:e: 2: 3:16:
+:12: 4:sort sequence...:e: 2: 2: 8:
+: 0:pledge master #.:n:    5: 0: 6: 3: 1:0:*: 0:10:+:16:0:
+:12:40:pledge balance..:m:
+:12:60:pledge balance..:e: 3:15:16:
+:14: 4:date............:n: 6: 0:33:
+:16: 4:contribution....:n: 8: 2: 0:
+:17: 4:pledged contrib.:n:    8: 2:10:21:0:*:13:0:
+: 0:statement key...:n:   12: 0:10: 1:0:*: 0:100:+:14:0:*: 0:1000000:+:20:0:
+: 0:alpha sort......:e:    1:19: 8:
+:-1:
+
+
+
+
+
+
+
+
+
+
+
+
+
+

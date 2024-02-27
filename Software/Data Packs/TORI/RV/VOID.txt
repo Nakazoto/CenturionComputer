@@ -1,0 +1,81 @@
+.job void
+*
+***   payroll check void (w/o state tax support)
+*
+.fspec rv#0e on #1 8=size
+.skip 1 if #8 ne 0
+.new rv#0e on #1 'c' 1
+.seta upsi eq 0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.use rv#0d on #1 for sys3
+.use @scrb#i on #s for sys4
+.run rv.xrv515
+.skip to void if #c = 110
+.skip to err1 if #c eq 100
+.seta upsi = 0
+.use @scrb#i on #s for sys0 shar
+.use @scrb#i on #s for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=52
+work=4,output=input,key=(5,4,bi)
+/*
+=void
+.seta upsi eq 0
+.use rv#0a on #1 for sys0
+.use rv#0e on #1 for sys1
+.use rv#0r on #1 for sys2
+.use @scrb#i on #s for sys3
+.use sort1#i on #s for sys4
+.run rv.xrv539
+.skip to eoj if 0 eq #c
+.skip to err if 100 eq #c
+=exp
+.log
+*
+***   adjustment data file expansion
+*
+.nolog
+.seta cc = 0
+.fspec rv#0e on #1 8 = size, 9 = use
+.skip to go if 1 eq #9
+.log
+*
+*   adjustment data file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*   did other partition expand the adjustment data file? (y/n)
+.nolog
+.enter 9
+.log
+.skip to recall if y eq #9
+=go
+.del rv#0e on #1
+.seta 8 = (#8 / 16) * 110 / 100 + 1
+.new rv#0e on #1 'c' #8
+.skipr to void
+=recall
+rv.void
+=eoj
+rvmenu
+=err
+.log
+*
+***   abnormal ending - please consult payroll manual
+*
+.nolog
+.end
+s.con
+*   created  06-01-77...klf
+*   revised  11-16-77  for directory "s"...klf
+*   added menu recall 10-31-78...jwb
+*   modified to use #s for sort and scratch files 11-12-79...jwb
+*   mod for cpu-6, changed all names to "rv" 02-27-80...ok
+

@@ -1,0 +1,196 @@
+.nolog
+.notime
+=again
+.run s.xeject
+/==============================================================================
+/                    new pledges or adjustments during the year
+/                       key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - enter/update new pledge/adjustment tx during the year
+/                    2 - print new pledge/adjustment transaction edit
+/
+/                    3 - post pledge information
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 4  le #9
+.skip to opt#9
+.skipr to again
+=chg
+/  enter printer or crt
+.enter 2
+.skipr to again
+=opt1
+* enter/update new pledge or adjustment transactions during the year
+/
+/     the new pledge/adjustment transactions should be dated the first
+/     day of the year (i.e. 010185).
+/     the file size should be the number of pledges you are adding or
+/     adjusting.
+/     newline to continue
+.pause
+.fspec pl#0a on #1 4=size
+.skip to ok if 0 ne #4
+.use pl.plsm03 on #1 for sys0 shar
+.run asmlib.xinitl
+.end
+.skip 4 if 0 eq #c
+/  file pl#0a cannot be initialized - condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.new pl#0a on #1 'c' #9
+.end
+=ok
+.use pl#0a  on #1 for sys0 shar
+.use pl.plsm03 on #d for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.use pl#0e  on #1 for sys3 shar
+.setc 4 eq pl#0a
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr to again
+=opt2
+* print new pledge or adjustment transaction edit
+.use pl#0a  on #1 for sys1 shar
+.use pl#0a  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+inpmod=(,xaisrt)
+print=no,filtyp=c,input=1,work=4,output=inp
+recsiz= 64
+key=(9,4,bi,35,26,ch),/*
+.end
+.use pl.plrm03 on #d for sys0 shar
+.use pl#0a  on #1 for sys1
+.use ch#0a  on #1 for sys2 shar
+.use pl#0e  on #1 for sys3 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr to again
+=opt3
+* post pledge information
+/
+/  this option posts new pledges and adjustments received during the year.
+/  are you ready to post the pledge information - y/n?
+/
+.enter 9
+.skipr to again if y ne #9
+/    are you sure - y/n?
+.enter 9
+.skipr to again if y ne #9
+/  enter  first united methodist church and newline 2 times.
+/  newline to acknowledge
+/
+.pause
+* create pledge transaction master file
+.fspec pl#0i on #1 4=size
+.new pl#0o on #1 #4s 'i' recsiz=68 keylen=4 paddng=10
+.use pl#0o on #1 for sys0 shar
+.use pl.plsm12 on #d for sys1 shar
+.use ch#0a on #1 for sys2 shar
+.use pl#0e on #1 for sys3 shar
+.setc 4 eq pl#0o
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+* post new pledges and adjustments to new pledge transaction master
+.use pl.plpm15 on 1 for sys0 shar
+.use pl#0a  on 1 for sys1 shar
+.use pl#0o  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+/  standby for creation of new pledge transaction file
+* add transactions to end of pledge master file
+.seta upsi=0
+.use pl.plsm12 on #d for sys0 shar
+.use pl#0o  on #1 for sys1 shar
+.use pl#0o  on #1 for sys3 shar
+.use pl#0g  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 2 3 4 5 6 7 1 8 9 10
+file tc no mod
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+* post pledge code to church master file
+.use pl.plpm01 on 1 for sys0 shar
+.use pl#0a  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+* post pledge transaction to pledge master
+.use pl.plpm02 on 1 for sys0 shar
+.use pl#0a  on 1 for sys1 shar
+.use pl#0i  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+* post pledge transaction to quarterly statements
+.use pl.plpm03 on 1 for sys0 shar
+.use pl#0a on 1 for sys1 shar
+.use pl#0k on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+.del pl#0o #1
+.del pl#0a #1
+.end
+/
+/     you must add the new pledges and make the adjustments to old pledges
+/     in the pledge method of payment file.
+/     newline to acknowledge.
+/
+.pause
+pl.plsub6 on #d
+=opt97
+pl.pledge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

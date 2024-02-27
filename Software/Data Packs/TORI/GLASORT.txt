@@ -1,0 +1,34 @@
+.job glasort
+.seta upsi=0
+.log
+*   standby while account file is sorted
+.nolog
+.use gl#0a on #1 for sys0
+.use gl#0j on #1 for sys1
+.run s.x?wtag
+.use gl#0j on #1 for sys1
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=10
+work=4,output=inp,key=(1,6,bi)
+/*
+glmenu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

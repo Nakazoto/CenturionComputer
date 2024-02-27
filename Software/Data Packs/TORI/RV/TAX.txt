@@ -1,0 +1,25 @@
+.job tax
+*
+***   random access payroll - print 941-a forms
+*
+.seta upsi=0
+.use dummy for syslst
+.skip to go if #2 eq no
+.use crt#v for syslst
+.skip to go if #2 eq type
+.skip to go if #2 eq crt
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.run rv.xrv581
+.skip to err if #c ne 0
+rvmenu
+=err
+.end
+s.con
+*   created  04-18-77  from rpsj81...klf
+*   revised  11-16-77  for directory "s"...klf
+*   added menu recall 10-24-78...jwb
+*   changed all names to "rv" 02-27-80...ok
+

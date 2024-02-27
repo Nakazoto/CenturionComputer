@@ -1,0 +1,52 @@
+: 2: 0: 9: 0:
+: 84: 58:  0:
+: 2:
+:h:- 1:  0:     1:l::
+:::
+:h:  4:  0:    28:l:first united methodist church:
+:::
+:h:  0:  0:    33:l:72 lake morton drive:
+:::
+:h:  0:  0:    31:l:lakeland, florida  33801:
+:::
+:h:  0:  0:    39:l:686-3163:
+:::
+:h:  4:  0:    10:f:   2:0:
+:              54:s:c:
+:::
+:h:  0:  0:    10:f:   8:1:
+:::
+:h:  0:  0:    10:f:   9:1:
+:::
+:h:  0:  0:    10:f:  10:1:
+:::
+:h:  0:  0:    10:f:  11:1:
+:              40:f:  12:1:
+:::
+:h:  3:  1:     5:l:pledge:
+:::
+:d:  0:  1:     5:f:   3:2:
+:              47:f:  18:0:
+:::
+:t:  2:  0: 1:  5:l:this is a confirmation of your new pledge.  it does not reflect any:
+:::
+:t:  0:  0: 1:  5:l:contributions received toward this new pledge.:
+:::
+:t:  2:  0: 1:  5:l:if this confirmation is not correct or if you have any questions, :
+:::
+:t:  0:- 3: 1:  5:l:please call faye at the church office, 686-3163.:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+

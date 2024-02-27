@@ -1,0 +1,51 @@
+.job apreg
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if no eq #2
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if type eq #2
+.seta upsi = 2
+.skip to err1 if crt eq #2
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.fspec ap#0c on #1 8=size
+.skip 1 if 0 ne #8
+.new ap#0c on #1 'b' 1
+.use ap#0a on #1 for sys0
+.use ap#0q on #1 for sys1
+.use ap#0r on #1 for sys2
+.use ap#0x on #1 for sys3
+.fspec ap#0z on #1 8=size
+.skip 1 if #8 eq 0
+.del ap#0z on #1
+.new ap#0z on #1 'a' 1
+.use ap#0z on #1 for sys4
+.use ap#0c on #1 for sys5
+.run ap.xap250
+.skip to error if #c ne 0
+.skip 2 if #u ne 1
+.del ap#0z on #1
+ap.dmd
+ap.chec
+=err1
+.log
+*   check register must output to hard-copy device
+*   newline to acknowledge
+.nolog
+.pause
+apmenu
+=error
+.end
+s.con
+* 2/25/77...added fspec and skip before new ap according to srn #66 in qcm #15..glg
+* 10/10/77...mod for new print options, removed parm statements, and
+             changed client # to key # and file 'ap' to 'ap#0z'...nw
+*
+* 08/31/78   updated jcl to current standards...seh
+*
+* 11/27/78   added check print file...jwb
+* 12/01/78   added fspec for check print file...jwb
+
+

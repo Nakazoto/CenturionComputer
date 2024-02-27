@@ -1,0 +1,5 @@
+.use #0 on #1 sys0
+.run s.xtdsp
+.end
+s.con
+

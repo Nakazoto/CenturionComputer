@@ -1,0 +1,35 @@
+.job init
+*
+***   random access payroll - vsi file initilization
+*
+.log
+*   enter number of employees expected in master file
+.nolog
+.enter 2
+.seta upsi=0
+.seta 8 = #2/14+1
+.new rv#0a on #1 'i' #8 recsiz=480 keylen=4 paddng=25
+.seta 8 = #2/40+1
+.new rv#0d on #1 'c' #8
+.new rv#0l on #1 'b' 1
+.new rv#0r on #1 'b' 1
+.fspec zipcod on #1 8=size
+.skip to eoj if #8 ne 0
+.seta 8 = #2/400+1
+.new zipcod on #1 'c' #8
+.use zipcod on #1 for sys0
+.run s.xrint
+recsiz=20,paddng=0
+/*
+=eoj
+*
+***   end of payroll file initialization
+*
+rvmenu
+.end
+s.con
+*   created  04-18-77...klf
+*   revised  11-16-77  for directory "s"...klf
+*   added menu recall and entry of number of employees 10-31-78...jwb
+*   mod for vsi type master file, changed all names to "rv" 02-27-80...ok
+

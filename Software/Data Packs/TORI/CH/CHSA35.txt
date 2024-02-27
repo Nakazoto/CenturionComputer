@@ -1,0 +1,28 @@
+:mailing list master file:2: 0:16: 5:n: 4:
+: 3: 4:mailing nbr.....:k:
+: 4: 4:name............:c:25:    0:
+: 5: 4:alpha sort......:c:25:    0:
+: 7: 4:address 1.......:c:25:    0:
+: 8: 4:address 2.......:c:25:    0:
+: 9: 4:address 3.......:c:25:    0:
+:10: 4:zip code........:c:10:    0:
+:12: 4:mailing code....:c: 1:    0:
+:13: 4:description.....:c:30:    0:
+: 0:constant one....:n:    1: 0:10: 0:1:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

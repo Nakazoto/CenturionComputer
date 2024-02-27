@@ -1,0 +1,85 @@
+.job glsrnk
+.fspec gl#0a on #1 7=use
+.skip to ok if 1 eq #7
+.log
+*
+*   account master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+=ok
+.use gl#0a on #1 sys0
+.use @scrb#i on #s sys1
+.seta upsi=0
+.run s.x?wtag
+.use gl#0a on #1 sys0
+.use @scrb#i on #s sys1
+.run gl.xgl512
+.skip to fin if #c ne 0
+.fspec gl#0a on #1 7=size
+.seta 7=#7/16
+.skip 1 if #7 gt #9
+.skip to eoj
+.skip to eoj if #9 eq 0
+.vspec #1 7=avail
+.seta 7=#7/16
+.skip to err1 if #7 lt #9
+.new gla#i on #1 'c' #9
+.seta upsi=0
+.use gla#i on #1 sys0
+.run s.x?rint
+recsiz=131,paddng=25
+/*
+.use gl#0a on #1 sys0
+.use gla#i on #1 sys2
+.use @scrb#i on #s sys1
+.run gl.xgl511
+.skip to ok if #c eq 0
+.log
+*
+*   system created the new file too small to contain all accounts
+*    file has not been reduced in size.
+*    newline to acknowledge
+.nolog
+.del gla#i on #1
+.skip to fin
+=ok
+.del gl#0a on #1
+.nam gla#i on #1 gl#0a
+.use gl#0a on #1 for sys0
+.use gl#0j on #1 for sys1
+.run s.x?wtag
+.seta upsi=0
+.log
+*   standby while account file is sorted
+.nolog
+.use gl#0j on #1 for sys0 shar
+.use gl#0j on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=10
+work=4,output=inp,key=(1,6,bi)
+/*
+=eoj
+.skip to fin if glmenu ne #4
+glmenu
+=err1
+.log
+*
+*   insufficient disk space to create new accounts file
+*
+.nolog
+=fin
+.end
+s.con
+*  7/18/78...cleanup..ns
+*  6/16/79...took out xgl520..ns
+*  10/18/79...modify to sort account file if file cannot be decreased in size..rle
+*  11/21/79...modified for cpu-6...kag
+*  07/15/82...modified to use @scrb#i instead of gl#0j until all is ok...mcs, pl#447
+
+

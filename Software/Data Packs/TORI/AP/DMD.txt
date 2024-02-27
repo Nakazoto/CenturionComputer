@@ -1,0 +1,96 @@
+.job apdmd
+.seta upsi = 0
+.use crt#v for syslst
+.use ap#0a on #1 for sys0 shar
+.use ap#0x on #1 for sys1
+.run ap.xap240
+.skip to exp if #c eq 110
+.skip to err2 if #c ne 0
+.seta 9=#u
+.skip to recall if #u eq 0
+.skip to out if #u eq 2
+=srt
+.log
+*
+***   sorting demand entries...please stand by
+*
+.nolog
+.seta upsi = 0
+.use ap#0x on #1 for sys0 shar
+.use ap#0x on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=c,recsiz=20
+work=4,output=inp,key=(5,4,bi,9,4,bi)
+inpmod=(,xaisrt)
+/*
+=out
+.skip to recall if #9 lt 2
+.seta cc=0
+.seta upsi=2
+.run s.xopt
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if no eq #2
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if type eq #2
+.seta upsi = 2
+.skip to go if crt eq #2
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use ap#0a on #1 for sys0 shar
+.use ap#0x on #1 for sys1
+.run ap.xap278
+.skip to err2 if #c ne 0
+.skip to recall
+=exp
+.run s.xeject
+.seta cc=0
+.log
+*
+*   demand file is full - standby for expansion 
+*
+.nolog
+.fspec ap#0x on #1 8=size
+.seta 8=#8/16
+.seta 8 = #8*125/100+1
+.vspec #1 7=avail
+.seta 7=#7/16
+.skip to err if #7 lt #8
+.new apx#0 on #1 'c' #8t
+.use ap#0x on #1 for sys0
+.use apx#0  on #1 for sys1
+.run s.xcoput
+.skip to err1 if #c ne 0
+.del ap#0x on #1
+.nam apx#0 on #1 to ap#0x
+ap.dmd
+=recall
+apmenu
+=err
+.log
+*
+*   insufficient disk space to expand demand file
+*
+.nolog
+.skip to err2
+=err1
+.log
+*
+*   copy failure - good demand file is ap#0x 
+*
+.nolog
+=err2
+.end
+s.con
+*   revised 08-18-77 minor clean-up for crossed dates...klf
+*           10/10/77 mod for new print options, directory s,
+*                    changed client # to key #, and minor clean up...nw
+*           08/11/78 rewritten for new release...jwb
+*           11/30/79...modified for cpu-6...kag
+

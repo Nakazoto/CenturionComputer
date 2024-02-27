@@ -1,0 +1,51 @@
+: 2: 0: 9: 0:
+:132: 60:  2:
+:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:date:
+:               8:s:s:
+:              53:l:first united methodist church:
+:             121:l:page:
+:             128:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              52:l:unpledged statement details list:
+:::
+:h:  0:  1:     2:l:plrm36:
+:::
+:h:  0:  1:     6:l:key:
+:              14:l:member:
+:              21:l:name:
+:              48:l:pledge:
+:              56:l:fund:
+:             104:l:date:
+:             112:l:contribution:
+:::
+:d:  0:  1:     1:f:   1:0:
+:              15:f:   2:0:
+:              21:f:   6:1:
+:              51:f:   8:0:
+:              57:f:   9:0:
+:              61:f:   3:2:
+:             102:e:  11:0:
+:             112:f:  12:0:
+:::
+:t:  1:  0:99: 61:l:grand total:
+:             110:t:  12:0:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+

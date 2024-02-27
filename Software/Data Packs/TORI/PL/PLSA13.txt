@@ -1,0 +1,37 @@
+:     enter/update pledge method of payment file:2: 0:16: 5:n: 4:
+: 5: 2:membership #....:k:
+: 6: 2:membership #....:n:    4: 0: 6: 1:0:*: 0:1:
+: 5:40:name............:e:    6:16:
+: 6:40:family name.....:e:    8:16:
+: 7:40:address.........:e:    9:16:
+: 8:40:address.........:e:   10:16:
+: 9:40:address.........:e:   11:16:
+: 9:66:zip code........:e:   12:16:
+:11:40:fund pledge code:m:
+:11:57:fund pledge code:e:    5:16:
+:13: 2:general fund....:c: 1:    0:
+:13:40:gf amt..........:n: 8: 2: 0:
+:14: 2:building fund...:c: 1:    0:
+:14:40:bf amount.......:n: 8: 2: 0:
+:15: 2:church develop..:c: 1:    0:
+:15:40:cdf amount......:n: 8: 2: 0:
+:16: 2:description.....:c:30:    0:
+:0:name................:e:    6: 8:
+:18:2:alpha sort.......:e:    7: 8:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,52 @@
+:132: 58:  0:
+:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:date:
+:               8:s:s:
+:              51:l:first united methodist church:
+:             121:l: page:
+:             128:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              55:l:mailing list master file:
+:::
+:h:  0:  1:     2:l:chrm38:
+:::
+:h:  0:  0:     2:l:mailing:
+:              11:l:name:
+:              43:l:address:
+:              74:l:zip code:
+:              87:l:mailing:
+:              96:l:description:
+:::
+:h:  0:  1:     2:l:number:
+:              89:l:code:
+:::
+:d:  0:  0:     3:f:   1:0:
+:              11:f:   2:0:
+:              43:f:   4:0:
+:              73:f:   7:0:
+:              90:f:   8:0:
+:              96:f:   9:0:
+:             128:s:r:
+:::
+:d:  0:  0:    43:f:   5:0:
+:::
+:d:  0:  1:    43:f:   6:0:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,75 @@
+.job tran
+*
+***   random access payroll transaction service
+*
+.seta upsi = 0
+.use rv#0a on #1 for sys0 shar
+.use rv#0d on #1 for sys2 shar
+.run rv.xrv510
+.skip to eoj if #c = 0
+.skip to err2 if #c = 100
+.skip to exp if #c ne 110
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if #2 eq type
+.seta upsi = 2
+.skip to go if #2 eq crt
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0 shar
+.use rv#0d on #1 for sys1
+.run rv.xrv519
+.skip to err2 if #c ne 0
+.skip to eoj
+=exp
+.log
+*
+***   transaction file expansion
+*
+.seta cc = 0
+.fspec rv#0d on #1 8 = size, 9 = use
+.skip to go if 1 eq #9
+.log
+*
+*   transaction file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*   did other partition expand the transaction file? (y/n)
+.nolog
+.enter 9
+.log
+.skip to recall if y eq #9
+=go
+.seta 8 = (#8/16)*110/100+1
+.new rvd#0 on #1 'c' #8
+.use rv#0d on #1 for sys0
+.use rvd#0 on #1 for sys1
+.run s.xcoput
+.skip to err if #c ne 0
+.del rv#0d on #1
+.nam rvd#0 on #1 to rv#0d
+=recall
+rv.tran
+=err
+.log
+*
+***   copy error - please call your dealer for assistance
+*
+.nolog
+=eoj
+rvmenu
+=err2
+.end
+s.con
+*   created  04-14-77  from rpsj10...klf
+*   revised  11-16-77 for directory "s"; for temp file names...klf
+*   added menu recall 10-24-78...jwb
+*   mod for cpu-6, changed names to rv...ok
+

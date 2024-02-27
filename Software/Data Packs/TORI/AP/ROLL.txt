@@ -1,0 +1,22 @@
+.job aproll
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if no eq #2
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if type eq #2
+.seta upsi = 2
+.skip to go if crt eq #2
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use ap#0a on #1 for sys0
+.use ap#0b on #1 for sys1
+.use ap#0q on #1 for sys2
+.run ap.xap274
+.skip 1 if #c ne 0
+apmenu
+.end
+s.con
+* 08-07-78...initial release...seh
+

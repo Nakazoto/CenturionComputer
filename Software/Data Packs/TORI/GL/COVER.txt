@@ -1,0 +1,35 @@
+.job glcove
+.seta cc=0 upsi=0
+.fspec  gl#0  on #1 7=size
+.fspec gl#0l  on #1 8=size
+.skip to noold if 0 eq #7
+.skip to nonew if 0 eq #8
+.del gl#0 on #1
+.skip to run
+*
+=nonew
+.nam gl#0 on #1 gl#0l
+.skip to run
+*
+=noold
+.skip to run if 0 ne #8
+.new gl#0l on #1 'a' 1
+*
+=run
+.use gl#0l on #1 for sys0
+.use @scr#i on #s for sys1
+.run gl.xgl543
+.skip to fin if #c ne 0
+.skip 1 if glmenu ne #4
+glmenu
+=fin
+.end
+s.con
+*   4/25/78...changed to new standards...ns
+*   7/20/78...cleanup..ns
+*   11/28/79...modified for cpu-6...kag
+*   05/21/80...added checking for old g/l  files...kag
+*   06/16/80...corrected checking for g/l old file...kag
+
+
+

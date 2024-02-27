@@ -1,0 +1,87 @@
+.job mast
+.use rr#0a on #1 sys0 shar
+.use gl#0a on #1 sys1 shar
+.seta cc=0, upsi=0, 4=0
+.fspec rv#0b on #1 7=size
+.skip to rp if 0 eq #7
+.fspec rp#0b on #1 7=size
+.skip to dupkey if 0 ne #7
+.use rv#0b on #1 sys2 shar
+.skip to go
+=rp
+.fspec rp#0b on #1 7=size
+.skip 2 if 0 eq #7
+.use rp#0b on #1 sys2 shar
+.skip 2
+.setc 4=1
+.use dummy for sys2
+=go
+.use rr#0b on #1 sys3 shar
+=ok
+.run rr.xrr500
+.skip to sort if #c eq 0
+.skip to fin if #c eq 50
+.seta cc=0, upsi=0
+.fspec rr#0a on #1 7=size
+.seta 7=(#7/16)*125/100+1
+.fspec rra#i on #1 6=size
+.skip 1 if 0 eq #6
+.del rra#i on #1
+.new rra#i on #1 'i' #7t  recsiz=254 keylen=4 paddng=25
+.seta upsi=0
+.use rr#0a on #1 sys0
+.use rra#i on #1 sys1
+.run s.xvcopy
+.skip to fin if #c ne 0
+.del rr#0a on #1
+.nam rr#i on #1 rr#0a
+.seta upsi=1
+=sort
+.skip to fin if #u eq 0
+.log
+*
+*   standby for sort
+*
+.nolog
+.seta upsi=0
+.use rr#0a on #1 sys0
+.use rr#0b on #1 sys1
+.run s.xtract
+print=no,arg,key,/*
+.use rr#0b on #1 sys0 shar
+.use rr#0b on #1 sys1 shar
+.use sort1#i on #s sys2
+.use sort2#i on #s sys3
+.use sort3#i on #s sys4
+.use sort4#i on #s sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=inp,key=(1,4,bi)
+/*
+=fin
+.skip to end if 8 ne #3
+.seta upsi=2
+.run s.xopt
+rr.print
+=end
+.fspec rrmenu on #d 7=size
+.skip 1 if 0 eq #7
+rrmenu
+=dupkey
+.log
+*    duplicate key numbers for payroll files are not allowed on the same disk.
+*    rp#0b and rv#0b are both on disk #1 and have the same key number.
+*                enter newline to acknowledge 
+.nolog
+.pause
+.end
+s.con
+*   1/18/78..initial release to qc..ns
+*   9/07/78...added message on sort. calls print jcl...ns
+*   1/30/79...added vrint of rra#i before vcopy...cb
+*   12/05/79...modified for cpu-6...kag
+*   02-14-80...changed param. 4 set to a ".setc 4=1" for passing to xrr500...ok
+*   02/27/80...changed sort file disk number to #s not 1...kag
+*   04-03-80...mod to use either rp or rv files and to disallow duplicate keys...ok
+*   09-07-83...changed master file size..pbl#761...emo
+

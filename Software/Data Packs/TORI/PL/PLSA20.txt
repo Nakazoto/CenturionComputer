@@ -1,0 +1,67 @@
+:general master file for first united methodist church:2: 0: 8: 5:n: 4:
+: 2: 1:mem. #..:k:
+: 2:23:fam. #..:n:         4: 0: 0:
+: 2:43:fam.head:c:         1:    0:
+: 2:65:affil...:c:         1:    0:
+: 3: 1:p/code..:n:         4: 0: 0:
+: 4: 1:name....:c:        25:    0:
+: 5: 1:alpha...:c:        25:    0:
+: 6: 1:fam.name:c:        35:    0:
+: 7: 1:add. 1..:c:        25:    0:
+: 8: 1:add. 2..:c:        25:    0:
+: 9: 1:add. 3..:c:        25:    0:
+:10: 1:zip code:c:        10:    0:
+:11: 1:geo.code:c:         4:    0:
+:12: 1:zone....:n:         3: 0: 0:
+:13: 1:phone...:c:        12:    0:
+:14: 1:sex.....:c:         1:    0:
+:15: 1:mar.stat:c:         1:    0:
+: 3:43:birthday:n:         6: 0:32:
+: 4:43:baptism.:n:         6: 0: 0:
+: 4:65:yes/no..:c:         1:    0:
+: 5:43:mem.date:n:         6: 0: 0:
+: 8:43:occup...:n:         3: 0: 0:
+: 9:43:employer:c:        23:    0:
+:10:31:descript:c:        35:    0:
+:11:31:descript:c:        35:    0:
+:13:31:bld.type:c:         3:    0:
+:14:31:constant:n:         5: 0: 2: 0:1:
+:15:31:age gr..:n:         5: 0: 0:
+:16:31:future..:n:         5: 0: 0:
+:14:55:particip:c:        11:    0:
+:15:55:future..:n:         5: 0: 0:
+:16:55:future..:n:         5: 0: 0:
+:17: 1:sun sch.:c:         2:    0:
+:18: 1:choirs..:n:         3: 0: 0:
+:18:21:activity:n:         3: 0: 0:
+:18:43:activity:n:         3: 0: 0:
+:18:63:activity:n:         3: 0: 0:
+:19: 1:boards..:n:         3: 0: 0:
+:19:21:activity:n:         3: 0: 0:
+:19:43:activity:n:         3: 0: 0:
+:19:63:activity:n:         3: 0: 0:
+:20: 1:boards..:n:         3: 0: 0:
+:20:21:activity:n:         3: 0: 0:
+:20:43:activity:n:         3: 0: 0:
+:20:63:activity:n:         3: 0: 0:
+:21: 1:misc....:n:         3: 0: 0:
+:21:21:activity:n:         3: 0: 0:
+:21:43:activity:n:         3: 0: 0:
+:21:63:activity:n:         3: 0: 0:
+:22: 1:office..:n:         3: 0: 0:
+:22:21:activity:n:         3: 0: 0:
+:22:43:activity:n:         3: 0: 0:
+:22:63:activity:n:         3: 0: 0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,112 @@
+.job mast
+*
+***   random access payroll master file service
+*
+.seta upsi eq 0
+.use rv#0a on #1 for sys0 shar
+.use zipcod on #1 for sys1 shar
+.fspec RV.rvfwtable on #D 8=size
+.skip 1 if 0 ne #8
+.new RV.rvfwtable on #D 'c' 1
+.use RV.rvfwtable on #D for sys2 shar
+.run rv.xrv500
+.skip to err2 if #c = 100
+.seta 9 = #c + #u
+.skip to eoj if #9 = 0
+.skip to prt if #9 = 2
+*
+***   standby while file is sorted for new additions
+*
+.seta upsi=0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.run s.xtract
+print=yes, filtyp=b, arg, key
+/*
+.seta upsi = 0
+.use rv#0l on #1 for sys0 shar
+.use rv#0l on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=inp,key=(1,4,bi)
+/*
+.skip to eoj if #9 eq 1
+.skip to exp if #9 eq 4
+=prt
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if #2 eq type
+.seta upsi = 2
+.skip to go if #2 eq crt
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0 shar
+.use rv#0l on #1 for sys1 shar
+.use zipcod on #1 for sys2 shar
+.run rv.xrv509
+.skip to err2 if #c ne 0
+.skip to eoj
+=exp
+.log
+*
+***   master file expansion
+*
+.nolog
+.seta cc = 0
+.fspec rv#0a on #1 8 = size, 9 = use
+.skip to go if 1 eq #9
+.log
+*
+*   master file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*   did other partition sort and expand master file? (y/n)
+.nolog
+.enter 9
+.log
+.skip to recall if y eq #9
+=go
+.seta 8 = (#8 / 16) * 110 / 100 + 1
+.new rva#0 on #1 'i' #8t  recsiz=480, keylen=4, paddng=25
+.seta cc eq 0
+.use rv#0a on #1 for sys0
+.use rva#0 on #1 for sys1
+.use rv#0l on #1 for sys2
+.run rv.xrv591
+.skip to err1 if #c ne 0
+.del rv#0a on #1
+.nam rva#0 on #1 to rv#0a
+=recall
+rv.mast
+=err1
+.log
+*
+***   copy error in payroll master file
+*
+.nolog
+=eoj
+rvmenu
+=err2
+.end
+s.con
+*   created 04-18-77  from rpsj00...klf
+*   revised 11-16-77  for directory "s"; for temp file names...klf
+*   added menu recall 10-24-78...jwb
+*   modified for cpu-6 11-12-79...jwb
+*   mod for rv system 02-26-80...ok
+*   corrected .new statement 'recsiz' parameter from 'recsize' 11-18-80...dle
+*   added file rvfwtable for fwt tables 11/28/84...jwb
+*   CHANGED RVFWTABLE TO RV.RVFWTABLE ON #D  12/21/88...SCP
+
+

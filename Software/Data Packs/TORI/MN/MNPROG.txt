@@ -1,0 +1,49 @@
+^m5
+^p
+^s5
+menu / jcl section
+------------------
+MEMORIAL - main application menu
+MNsub1 - print memorial master file menu
+MNdoc - documentation for church staff
+^s1
+MNprog - program documentation
+^s1
+\program documentation\
+:---------:---------------------------------------:--------:--------:--------:
+: screen  : screen map                            : alt 1  : alt 2  : alt 3  :
+: map #   : description                           : map #  : map #  : map #  :
+:---------:---------------------------------------:--------:--------:--------:
+: MNsa01  : memorial master file             a,b  : mnsm02 : mnsm03 :        :
+  MNsa02  : memorial name file               c,d  :        :        :        :
+: MNsa03  : designation code  file           e,f  :        :        :        :
+: MNsa04  : memorial transaction file        g    : mnsm02 : mnsm03 : MNSM01 :
+:-------------------------------------------------:--------:--------:--------:
+^s1
+:---------:-----------------------------:---------:--------:--------:--------:
+: report  : report                      : primary : alt 1  : alt 2  : alt 3  :
+: map #   : description                 : map #   : map #  : map #  : map #  :
+:---------:-----------------------------:---------:--------:--------:--------:
+  MNra01  : memorial master file - 4 ln :   01    :   03   :        :        :
+: MNra02  : memorial name file          :   02    :        :        :        :
+: MNra03  : designation code master file:   03    :        :        :        :
+: MNra04  : memorial transaction file   :   04    :   01   :   02   :   03   :
+:---------:-----------------------------:---------:--------:--------:--------:
+^s1
+:---------:-----------------------------:---------:--------:
+: posting : posting                     : trans   : master :
+: map #   : map description             : file #  : file # :
+:---------:-----------------------------:---------:--------:
+: MNpa01  : mn transactions to master   :   04    :   01   :
+:---------:-----------------------------:---------:--------:
+
+
+
+
+
+
+
+
+
+
+

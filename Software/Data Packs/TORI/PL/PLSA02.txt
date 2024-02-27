@@ -1,0 +1,24 @@
+:fund description master file:2: 0:16: 5:n: 2:
+: 4: 4:fund code.......:k:
+: 6: 4:sort sequence...:n: 1: 0: 0:
+: 7: 4:description.....:c:40:    0:
+: 9: 4:fund pledge code:n: 4: 0: 0:
+:11: 4:ytd contribution:n: 9: 2: 0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

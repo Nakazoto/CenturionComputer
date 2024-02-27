@@ -1,0 +1,101 @@
+.job glnew
+.run s.xeject
+.seta 9=1
+.fspec gl#0a on #1 7=size
+.skip to err if #7 eq 0
+.log
+*
+*   create files for gla key number #2 on disk #3
+*
+.nolog
+.fspec gl#2a on #3 5=size
+.skip 1 if #5 eq 0
+.del gl#2a on #3
+.new gl#2a #3 'c' #7s
+.fspec gl#0b on #1 7=size
+.skip to subacc if #7 eq 0
+.log
+*
+*   do you plan to use budget comparisons?  (y/n)
+.nolog
+.enter 4
+.skip to subacc if n = #4
+.new gl#2b #3 'c' #7s
+=subacc
+.fspec gl#0c on #1 7=size
+.skip to norm if 0 eq  #7
+.log
+*
+*   do you plan to use subaccounts? (y/n)
+*
+.nolog
+.enter 6
+.skip to norm if n = #6
+.new gl#2c #3 'c' #7s
+.new gl#2f #3 'b' 1
+=norm
+.fspec gl#2d on #3 7=size
+.skip 1 if 0 ne #7
+.new gl#2d #3 'b' 1
+.fspec gl#2e on #3 7=size
+.skip to f if 0 ne #7
+.fspec gl#0e on #1 7=size
+.skip 1 if 0 ne #7
+.seta 7=1
+.new gl#2e #3 'c' #7s
+=f
+.fspec gl#2j on #3 7=size
+.skip 1 if 0 ne #7
+.new gl#2j #3 'b' 1
+=cop
+.log
+*   all files for gla key number #2 have been initialized
+*   program is now copying files for key number #0 to files for number #2
+.nolog
+.use gl#0a on #1 sys0
+.use gl#2a on #3 sys1
+.run s.xcoput
+.skip to fin if #c ne 0
+.use gl#0j on #1 sys0
+.use gl#2j on #3 sys1
+.run s.xcoput
+.skip to fin if #c ne 0
+.fspec gl#2b on #3 5=size
+.skip to ok if #5 eq 0
+.fspec gl#0b on #1 5=size
+.skip to ok if #5 eq 0
+.use gl#0b on #1 sys0
+.use gl#2b on #3 sys1
+.run s.xcoput
+.skip to fin if #c ne 0
+=ok
+.fspec gl#2c on #3 5=size
+.skip to ok if #5 eq 0
+.fspec gl#0c on #1 5=size
+.skip to ok if #5 eq 0
+.use gl#0c on #1 sys0
+.use gl#2c on #3 sys1
+.run s.xcoput
+.skip to fin if #c ne 0
+=ok
+.use gl#2a on #3 sys0
+.use gl#2j on #3 sys1
+.run gl.xgl504
+.skip to fin if 0 ne #c
+.seta upsi=1
+gl.mast #2 #3 crt
+=err
+.log
+*
+*    master files for user # #0 are not on disk #1
+*
+.nolog
+=fin
+.end
+.use crt#v syslog
+s.con
+* 12/18/78...corrected copying of gl#0m file...jwb
+* 6/18/79...took out gl#0k, i, m, h, g..ns
+* 12/21/78...corrected size of new budget file (gl#2b)...jwb
+* 11/05/79...modified for cpu-6...kag
+

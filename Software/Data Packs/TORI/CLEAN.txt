@@ -1,0 +1,21 @@
+.nolog
+.notime
+.run s.xeject
+/ insert floppy disk in drive then hit return
+.pause
+/
+/
+/ ready ? y/n
+.enter 5
+.skip to eoj if #5 ne y
+.noguard 0
+.format 0
+.clr 0 vol=new
+/
+/ format another floppy ? y/n
+.enter 6
+.skipr 2 if #6 eq y
+=eoj
+.end
+s.con
+

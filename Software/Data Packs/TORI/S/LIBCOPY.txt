@@ -1,0 +1,15 @@
+.job libcopy abort=cancel
+.nolog
+.use #0 on #1 for sys2
+.run s.xlibcopy
+/
+/ are you ready to execute ?
+/
+.enter 2
+.skip 2 if y ne #2
+.log
+#0 on #1
+.end
+.log
+s.con
+

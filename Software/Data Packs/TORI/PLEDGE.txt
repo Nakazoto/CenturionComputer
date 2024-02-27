@@ -1,0 +1,119 @@
+.nolog
+.notime
+.seta 0=100
+.seta 1=1
+.run s.xeject
+/==============================================================================
+/                       first united methodist church
+/                            pledge application
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - master file services
+/
+/                    2 - pledge information
+/                    3 - weekly contributions data entry
+/                    4 - statement information
+/
+/                    5 - end of year clearing
+/
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 1 if 99 ne #9
+s.con
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  6 le #9
+.skip to opt#9
+.end
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+pl.plsub1
+=opt2
+pl.plsub8
+=opt3
+pl.plsub11
+=opt4
+pl.plsub10
+=opt5
+/
+/  are you ready to clear the ytd contributions in the fund master - y/n?
+.enter 9
+.skipr 0 if y ne #9
+/     clearing ytd contribution in fund master file
+.seta upsi=0
+.use pl.plsm02 on 1 for sys0 shar
+.use pl#0e on 1 for sys1 shar
+.use pl#0e on 1 for sys3 shar
+.use pl#0f on 1 for sys2
+.run asmlib.xxtrct on 1
+data 1/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl.plcm01 on 1 for sys0 shar
+.use pl#0f on 1 for sys1 shar
+.use pl#0e on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xclear on 1
+.end
+** delete and create envelope master file
+/
+/  are you ready to delete the envelope master file?  (y/n)
+/
+.enter 3
+.skipr 0 if y ne #3
+.del pl100c #1
+.del pl100d #1
+.seta upsi=0
+.seta 8=0
+.fspec pl#0c on 1 4=size
+.skip to existing if 0 ne #4
+/  file pl#0c envelope master not found on disk #1
+/  do you wish to create a new file?  (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr 0
+.use pl.plsm01 on 1 sys0 shar
+.run asmlib.xinitl
+.end
+.skip 4 if 0 eq #c
+/  file pl#0c cannot be initialized - condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.new pl#0c on 1 'i' #9  recsiz=#8 keylen=#u paddng=10
+.new pl#0d on 1 'b' 1t
+.seta upsi=0
+.end
+.skipr 0
+=existing
+/
+/  file set already exists
+/  newline to continue
+/
+.pause
+.skipr 0
+
+
+
+
+
+
+
+
+
+

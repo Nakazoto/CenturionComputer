@@ -1,0 +1,186 @@
+.nolog
+.notime
+/
+/
+/
+/
+/
+/
+/
+/   * * *   e n t e r    p a s s w o r d   * * *
+/
+/
+/
+/
+/
+/
+/
+.enter 3
+.skip 2 if #3 eq dollar
+/   * * *   i n v a l i d    p a s s w o r d  * * *
+s.con
+=again
+.run s.xeject
+/==============================================================================
+/                    weekly contributions data entry
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - beginning of a new quarter menu
+/
+/                    2 - enter/update weekly transactions
+/                    3 - print weekly transaction journal
+/                    4 - print weekly transaction journal  (sorted)
+/                    5 - print weekly transaction summary
+/
+/                    6 - post weekly transactions
+/
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  7 le #9
+.skip to opt#9
+.skipr to again
+=chg
+/  enter printer or crt
+.enter 2
+.skipr to again
+=opt1
+pl.plsub12 on 1
+=opt2
+* enter/update weekly transactions
+/
+/  is this the beginning of a new quarter?  (y/n)
+/
+.enter 3
+.skip to next if y ne #3
+/
+/  have you completed the beginning of a new quarter menu - y/n?
+/
+.enter 3
+.skipr to again if y ne #3
+=next
+.use pl#0s  on 1 for sys0 shar
+.use pl.plsm14 on 1 for sys1 shar
+.use pl#0y  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0i on 1 for sys4 shar
+.setc 4 eq pl#0s
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr to again
+=opt3
+* print weekly transaction journal
+.use pl.plrm09 on 1 for sys0 shar
+.use pl#0s  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt4
+* print weekly transaction journal (sorted)
+.use pl#0s  on 1 for sys1 shar
+.use pl#0s  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+inpmod=(,xaisrt)
+print=no,filtyp=c,input=1,work=4,output=inp
+recsiz= 64
+key=(5,4,bi,9,4,bi,39,26,ch),/*
+.end
+.use pl.plrm06 on 1 for sys0 shar
+.use pl#0s  on 1 for sys1
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0i on 1 for sys4 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt5
+* print weekly transaction journal summary
+.use pl#0s on 1 for sys1 shar
+.use pl#0s on 1 for sys0 shar
+.use sort1#i on 1 for sys2
+.use sort2#i on 1 for sys3
+.use sort3#i on 1 for sys4
+.use sort4#i on 1 for sys5
+.run s.dsort
+inpmod=(,xaisrt)
+print=no,filtyp=c,input=1,work=4,output=inp
+recsiz= 64
+key=(9,4,bi,39,26,ch),/*
+.end
+.use pl.plrm13 on 1 for sys0 shar
+.use pl#0s on 1 for sys1
+.use pl#0e on 1 for sys2 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt6
+/
+/  are you ready to post the weekly transactions - y/n?
+/
+.enter 9
+.skipr to again if y ne #9
+* post weekly transactions
+* post weekly transactions to pledge master
+.use pl.plpm05 on 1 for sys0 shar
+.use pl#0s  on 1 for sys1 shar
+.use pl#0i  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+* post weekly transactions to fund master
+.use pl.plpm10 on 1 for sys0 shar
+.use pl#0s on 1 for sys1 shar
+.use pl#0e on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+* post weekly transactions to quarterly statement file
+.use pl.plpm06 on 1 for sys0 shar
+.use pl#0s  on 1 for sys1 shar
+.use pl#0k  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+.skipr to again
+=opt97
+pl.pledge
+
+
+
+
+
+

@@ -1,0 +1,83 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/            print general master file with activities ne zero
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - print activity code ne zero
+/                   98 - change key/disk/printer
+/                   99 - end chact
+/
+/==============================================================================
+/  awaiting response
+.enter 9
+.skip 1 if 99 ne #9
+s.con
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  3 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter key
+.enter 0
+/  enter disk
+.enter 1
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm20 on #d for sys0 shar
+.use ch#0a  on #1 for sys1 shar
+.use ch#0a  on #1 for sys3 shar
+.use ch#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+select 35 ne "0" or 36 ne "0" or 37 ne "0"
+or 39 ne "0" or 40 ne "0" or 41 ne "0"
+or 43 ne "0" or 44 ne "0" or 45 ne "0"
+or 47 ne "0" or 48 ne "0" or 49 ne "0"
+or 51 ne "0" or 52 ne "0" or 53 ne "0"
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0b  on #1 for sys1 shar
+.use ch#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  8
+key=(5,4,bi),/*
+.end
+.use ch.chrm80 on #d for sys0 shar
+.use ch#0a  on #1 for sys1
+.use ch#0b  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+
+
+
+
+
+
+
+
+
+
+
+

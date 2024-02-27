@@ -1,0 +1,368 @@
+title 'ap961 accounts payable check writer - scn version'
+;
+system (exp=d)
+;
+define m01:'ap961 (accounts payable check writer)- scn version 8-16-84'
+;
+;==============================================================================
+;                         n o t e s
+;==============================================================================
+;
+;   09-22-78...created from ap260 dated 07-26-78...jwb
+;              ** this program prints on the new style **
+;              ** check designed by warrex of ft. worth **
+;   09-26-78...changed size of demand record from 16 to 20 bytes...jwb
+;   10-06-78...added check for deleted record in demand file (s/r rone)...jwb
+;   11-07-78...corrected partial payment check printing...jwb
+;   11-28-78...program completely re-written...jwb
+;   01-19-79...chged date and check number line(reduced 1 space) and move name
+;              and address down 2 lines...jwb
+;   02-13-79...added check number print on voucher stub...jwb
+;   07-30-80...added ability to print negative gross amounts (credit memo)
+;              on check stub...dle
+;   01-20-81...mod to print negative (-) sign where appropriate for gross
+;              and net amounts,also corrected restart option to restart with
+;              correct check number...dle
+;   11-30-83...changed to expansion d, added messages to warn about the
+;              importance of the restart question..pl#774...emo
+;   08-16-84...changed to bms check format...scn
+;
+;==============================================================================
+;                       e x t e r n a l s
+;==============================================================================
+;
+external cget,fill,ynget,getkey,msg,ioerr,lfeed,pupsi,stat,gupsi
+entrypoint crt
+;
+;==============================================================================
+;                           f i l e s
+;==============================================================================
+;
+file mst:    sys0, class=2, rnd, recsiz=131, key=mstkey
+set mstkey:0
+;
+file checks: sys2, class=2, seq, lsr=4, filtyp=b, buffer=400, buf0
+buffer buf0 (400)
+;
+file demand: sys1, class=2, rnd, recsiz=20, key=dmdkey
+set dmdkey:0
+;
+file option: sys3, class=2, seq, filtyp=a
+;
+file crt:    sysipt
+;
+file prt:    syslst, class=1, seq
+;
+;==============================================================================
+;                       r e c o r d     l a y o u t s
+;==============================================================================
+;
+record mstb(131)  ;   accou~ts payable master record  of vendors
+set ven :0     ;    vendor number
+string  name(25)   ;    vendor name
+string  ad1(25);    vendor address 1
+string  ad2(25);    vendor address 2
+string  ad3(25);    vendor address 3
+set ygros:0  ;    year to date gross
+set ydisc:0;      year to date discount
+set ter:0 ; territory
+set cat:0 ; category
+endrec
+;
+record headb(131);     master header (client name etc.)
+set hvend:0   ;    zero
+string client(25);    client name
+string had1   (25);    client address 1
+string had2   (25);    client address 2
+string had3   (25);    client address 3
+set cgros:0   ;    year to date gross for the client
+set cdisc:0  ;    year to date discount for the client
+endrec;    the client doesnt have a territory or category
+;
+record dmd0(8)
+ set avlkey:0
+endrec
+;
+record ckrec (37)
+ set ckven: 0
+ set cknum: 0
+ set ckinv: 0
+ set ckdept:0
+ set ckidte:0
+ set ckgros:0
+ set ckdisc:0
+ set netck :0
+ endrec
+ ;
+;==============================================================================
+;                       l o g i c
+;==============================================================================
+;
+entry
+   ;
+   call pupsi(0)
+   open io (mst, checks, demand, option, crt)
+   call getkey (mst, zero)
+   goto (q0600, ioerr) on status
+   readb (mst, headb)
+   call stat (1)
+   ;
+a0100:
+   ;
+ 
+   call msg (eject)
+   call msg(m01); salutation
+   call msg(null)
+   ;
+a0200:
+   ;
+   readb (checks, ckrec)
+   goto (q0700, ioerr) on status
+   read (option, f14) cdte, fckno, dopt, dodate, all
+   ldate (grin, cdte)
+   sdate (string, scdte)
+   close option
+   ;
+a0400:
+   ;
+   open output prt
+a0500:    ;   restart for checks
+   ;
+   call pupsi (0)
+   call msg (m11)  ;pl#774
+   call msg (m12)  ;pl#774
+   call ynget(m05)  ; restart?
+   if (status.ne.1) goto a0600
+   call pupsi (1)
+;
+a0505:
+   call cget(m25,f39,begck);  restart check number/01-20-81
+   if (status.ne.0) goto a0505
+   ;
+a0600:
+   ;
+   call ynget (m14)
+   if (status. eq. 0) goto q0950
+   ;
+a0610:
+   ;
+   savchk=cknum
+   savven=ckven
+   if (cknum. ge. begck) goto a0625
+   readb (checks, ckrec)
+   goto (q0900, ioerr) on status
+   goto a0610
+   ;
+a0625:
+   ;
+   WRITE (PRT,F64) SAVCHK
+   CALL LFEED (PRT,2)
+   ;
+a0650:
+   ;
+   call prdate
+   ckgro=ckgro+ckgros
+   ckdis=ckdis+ckdisc
+   call edit (ckdisc, disfld, mask01)
+   if (ckgros.lt.0) call edit (ckgros,grofld,mask07)
+   if (ckgros.ge.0) call edit (ckgros,grofld,mask02)
+   if (netck.lt.0) call edit (netck,netfld,mask07)
+   if (netck.ge.0) call edit (netck,netfld,mask02)
+   write (prt,f60) swork, m32, ckdept, m33, ckinv, grofld, [disfld+1], netfld
+   lcr=lcr+1
+   readb (checks, ckrec)
+   goto (q0800, ioerr) on status
+   if (savchk. ne. cknum) goto a0800
+   goto a0650
+   ;
+a0800:
+   ;
+   ;
+   call getkey (mst, savven)
+   if (status. ne. 0) call ioerr
+   readb (mst, mstb)
+   call stat (1)
+   if (savven. eq. i98) goto a0801b
+   if (savven. eq. ckven) goto b0100
+   ;
+a0801b:
+   ;
+   lcr=11-lcr
+   if (lcr. ne. 0) goto a0801
+   goto a0802
+   ;
+a0801:
+   ;
+   call lfeed (prt, lcr)
+   ;
+a0802:
+   ;
+   call lfeed (prt, 3)
+   net=ckgro-ckdis
+   if (ckgro.lt.0) call edit (ckgro,ackgro,mask08);01/10/81
+   if (ckgro.ge.0) call edit (ckgro,ackgro,mask03);01/10/81
+   call edit (ckdis, ackdis, mask04)
+   if (net.lt.0) call edit (net,anet,mask08)
+   if (net.ge.0) call edit (net,anet,mask03)
+   write (prt, f61) scdte, savchk, ackgro, [ackdis+1], anet
+a0805:
+   ;
+   CALL LFEED (PRT,10)
+   CALL EDIT (NET,BNET,MASK09)
+   CALL EDIT (NET,CNET,MASK10)
+   'MVOID' = 'NULL'
+   IF (NET.LE.0) DO
+      'BNET' = 'NULL'
+      'CNET' = 'NULL'
+      'MVOID' = 'VOID'
+       END DO
+    WRITE (PRT,F62) BNET
+    WRITE (PRT,F63) MVOID
+    WRITE (PRT,F63) SCDTE, SAVCHK, CNET
+   if (savven. ne. i98) goto a0850
+   fa1=0
+   call cget (m07, f40, al2)
+   write (prt, f34) al2
+   call cget (m08, f40, al2)
+   write (prt, f34) al2
+   call cget (m09, f40, al2)
+   write (prt, f34) al2
+   call cget (m10, f40, al2)
+   write (prt, f34) al2
+   goto a0860
+   ;
+a0850:
+   ;
+   write (prt, f34) name
+   write (prt, f34) ad1
+   write (prt, f34) ad2
+   write (prt, f34) ad3
+   ;
+a0860:
+   ;
+   call lfeed (prt, 7)
+   if (lcr. ge. 11) goto a0870
+   net = ckgro = ckdis = 0
+   ;
+a0870:
+   ;
+   lcr=0
+   savchk=cknum
+   savven=ckven
+   if (eflg. ne. 0) goto q0900
+   goto a0625
+   ;
+b0100:
+   ;
+   net=0
+   call lfeed (prt, 4)
+   goto a0805
+   ;
+q0600:
+   ;
+   call msg (m21)
+   stop 110
+   ;
+q0700:
+   ;
+   call msg (m04)
+   stop 1
+   ;
+q0800:
+   ;
+   eflg=1
+   ckven=cknum=test
+   goto a0800
+   ;
+q0900:
+   ;
+   readb (demand, dmd0)
+   call stat (1)
+   avlkey=0
+   writeb (demand, dmd0)
+   call stat (1)
+   stop 0
+   ;
+q0950:
+   ;
+   call pupsi (1)
+   stop 0
+   ;
+;==============================================================================
+;                     s u b r o u t i n e s
+;==============================================================================
+;
+;=======================
+subroutine prdate
+;========================
+   ;
+   work = ckidte / tentho
+   work = ckidte - (work * tentho) * 100 + work
+   ldate (grin, work)
+   sdate (string, swork)
+   return
+   ;
+;========================
+;==============================================================================
+;             w o r k i n g     s t o r a g e
+;==============================================================================
+;
+set tentho:10000, work:0
+set eof:99999,i98:99998
+set fckno:0, net:0, CKDIS:0
+set savchk:0, savven:0, begck:0, eflg:0, test:999999
+set fa1:0, lcr:0, CKGRO:0, DODATE:0
+string dopt(1), scdte(8), swork(8), disfld(9), grofld(11)
+string ackgro(14), ackdis(13), anet(14), netfld (11)
+string al2(132)
+string null(0), cdte(6), all(1)
+STRING MVOID(8), BNET(27), CNET(11)
+;
+define void:'***void'
+;
+define m04:'check detail file is empty - program cancelled'
+define m05:'is this a restart for checks (y/n) ?'
+define m07:'name'
+define m08:'address 1'
+define m09:'address 2'
+define m10:'address 3'
+define m11:'         **an improper response will cause paid invoices**'
+define m12:'         **to remain in the posted invoice file.        **'
+define m14:'ready to print ? (y/n)'
+define m21:'error - vendor master file not established'
+define m25:'restart check number?'
+define m32 :'dept '
+define m33 :'invoice '
+;
+define mask01:'  #,###@.##'
+define mask02:'  ##,###@.##@ '
+define mask03:'  #,###,###@.##@ '
+define mask04:'  ###,###@.##'
+define mask07:'  ##,###@.##@-'
+define mask08:'  #,###,###@.##@-'
+DEFINE MASK09:'*$###,##@#DOLLARS AND ##@CENTS'
+DEFINE MASK10:'*$#,###,##@#.##'
+;
+FORMAT F14: N6 N6 C1 N6 C1
+format f34: X7 C40 ; wegners
+format f39:n6
+format f40:c40
+format f60:  c8 x4 c5 n4 x4 c8 N6 x6 c11 X2 c8 x3 c11
+format f61:  c8 x2 n6 x26 c14 C10 C14
+FORMAT F62: X5 C27                     ;WRITTEN AMOUNT
+FORMAT F63: X39 C8 X5 N4 X10 C14       ;CHECK LINE
+FORMAT F64: X67 N6
+;
+end ; ap961
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,115 @@
+.job endday
+*
+***   scratch file reduction
+*
+*     what disk?
+.nolog
+.enter 0
+.log
+*     how many partitions are to be deleted?
+.nolog
+.enter 1
+.log
+*     how many partitions are to be set up again?
+.nolog
+.enter 2
+.log
+*     ready?  (y/n)
+.nolog
+.enter 9
+.log
+.seta 3=0
+.skip to eoj if y ne #9
+.NOLOG
+/
+/     ARE YOU READY TO SHRINK THE @SPOOL FILE- Y/N?
+/     THIS WILL ERASE ANY REPORTS ON THE SPOOLER
+/
+.ENTER 9
+.SKIP TO NOGO IF Y NE #9
+.DEL @SPOOL 1
+.NEW @SPOOL ON 1 'Q' 40T
+=NOGO
+.LOG
+.SKIP TO NEW IF 0 GE #1
+=del
+.fspec @scr#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 16
+.del @scr#3 on #0
+.fspec @scrb#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del @scrb#3 on #0
+.fspec @scrc#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 16
+.del @scrc#3 on #0
+.fspec @scre#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del @scre#3 on #0
+.fspec @lst#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 16
+.del @lst#3 on #0
+.fspec sort1#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort1#3 on #0
+.fspec sort2#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort2#3 on #0
+.fspec sort3#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort3#3 on #0
+.fspec sort4#3 on #0 7=use 8=size
+.skip 2 if #7 ne 1
+.skip 1 if #8 eq 8
+.del sort4#3 on #0
+.fspec @xref#3 on #0 8=size
+.skip 1 if #8 eq 0
+.del @xref#3 on #0
+.seta 3=#3+1
+.skipr to del if #3 lt #1
+.seta 3=0
+=new
+.skip to eoj if #3 ge #2
+.fspec @scr#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scr#3  on #0 'a' 1t fsi=1t
+.fspec @scrb#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scrb#3 on #0 'b' 1 fsi=1
+.fspec @scrc#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scrc#3 on #0 'c' 1t
+.fspec @scre#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @scre#3 on #0 'e' 4s fsi=4s
+.fspec @lst#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new @lst#3 on #0 'a' 1t fsi=1t
+.fspec sort1#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort1#3 on #0 'b' 4s fsi=4s
+.fspec sort2#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort2#3 on #0 'b' 4s fsi=4s
+.fspec sort3#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort3#3 on #0 'b' 4s fsi=4s
+.fspec sort4#3 on #0 8=size
+.skip 1 if #8 ne 0
+.new sort4#3 on #0 'b' 4s fsi=4s
+.seta 3=#3+1
+.skipr to new
+=eoj
+.end
+.dir #0 (xxxxxx)
+.end
+.nolog
+s.con
+

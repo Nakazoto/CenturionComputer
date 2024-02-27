@@ -1,0 +1,22 @@
+:HEADING FILE FOR FIRST UNITED METHODIST CHURCH:2: 0:16: 5:N: 1:
+: 4: 4:KEY - ENTER 1...:K:
+: 8: 4::B:ENTER REPORT HEADING IN FIELD 2 - PLEASE CENTER - 40 SPACES PROVIDED: 0:
+:14: 4:REPORT HEADING..:C:40:    0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

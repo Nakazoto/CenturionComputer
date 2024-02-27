@@ -1,0 +1,31 @@
+.job init
+.seta upsi=0
+.seta 2=(#2 * 254 + 50) /400
+.skip 1 if 0 ne #2
+.seta 2=1
+.fspec rr#0a on #1 4=size
+.skip to eoj if 0 ne #4
+.new rr#0a on #1 'i' #2 recsiz=254 keylen=4 paddng=25
+.skip to ok if #c eq 0
+.log
+*   error incountered during initialization
+*   files have not been initialized
+*   enter newline to recall menu
+.nolog
+.pause
+.del rr#0a on #1
+.skip to fin
+=ok
+.new rr#0b on #1 'b' 1
+.new rr#0c on #1 'b' 1
+=fin
+.fspec rrmenu on #d 7=size
+.skip 1 if #7 eq 0
+rrmenu
+=eoj
+.end
+s.con
+*   9/07/78...ns
+*   11/13/79..modified for cpu-6...kag
+*   09-07-83..changed for new record size..pbl#761...emo
+

@@ -1,0 +1,25 @@
+.job copt
+.nolog
+* s.copt <filename> <disk> <tape file #> <tape unit>
+.notime
+.setc 5='.'
+/enter input library name or "newline" if no library
+.enter 4
+.skip to copt1 if ? le #4
+.setc 4='' 5=''
+=copt1
+.fspec #4#5#0 on #1 6=size
+.skip to err1 if 0 ge #6
+.use #4#5#0 on #1 for sys0 shar
+/positioning to file #2 on #3 
+.use #2 on #3 sys1
+/positioned
+.run s.xcoput
+.skip to coptexit
+=err1
+/file #4#5#0 on #1 does not exit
+=coptexit
+.end
+s.con
+.end
+

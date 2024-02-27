@@ -1,0 +1,8 @@
+.nolog
+.job que abort=cancel
+.seta upsi=1
+.use @spool on #s for sys0 shar
+.run s.xsplmt
+.end
+s.con
+

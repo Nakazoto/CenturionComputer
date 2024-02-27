@@ -1,0 +1,173 @@
+system (exp=d)
+define m00:'zsmhdr 08/25/83 smart header file maintenance'
+;
+external stat,ioerr,clrec,getk,newk,getr,putr,cget,ynget,msg,lfeed,f90
+entrypoint crt
+;
+;===============================================================================
+;                          f i l e s
+;===============================================================================
+;
+file crt: sysipt
+;
+file diskfile: sys0, class=2, indexed, key=diskkey
+set  diskkey:0
+;
+;===============================================================================
+;                          r e c o r d s
+;===============================================================================
+;
+;
+record hdr (50)
+set     eof:0
+set     sav:0
+set     dat:0
+string  frm (30)
+string  nam (6)
+endrec
+;
+;
+page eject
+;===============================================================================
+;                      p r o g r a m    l o g i c
+;===============================================================================
+;
+;
+entry
+;
+   open io (crt,diskfile)
+   call msg (eject)
+   call msg (m00)
+   call lfeed (crt,2)
+   ;
+   ;
+a0100:
+   call cget (m01,fn1,type)            ;enter 0-for numeric, 1-for alpha key
+   if (status) go to a0100
+   if (type .gt. 1) go to a0100        ;screen out the invalid codes
+   go to (a0110) on type               ;1 for alpha key
+   call getk (diskfile,z)              ;get the key for the header
+   go to (a0200,ioerr,ioerr,ioerr) on status
+   write (crt,f00) m04
+   call getr (diskfile,hdr)            ;read the header
+   call stat (1)
+   go to a0300
+   ;
+   ;
+a0110:
+   call getk (diskfile,a)
+   go to (a0210,ioerr,ioerr,ioerr) on status
+   write (crt,f00) m04
+   call getr (diskfile,hdr)
+   call stat (1)
+   go to a0300
+   ;
+   ;
+a0200:
+   call ynget (m02)
+   if (status .eq. 0) go to fini
+   call newk (diskfile,z)
+   call stat (1)
+   call clrec (hdr)
+   go to a0300
+   ;
+   ;
+a0210:
+   call ynget (m02)
+   if (status .eq. 0) go to fini
+   call newk (diskfile,a)
+   call stat (1)
+   call clrec (hdr)
+   go to a0300
+   ;
+   ;
+fini:
+   stop 0
+   ;
+   ;
+a0300:
+   write (crt,f00)
+   write (crt,f01) mm1,eof
+   write (crt,f01) mm2,sav
+   write (crt,f01) mm3,dat
+   write (crt,f02) mm4,frm
+   write (crt,f02) mm5,nam
+   write (crt,f00)
+   call cget (m03,fn2,opt)
+   if (status) go to a0300
+   if (opt .le. 0) go to c6
+   go to (c1,c2,c3,c4,c5) on opt
+   go to a0300
+   ;
+   ;
+c1:
+   call cget (mm1,fn6,eof)
+   if (status) go to c1
+   go to a0300
+   ;
+   ;
+c2:
+   call cget (mm2,fn6,sav)
+   if (status) go to c2
+   go to a0300
+   ;
+   ;
+c3:
+   call cget (mm3,fn6,dat)
+   if (status) go to c3
+   go to a0300
+   ;
+   ;
+c4:
+   call cget (mm4,fc30,frm)
+   if (status) go to c4
+   go to a0300
+   ;
+   ;
+c5:
+   call cget (mm5,fc6,nam)
+   if (status) go to c5
+   go to a0300
+   ;
+   ;
+c6:
+   call putr (diskfile,hdr)
+   call stat (1)
+   go to fini
+   ;
+   ;
+page eject
+;===============================================================================
+;                    w o r k i n g    s t o r a g e
+;===============================================================================
+;
+define m01:'enter: 0-numeric key    1-alpha key'
+define m02:'no header found, do you want to create it ?  (y/n)'
+define m03:'enter field number to change (or newline to exit)'
+define m04:'header key has been found'
+;
+define mm1:'eof pointer         (01)'
+define mm2:'last posted on      (02)'
+define mm3:'date of last access (03)'
+define mm4:'company name        (04)'
+define mm5:'file name           (05)'
+;
+set    type:0
+set     opt:0
+set       z:0
+set      z1:0
+;
+define a:'                                   ';35 blanks
+;
+format f01:  c30, n06
+format f02:  c30, c30
+format fn2:  n02
+format fn1:  n01
+format f00:  c79
+format fc6:  c06
+format fc30: c30
+format fn6:  n06
+;
+;
+end zmshdr
+

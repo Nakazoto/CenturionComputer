@@ -1,0 +1,550 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                    centurion computer systems
+/                        smart i generator
+/==============================================================================
+/          key: #0     disk: #1     printer: #2     application: #3
+/==============================================================================
+/  enter function:   1 - create/edit screen map and/or data dictionary
+/                    2 - create screen map from existing data dictionary
+/                    3 - create/edit report map
+/                    4 - create master file posting map
+/                    5 - create master file clearing map
+/                    6 - display data dictionary
+/                    7 - display screen map
+/                    8 - display report map
+/                    9 - master/transaction file services
+/                   10 - master file posting
+/                   11 - master file clearing   95 - change key
+/                   12 - print reports          96 - change disk
+/                   13 - generate jcl           97 - change printer
+/                   14 - disk dump              98 - change application
+/                   15 - a s m a r t            99 - end smart
+/==============================================================================
+/ awaiting response
+ 
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.setc 7 eq ' '
+.skip 1 if 99 ne #9
+s.con
+.skip 1 if 15 ne #9
+asmlib.asmart
+.skip to chg4 if 98 eq #9
+.skip to chg3 if 97 eq #9
+.skip to chg2 if 96 eq #9
+.skip to chg1 if 95 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 15 le #9
+.skip to opt#9
+.skipr 0
+=chg1
+/  enter key
+.enter 0
+=chg2
+/  enter disk
+.enter 1
+=chg3
+ 
+/  enter printer or 'crt'
+ 
+.enter 2
+=chg4
+ 
+/  enter application prefix
+ 
+.enter 3
+.skipr 0
+=opt1
+.seta 8 eq 0
+/
+/  enter screen map or dd number (nn)
+ 
+.enter 5
+.setc 9 eq sm
+.fspec #3sm#5 on #1 4=size
+.skip to ok1 if 0 ne #4
+.setc 9 eq dd
+.fspec #3dd#5 on #1 4=size
+.skip to ok1 if 0 ne #4
+.new #3sm#5 #1 'c' 1
+.setc 9 eq sm
+.seta upsi=0
+.skip to opt1a
+=ok1
+.seta upsi=20
+=opt1a
+.setc 4 eq ' '
+ 
+/
+/  enter map or dd name (xxsmyy or xxddyy) of alternate file 1
+ 
+.enter 4
+.skip to go3 if #4 = ' '
+.use #4 on #1 sys1
+.seta upsi=#u+1
+ 
+/
+/  enter map or dd name (xxsmyy or xxddyy) of alternate file 2
+ 
+.enter 4
+.skip to go3 if #4 = ' '
+.use #4 on #1 sys2
+.seta upsi=#u+1
+ 
+/
+/  enter map or dd name (xxsmyy or xxddyy) of alternate file 3
+ 
+.enter 4
+.skip to go3 if #4 = ' '
+.use #4 on #1 sys3
+.seta upsi=#u+1
+=go3
+.skip to go6a if 999 eq #8
+.skip to opt2a if 998 eq #8
+.use #3#9#5 on #1 sys0
+.run asmlib.xsmap
+.end
+.skipr 0
+=opt2
+/
+/  enter existing map or dd name (xxttyy) from which screen map will be created:
+.enter 5
+.fspec #5 on #1 4=size
+.skip to go2 if 0 ne #4
+/  #5 not found on disk #1
+/
+/  newline to return to menu
+.pause
+.skipr 0
+=go2
+.use #5 on #1 sys4
+/
+/  enter new screen map number (nn)
+.enter 5
+/ #3sm#5
+.fspec #3sm#5 on #1 4=size
+.skip 1 if 0 eq #4
+.del #3sm#5 #1
+.new #3sm#5 #1 'c' 1
+.use #3sm#5 on #1 sys0
+.seta upsi=0
+.setc 8 eq 998
+=opt2a
+.run asmlib.xgmap
+.end
+.skipr 0
+=opt9
+.seta 8=0
+ 
+/
+/  enter file letter (a - z):
+.enter 6
+/
+/  enter map number:
+.enter 5
+.fspec #3#0#6 on #1 4=size
+.skip to go7 if 0 ne #4
+ 
+/
+/  file #3#0#6 not found on disk #1
+/  do you wish to create a new file ? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr 0
+.use #3sm#5 on #1 sys0 shar
+.run asmlib.xinitl
+.end
+.skip to go7a if 0 eq #c
+/
+/  file #3#0#6 cannot be initialized - condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+=go7a
+.skip 2 if 0 ne #u
+.new #3#0#6 on #1 'c' #9
+.skip to go7
+.new #3#0#6 on #1 'i' #9 recsiz=#8 keylen=#u paddng=10
+.end
+=go7
+/
+/  enter name of alternate file 1
+.enter 4
+.skip to go8 if #4 = ' '
+.use #4 on #1 sys2 shar
+/
+/  enter name of alternate file 2
+.enter 4
+.skip to go8 if #4 = ' '
+.use #4 on #1 sys3 shar
+/
+/  enter name of alternate file 3
+.enter 4
+.skip to go8 if #4 = ' '
+.use #4 on #1 sys4 shar
+=go8
+.skip to go10 if 999 eq #8
+.setc 4=#3#0#6
+.use #4 on #1 sys0 shar
+.use #3sm#5 on #1 sys1 shar
+.setc 8 eq #i
+.seta cc=0
+.run asmlib.xmaint
+.skip 3 if 0 eq #c
+/newline to return to menu
+.pause
+.skipr 0
+.end
+.skip 1 if 200 eq #u
+.skipr 0
+.seta cc=0
+ 
+/
+/  records have been added to or deleted from #4
+/  standby for creation of new list file
+/
+/  enter list file letter (a - z):
+.enter 6
+.fspec #3#0#6 on #1 8=size
+.skip 1 if 0 ne #8
+.new #3#0#6 #1 'b' 1
+.use #3sm#5 on #1 sys0
+.use #4 on #1 sys1 shar
+.use #3#0#6 on #1 sys2
+.use #4 on #1 sys3 shar
+.seta upsi=1
+.run asmlib.xxtrct
+.end
+.skip 1 if 0 eq #c
+/  xxtrct abend condition #c infix position #u
+/  newline to return to menu
+.pause
+.seta upsi=0
+.skipr 0
+=opt5
+/
+/  enter master file dictionary number:
+.enter 5
+/
+/  enter clearing map number:
+.enter 7
+.setc 9 eq sm
+.fspec #3sm#5 on #1 4=size
+.skip to go5 if 0 ne #4
+.setc 9 eq dd
+.fspec #3dd#5 on #1 4=size
+.skip to err4 if 0 eq #4
+=go5
+.fspec #3cm#7 on #1 4=size
+.skip 1 if 0 ne #4
+.new #3cm#7 #1 'c' 1
+.use #3#9#5 on #1 sys1
+.use #3cm#7 on #1 sys2
+.run asmlib.xcmap
+.end
+.skipr 0
+=opt11
+/
+/  enter clearing map number:
+.enter 5
+/
+/  enter master file letter (a - z):
+.enter 7
+/
+/  enter list file letter (a - z):
+.enter 8
+.use #3cm#5 on #1 sys0
+.use #3#0#8 on #1 sys1
+.use #3#0#7 on #1 sys2
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run asmlib.xclear
+.end
+.skipr 0
+=opt7
+ 
+/
+/  enter map number:
+ 
+.enter 5
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.use #3sm#5 on #1 sys0
+.run asmlib.xscren
+.end
+.skip 1 if crt ne #2
+.pause
+.skipr 0
+=opt6
+ 
+/
+/  enter dictionary number:
+ 
+.enter 5
+.setc 6 eq dd
+.fspec #3dd#5 on #1 4=size
+.skip to go4 if 0 ne #4
+.setc 6 eq sm
+.fspec #3sm#5 on #1 4=size
+.skip to go4 if 0 ne #4
+ 
+/  neither #3dd#5 nor #3sm#5 found on disk #1
+/
+/  newline to return to menu
+ 
+.pause
+.skipr 0
+=go4
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.setc 4 = #3#6#5
+.use #4 on #1 sys0
+.run asmlib.xdictn
+.end
+.skip 1 if crt ne #2
+.pause
+.skipr 0
+=opt8
+.setc 7 eq #9
+.skip to opt33
+=opt3
+.setc 7 eq ' '
+.seta cc=0
+.fspec @scrc#i on #s 4=size
+.skip 1 if 0 eq #4
+.del @scrc#i #s
+.new @scrc#i #s 'c' 1
+.use @scrc#i on #s sys5
+=opt33
+/
+/  enter report map number:
+ 
+.enter 5
+.fspec #3rm#5 on #1 4=size
+.skip 2 if 0 ne #4
+.new #3rm#5 #1 'c' 1
+.skip 1
+.seta cc=11
+/
+/  enter map or dd number (nn) of primary file
+ 
+.enter 6
+.setc 9 eq dd
+.fspec #3dd#6 on #1 4=size
+.skip to go6 if 0 ne #4
+.setc 9 eq sm
+.fspec #3sm#6 on #1 4=size
+.skip to go6 if 0 ne #4
+ 
+/  neither #3dd#6 nor #3sm#6 found on disk #1
+/
+/  newline to return to menu
+ 
+.pause
+.skipr 0
+=go6
+.seta 8 eq 999
+.seta upsi=0
+.skipr to opt1a
+=go6a
+.setc 4 = #3#9#6
+.use #4 on #1 sys0
+.use #3rm#5 on #1 sys4
+.setc 6 = #3rm#5
+.skip to go6b if 8 ne #7
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run asmlib.xrmdsp
+.end
+.skipr 0
+=go6b
+.skip to go6c if 11 eq #c
+.run asmlib.xrmap
+.end
+.skipr 0
+=go6c
+.seta cc=0
+.run asmlib.xrmchg
+.end
+.skipr 0
+=opt10
+ 
+/
+/  enter posting map number :
+ 
+.enter 5
+ 
+/
+/  enter transaction file letter (a - z):
+ 
+.enter 6
+ 
+/
+/  enter master file letter (a - z):
+ 
+.enter 7
+.use #3pm#5 on #1 sys0
+.use #3#0#6 on #1 sys1
+.use #3#0#7 on #1 sys2
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run asmlib.xpost
+.end
+.skipr 0
+=opt12
+ 
+/
+/  enter report map number:
+ 
+.enter 5
+ 
+/
+/  enter master file letter (a - z):
+ 
+.enter 6
+ 
+/
+/  enter list file letter (a - z)
+ 
+.enter 7
+.skip 1 if #7 = ' '
+.use #3#0#7 on #1 sys5
+.seta 8=999
+.skipr to go7
+=go10
+.use #3rm#5 on #1 sys0
+.use #3#0#6 on #1 sys1
+.skip 2 if crt ne #2
+.use crt#v sys10
+.skip 1
+.use prt#2 sys10
+.run asmlib.xreprt
+.end
+.skip 1 if crt ne #2
+.pause
+.skipr 0
+=opt4
+ 
+/
+/  enter transaction file dictionary number:
+ 
+.enter 5
+ 
+/
+/  enter master file dictionary number:
+ 
+.enter 6
+ 
+/
+/  enter posting map number:
+ 
+.enter 7
+.setc 8 = dd
+.fspec #3dd#5 on #1 4=size
+.skip to go4a if 0 ne #4
+.setc 8 = sm
+.fspec #3sm#5 on #1 4=size
+.skip to err4 if 0 eq #4
+=go4a
+.setc 9 = dd
+.fspec #3dd#6 on #1 4=size
+.skip to go4b if 0 ne #4
+.setc 9 = sm
+.fspec #3sm#6 on #1 4=size
+.skip to go4b if 0 ne #4
+.setc 5 eq #6
+.skip to err4
+=go4b
+.fspec #3pm#7 on #1 4=size
+.skip to go4 if 0 ne #4
+.new #3pm#7 #1 'c' 1
+=go4
+.use #3#8#5 on #1 sys0
+.use #3#9#6 on #1 sys1
+.use #3pm#7 on #1 sys2
+.run asmlib.xpmap
+.end
+.skipr 0
+=err4
+ 
+/
+/  neither #3dd#5 nor #3sm#5 found on disk #1
+/
+/  newline to return to menu
+ 
+.pause
+.skipr 0
+=opt13
+.setc 5 eq #3menu
+=opt11a
+.fspec #5 on #1 4=size
+.skip to go11b if 0 eq #4
+/
+/  #5 already exists on disk #1
+/  do you wish to delete ? (y/n)
+.enter 9
+.skip to go11a if y eq #9
+=opt11b
+/
+/  enter full name of jcl stream (newline to return to menu)
+.enter 5
+.skip 1 if #5 = ' '
+.skipr to opt11a
+.skipr 0
+=go11a
+.del #5 #1
+=go11b
+/  #5 is the jcl name
+/  okay to go ? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr to opt11b
+.new #5 on #1 'a' 1
+.use #5 on #1 sys0
+.fspec @scrc#i on #s 4=size
+.skip 1 if 0 eq #4
+.del @scrc#i #s
+.new @scrc#i #s 'c' 1
+.use @scrc#i on #s sys1
+.run asmlib.xgjcl
+.end
+/
+/  do you wish to call the menu ? (y/n)
+.enter 9
+.skip 1 if y eq #9
+.skipr 0
+#5 on #1
+=opt14
+ 
+/
+/  enter file name
+ 
+.enter 9
+.use #9 on #1 sys0
+.run asmlib.xsmdump
+.end
+.use crt#v syslst
+.skipr 0
+
+
+
+
+
+
+
+
+

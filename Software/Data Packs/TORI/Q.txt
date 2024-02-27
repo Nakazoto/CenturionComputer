@@ -1,0 +1,16 @@
+.job splmt
+.nolog
+.seta upsi=1
+.seta 7=1
+.fspec @spool on #7 8=size
+.skip to go if #8 ne 0
+.seta 7=0
+.fspec @spool on #7 8=size
+.skip to eoj if #8 eq 0
+=go
+.use @spool on #7 for sys0 shar
+.run s.xsplmt
+=eoj
+.end
+s.con
+

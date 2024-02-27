@@ -1,0 +1,7 @@
+.job unspool1
+.use @spool1 on 1 sys0 shar
+.use prt1 for sys1
+.run s.xunspol
+.end
+.stop
+

@@ -1,0 +1,18 @@
+.job print
+.seta cc=0, upsi=0
+.use rr#0a on #1 sys0 shar
+.use gl#0a on #1 sys1 shar
+.use rr#0b on #1 sys3 shar
+.use crt#v for syslst
+.skip to ok if #2 eq crt
+.use prt#2 for syslst
+=ok
+.run rr.xrr502
+.fspec rrmenu on #d 7=size
+.skip 1 if #7 eq 0
+rrmenu
+.end
+s.con
+*  1/18/78...initial release to qc..ns
+* 08/11/78...changed print device options..ns
+

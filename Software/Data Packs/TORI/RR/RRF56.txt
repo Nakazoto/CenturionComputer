@@ -1,0 +1,125 @@
+.job rrcvt56 memory=wait abort=cancel
+.nolog
+/   enter key set number  >>>
+.enter 0
+/   enter source disk number >>>
+.enter 1
+/   enter target disk number >>>
+.enter 2
+.seta upsi=0
+.seta cc=0
+.fspec rr#0a on #2 8=size
+.skip to ok if 0 eq #8
+/
+/   files are already initialized for client #0
+/
+.skip to eoj
+=ok
+/
+/    convert rr dataset #0 from #1 to #2
+/
+/    ready? (y/n)
+.enter 9
+.skip to eoj if y ne #9
+.use disk#1 for sys#1
+.run cvt.xaloc5
+*fspec rr#0a on #1 8=size
+*fspec rr#0b on #1 7=size
+*fspec rr#0c on #1 6=size
+/*
+.skip to err if #c ne 0
+.skip to ok if #8 ne 0
+/
+/    rr dataset #0 not present on disk #1
+/
+.skip to eoj
+=ok
+=next
+.skip to next if #8 eq 0
+.seta upsi=8
+.run s.xnew
+.skip to err if #c ne 0
+.seta upsi=0
+.new rr#0a on #2 'i'  #8s fsi=#9s  keylen=4 paddng=25 recsiz=224
+.skip to err if #c ne 0
+.use disk#1 for sys0
+.use rr#0a on #2 sys1
+.run cvt.xcopisc
+input=rr#0a,/*
+.skip to err if #c ne 0
+*
+=next
+.skip to next if #7 eq 0
+.seta upsi=7
+.run s.xnew
+.skip to err if #c ne 0
+.seta upsi=0
+.new rr#0b on #2 'b' #7s fsi=#8s
+.use disk#1 for sys0
+.use rr#0b on #2 sys1
+.run cvt.xcopsc
+input=rr#0b,/*
+.skip to err if #c ne 0
+*
+.use rr#0a on #2 for sys0
+.use rr#0b on #2 for sys1
+.seta upsi=0
+.run s.xtract
+print=no,filtyp=b,arg,key
+/*
+.skip to err if #c ne 0
+=sort
+.seta upsi=0
+.use rr#0b on #2 for sys0 shar
+.use rr#0b on #2 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=input,key=(1,4,bi)
+/*
+*
+=next
+.skip to next if #6 eq 0
+.seta upsi=6
+.run s.xnew
+.skip to err if #c ne 0
+.seta upsi=0
+.new rr#0c on #2 'b' #6s fsi=#7s
+.use disk#1 for sys0
+.use rr#0c on #2 sys1
+.run cvt.xcopsc
+input=rr#0c,/*
+.skip to err if #c ne 0
+*
+=next
+.skip to eoj
+=err
+.end
+/  ***** error during conversion ****  cc=#c
+/
+=eoj
+.end
+/  ***** conversion now ended....
+.fspec s.con on #s 9=size
+.skip 1 if #9 eq 0
+s.con
+.use crt#v for sysrdr
+12/07/79...written by...kag
+
+(#7/16)*125/100+1
+.fspec rra#i on #1 6=size
+.skip 1 if 0 eq #6
+.del rra#i on #1
+.new rra#i on #1 'i' #7t  recsiz=224 keylen=4 paddng=25
+.seta upsi=0
+.use rr#0a on #1 sys0
+.use rra#i on #1 sys1
+.run s.xvcopy
+.skip to fin if #c ne 0
+.del rr#0a on #1
+.nam rr#i on #1 rr#0a
+.seta upsi=1
+=sort

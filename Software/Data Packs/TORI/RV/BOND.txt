@@ -1,0 +1,42 @@
+.job bond
+*
+***   print payroll savings bond purchase report
+*
+.nolog
+.setc 9 = 'rv.'
+.fspec rv     on #d 8=size
+.skip to go if 0 ne #8
+.setc 9 = 'rvs.'
+.fspec rvs    on #d 8=size
+.skip to err if 0 eq #8
+=go
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if #2 eq no
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if #2 eq type
+.seta upsi = 2
+.skip to go if #2 eq crt
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.use @scrb#i on #s for sys2
+.use zipcod on #1 for sys3
+.run #9xrv585
+.skip to err if #c ne 0
+.setc 9=''
+rvmenu
+=err
+.end
+.setc 9=''
+s.con
+*   created  04-18-77  from rpsj85...klf
+*   revised  07-25-77  to run in either directory...klf
+*   revised  11-16-77  for directory "s"; cleanup compatibility...klf
+*   added menu recall 10-24-78...jwb
+*   changed all names to "rv" 02-27-80...ok
+*   put scratch file on #s  04-02-80...ok
+

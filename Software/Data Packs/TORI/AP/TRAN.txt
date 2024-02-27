@@ -1,0 +1,120 @@
+.job aptran
+=nogo
+.seta upsi=2
+.run s.xopt
+.seta upsi=0
+.skip to go if #2 eq no
+.seta upsi=1
+.skip to go if #2 eq type
+.seta upsi=2
+.skip to go if #2 eq crt
+.seta upsi=3
+=go
+.run ap.xap219
+.skipr to nogo if #c ne 0
+.fspec @scr#i on #s 8=size
+.skip 1 if 0 ne #8
+.new @scr#i on #s 'a' 1
+.use ap#0a on #1 for sys0 shar
+.run ap.xap213
+.skip to err1 if #c ne 0
+.use @scr#i on #s for syslst
+.skip to ccap if #u eq 2
+.skip to ragl if #u eq 3
+.skip to go if #u ne 0
+.fspec @scrc#i on #s 8=size
+.skip 1 if #8 ne 0
+.new @scrc#i on #s 'c' 1
+.use @scrc#i on #s for sys2 shar
+.skip to aroun
+=go
+.use gt#0a on #1 for sys2 shar
+=aroun
+.use ap#0a on #1 for sys0 shar
+.use ap#0m on #1 for sys1 shar
+.run ap.xap210
+.skip to list if #c eq 0
+.skip to exp if #c eq 1
+.skip to err1 if #c ne 2
+.setc 5=gt#0a
+.skip to exp2
+=ccap
+.use ap#0a on #1 for sys0 shar
+.use ap#0m on #1 for sys1 shar
+.use ff#0d on #1 for sys2 shar
+.use ff#0c on #1 for sys3 shar
+.run ap.xap214
+.skip to list if #c eq 0
+.skip to exp if #c eq 1
+.skip to err1 if #c ne 2
+.setc 5=ff#0d
+.skip to exp2
+=ragl
+.use ap#0a on #1 for sys0 shar
+.use ap#0m on #1 for sys1 shar
+.use gl#0e on #1 for sys2 shar
+.use gl#0a on #1 for sys4 shar
+.run ap.xap215
+.skip to list if #c eq 0
+.skip to exp if #c eq 1
+.skip to err if #c ne 2
+.setc 5=gl#0e
+.skip to exp2
+=exp
+.setc 5=ap#0m
+=exp2
+.seta cc=0
+.fspec #5 on #1 7=use 8=size
+.skip to go if 1 eq #7
+.log
+*
+*   detail file (#5) is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition expand detail file ? (y/n)
+*
+.nolog
+.enter 9
+.skip to list if y eq #9
+=go
+.seta 8=#8/16
+.seta 8=#8*125/100+1
+.vspec #1 7=avail
+.seta 7=#7/16
+.skip to err if #7 lt #8
+.new ap#0 on #1 'c' #8t
+.use #5 on #1 for sys0
+.use ap#0 on #1 for sys1
+.run s.xcoput
+.skip to err1 if #c ne 0
+.del #5 on #1
+.nam ap#0 on #1 #5
+.use crt#v for syslst
+.use @scr#i on #s for sys0
+.use prt#2 for sys1
+.run s.xlist
+.skip to err1 if #c ne 0
+ap.tran
+=list
+.use crt#v for syslst
+.use @scr#i on #s for sys0
+.use prt#2 for sys1
+.run s.xlist
+.skip to err1 if #c ne 0
+apmenu
+=err
+.log
+*
+*   insufficient disk space to expand detail file (#5)
+*
+.nolog
+=err1
+.end
+s.con
+*   08/07/78...complete re-work of old aptran dated xx/xx/xx...jwb
+*   11/30/79...modified for cpu-6...kag
+

@@ -1,0 +1,60 @@
+.job sysgen abort=cancel memory=wait
+.nolog
+.notime
+.setc 6='.'
+/
+/     enter configuration data set library name or "newline" if no library
+.enter 5
+.skip 1 if ? le #5
+.setc 5='' 6=''
+/
+/     enter configuration set file name
+.enter 0
+/
+/     enter disk number for configuration
+.enter 1
+.fspec #5#6#0 on #1 8=size 9=type
+.skip to ask if 0 ge #8
+.skip to ok if b eq #9
+/
+/     file #5#6#0 not found on disk#1
+.skipr 3
+=ask
+/
+/     file #5#6#0 not found on disk#1
+/     do you wish to create ? (y/n)
+.enter 8
+.skipr 3 if n eq #8
+.new #5#6#0 on #1 'b' 1s
+=ok
+.fspec @sysin#i on #s 8=size
+.skip 2 if 0 lt #8
+.new @sysin#i on #s 'b' 1t
+.skip to next1
+.del @sysin#i #s
+.new @sysin#i #s 'b' 1t
+=next1
+.fspec @scrb#i on #s 8=size
+.skip 1 if 0 lt #8
+.new @scrb#i #s 'b' 1t
+.use @sysin#i on #s sys0
+.use #5#6#0 on #1 sys1
+.use @scrb#i on #s sys2
+.run p.xsysgen
+/
+/ do you want a listing of the configuration set ?
+/
+.enter 8
+.skip to noprt if y ne #8
+.use #5#6#0 on #1 sys0
+/
+/ enter print device name
+/
+.enter 8
+.use #8 sys1
+.run p.xsysprt
+=noprt
+.end
+.del @sysin#i #s
+s.con
+

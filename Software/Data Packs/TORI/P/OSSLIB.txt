@@ -1,0 +1,663 @@
+         title  'osslib -- os table blocks and values'
+*
+*
+(bmon00)
+*
+*        static block description
+*
+?top     equ    0
+?lbot    equ    2            line table bottom
+?rbot    equ    4            real store bottom
+?ibot    equ    6            integer store bottom
+?sbot    equ    8            string descriptor store bottom
+?fbot    equ    10           free string bottom
+?curln   equ    12           current line number
+?cdata   equ    14           current data pool address
+?bdata   equ    16           beginning data pool address
+?cstop   equ    18           call stack top
+?csc     equ    20           call stack count
+?ic      equ    21           current input channel
+?oc      equ    22           current output channel
+?li      equ    23           address of input line buffer
+?lo      equ    25           address of output line buffer
+?fmp     equ    27           format pointer
+?fct     equ    29           file count (number of files)
+?fdtb    equ    30           address of file description table
+?ll      equ    32           max line length
+?rtb     equ    34           record table addr (reccnt during init)
+?trsw    equ    36           trace switch
+?trch    equ    37           trace channel number
+?wl      equ    39           address of work line
+?wc      equ    41           wait counter
+?sta     equ    42           io status word
+?rln     equ    44           last record length
+?rnd     equ    46           last random real number (6 bytes)
+?uptrc   equ    52           upsi value at initialization (1 byte)
+?sstop   equ    53           string discriptor stack top
+?rstop   equ    55           real number stack top
+?fpt     equ    57           next free pointer in free string area
+?pc      equ    59           program counter
+?cver    equ    61           conversion error
+?merr    equ    62           math statement error
+*
+otag     equ    b'1000000000000000' opcode tag bit
+ftag     equ    b'0100000000000000' function tag bit
+stag     equ    b'0010000000000000' string tag bit
+itag     equ    b'0001000000000000' integer tag bit
+*
+eq       equ    b'001'       equal test mask
+lt       equ    b'010'       less than test mask
+gt       equ    b'100'       greater than test mask
+*
+nip      equ    9            number of integer places
+ndp      equ    6            number of decimal places
+lrn      equ    6            byte length of real number
+csz      equ    12           call stack size (number of calls)
+wll      equ    8            work line length
+*
+(bmon05)
+*
+*        fdtb description
+*
+frsz     equ    0            record size (pointer to rcb after processing)
+fptr     equ    0            pointer to rcb (word)
+fkey     equ    2            address of key (word)
+fsys     equ    4            sys # (file status after processing)
+fsta     equ    4            file status (byte)
+facs     equ    5            access/buffer
+*                            (0=seq, 1=rnd, 2=ind (sla'd) = bit 0=buffer)
+fmod     equ    5            access mode (after processing) - word
+fcls     equ    6            device class
+ftyp     equ    7            file type
+*
+*        fmod values
+*
+*        0=seq/unb/ascii,
+*        1=seq/buf/ascii,
+*        2=rnd/unb,
+*        3=rnd/buf,
+*        4=seq/buf/bin,
+*        5=ind
+*
+(oss00 ) tib
+*
+svc      set    x'5a'
+*
+*        task information block description
+*
+tbrun    equ    0            task running flag (1=true)
+tbid     equ    1            task identifier
+tbpct    equ    2            task priority counter
+tbpri    equ    3            task priority value
+tblub    equ    4            addr of lub table for this task
+tbplu    equ    6            1st programmer logical unit number
+tblmx    equ    7            max logical unit number for this task
+tbcon    equ    8            addr of console pub for this task
+tblom    equ    10           low memory address
+tbhim    equ    12           high memory address
+tbshi    equ    14           last prog segment high address
+tbss     equ    16           's' reg save area
+tbjcf    equ    18           job control flag
+tbabt    equ    19           abort flag
+tbccd    equ    20           completion code
+tbups    equ    21           utility program switches
+tbpmx    equ    22           max ncmber of job parameters
+tbprm    equ    23           address of job parameters
+tbuw0    equ    25           utility word 0 (first word of cpl program)
+tbrdn    equ    27           run disc number
+tbrlb    equ    28           run lib (dir) disc addr
+tbrfn    equ    30           run file name (10-char)
+tbcunt   equ    40           console unit number
+tbsub    equ    41           storage for sub-totals in cpl math statements
+tbdflt   equ    49           default disk 'd'
+tbtlck   equ    50           time lock (-1=disabled)
+tbjlck   equ    52           job time for lock (0=tib time lock)
+tbmap    equ    54           tib memory map
+tbfrm    equ    87           default form
+tbtsv    equ    89           time of last wait
+tbs1x    equ    90           save seg 1 x reg
+tbcrx    equ    92           save prgm x reg
+tbdfltt  equ    94           default disk 't' temporary
+tbdfltl  equ    95           default disk 'l' library
+tbdfltw  equ    96           default disk 'w' work
+*
+(oss01 ) pub
+svc      set    x'5a'
+*
+*        device type
+*
+dum      equ    0            dummy
+sel      equ    1            selectric
+vdo      equ    2            video
+prt      equ    3            printer
+dsc      equ    4            disk
+kpd      equ    5            keypad
+cas      equ    6            cassette
+tap      equ    7            mag tape
+ptr      equ    8            paper tape
+spl      equ    9            spooler
+com      equ    10           communication
+bsc      equ    11           bisync
+*
+*        physical unit block description
+*
+pbf0     equ    0            flag 0
+pbdvc    equ    1            device type
+pbunt    equ    2            unit number
+pbdcf    equ    3            device control flag address
+pbsrb    equ    5            device service service routine block address
+pbnam    equ    7            symbolic device name (6-char)
+pbtib    equ    13           addr of tib this pub is assigned to
+pbdva    equ    15           device address
+*
+*        the following extension is for keyboard devices
+*
+pbenb    equ    17           input enabled flag (1=true)
+pblch    equ    18           last char of message
+pbatn    equ    19           attention flag
+pbrcb    equ    20           address of current rcb
+pbc0     equ    22           control byte
+pbach    equ    23           attn char
+pblc     equ    24           line count (crt screen size)
+pbmcb    equ    25           mux control byte
+pbcunt   equ    26           pub console unit number
+pbisr    equ    27           user interupt service routine
+pbpd     equ    29           pub pre-driver
+pbccd    equ    31           crt security code
+pbcdvt   equ    37           bin time of last security violation
+pbcdvd   equ    41           bin date of last violation
+pbptin   equ    43           addr ptr for input to buffer
+pbptot   equ    45           addr ptr for output to buffer
+pbtbl    equ    47           total length of buffer
+pbhsta   equ    49           starting addr of buffer
+pbheda   equ    51           ending addr of buffer
+pbcbi    equ    53           current bytes in buffer
+pbmcod   equ    55           sub code for mux devices
+*
+*        the following extension is for disk devices
+*
+pbntk    equ    17           number of tracks on disk
+pbdsc    equ    19           disk select code
+pbbst    equ    20           addr of bst for this disk
+pbbstl   equ    22           length of bst
+pbdcd    equ    23           directory location code
+pbrdef   equ    25           read sector 'e' 'f'
+pbdcod   equ    27           sub code for disk devices
+*
+*        the following extension is for spoolers
+*
+pbfnm    equ    17           spool filename (21 chars)
+pbdsk    equ    38           disk num for spool file
+*
+*        the following extension is for bisync communications
+*
+pblevt   equ    17           last event processed by the driver
+pbnevt   equ    19           next event to be processed by the driver
+pbpsta   equ    21           hold retrun status for interrupt lvl 4
+pbabfg   equ    22           abort flag for interrupt lvl 4
+pbdmafg  equ    23           dma flag for interrupt lvl 4
+pbrlen   equ    24           work length for dma
+pbslen   equ    26           actual length for dma
+pbraddr  equ    28           work address for dma
+pbsaddr  equ    30           actual address for dma
+pbctime  equ    32           timer for lvl 0 from lvl 4
+pbsexec  equ    34           start exec address for down loaded device
+pbrovfl  equ    36           overflow flag for interrupt lvl 4
+pbrsvcfl equ    37           svc flag for interrupt lvl 4
+pbrmsg   equ    38           error message address
+pbrbtfl  equ    40           byte / byte flag
+*
+*        the following extension is for mag tape devices
+*
+pbtfl    equ    17           current file #
+pbtrc    equ    18           current record #
+pbtop    equ    20           tape options
+pbtcod   equ    21           sub code for tape devices
+*
+*        pbtop values
+*
+pbtoeb   equ    b'00000001'  ebcidic
+pbtoig   equ    b'00000010'  ignore parity
+*
+(oss02 ) fcb
+svc      set    x'5a'
+*
+*        file control block for shared files
+*
+*        segment 0 for the fcb
+*
+fbfcb    equ    0            pointer to common area of fcb
+fbtib    equ    2            tib number using this fcb
+fbf0     equ    3            file flag zero
+fbcda    equ    4            current disk address for sysio
+fbcbp    equ    6            current buffer pointer for sysio
+*
+*        segment 1 for the fcb
+*
+fbnum    equ    0            number of times file is allocated
+fbiex    equ    1            file in process of being expanded
+fbsiz    equ    2            file size in sectors -1
+fbfsi    equ    4            file size increment
+fbatt    equ    5            file attributes
+fbflb    equ    6            file library directory number
+fbdsk    equ    8            disk number for file
+fbcnm    equ    9            complete file name
+fbfnm    equ    30           file name
+fbcls    equ    40           file class
+fbdat    equ    41           file date
+fbdalp   equ    43           pointer to ual list for this file
+*
+*        segment 2 for this fcb
+*
+fbdal    equ    0            ual pointers for this file
+*
+(oss03 ) rcb
+svc      set    x'5a'
+*
+*        record control block description
+*
+rbsta    equ    0            status of i-o event
+rblun    equ    1            logical unit number
+rbf0     equ    2            flag 0
+rbfcn    equ    3            function
+rbbln    equ    4            max buffer length
+rbbuf    equ    6            buffer address
+rbctl    equ    8            control word
+*
+*        logical io extension
+*
+rblsr    equ    10           address of logical io routine
+rbdvc    equ    12           device class
+rbdft    equ    13           disc file type
+rbrln    equ    14           max record length
+rbrec    equ    16           address of record area
+rbcda    equ    18           current disc address
+rbcbp    equ    20           current buffer pointer
+rbnda    equ    22           next disc address
+rbnbp    equ    24           next buffer pointer
+rbkey    equ    26           address of 32-bit record key
+rbrsz    equ    28           record size for random access calculation
+rbnok    equ    30           number of index key records
+rbdln    equ    33           data record length
+rbkln    equ    35           key length
+rbhk     equ    36           hash key
+rbsk1    equ    39           save key 1
+rbsk2    equ    42           save key 2
+rbpdp    equ    45           prime data pointer save
+rbhrz    equ    48           hold record zero sw
+rbext    equ    49           extended index sw
+rbssv    equ    50           s reg save
+rbzsv    equ    52           z reg save
+rbirln   equ    54           length for index record i/o
+rbipdp   equ    56           index prime data pointer
+rbichn   equ    59           index chain pointer
+rbiid    equ    62           index id
+rbelen   equ    67           extension length
+*
+* logical unit block
+*
+sysrdr   equ    x'80'
+sysipt   equ    x'81'
+syslog   equ    x'82'
+syslst   equ    x'83'
+*
+(oss04 ) values
+svc      set    x'5a'
+*
+*        global system values
+*
+sblksz   equ    400          system block size
+*
+?tapsw   equ    .not.0       tape switch
+?bscsw   equ    .not.0       bisync switch
+*
+opsmpn   equ    0            opsys map #
+crtmpn   equ    1            crt int map #
+intmpn   equ    2            int map # (disk and tape)
+iodmpn   equ    3            device driver map #
+usrmpn   equ    4            user map #
+jclmpn   equ    5            jcl map #
+basmpn   equ    6            basic map #
+cobmpn   equ    7            cobol map #
+*
+*        job control flag values (tib)
+*
+jlog     equ    b'00000001'  log option (1=true)
+jatn     equ    b'00000010'  attn request flag
+jjob     equ    b'00000100'  job in process
+jstp     equ    b'00001000'  job step in process
+jcan     equ    b'00010000'  job cancelled
+jtme     equ    b'00100000'  time-hack option
+jstr     equ    b'01000000'  job started by another partition
+jabt     equ    b'01000000'  auto cancel on error
+jdmp     equ    b'10000000'  partition dump
+*
+*        flag 0 value bit masks
+*
+inp      equ    b'00000001'  input allowed (rcb-pub-fcb)
+out      equ    b'00000010'  output allowed (rcb-pub-fcb)
+shr      equ    b'00000100'  shared device/file (fcb-pub)
+noe      equ    b'00001000'  no echo flag (pub)
+trns     equ    b'00001000'  transparent mode (crt only) (rcb)
+pas      equ    b'00010000'  pass file to next job step (fcb)
+fil      equ    b'00010000'  file oriented device (pub)
+opn      equ    b'00100000'  file is opened (rcb)
+asg      equ    b'00100000'  device assigned (pub)
+act      equ    b'01000000'  active device (pub)
+ext      equ    b'10000000'  extended pub (pub)
+frm      equ    b'01000000'  spooler set form flag (rcb)
+hld      equ    b'10000000'  spooler hold/free flag (rcb)
+*
+*        function (rbfcn) values
+*
+rdfcn    equ    1            read
+wrfcn    equ    2            write
+rrfcn    equ    3            rewrite
+rwfcn    equ    4            rewind
+ntfcn    equ    5            note
+ptfcn    equ    6            point
+hlfcn    equ    7            hold
+frfcn    equ    8            free
+opfcn    equ    9            open
+clfcn    equ    10           close
+tbfcn    equ    11           truncate buffer
+nkfcn    equ    12           new key
+gkfcn    equ    13           get key
+dkfcn    equ    14           delete key
+nxfcn    equ    15           next key
+*
+*        tbrun value bit masks
+*
+run      equ    b'00000001'  partition running
+lbuf     equ    b'00000010'  load buffer for syslog
+pwait    equ    b'00000100'  partition waiting flag
+multp    equ    b'00001000'  multi programmable partition
+wmflg    equ    b'00010000'  memory option flag
+mwflg    equ    b'00100000'  waiting for memory flag
+badge    equ    b'01000000'  badge in security flag
+mlstp    equ    b'10000000'  memory lock partition stop flag
+*
+*        file attribute value (fbatt)
+*
+dir      equ    0            directory file
+bin      equ    1            binary file
+lnk      equ    2            linked sequential file
+ctg      equ    3            contiguous sectored file
+exf      equ    4            executable program file
+lib      equ    5            private library file
+ind      equ    6            hashed indexed file
+seg      equ    7            incomplete file segment
+que      equ    8            spooler que file
+*
+int      equ    b'00010000'  initialize file
+rdp      equ    b'01000000'  read protected
+wrp      equ    b'10000000'  write protected
+*
+*        i-o status byte values (rbsta)
+*
+sok      equ    0            io ok
+seof     equ    1            end of file
+seom     equ    2            end of medium
+scna     equ    3            command not acknowledged
+serr     equ    4            error i-o
+swlr     equ    5            wrong length record
+swpt     equ    6            write protected
+snrd     equ    7            not ready
+suby     equ    8            busy
+susd     equ    9            in use
+srwd     equ    10           rewinding
+ssom     equ    11           start of medium
+*
+sbsy     equ    b'10000000'  busy (event not complete)
+*
+prmlen   equ    10           parameter length
+lowelm   equ    16           low partition element
+*
+noatn    equ    b'10000000'  no atten flag (pbatn)
+*
+(oss15 ) directory and allocation list displacements
+*
+*        directory record zero
+*
+drvol    equ    0            name of disk volume
+drrgdt   equ    10           date of last reorg
+drrger   equ    12           number of errors in last reorg
+draloc   equ    13           disk address of first sector of alloc list file
+*
+*        directory displacements
+*
+drfnam   equ    0            file name
+drabp    equ    10           buffer pointer/3 of allocation list for file
+draad    equ    11           relative disk address of allocation list for file
+dratt    equ    13           file attributes: 4-bits unused/4-bits file type
+drdat    equ    14           binary file date
+drlen    equ    16           length of directory entry
+*
+*        attribute list record displacements
+*
+atsiz    equ    0            file size
+atbbp    equ    2            file beginning buffer pointer
+atfsi    equ    4            file size incriment
+atcls    equ    5            file class
+atdal    equ    6            file disk address list
+atflen   equ    atdal        fcb fixed length
+*
+*        tape directory record zero
+*
+drtvol   equ    0            volume name
+drtdsz   equ    10           directory size (for rebuilding disk)
+drtusz   equ    12           ual size (for rebuilding disk)
+drtfsz   equ    14           fal size (for rebuilding disk)
+drtdir   equ    16           odirad (seed info for rebuilding disk)
+drtdat   equ    19           volume date
+*
+*        tape directory displacements
+*
+drtfnam  equ    0            file name
+drtfno   equ    10           relative file number
+*
+*        tape header displacements
+*
+attfnm   equ    0            file name
+attatt   equ    10           file atributes
+attdat   equ    11           file date
+attsiz   equ    13           file size
+attfsi   equ    15           file size increment (for rebuilding disk)
+attcls   equ    16           file class
+*
+(oss20 ) comrg
+*
+*        comrg (osn0) displacements
+*
+osn0     equ    x'100'       addr of commreg
+curtb    equ    3            current tib address
+sdsc     equ    5            system disc number
+mxdsc    equ    6            max disc number
+tibpt    equ    7            tib pointer table address
+pubpt    equ    9            pub pointer table address
+muxpt    equ    11           mux device pub pointer table address
+lubtb    equ    13           lub table address
+svcjt    equ    15           service call jump table
+mxlub    equ    17           max lub number (all tibs)
+mxdx     equ    20           max ojx number
+dxtb     equ    22           addr of ojx disc address table
+jxfcb    equ    24           addr of fcb for private library containing jxlib
+txfcb    equ    26           addr of fcb for private library containing txlib
+daip     equ    28           disc space allocation in process sw
+sysbf    equ    29           address of system buffer
+dmacf    equ    31           dma control flag
+shtb     equ    32           sector hold table address
+bgdate   equ    34           "grin" date for basic
+dsabl    equ    37           dissable task selection switch (0=enabled)
+dvint    equ    38           addr of device initializtion routine table
+cdate    equ    40           character date
+ctime    equ    48           character time
+basmon   equ    57           address of basic monitor (0=monitor not loaded)
+sbfcf    equ    59           system buffer control flag (-1=free, tibid=in use)
+os5flg   equ    60           osn5 usage flag (-1=free, tibid=in use)
+tflag    equ    61           transient usgae flag (-1=free, tibid=in use)
+atnflg   equ    62           attn flag
+dmacfp   equ    63           address of last pub to set dma
+toflg    equ    65           time out flag
+tmlck    equ    66           time lock default for all tibs
+mutbl    equ    68           memory usage table
+isrtb    equ    100          addr of table of isr's cur res in the opsys
+basmap   equ    102          addr of basic map for basic monitor
+bufpt    equ    104          pointer to buffered crts
+freesp   equ    106          free space in commreg
+itfg     equ    107          interrupt flag
+atnque   equ    108          addr of queue of pubs needing attention
+pdtbl    equ    110          addr of predriver table
+clc      equ    112          clock cycle (line voltage cycle)
+ptseg0   equ    113          pointer to segment 0
+ptseg1   equ    115          pointer to segment 1
+ptmap1   equ    117          pointer to map 1
+ptmap3   equ    119          pointer to map 3
+ptmap6   equ    121          pointer to map 6
+ptmap7   equ    123          pointer to map 7
+sizeop   equ    125          size of opsys (seg0,seg1,i/o,dead space)
+sizett   equ    127          total size of transient
+sizeta   equ    129          current size alloc to transient
+sizetu   equ    131          current used space in transient
+map00    equ    133          map 0 seg 0
+mapup0   equ    149          buffer/bst/lub/sh/jp for map 0
+map01    equ    165          map 0 seg 1
+map10    equ    181          map 1
+map30    equ    197          map 3
+mapup3   equ    213          buffer/bst/lub/sh/jp for map 3
+map60    equ    229          map 6 basic
+*
+(oss25 ) disk table values
+*        disk table values
+*
+bstsa    equ    x'000f'      bad sector table address
+*
+*
+*        upper common area equated values
+*
+umclen   equ    5            length (in clicks) of upper common area
+umcdsp   equ    11           displacement into 16 byte map (umclen+umcdsp=16)
+umcadr   equ    x'd800'      first available address in upper common area
+*
+(oss30 )
+*
+*        service call jump table description
+*
+@pioc    equ    0            physical i/o control
+@trtn    equ    1            transient return
+@lodnm   equ    2            load file name specified
+@lodf    equ    3            load fcb specified
+@lodjx   equ    4            load jx module specified
+@ts      equ    5            load transient module
+@flwt    equ    6            wait for flag to go positive
+@wt      equ    7            uncontitional wait
+@rbwt    equ    8            wait for rcb to go ready
+@abrt    equ    9            abort task
+@exit    equ    10           exit to ojx00
+@dt      equ    11           get binary date
+@pgiob   equ    12           protected get i/o block
+@jxm     equ    13           protected change to jx map
+@dirnm   equ    14           search directory for file name specified
+@conio   equ    15           console i/o
+@sysio   equ    16           device independant logical unit i/o (all units)
+@gmemr   equ    17           @gmem with a=addr b=size
+@flwtr   equ    18           @flwt with flag address in al
+@rmemr   equ    19           @rmem with address in a
+@drdy    equ    20           disk ready check
+@gbr     equ    21           get bin time into a and b regs
+@gmem    equ    22           get memory block from transient area
+@rmem    equ    23           release memory block back to transient area
+@lioc    equ    24           logical i/o control
+@exp     equ    25           file expand
+@user    equ    26           change to user mode
+@gb      equ    27           get binary time
+@gc      equ    28           get character time
+@stime   equ    29           set time lock
+@ld      equ    30           cpl 32-bit load
+@st      equ    31           cpl 32-bit store
+@ad      equ    32           cpl 32-bit add
+@tsr     equ    33           @ts with tx# in au
+@su      equ    34           cpl 32-bit subtract
+@gdpub   equ    35           locate pub for disk specified in al
+@mu      equ    36           cpl 32-bit multiply
+@dv      equ    37           cpl 32-bit divide
+@cn      equ    38           cpl 32-bit numeric compare
+@cs      equ    39           cpl string compare
+@cg      equ    40           cpl 32-bit computed goto
+@mv      equ    41           cpl string move
+@cp      equ    42           cpl cursor position
+@mul16   equ    43           16-bit multiply
+@div16   equ    44           16-bit divide
+@cvd16   equ    45           16-bit cvt to dec from memory
+@cvr16   equ    46           16-bit cvt to dec from 'a' reg
+@cb      equ    47           cpl cursor blanking
+@cc      equ    48           cpl cursor blanking with specified string
+@wn      equ    49           cpl formatted write with out c/r
+@dc      equ    50           cpl decode
+@nc      equ    51           cpl encode
+@rf      equ    52           cpl formatted read
+@wf      equ    53           cpl formatted write
+@rt      equ    54           cpl re-write
+@rb      equ    55           cpl binary read
+@wb      equ    56           cpl binary write
+@op      equ    57           cpl open
+@ct      equ    58           cpl control function
+@ld48    equ    59           cpl 48-bit load
+@st48    equ    60           cpl 48-bit store
+@ad48    equ    61           cpl 48-bit add
+@rs      equ    62           cpl record skip
+@su48    equ    63           cpl 48-bit subtract
+@tioc    equ    64           tape io
+@mu48    equ    65           cpl 48-bit multiply
+@dv48    equ    66           cpl 48-bit divide
+@cn48    equ    67           cpl 48-bit numeric compare
+@cg48    equ    68           cpl 48-bit computed goto
+@ld64    equ    69           cpl 64-bit load
+@st64    equ    70           cpl 64-bit store
+@ad64    equ    71           cpl 64-bit add
+@su64    equ    72           cpl 64-bit subtract
+@mu64    equ    73           cpl 64-bit multiply
+@dv64    equ    74           cpl 64-bit divide
+@ttime   equ    75           test time lock
+@dio     equ    76           disk i/o
+@shld    equ    77           sector hold
+@sfre    equ    78           sector free
+@dirl    equ    79           search library directory
+@dire    equ    80           locate directory entry specified
+@dird    equ    81           set date of file or subfile
+@giob    equ    82           unprotected giob
+@fmd     equ    83           hard disk format
+@drnmb   equ    84           directory search
+@diosx   equ    85           execute disk command string
+@fsvc    equ    86           fake svc call
+@lodtx   equ    87           load tx module
+@bug     equ    88           bug
+@aseg    equ    89           add next free mem segment to curtb (wait for comp)
+@rseg    equ    90           release memory segment specified in al
+@lodnmt  equ    91           load name into transient area
+@gbkv    equ    92           get os block value
+@pbkv    equ    93           set os block value
+@asegr   equ    94           add next free mem seg to curtb (ret if not avail)
+@gprm    equ    95           get general parameter
+@pprm    equ    96           set general parameter
+@ccc     equ    97           security code check
+@lodfr   equ    98           load fcb from .run
+@rsegx   equ    99           release other part memory
+@dirlf   equ    100          create fcb for file in private lib
+@dirsz   equ    101          access size of file in private lib
+@eom     equ    102          check for eof/eom
+@gvol    equ    103          get volume name
+@rlsr    equ    104          return from lsr
+@isrm    equ    105          connect/disconnect isr from pub
+@basic   equ    106          enter basic monitor for current partition
+@abrtr   equ    107          abort with ab code in al
+@exitr   equ    108          exit with cc al
+*
+
+
+
+
+
+
+
+

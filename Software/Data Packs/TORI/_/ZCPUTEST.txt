@@ -1,0 +1,2188 @@
+ title 'cputest'
+*
+* 2179 statements
+*
+*
+* 4/25/75 sharrock
+*
+*
+ copy oss00 no print
+ copy oss01 no print
+ copy oss02 no print
+ copy oss03 no print
+ copy oss04 no print
+*
+*
+*
+*
+* system io drivers:
+*
+* iod0 (r,w,i) 8-port mux & selectric
+* iod1 (io,s,rs)   9427h 5.2 mb disk
+* iod2 (r,w)   dummy (null device)
+* iod3 (w)     data printer
+* iod4 (w)     tally printer
+* iod5 (w)     printec printer
+* iod6 (w)     centronics  printer
+* iod9 (w)     printec printer *status version of iod5
+* ioda (io,s,rs,sx)   floppy disk
+* iodd (w)     9322 printer
+* iode (w)     cdc 416 printer (cpl 173)
+* iodf (r,w,i) 4-port
+* iodh (w)     remote 416 printer
+* iodi (w)     print driver for odec/centronics with new interface
+* iodk (w)     cdc 416 printer w/o uc conversion (prt5)
+* iodj (i,ct,bt) time routines
+* iodm (w) ti 810 serial
+*
+*
+*
+* configuration parameters
+*
+mxdsc equ 7 maximum disk number
+sdn equ 1 system disk number
+nlu equ 25 number of programmer logical units/task
+njp equ 10 number of job parameters/task
+njx equ 40 largest jx number
+nis equ 10 number of isr's the system will maintain
+t0su equ 1 task 0 system pub number
+t1su equ 14 task 1 system pub number
+t2su equ 14 task 2 system pub number
+t3su equ 14 task 3 system pub number
+t4su equ 14 task 4 system pub number
+t5su equ 14 task 5 system pub number
+t6su equ 14 task 6
+t7su equ 14 task 7
+t8su equ 14 task 8
+t9su equ 14 task 9
+t0sup equ pub1 task 0 system pub address
+t1sup equ pub14 task 1 system pub address
+t2sup equ pub14 task 2 system pub address
+t3sup equ pub14 task 3 system pub address
+t4sup equ pub14 task 4 system pub address
+t5sup equ pub14 task 5 system pub address
+t6sup equ pub14 task 6
+t7sup equ pub14
+t8sup equ pub14
+t9sup equ pub14
+*
+mcb equ x'c5' 4-port mux control byte
+mda0 equ x'f200' 4-port mux dvc addr-0
+mda1 equ x'f202' 4-port mux dvc addr-1
+mda2 equ x'f204' 4-port mux dvc addr-2
+mda3 equ x'f206' 4-port mux dvc addr-3
+mda4 equ x'f210' 4-port mux dvc addr-4
+mda5 equ x'f212' 4-port mux dvc addr-5
+mda6 equ x'f214' 4-port mux dvc addr-6
+mda7 equ x'f216' 4-port mux dvc addr-7
+*
+ print off
+code equ 100
+ print on
+*
+*
+*
+osn0 begin x'100'
+*
+ extrn svctb,osn1,osnz
+*
+ extrn iod1io,iod1s,iod1rs
+ extrn iod2r,iod2w
+ extrn iod3w
+ extrn iod6w
+ extrn iodaio,iodas,iodars,iodasx
+ extrn ioddw
+ extrn iodew
+ extrn iodfr,iodfw,iodfi
+ extrn iodhw
+ extrn iodiw
+ extrn iodkw
+ extrn iodjct,iodjbt,iodji
+ extrn iodmw
+*
+ extrn diow,dior
+ extrn pd000,pd001,pd002
+ extrn qioa,qiob,qiod
+*
+ entry sysbuf,trtbl,atnque,muxpt,isrtbl
+*
+* communication region
+*
+ jmp/ osn1 jump to svc entry
+ dw tib0 current tib addr
+ db sdn system disk number
+ db mxdsc max disk number
+ dw tibpt tib pointer table address
+ dw pubpt pub pointer table address
+ dw muxpt mux device pub pointer table address
+ dw p0lub lub table address
+ dw svctb service call jump table
+ dw (nlu+4)*ntb-1 max lub # (all tibs)
+ db 0 unused
+ dw njx maximum ojx number
+ dw dxtb addr of ojx fcb tbl
+ dw 0 address of fcb for private library for jxlib
+ dw 0 address of fcb for private library for txlib
+ db -1 disk allocation in process sw (-1=no, tibid=yes)
+ dw sysbuf address of system buffer
+ db -1 dma control flag (-1=dma may be started, tibid=no start)
+ dw shtb sector hold table address
+ dw 0 unused
+ db 0 unused
+ db 1 dsabl - dissable flag - set true for hskping (0=false)
+ dw dvitb addr of device initialization routine table
+ dw 0 unused
+ dw 0 unused
+ dw 0,2 system date numeric (32-bit binary)
+ dc 'mm/dd/yy' system date string
+ db 0 terminator for sysdts
+ dw 0 basmon - addr of basic monitor
+ db -1 system buffer control flag (-1=free, tibid=in use)
+ db -1 osn5 usage flag
+ db -1 transient usage flag
+ db 0 attn flag
+ dw 0 dmacfp - addr of last pub to use dma
+ db 0 toflg time out flag
+ dw 600 10 min. time lock default
+ db 0,16 mutbl - memory usage table
+ dw isrtbl isrpt - pointer to beginning of table of isr's currently resident
+*
+*
+* end of comrg
+*
+*
+*
+* tib pointer table
+*
+tibpt equ *
+ dw tib0
+ dw tib1
+ dw tib2
+ dw tib3
+ dw tib4
+ dw tib5
+ dw tib6
+ dw tib7
+ dw tib8
+ dw tib9
+ntb equ (*-tibpt)/2
+*
+ dw 0
+*
+*
+* pub pointer table
+*
+pubpt equ *
+ dw pub0
+ dw pub1
+ dw pub2
+ dw pub3
+ dw pub4
+ dw pub5
+ dw pub6
+ dw pub7
+ dw pub8
+ dw pub9
+ dw pub10
+ dw pub11
+ dw pub12
+ dw pub13
+ dw pub14
+ dw pub15
+ dw pub16
+ dw pub17
+ dw pub18
+ dw pub19
+ dw pub20
+ dw pub21
+ dw pub22
+ dw pub23
+ dw pub24
+ dw pub25
+ dw pub26
+ dw 0
+*
+* isrtbl - table of isr's currently resident in opsys
+*
+*        dw     0                           isr number (1-65534, 0=slot free)
+*        dw     0                           addr of isr
+*
+isrtbl equ *
+ db 0,4*nis create space for isr table
+ dw -1 terminator
+*
+*
+*
+* mux device pub pointer table
+*
+muxpt equ *
+ dw mxtnd-*-2 2*number of mux channels
+ dw pub1
+ dw pub2
+ dw pub3
+ dw pub4
+ dw pub5
+ dw pub6
+ dw pub7
+ dw pub8
+mxtnd dw 0
+*
+*
+*
+* ojxtb - job executive disk addr table
+*
+dxtb dw 0,njx+1 (1 word for each module)
+*
+*
+*
+* task information block table
+*
+*
+*
+tib0 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 0
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p0lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t0sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl0
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+tib1 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 1
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p1lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t1sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl1
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+tib2 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 2
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p2lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t2sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl2
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+tib3 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 3
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p3lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t3sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl3
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+tib4 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 4
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p4lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t4sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl4
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+tib5 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 5
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p5lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t5sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl5
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+tib6 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 6
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p6lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t6sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl6
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+tib7 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 7
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p7lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t7sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl7
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+tib8 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 8
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p8lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t8sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl8
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+tib9 equ *
+tib set *
+ org tib+tbrun
+ db 0
+ org tib+tbid
+ db 9
+ org tib+tbpct
+ db 0
+ org tib+tbpri
+ db 0
+ org tib+tblub
+ dw p9lub
+ org tib+tbplu
+ db 4
+ org tib+tblmx
+ db nlu+4-1
+ org tib+tbcon
+ dw t9sup
+ org tib+tblom
+ dw 0
+ org tib+tbhim
+ dw 0
+ org tib+tbshi
+ dw 0
+ org tib+tbss
+ dw 0
+ org tib+tbjcf
+ db jlog
+ org tib+tbabt
+ db 0
+ org tib+tbccd
+ db 0
+ org tib+tbups
+ db 0
+ org tib+tbpmx
+ db njp
+ org tib+tbprm
+ dw pl9
+ org tib+tbuw0
+ dw 0
+ org tib+tbrdn
+ db 0
+ org tib+tbrlb
+ dw 0
+ org tib+tbrfn
+ ds 6
+ org tib+tbcunt
+ db 0
+ org tib+tbsub
+ ds 8
+ org tib+tbdflt
+ db 0
+ org tib+tbtlck
+ dw 0
+ org tib+tbjlck
+ dw 0
+ org tib+tbmap
+ db 0,32
+ db x'fd'
+ org tib+tbfrm
+ dw 0
+*
+*
+*
+*
+*
+*
+*
+* physical unit block table
+*
+*
+*
+*  line printer pub cdc416 without upper case
+*
+pub0 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf27
+ org pub+pbsrb
+ dw srb13
+ org pub+pbnam
+ dc 'prt5  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'0e0'
+*
+* crt0 pub - active
+*
+pub1 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 1 4p-0
+ org pub+pbdcf
+ dw dcf1
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt0  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda0
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 0
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw pd001
+ org pub+pbccd
+ dc 'crt0  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+*
+* crt1 pub - active
+*
+pub2 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 2 4p-1
+ org pub+pbdcf
+ dw dcf2
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt1  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda1
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 1
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw pd001
+ org pub+pbccd
+ dc 'crt1  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+*
+* crt2  pub - active
+*
+pub3 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 4 4p-2
+ org pub+pbdcf
+ dw dcf3
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt2  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda2
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 2
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw pd001
+ org pub+pbccd
+ dc 'crt2  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+*
+* crt3 pub - active
+*
+pub4 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 8 4p-3
+ org pub+pbdcf
+ dw dcf4
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt3  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda3
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 3
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw pd001
+ org pub+pbccd
+ dc 'crt3  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+*
+* crt4 pub - active
+*
+pub5 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 1 4p-0
+ org pub+pbdcf
+ dw dcf5
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt4  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda4
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 4
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw 0
+ org pub+pbccd
+ dc 'crt4  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+* crt5 pub - active
+*
+pub6 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 2 4p-1
+ org pub+pbdcf
+ dw dcf6
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt5  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda5
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 5
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw 0
+ org pub+pbccd
+ dc 'crt5  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+* crt6 pub - active
+*
+pub7 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 4 4p-2
+ org pub+pbdcf
+ dw dcf7
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt6  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda6
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 6
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw 0
+ org pub+pbccd
+ dc 'crt6  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+*
+* crt7 pub (active)
+*
+pub8 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db vdo
+ org pub+pbunt
+ db 8 4p-3
+ org pub+pbdcf
+ dw dcf8
+ org pub+pbsrb
+ dw srb0
+ org pub+pbnam
+ dc 'crt7  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw mda7
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db x'83'
+ org pub+pblc
+ db 24
+ org pub+pbmcb
+ db mcb
+ org pub+pbcunt
+ db 7
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw 0
+ org pub+pbccd
+ dc 'crt7  '
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+*
+*
+* line printer pub
+*
+*
+pub9 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf9
+ org pub+pbsrb
+ dw srb2
+ org pub+pbnam
+ dc 'prt0  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'0e0' (for multi-printer support)
+*
+* disk 0 removable pub
+*
+pub10 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.fil
+ org pub+pbdvc
+ db dsc
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf10
+ org pub+pbsrb
+ dw srb1
+ org pub+pbnam
+ dc 'disk0 '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'f140'
+ org pub+pbntk
+ dw 810
+ org pub+pbdsc
+ db 0
+ org pub+pbbst
+ dw 0
+ org pub+pbbstl
+ db 30*3
+ org pub+pbdcd
+ print off
+ dw code
+ print on
+*
+* disk 0  fixed pub
+*
+pub11 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.fil
+ org pub+pbdvc
+ db dsc
+ org pub+pbunt
+ db 1
+ org pub+pbdcf
+ dw dcf10
+ org pub+pbsrb
+ dw srb1
+ org pub+pbnam
+ dc 'disk1 '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'f140'
+ org pub+pbntk
+ dw 810
+ org pub+pbdsc
+ db 1
+ org pub+pbbst
+ dw 0
+ org pub+pbbstl
+ db 30*3
+ org pub+pbdcd
+ print off
+ dw code
+ print on
+*
+* disk 1 removable pub
+*
+pub12 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.fil
+ org pub+pbdvc
+ db dsc
+ org pub+pbunt
+ db 2
+ org pub+pbdcf
+ dw dcf11
+ org pub+pbsrb
+ dw srb1
+ org pub+pbnam
+ dc 'disk2 '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'140'
+ org pub+pbntk
+ dw 810
+ org pub+pbdsc
+ db 2
+ org pub+pbbst
+ dw 0
+ org pub+pbbstl
+ db 30*3
+ org pub+pbdcd
+ print off
+ dw code
+ print on
+*
+* disk 1 fixed pub
+*
+pub13 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.fil
+ org pub+pbdvc
+ db dsc
+ org pub+pbunt
+ db 3
+ org pub+pbdcf
+ dw dcf11
+ org pub+pbsrb
+ dw srb1
+ org pub+pbnam
+ dc 'disk3 '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'f140'
+ org pub+pbntk
+ dw 810
+ org pub+pbdsc
+ db 3
+ org pub+pbbst
+ dw 0
+ org pub+pbbstl
+ db 30*3
+ org pub+pbdcd
+ print off
+ dw code
+ print on
+*
+* disk 2 removable pub
+*
+pub21 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.fil
+ org pub+pbdvc
+ db dsc
+ org pub+pbunt
+ db 4
+ org pub+pbdcf
+ dw dcf12
+ org pub+pbsrb
+ dw srb1
+ org pub+pbnam
+ dc 'disk4 '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'140'
+ org pub+pbntk
+ dw 810
+ org pub+pbdsc
+ db 4
+ org pub+pbbst
+ dw 0
+ org pub+pbbstl
+ db 30*3
+ org pub+pbdcd
+ print off
+ dw code
+ print on
+*
+* disk 2 fixed pub
+*
+pub22 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.fil
+ org pub+pbdvc
+ db dsc
+ org pub+pbunt
+ db 5
+ org pub+pbdcf
+ dw dcf12
+ org pub+pbsrb
+ dw srb1
+ org pub+pbnam
+ dc 'disk5 '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'140'
+ org pub+pbntk
+ dw 810
+ org pub+pbdsc
+ db 5
+ org pub+pbbst
+ dw 0
+ org pub+pbbstl
+ db 30*3
+ org pub+pbdcd
+ print off
+ dw code
+ print on
+*
+* disk 6 floppy pub
+*
+pub25 equ *
+pub set *
+ org pub+pbf0
+ db 0 inactive
+*
+* disk 7 floppy pub
+*
+pub26 equ *
+pub set *
+ org pub+pbf0
+ db 0 inactive
+*
+* dummy pub
+*
+pub14 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out
+ org pub+pbdvc
+ db dum
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf14
+ org pub+pbsrb
+ dw srb3
+ org pub+pbnam
+ dc 'dummy '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw 0
+*
+* ti 810 serial
+*
+pub15 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out.or.ext
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf15
+ org pub+pbsrb
+ dw srb4
+ org pub+pbnam
+ dc 'prt6  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'f206'
+ org pub+pbmcb
+ db 197 9600 baud
+ org pub+pbpd
+ dw 0 no predriver
+*
+* printer pub for data printer
+*
+pub16 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf16
+ org pub+pbsrb
+ dw srb5
+ org pub+pbnam
+ dc 'prt1  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'0e0' (for multi-printer support)
+*
+* printer pub for 9322
+*
+pub17 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf17
+ org pub+pbsrb
+ dw srb6
+ org pub+pbnam
+ dc 'prt2  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'0e0' (for multi-printer support)
+*
+*
+* cdc 416 printer
+*
+pub18 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf18
+ org pub+pbsrb
+ dw srb7
+ org pub+pbnam
+ dc 'prt3  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'0e0'
+*
+*  remote 416 printer
+*
+pub23 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf21
+ org pub+pbsrb
+ dw srb10
+ org pub+pbnam
+ dc 'prtr  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw pub4 crt3
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ dw 0
+ org pub+pblc
+ db 66
+ org pub+pbisr
+ jsr/ *-*
+*
+*
+* line printer pub
+*
+*
+pub24 equ *
+pub set *
+ org pub+pbf0
+ db act.or.out
+ org pub+pbdvc
+ db prt
+ org pub+pbunt
+ db 4
+ org pub+pbdcf
+ dw dcf22
+ org pub+pbsrb
+ dw srb11
+ org pub+pbnam
+ dc 'prt4  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw x'0e0' (for multi-printer support)
+*
+* blind - dummy console pub
+*
+pub19 equ *
+pub set *
+ org pub+pbf0
+ db act.or.shr.or.inp.or.out.or.ext
+ org pub+pbdvc
+ db dum
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf19
+ org pub+pbsrb
+ dw srb3
+ org pub+pbnam
+ dc 'blind '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw 0
+*     keyboard extension
+ org pub+pbenb
+ db 0
+ org pub+pblch
+ db 0
+ org pub+pbatn
+ db 0
+ org pub+pbrcb
+ dw 0
+ org pub+pbc0
+ db 0
+ org pub+pbach
+ db 0
+ org pub+pblc
+ db 0
+ org pub+pbmcb
+ db 0
+ org pub+pbcunt
+ db -1
+ org pub+pbisr
+ dw 0
+ org pub+pbpd
+ dw 0
+ org pub+pbccd
+ db 0,6
+ org pub+pbcdvt
+ db x'ff',4
+ org pub+pbcdvd
+ dw -1
+*
+* spoolr - pub for spooler
+*
+*
+pub20 equ *
+pub set *
+ org pub+pbf0
+ db out.or.shr
+ org pub+pbdvc
+ db spl
+ org pub+pbunt
+ db 0
+ org pub+pbdcf
+ dw dcf20
+ org pub+pbsrb
+ dw 0
+ org pub+pbnam
+ dc 'prtq  '
+ org pub+pbtib
+ dw 0
+ org pub+pbdva
+ dw 0
+*
+*
+****************************************************************
+*
+*
+*
+* device control flag table
+*
+*
+dcf1 db 0 crt1
+dcf2 db 0 crt2
+dcf3 db 0 crt3
+dcf4 db 0 crt4
+dcf5 db 0 crt5
+dcf6 db 0 crt6
+dcf7 db 0 crt7
+dcf8 db 0 crt8
+dcf9 db 0 prt0
+dcf10 db 0 disk 0-1
+dcf11 db 0 disk 2-3
+dcf12 db 0 disk 4-5
+dcf13 db 0 blank
+dcf14 db 0 dummy
+dcf15 db 0 ti 810 serial
+dcf16 db 0 prt1
+dcf17 db 0 prt2
+dcf18 db 0 prt3
+dcf19 db 0 blind
+dcf20 db 0 spoolr
+dcf21 db 0 prtr
+dcf22 db 0 prt4
+dcf23 db 0 disk7
+dcf24 db 0 disk8
+dcf27 db 0 prt5
+*
+*
+* device initialization routine address table
+*
+dvitb equ *
+ dw iodfi 4-port
+ dw iodji clock
+ dw 0
+*
+*
+*
+* device service routine block table
+*
+*
+*
+* 4-port iod
+*
+srb0 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qiob quies io routine
+ dw iodfr 1 read
+ dw iodfw 2 write
+*
+* disk iod
+*
+srb1 equ *
+ db 0 busy flag
+ db 5 max function
+ dw qioa quies io routine
+ dw dior 1 read
+ dw diow 2 write
+ dw iod1io 3 i/o      (dio)
+ dw iod1s 4 status   (dio)
+ dw iod1rs 5 reset    (dio)
+*
+* printer iod
+*
+srb2 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qioa quies io routine
+ dw 0 1 read
+ dw iod6w 2 write
+*
+* dummy iod
+*
+srb3 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qioa quies io routine
+ dw iod2r 1 read
+ dw iod2w 2 write
+*
+* ti 810 serial
+*
+srb4 equ *
+ db 0 busy flag
+ db 2 max fcn
+ dw qioa quiesce routine
+ dw 0 read invalid
+ dw iodmw write
+*
+* prt1 iod
+*
+srb5 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qioa quies io routine
+ dw 0 1 read
+ dw iod3w 2 write
+*
+* prt2 iod
+*
+srb6 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qioa quies io routine
+ dw 0 1 read
+ dw ioddw 2 write
+*
+* prt3 iod
+*
+srb7 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qioa quies io routine
+ dw 0 1 read
+ dw iodew 2 write
+*
+* remote printer srb
+*
+srb10 equ *
+ db 0 busy flag
+ db 2
+ dw qiod quiesce
+ dw 0 1 read
+ dw iodhw 2 write
+*
+* prt4 iod
+*
+srb11 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qioa quies io routine
+ dw 0 1 read
+ dw iodiw write
+*
+* floppy disk srb
+*
+*
+*
+srb13 equ *
+ db 0 busy flag
+ db 2 max function
+ dw qioa quies io routine
+ dw 0 1 read
+ dw iodkw write
+*
+*
+****************************************************************
+*
+*
+* queue of pubs needing attention
+*
+*
+atnque db x'ff',10
+*
+* sector hold table
+*
+*     byte 0=task id
+*     byte 1=disk number
+*     byte 2-4=disk address
+*
+*     0-1=x'ffff' is empty entry
+*     0-1=x'ff00' is end of table
+*
+*
+shtb equ *
+ db x'ff',(5*4)*ntb 5byte entries, 4/task
+ dw x'ff00' end of table
+*
+*
+*
+*
+* logical unit block table
+*
+*     db 0 - pub number (-1=not assigned)
+*     dw 1 - fcb address (-1=not assigned)
+*
+*     0=sysrdr
+*     1=sysipt
+*     2=syslog
+*     3=syslst
+*     4 to n=sys0 to sysn
+*
+p0lub equ *
+ db t0su system logical units
+ dw -1
+ db t0su
+ dw -1
+ db t0su
+ dw -1
+ db t0su
+ dw -1
+ db x'ff',nlu*3 programmer logical units
+*
+*
+p1lub equ *
+ db t1su system logical units
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programer logical units
+*
+*
+p2lub equ *
+ db t1su system logical units
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programer logical units
+*
+*
+p3lub equ *
+ db t1su system logical units
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programer logical units
+*
+*
+p4lub equ *
+ db t1su system logical units
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programer logical units
+*
+*
+p5lub equ *
+ db t1su system logical units
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programer logical units
+*
+*
+p6lub equ *
+ db t1su system logical
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programmer logical
+*
+*
+p7lub equ *
+ db t1su system logical
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programmer logical
+*
+*
+p8lub equ *
+ db t1su system logical
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programmer logical
+*
+*
+p9lub equ *
+ db t1su system logical
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db t1su
+ dw -1
+ db x'ff',nlu*3 programmer logical
+*
+*
+*
+*
+* job parameter value storage
+*
+*
+ db ' ',prmlen job name p0
+pl0 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p1
+pl1 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p2
+pl2 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p3
+pl3 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p4
+pl4 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p5
+pl5 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p6
+pl6 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p7
+pl7 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p8
+pl8 db ' ',(prmlen)*njp
+ db ' ',prmlen job name p9
+pl9 db ' ',(prmlen)*njp
+*
+*
+*
+*
+* buffers
+*
+sysbuf ds 2+400 system disk buffer
+ dw 0
+ dw x'8d8d'
+ db x'ff'
+*
+*
+endbf equ *
+*
+*
+* housekeeping (overlayed)
+*
+*
+ extrn tx004,tx005,tx010,tx011
+*
+*
+ org sysbuf
+ dw osbeg-*-2 sign-on message displayed by hsk
+ dc 'centurion vi (8,h6,f2,0,1,2,3,4,5,6,prtq,prtr)'
+osbeg equ *
+ jmp/ osnz goto boot
+*
+*
+* table of transients to be loaded into memory
+*
+trtbl  equ *
+ dw -1 0
+ dw -1 1
+ dw -1 2
+ dw -1 3
+ dw -1 4
+ dw -1 5
+ dw -1 6
+ dw -1 7
+ dw -1 8
+ dw -1 9
+ dw -1 10
+ dw -1 11
+ dw 0 end of table
+*
+*
+*
+*
+ org endbf
+*
+*
+ end osbeg
+
+ dw -1 8
+ dw -1 9
+ dw -1 10
+ dw -1 11
+ dw 0 end of table
+*
+*
+*
+*
+ org endbf
+*
+*
+ end osbeg
+
+
+
+
+
+
+
+
+

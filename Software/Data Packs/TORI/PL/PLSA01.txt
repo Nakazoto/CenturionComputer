@@ -1,0 +1,29 @@
+:envelope master file:2: 0:16: 5:n: 4:
+: 4: 4:envelope number.:k:
+: 5: 4:membership #....:n: 4: 0: 4:
+: 5:40:name............:e:    6:16:
+: 6:40:family name.....:e:    8:16:
+: 7:40:address.........:e:    9:16:
+: 8:40:address.........:e:   10:16:
+: 9:40:address.........:e:   11:16:
+:10:50:zip code........:e:   12:16:
+:12:40:fund pledge code:m:
+:12:57:pledge code.....:e:    5:16:
+: 0:alpha sort......:e:       7: 0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

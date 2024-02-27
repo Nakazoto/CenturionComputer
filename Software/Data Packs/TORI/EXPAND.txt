@@ -1,0 +1,84 @@
+.nolog
+.notime
+*******************************************************************************
+*
+*     indexed file expansion for a cpu-6 smart file
+*
+*******************************************************************************
+.run s.xeject
+/
+/   you must have a current backup of the file you wish to expand!!!!!
+/   do you wish to proceed? (y/n)
+/
+.enter 1
+.skip to err if y ne #1
+=again
+.nolog
+.notime
+.run s.xeject
+/
+/    enter disk number where file is located
+.enter 2
+/
+/    enter name of input file
+.enter 3
+/
+/    enter number of tracks wanted
+.enter 4
+/
+/     ENTER FILE INCREMENT SIZE IN TRACKS
+.ENTER 1
+/
+/    enter record size
+.enter 5
+/
+/    enter key length in bytes
+.enter 6
+/
+/    enter disk number for expanded file
+.enter 7
+******************************************************************************
+.setc 8=tmpexp
+.run s.xeject
+/  input disk                  =#2
+/  output disk                 =#7
+/  name of input file          =#3
+/  number of tracks            =#4
+/  FILE INCREMENT SIZE         =#1
+/  record size                 =#5
+/  key length                  =#6
+/  temporary file name         =#8
+/
+/
+/   are the above options correct?  (y/n)
+/
+.enter 9
+.skipr to again if y ne #9
+.new #8 on #7 'I' #4 FSI=#1 RECSIZ=#5 KEYLEN=#6 PADDNG=10
+.SETA UPSI=1
+.USE #3 ON #2 FOR SYS0
+.USE #8 ON #7 FOR SYS1
+.RUN S.XVCOPY
+.SKIP TO ERR IF 0 NE #C
+.end
+.del #3  #2
+.nam #8 #7 #3
+.end
+s.con
+=err
+.end
+/     try again!!!
+s.con
+
+
+
+
+
+
+
+
+
+
+
+
+

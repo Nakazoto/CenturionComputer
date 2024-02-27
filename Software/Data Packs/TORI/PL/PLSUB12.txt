@@ -1,0 +1,272 @@
+.nolog
+.notime
+=again
+.run s.xeject
+/==============================================================================
+/                      beginning of a new quarter menu
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - create new quarterly statement master file
+/
+/                    2 - create year-to-date contributions master file
+/                    3 - print y-t-d contributions journal
+/
+/                    4 - post y-t-d contributions and pledges to the
+/                        quarterly statement master file
+/
+/                    5 - weekly contributions data entry menu
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 7 le #9
+.skip to opt#9
+.end
+.skipr to again
+=chg
+/  enter printer or crt
+.enter 2
+.skipr to again
+=opt1
+/
+/  have you backed-up the church and pledge files - y/n?
+/
+.enter 9
+.skipr 0 if y ne #9
+* create new quarterly statement master file
+.del pl100k #1
+.del pl100l #1
+.new pl#0k on #1 'i' 176 fsi=16 recsiz=60 keylen=6 paddng=10
+.new pl#0l on #1 'b' 1t
+/
+/  you must initialize the file before you can continue.
+/  please enter first united methodist church and newline 2 times.
+/  newline to acknowledge.
+/
+.pause
+.use pl#0k on 1 for sys0 shar
+.use pl.plsm05 on 1 for sys1 shar
+.use ch#0a on #1 for sys2 shar
+.setc 4 eq pl#0k
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr to again
+=opt2
+/
+/     this option will create the ytd contribution master file from
+/     the pledge master file.  the ytd contributions master file
+/     needs to be created at the beginning of the second, third and
+/     fourth quarters.
+/     do you wish to proceed - y/n?
+/
+.enter 3
+.skipr to again if y ne #3
+/
+/     you must have the relative day number for the date of the ytd
+/     contributions.
+/     newline to continue
+/
+.pause
+.use ch#0u  on 1 for sys0 shar
+.use ch.chsm38 on 1 for sys1 shar
+.setc 4 eq ch#0u
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.run s.xeject
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on #1 for sys0 shar
+.use pl#0i on #1 for sys1 shar
+.use pl#0i on #1 for sys3 shar
+.use pl#0j on #1 for sys2
+.run asmlib.xxtrct on #s
+select 14 ne "0"
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.run s.xeject
+.end
+/
+/  you must initialize the file before you can continue.
+/  please enter first united methodist church and newline 2 times.
+/  newline to acknowledge.
+/
+.pause
+.fspec pl#0i on #1  4=size
+.new pl#0m on #1 #4s 'i' recsiz=60 keylen=4 paddng=10
+.new pl#0n on #1 'b' 1t
+.use pl#0m on #1 for sys0 shar
+.use ch#0a on #1 for sys2 shar
+.use pl#0e on #1 for sys3 shar
+.use pl.plsm11 on 1 for sys1 shar
+.setc 4 eq pl#0m
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.use crt#v for sysipt
+.use pl#0i on #1 for sys1
+.use pl#0j on #1 for sys0
+.use pl#0m on #1 for sys2
+.run pl.xpl100 on 1
+.end
+.skipr to again
+=opt3
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm11 on #d for sys0 shar
+.use pl#0m  on #1 for sys1 shar
+.use pl#0m  on #1 for sys3 shar
+.use pl#0n  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 3 4 2
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 20t
+.new sort3#i on 1 'b' 25t
+.new sort4#i on 1 'b' 20t
+.use pl#0n  on #1 for sys1 shar
+.use pl#0n  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 16
+key=(5,4,bi,9,4,bi,13,4,bi),/*
+.end
+.use pl.plrm26 on #d for sys0 shar
+.use pl#0m  on #1 for sys1
+.use ch#0a  on #1 for sys2 shar
+.use pl#0e  on #1 for sys3 shar
+.use pl#0n  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr to again
+=opt4
+* post y-t-d contributions and pledges to quarterly statement master file
+/
+/  are you posting to statements for the first time this quarter?  (y/n)
+/
+.enter 6
+.skipr to again if y ne #6
+/
+.fspec pl#0m on #1 4=size
+.skip to noytd if 0 eq #4
+.new pl#0u on #1 'c' 40t
+* extract ytd transactions from ytd master
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm11 on #d for sys0 shar
+.use pl#0m  on #1 for sys1 shar
+.use pl#0m  on #1 for sys3 shar
+.use pl#0u  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 2 3 4 5 6 7 8 9
+file tc no
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.end
+* post ytd transactions to quartery statements
+.use pl.plpm08 on 1 for sys0 shar
+.use pl#0u on 1 for sys1 shar
+.use pl#0k on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+.del pl#0m #1
+.del pl#0n #1
+.del pl#0u #1
+.end
+=noytd
+* post pledge transactions to quarterly statements
+.use pl.plpm03 on 1 for sys0 shar
+.use pl#0g  on 1 for sys1 shar
+.use pl#0k  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+.skipr to again
+=opt5
+pl.plsub11 on 1
+=opt97
+pl.pledge
+
+.use pl.plpm08 on 1 for sys0 shar
+.use pl#0u on 1 for sys1 shar
+.use pl#0k on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost on 1
+.end
+.del pl#0m #1
+.del pl#0n #1
+.del pl#0u #1
+.end
+=noytd
+* post pledge transactions to quarterly statements
+.use pl.plpm03 on 1 for sys0 shar
+.use pl#0g  on 1 for sys1 shar
+.use pl#0k  on 1 for sys2 shar
+.use crt#v for sys10
+.run asmlib.xpost  on 1
+.end
+.skipr to again
+=opt5
+PL.PLSUB11 ON 1
+=opt97
+pl.pledge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

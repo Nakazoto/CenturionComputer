@@ -1,0 +1,370 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                            file balancing reports
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - print fund master report
+/                    2 - print pledge master summary report
+/                    3 - print quarterly statement master summary report
+/
+/                    4 - print comparison of pledge master & quarterly
+/                        statement details when not in balance
+/
+/                    5 - print variable quarterly statement details
+/                    6 - print variable unpledged statement detail list
+/
+/                    7 - display quarterly statement master file
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9 = #u
+.seta upsi = 0
+.skip to opt97 if 97 eq  #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skipr 0 if 0 ge #9
+.skipr 0 if  8 le #9
+.skip to opt7 if 7 eq #9
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 20t
+.new sort3#i on 1 'b' 25t
+.new sort4#i on 1 'b' 20t
+.skip to opt#9
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm02 on #d for sys0 shar
+.use pl#0e  on #1 for sys1 shar
+.use pl#0e  on #1 for sys3 shar
+.use pl#0f  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl#0f  on #1 for sys1 shar
+.use pl#0f  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  8
+key=(5,4,bi),/*
+.end
+.use pl.plrm02 on #d for sys0 shar
+.use pl#0e  on #1 for sys1
+.use pl#0f  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt2
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on #d for sys0 shar
+.use pl#0i  on #1 for sys1 shar
+.use pl#0i  on #1 for sys3 shar
+.use pl#0j  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 9 8 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl#0j  on #1 for sys1 shar
+.use pl#0j  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,4,bi,9,4,bi),/*
+.end
+.use pl.plrm23 on #d for sys0 shar
+.use pl#0i  on #1 for sys1
+.use pl#0j  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt3
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm05 on #d for sys0 shar
+.use pl#0k  on #1 for sys1 shar
+.use pl#0k  on #1 for sys3 shar
+.use pl#0l  on #1 for sys2
+.run asmlib.xxtrct on #s
+select 8 ge "0" and 9 ge "0"
+data 9 8 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl#0l  on #1 for sys1 shar
+.use pl#0l  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,4,bi,9,4,bi),/*
+.end
+.use pl.plrm24 on #d for sys0 shar
+.use pl#0k  on #1 for sys1
+.use pl#0l  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt4
+/
+/    this will print out a comparison of the pledge master and quarterly
+/    statement details files.  you must enter the pledge code (0/1)
+/    and the sort sequence (1,4,5,9) of the fund you want printed.  you
+/    will be asked to enter these for both reports.
+/
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm05 on #d for sys0 shar
+.use pl#0k  on #1 for sys1 shar
+.use pl#0k  on #1 for sys3 shar
+.use pl#0l  on #1 for sys2
+.run asmlib.xxtrct on #s
+in 0#1enter pledge code
+in 1#2enter sort sequence
+data 2 8 10
+select 8 eq #0 and 10 eq #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl#0l  on #1 for sys1 shar
+.use pl#0l  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 16
+key=(9,4,bi,13,4,bi,5,4,bi),/*
+.end
+.use pl.plrm25 on #d for sys0 shar
+.use pl#0k  on #1 for sys1
+.use pl#0l  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on #d for sys0 shar
+.use pl#0i  on #1 for sys1 shar
+.use pl#0i  on #1 for sys3 shar
+.use pl#0j  on #1 for sys2
+.run asmlib.xxtrct on #s
+in 0#1enter pledge code
+in 1#2enter sort sequence
+data 2 8 11
+select 8 eq #0 and 11 eq #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl#0j  on #1 for sys1 shar
+.use pl#0j  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 16
+key=(9,4,bi,13,4,bi,5,4,bi),/*
+.end
+.use pl.plrm31 on #d for sys0 shar
+.use pl#0i  on #1 for sys1
+.use pl#0j  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt5
+/  standby for creation of new list file
+/
+/     select the fields that make what you want unique
+/     then enter
+/        data 9 8 2 /*
+.seta upsi=1
+.use pl.plsm05 on #d for sys0 shar
+.use pl#0k  on #1 for sys1 shar
+.use pl#0k  on #1 for sys3 shar
+.use pl#0l  on #1 for sys2
+.run asmlib.xxtrct on #s
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl#0l  on #1 for sys1 shar
+.use pl#0l  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 16
+key=(5,4,bi,9,4,bi,13,4,bi),/*
+.end
+.use pl.plrm16 on #d for sys0 shar
+.use pl#0k  on #1 for sys1
+.use ch#0a  on #1 for sys2 shar
+.use pl#0e  on #1 for sys3 shar
+.use pl#0l  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt6
+* print variable unpledged statement detail list
+/  standby for creation of new list file
+/
+/     select the fields that make what you want unique
+/     then enter
+/        data 9 8 2 /*
+.seta upsi=1
+.use pl.plsm05 on #d for sys0 shar
+.use pl#0k  on #1 for sys1 shar
+.use pl#0k  on #1 for sys3 shar
+.use pl#0l  on #1 for sys2
+.run asmlib.xxtrct on #s
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use pl#0l  on #1 for sys1 shar
+.use pl#0l  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 16
+key=(5,4,bi,9,4,bi,13,4,bi),/*
+.end
+.use pl.plrm36 on #d for sys0 shar
+.use pl#0k  on #1 for sys1
+.use ch#0a  on #1 for sys2 shar
+.use pl#0e  on #1 for sys3 shar
+.use pl#0l  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+=opt7
+* display quarterly statement master file
+/
+/  you may display records or delete records with zero money
+/  but do not use this option to change records.
+/  please use the pledge adjustment menu to correct a pledge
+/  or the statement information menu to correct a contribution.
+/
+/  newline to acknowledge
+/
+.pause
+.use pl#0k on 1 for sys0 shar
+.use pl.plsm05 on 1 for sys1 shar
+.use ch#0a on 1 for sys2 shar
+.setc 4 eq pl#0k
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt97
+pledge
+
+.use pl.plsm05 on 1 for sys1 shar
+.use ch#0a on 1 for sys2 shar
+.setc 4 eq pl#0k
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt97
+pledge
+
+
+
+
+
+
+
+
+
+

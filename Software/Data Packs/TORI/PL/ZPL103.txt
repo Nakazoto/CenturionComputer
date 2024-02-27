@@ -1,0 +1,116 @@
+system  (exp=d)
+;
+define m00: 'zpl103 1/16/85  change pledge tx from 40 to 60'
+;
+;*****************************************************************************
+;*       files:
+;*       sys#      file-name     rec-name       description
+;*        0        listfile      listrec        transaction file type c
+;****************************************************************************
+;*                           program linkage
+;****************************************************************************
+;
+external cget,stat,getk,getr,putr,ioerr,msg,newk,clrec,ynget
+call msg                     ; this is to force linkage of f90 ?
+entrypoint crt
+;
+;****************************************************************************
+;*                           files
+;****************************************************************************
+;
+         file crt : sysipt
+;
+         file listfile : sys0,class=2,rnd,recsiz=64,key=itkey,buffer=400,*
+         set itkey: 0
+;*****************************************************************************
+;*                           records
+;*****************************************************************************
+;
+record listrec (64)                     ;record layout for c file
+         set member : 0
+         set plcode : 0
+         set fdcode : 0
+         set sortseq : 0
+         set lstdate : 0
+         set plamount : 0
+         set plkey : 0
+         set ?Plstmt : 0
+         string alpha (25)
+         set fdpledge : 0
+endrec
+;
+;
+     format f01 : n6
+;
+eject
+;
+;*****************************************************************************
+;*                           logic
+;****************************************************************************
+;
+         entry
+;
+initialization:
+;
+         open io (crt,listfile)
+;
+;
+mainline:
+        itkey = itkey + 1
+         call rdblst                             ; read list file
+         if (status) go to final                 ; end of file
+         fdcode = 60
+         sortseq = 6
+         plkey = member * 10 + 6
+         ?Plstmt = member * 100 + 60 * 1000000 + lstdate
+         write (crt,f01) member
+         call wrblst                             ; write pledge record
+         goto mainline
+;
+final:
+          close crt,listfile
+          stop 0
+;
+eject
+;****************************************************************************
+;*
+;*            input/output routines
+;*
+;*****************************************************************************
+;
+rdblst:
+         readb (listfile,listrec) \ go to ioret1
+;
+wrblst:
+         writeb (listfile,listrec) \ go to ioret1
+;
+ioret1:
+         if (status.gt.1) goto ioerr
+         return
+;
+     end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

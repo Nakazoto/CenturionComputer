@@ -1,0 +1,208 @@
+^s5
+^m5
+/==============================================================================
+/                            MEMORIAL GIFT SYSTEM
+/                 key: 100     disk: 1       printer: Q
+/==============================================================================
+^s1
+1.  The menu is called by entering:  MEMORIAL
+2.  The operator should enter 98 to change the printer to Q.
+^s1
+** MAIN MENU OPTIONS **
+/=============================================================================
+/  enter function:   1 - ENTER/UPDATE CODE MASTER FILE
+/                    2 - PRINT CODE MASTER FILE
+/
+/                    3 - ENTER/UPDATE MEMORIAL NAME FILE
+/                    4 - PRINT MEMORIAL NAME FILE
+/
+/                    5 - ENTER MEMORIAL TRANSACTIONS
+/                    6 - PRINT MEMORIAL TRANSACTION FILE
+/                    7 - POST MEMORIAL TRANSACTIONS
+/
+/                    8 - MEMORIAL MASTER FILE MENU
+/                    9 - YEAR END CLEARING
+/
+/                   98 - change printer
+/                   99 - end of processing
+/==============================================================================
+^S1
+** MEMORIAL MASTER FILE MENU **
+/==============================================================================
+/  enter function:   1 - DISPLAY MEMORIAL MASTER FILE
+/
+/                    2 - PRINT MEMORIAL MASTER FILE - NUMERIC KEY ORDER
+/                    3 - PRINT MEMORIAL MASTER FILE - ALPHA BY MEMORIAL
+/                    4 - PRINT MEMORIAL MASTER FILE - FUND ORDER
+/                    5 - PRINT MEMORIAL MASTER FILE - DATE ORDER
+/
+/                    6 - SELECT PRINT BY MEMORIAL NUMBER
+/                    7 - SELECT PRINT BY FUND NUMBER
+/                    8 - SELECT PRINT BY DATES
+/                    9 - VARIABLE SELECT PRINT
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end of processing
+/==============================================================================
+^M5
+^P
+^S5
+** MAIN MENU OPTIONS **
+^S1
+1 - ENTER/UPDATE CODE MASTER FILE
+^M9 65
+^^The CODE MASTER FILE contains the designation code number and description.
+This file needs to be set-up first.  The code number is a 2 digit number.
+For example, general operating budget could be 1, building fund could be 2, etc.^^
+^s1
+^m5
+2 - PRINT THE CODE MASTER FILE
+^M9 65
+^^This option will print the designation code and desciption for all the codes
+in the CODE MASTER FILE.  The report will print in code number order.^^
+^s1
+^m5
+3 - ENTER/UPDATE MEMORIAL NAME FILE
+^m9 65
+^^The MEMORIAL NAME FILE contains the memorial number, memorial name,
+date of death, and two acknowledged to names and addresses.
+The memorial number may be the same as the number used in the CHURCH application, but can be any unique number from 1 to 9999.
+The name should be entered so that it can be sorted alphabetically (i.e. last name, first name, middle name).^^
+^s1
+^^The memorial name record must be set-up before the memorial transactions are entered.^^
+^S1
+^M5
+4 - PRINT MEMORIAL NAME FILE
+^M9 65
+^^This option will print the MEMORIAL NAME FILE in either numeric or alphabetical order.
+The report will print the memorial name, date of death and the two acknowledged to names and addresses.^^
+^s1
+^m5
+5 - ENTER MEMORIAL TRANSACTIONS
+^M9 65
+^^This option allows the operator to enter the memorial transactions.^^
+^s1
+^^The operator enters the
+memorial number (the memorial should be set up in the MEMORIAL NAME FILE first), and the computer will display the memorial
+name.  The operator enters who the check is from, their address and the designation code.
+The computer will display the code name.
+The operator then enters the amount given and date given (or deposited).
+The computer displays the two acknowledgement names and the operator keys in the name the gift was acknowledged to
+and the acknowledgement date.  The operator then hits
+newline and the computer generates a unique key for this record in the MEMORIAL MASTER FILE.  The key will be displayed and SHOULD
+be followed by a blank.  If a name is displayed, the operator should increase
+the value of the newline field (i.e. from 1 to 2, etc.) until the unique key field is followed by a blank.  This insures that there
+will be a unique key in the MEMORIAL MASTER FILE when the transactions are posted.  Also, there should not be any duplicate keys on
+the print-out of the MEMORIAL TRANSACTION FILE.  The unique key is the memorial number followed by 01-99.  If all the possible keys
+are used, the operator can assign another memorial number  in the MEMORIAL NAME FILE.^^
+^s1
+^m5
+6 - PRINT MEMORIAL TRANSACTION FILE
+^M9 65
+^^This option will print the MEMORIAL TRANSACTION FILE in unique key order, and will print a grand total of the amount given.
+The report prints the transaction number, memorial number and name, check from and address,
+designation code and name, amount and date given, name and date acknowledged,
+and the unique key and duplicate key from the MEMORIAL MASTER FILE.
+If the duplicate key is not zero, the operator needs to change the value of the newline field in the transaction (see #5 above).
+If two transactions have the same unique key, one of the records need to be changed.^^
+^s1
+^m5
+7 - POST MEMORIAL TRANSCTIONS
+^M9 65
+^^This option will post the MEMORIAL TRANSACTION FILE to the MEMORIAL MASTER FILE.^^
+^s1
+^m5
+8 - YEAR END CLEARING
+^M9 65
+^^This option will initialize the Memorial name, transaction and master files.
+The program will remind the operator to print all reports needed for the year before running this option.
+This option deletes the files and sets them back up.^^
+^s1
+^p
+^s5
+^m5
+** MEMORIAL MASTER FILE MENU **
+^S1
+1 - DISPLAY MEMORIAL MASTER FILE
+^M9 65
+^^This option will allows the operator to display a record from the MEMORIAL MASTER FILE on the crt.  The key is the memorial
+number followed by 01-99.  The unique key, memorial number and name, check from and address, designation code and name, amount and
+date given and name and date acknowledged are displayed.^^
+^s1
+^^This is for information only, records are entered through the MEMORIAL TRANSACTIONS.^^
+^S1
+^M5
+2 - 9  PRINT MEMORIAL MASTER FILE
+^M9 65
+^^Options 2 - 9 will print the MEMORIAL MASTER FILE in various ways.
+The reports print all the fields in the MEMORIAL MASTER FILE and
+print a total of amount given at the end of the report.^^
+^s1
+^m5
+2 - PRINT MEMORIAL MASTER FILE - NUMERIC KEY ORDER
+^M9 65
+^^This option will print the MEMORIAL MASTER FILE in numeric key order.  The
+numeric key is the memorial number followed by 01-99.^^
+^s1
+^M5
+3 - PRINT MEMORIAL MASTER FILE - ALPHA BY MEMORIAL
+^M9 65
+^^This option will print the MEMORIAL MASTER FILE in alphabetical order by the
+memorial.^^
+^s1
+^m5
+4 - PRINT MEMORIAL MASTER FILE  - FUND ORDER
+^M9 65
+^^This option will print the MEMORIAL MASTER FILE in fund number (designation code) and key order.^^
+^s1
+^m5
+5 - PRINT MEMORIAL MASTER FILE - DATE ORDER
+^M9 65
+^^This option will print the MEMORIAL MASTER FILE in date and numeric key order.^^
+^s1
+^m5
+6 - SELECT PRINT BY MEMORIAL NUMBER
+^M9 65
+^^This option allows the operator to print the  MEMORIAL MASTER FILE for a
+ single memorial or a range of memorial numbers.  The
+operator will be asked to enter the beginning and ending memorial numbers.  If
+only one memorial is desired, the same number is entered for the beginning and
+ending numbers.  The report will print in memorial and date order.^^
+^s1
+^m5
+7 - SELECT PRINT BY FUND NUMBER
+^M9 65
+^^This option allows the operator to print the MEMORIAL MASTER FILE for a single fund (designation code) or a range of funds.
+The operator will be asked to enter the beginning and  ending fund numbers.  Ifa single fund is desired, the same number is entered
+for the beginning and ending numbers.  The report is printed in fund number and memorial number order.^^
+^s1
+^m5
+8 - SELECT PRINT BY DATES
+^M9 65
+^^This option allows the operator to print the MEMORIAL MASTER FILE within a
+range of dates.  The dates are entered mmddy.^^
+^s1
+^m5
+9 - VARIABLE SELECT PRINT
+^M9 65
+^^This option allows the operator to selectively print any records from the
+MEMORIAL MASTER FILE.  The operator will select by field number any of the
+fields that she wants and then enter the data statement.^^
+^s1
+^^For example, if the operator wanted to print all memorial number 1234 that
+had been designated to fund 14, the following would be the select and data statements.^^
+^s1
+     SELECT 2 EQ "1234" AND  8 EQ "14"
+     DATA 2 11 /*
+^S1
+^^The report will print in memorial and date order.^^
+
+
+
+
+
+
+
+
+

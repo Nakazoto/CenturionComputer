@@ -1,0 +1,180 @@
+.nolog
+.job rvmenu
+.notime
+.setc 2 = crt
+.use crt#v for syslst
+.skip to report if rvrepo eq #4
+.skip to rvmenu if rvmenu eq #4
+.setc 4 = no
+.seta upsi = 3
+.run s.xopt
+=rvmenu
+.setc 4 = rvmenu
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  centurion random access payroll application
+*                         (without state tax support)
+*
+*******************************************************************************
+*                  key number = #0                   disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  establish file set
+*                  2  master file service
+*                  3  master file sort
+*                  4  zip code file maintenance
+*                  5  data entry
+*                  6  adjustments entry
+*                  7  void check entry
+*                  8  reports
+*                  9  year end processing
+*                 97  change key number / disk number for file set
+*                 99  processing completed
+.nolog
+.enter upsi
+.skip to err1 if 0 ge #u
+.seta 9=#u
+.skip 2 if 99 ne #9
+.setc 4=no
+s.con
+.skip 2 if 97 ne #9
+.setc 4=no
+rvmenu
+.skip to err1 if 10 le #9
+.fspec rv#0a on #1 8=size
+.skip to go if 1 ne #9
+.skip to err3 if 0 ne #8
+.fspec rv.init on #d 8=size
+.skip to err1 if 0 eq #8
+rv.init
+=go
+.skip to err2 if #8 eq 0
+.skip to opt#9
+=opt2
+.seta upsi=2
+.run s.xopt
+.setc 7=mast
+.skip to call
+=opt3
+.setc 7=tag
+.skip to call
+=opt4
+.setc 7=zipmt
+.skip to call
+=opt5
+.seta upsi=2
+.run s.xopt
+.setc 7=tran
+.skip to call
+=opt6
+.seta upsi=2
+.run s.xopt
+.setc 7=adjust
+.skip to call
+=opt7
+.setc 7=void
+.skip to call
+=opt9
+.setc 7=year
+=call
+.fspec rv.#7 on #d 8=size
+.skip to notfnd if 0 eq #8
+rv.#7
+=report
+=opt8
+.setc 4 = rvrepo
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  centurion random access payroll reports
+*                         (without state tax support)
+*
+*******************************************************************************
+*                  key number = #0               disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  register
+*                  2  checks
+*                  3  time transmittal sheets
+*                  4  quarterly earnings
+*                  5  941-a's
+*                  6  w-2's
+*                  7  bond purchase
+*                  8  adjustment/void check register
+*                  9  reports completed
+.nolog
+.enter upsi
+.skip to err1 if 0 ge #u
+.seta 9=#u
+.skip 2 if 9 ne #9
+.setc 4=rvmenu
+rvmenu
+.skip to err1 if 9 le #9
+.seta upsi=2
+.run s.xopt
+.skip to opt#9
+=opt1
+.setc 7=reg
+.skip to call
+=opt2
+.setc 7=check
+.skip to call
+=opt3
+.setc 7=time
+.skip to call
+=opt4
+.setc 7=period
+.skip to call
+=opt5
+.setc 7=tax
+.skip to call
+=opt6
+.setc 7=w2
+.skip to call
+=opt7
+.setc 7=bond
+.skip to call
+=opt8
+.setc 7=avreg
+=call
+.fspec rv.#7 on #d 8=size
+.skip to notfnd if #8 eq 0
+rv.#7
+=err1
+.log
+*   invalid option selected
+.nolog
+.skip to recall
+=err2
+.log
+*   improper request - file set not on specified disk
+.nolog
+.skip to recall
+=err3
+.log
+*   improper request - file set already exists
+.nolog
+.skip to recall
+=notfnd
+.log
+*   this module is not installed
+.nolog
+=recall
+.log
+*   enter newline to recall menu
+.nolog
+.pause
+rvmenu
+=eoj
+.end
+.setc 4 = no
+s.con
+*   10/31/78...created...jwb
+*   02-26-80...changed all names to rv...ok
+
+f‚ff†f–f ªf–y…f&¢fžf¦f¢fžyŸf¦”x7Ðf†y…f–f"ªf‚yäq<Ð°‘~µ!‘€µ!‘„µ!‘ˆ¹{	{Ð°•!±~•!±€•!±„™±ˆ	{žÓI…A¥(®µ(f„:èy?Ó2Õ(•Dµ!•A•m€ J€

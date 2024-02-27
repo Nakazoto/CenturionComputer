@@ -1,0 +1,110 @@
+.nolog
+.job rrmenu
+.notime
+.setc 2=crt
+.use crt#v syslst
+.skip to main if rrmenu eq #8
+.seta upsi=3
+.run s.xopt
+=main
+.setc 8=rrmenu
+.run s.xeject
+.log
+*******************************************************************************
+*
+*                  centurion payroll to general ledger communication
+*
+*******************************************************************************
+*                  key number = #0                         disk = #1
+*******************************************************************************
+*
+*
+*   enter option:  1  communication table initialization
+*                  2  communication table master file service
+*                  3  print the communication table
+*                  4  generate general ledger details
+*                  5  general ledger menu
+*                 97  change the key/disk number
+*                 99  processing completed
+*
+*
+.nolog
+.enter upsi
+.seta 4=#u
+.skip to fin if 99 eq #4
+.skip 2 if 97 ne #4
+.setc 8 =''
+rrmenu
+.skip to err if 6 le #4
+.skip to err if 0 ge #4
+.fspec rr#0a on #1 7=size
+.skip to init if 1 eq #4
+.skip to menu if 5 eq #4
+.skip to ok if 0 ne #7
+.log
+*   improper request - file set not on specified disk
+.nolog
+.skip to recall
+=ok
+.skip to jcl#4
+=menu
+.fspec glmenu on #d 7=size
+.skip to err1 if 0 eq #7
+glmenu
+=init
+.skip to ok if #7 eq 0
+.log
+*   improper request - file set already exists
+.nolog
+.skip to recall
+=ok
+.fspec rr.init on #d 7=size
+.skip to err1 if #7 eq 0
+.log
+*   enter approximate number of job/departments in payroll
+.nolog
+.enter 2
+rr.init
+=jcl2
+.setc 6=mast
+.skip to call
+=jcl3
+.setc 6=print
+.skip to call
+=jcl4
+.setc 6=det
+=call
+.fspec rr.#6 on #d 7=size
+.skip to err1 if #7 eq 0
+.skip to ok if 3 ne #4
+.seta upsi=2
+.run s.xopt
+=ok
+rr.#6
+=err
+.log
+*   invalid option selected
+.nolog
+.skip to recall
+=err1
+.log
+*   this module is not installed
+.nolog
+=recall
+.log
+*   enter newline to recall menu
+.nolog
+.pause
+rrmenu
+=fin
+.end
+.setc 8=''
+s.con
+*  1/18/78...written..ns
+*   8/11/78...cleanup..ns
+
+®·•qif
+dfŒf şxfŒ£f
+ÿc³s¥    ªªªªª  É¯Ï ÅÒÒÏÒ     ÓÙÓÁÄÄÒÅÓÓ½ÓÔÁÔÕÓ½ªªªªª  ÅÏÍ ÏÎ ÏÕÔĞÕÔ ÓÙÓ½
+fVŒ‹t›~aÕA•A\2qo§~aÕA•A\2qa³~aÕA•A\2
+qV€’”–˜š¡£¥§©«²´¶¸º¼ÃÅÇ»€Ô ÁĞĞÌÉÃÁÂÌÅ €ışùõ€

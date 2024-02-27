@@ -1,0 +1,137 @@
+.nolog
+.notime
+.job test
+.seta cc=100
+.run ?.xeject
+/   centurion test routines
+/
+/   1  crt test
+/   2  printer test
+/   3  mainframe test
+/   4  exit
+/
+/   enter option(1,2,3,4):
+.enter 8
+.skip to #8
+=2
+/   enter printer name:
+.enter 8
+=2a
+.use #8 sys0
+.run ?.xptest
+.skipr to 2a if #c ne 0
+.skipr 0
+=1
+.run ?.xctest
+.skipr to 1 if #c ne 0
+.skipr 0
+=3
+.skip to asm?
+=4
+.end
+.time
+.log
+.use crt#v sysrdr
+=#8
+.skipr 0
+=asm?
+.time
+.log
+.seta 9=0
+=next
+.seta 9=#9+1
+/***********************************
+/*                                 *
+/*         system test             *
+/*                                 *
+/***********************************
+/*
+/*  pass: #9
+/*
+.fspec @scr#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @scr#i on #d
+.new @scr#i on #d 'a' 1t
+.fspec @scre1#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @scre1#i on #d
+.new @scre1#i on #d 'e' 1s
+.fspec @scre2#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @scre2#i on #d
+.new @scre2#i on #d 'e' 1s
+.fspec @xref#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @xref#i on #d
+.new @xref#i on #d 'b' 1s
+=asprp
+.seta cc=0
+.use ?.zcputest on #d sys0 shar
+.use @scr#i on #d sys1
+.use ?.tstdta on #d sys2 shar
+.run ?.xasprp
+=assm
+.use @scr#i on #d sys1
+.use @scre1#i on #d sys2
+.use crt#v sys3
+.use @xref#i on #d sys4
+.run ?.xassm
+.skip to error if #c ne 0
+.use ?.rcputest on #d sys0 shar
+.use @scre1#i on #d sys1
+.run ?.xcprut
+.skip to error if #c ne 0
+=link
+.use @scre2#i on #d sys1
+.use @scre1#i on #d sys2
+.use ?.tstlib on #d sys3 shar
+.use ?.hicore on #d sys4 shar
+.run ?.xlink
+tap
+org 256
+inc
+go
+go
+go
+go
+log
+end
+.use @scre2#i on #d sys0
+.use ?.@cputest on #d sys1 shar
+.run ?.xcprut
+.skipr to next if #c eq 0
+=error
+/*
+/*
+/*
+/*
+/******************  error on pass #9  ******************************
+/*
+/*
+/*
+.end
+.use crt#v sysrdr
+=quit
+/************************************
+/*                                  *
+/*        end system test           *
+/*                                  *
+/************************************
+/*
+/*   final pass: #9
+.fspec @scr#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @scr#i on #d
+.fspec @scre1#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @scre1#i on #d
+.fspec @scre2#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @scre2#i on #d
+.fspec @xref#i on #d 8=size
+.skip 1 if #8 eq 0
+.del @xref#i on #d
+.end
+.skipr 0
+
+

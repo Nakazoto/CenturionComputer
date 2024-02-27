@@ -1,0 +1,30 @@
+.job glpack
+.use gl#0f on #1 sys2
+.fspec glscr#i on #1 7=type, 5=size
+.skip 2 if #5 eq 0
+.skip 2 if #7 eq b
+.del glscr#i on #1
+.new glscr#i on #1 'b' 1
+.use glscr#i on #1 sys1
+.use gl#0a on #1 sys0 shar
+.run gl.xgl575
+.skip to fin if #c ne 0
+.skip to exit if 9 eq #u
+.del gl#0f on #1
+.nam glscr#i on #1 gl#0f
+.skip to exit if 2 eq #u
+.skipr 0
+*
+=exit
+.skip 1 if glmenu ne #4
+glmenu
+=fin
+.end
+s.con
+*  4/25/78...changed to new standards..ns
+*   10/04/78...cleanup..ns
+*   07/10/80...provided for multiple re-entry..aja
+*   03/25/82...modified to make the scratch file partition-specific..dl
+
+
+

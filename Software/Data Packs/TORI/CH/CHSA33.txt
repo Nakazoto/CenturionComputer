@@ -1,0 +1,21 @@
+:SUNDAY SCHOOL MASTER FILE:2: 0:16: 5:C: 7:
+: 4: 4:CLASS NUMBER....:K:
+: 6: 4:CLASS NAME......:C:30:    0:
+:-1:
+:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

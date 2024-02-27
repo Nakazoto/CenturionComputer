@@ -1,0 +1,369 @@
+.nolog
+.notime
+.seta 0=100
+.seta 1=1
+.run s.xeject
+/==============================================================================
+/                        memorial master file menu
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/  enter function:   1 - display memorial master file
+/
+/                    2 - print memorial master file - numeric key order
+/                    3 - print memorial master file - alpha by memorial
+/                    4 - print memorial master file - fund order
+/                    5 - print memorial master file - date order
+/
+/                    6 - select print by memorial number
+/                    7 - select print by fund number
+/                    8 - select print by dates
+/                    9 - variable select print
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end of processing
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 1 if 99 ne #9
+s.con
+.skip 1 if 97 ne #9
+memorial on #d
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 10 le #9
+.setc 7 = mnrm01
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+* display memorial master file
+.use mn#0a on #1 for sys0 shar
+.use mn.mnsm01 on #d for sys1 shar
+.use mn#0c on #d for sys2 shar
+.use mn#0e on #d for sys3 shar
+.setc 4 eq mn#0a
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr 0
+=opt2
+* numeric key order
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  8
+key=(5,4,bi),/*
+.end
+.skip to report
+=opt3
+* alpha by memorial
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 3 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  38
+key=(9,30,ch,5,4,bi),/*
+.end
+.skip to report
+=opt4
+* fund order
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 8 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  12
+key=(9,4,bi,5,4,bi),/*
+.end
+.skip to report
+=opt5
+* date order
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+data 1 11 /*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  12
+key=(9,4,bi,5,4,bi),/*
+.end
+.skip to report
+=opt6
+* select by memorial number
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+in 0#4enter beginning memorial number
+skip 4 if #0 le "0"
+in 1#4enter ending memorial number
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#4 "9999"
+data 2 11
+select 2 ge #0 and 2 le #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  12
+key=(5,4,bi,9,4,bi),/*
+.end
+.skip to report
+=opt7
+* select by fund number
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+in 0#2enter beginning fund number
+skip 4 if #0 le "0"
+in 1#2enter ending fund number
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "99"
+data 8 2
+select 8 ge #0 and 8 le #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  12
+key=(5,4,bi,9,4,bi),/*
+.end
+.skip to report
+=opt8
+* select print by dates
+/  standby for creation of new list file
+.seta upsi=0
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+in 0#6enter beginning date mmddyy
+skip 4 if #0 le "0"
+in 1#6enter ending date mmddyy
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "999999"
+data 2 11
+select 11 ge #0 and 11 le #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  12
+key=(5,4,bi,9,4,bi),/*
+.end
+.skip to report
+=opt9
+* variable select
+/  standby for creation of new list file
+/
+/    select the fields that make what you want unique
+/    then enter
+/          data 2 11 /*
+.seta upsi=1
+.use mn.mnsm01 on #d for sys0 shar
+.use mn#0a  on #1 for sys1 shar
+.use mn#0a  on #1 for sys3 shar
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.seta upsi=0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  12
+key=(5,4,bi,9,4,bi),/*
+.end
+.skip to report
+=report
+.use mn.#7 on #d for sys0 shar
+.use mn#0a  on #1 for sys1
+.use mn#0e on #1 for sys2
+.use mn#0b  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+
+.use mn#0b  on #1 for sys2
+.run asmlib.xxtrct on #s
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.seta upsi=0
+.use mn#0b  on #1 for sys1 shar
+.use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=  12
+key=(5,4,bi,9,4,bi),/*
+.end
+.skip to report
+=report
+.use mn.#7 on #d for sys0 shar
+.use mn#0a  on #1 for sys1
+.use mn#0e on #1 for sys2
+.use mn#0b  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr 0
+
+use mn#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+
+
+
+
+
+
+
+
+
+

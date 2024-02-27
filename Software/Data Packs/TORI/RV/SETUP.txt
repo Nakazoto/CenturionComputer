@@ -1,0 +1,42 @@
+.nolog
+.notime
+.job rvsetup
+.fspec rv on #d 7=size
+.skip 2 if #7 eq 0
+.setc 9=rv
+.skip to go
+.fspec rvs on #d 7=size
+.skip 2 if #7 eq 0
+.setc 9=rvs
+.skip to go
+/   rv or rvs library not located on disk #d
+s.con
+=go
+/   enter payroll key number > 
+.enter 1
+/   enter payroll disk number> 
+.enter 0
+.fspec rv#1a on #0 7=size
+.skip 2 if #7 gt 0
+/   payroll files for key #1 not located on disk #0
+s.con
+/
+/   stand by for rv payroll setup
+/
+.use #9.rvfwtable on #d for sys0
+.fspec rvfwtable on #0 7=size
+.skip 1 if #7 gt 0
+.new rvfwtable on #0 'c' 1
+.use rvfwtable on #0 for sys1
+.use dummy for syslog
+.run s.xcoput
+.use crt#v for syslog
+.skip 2 if #c eq 0
+/********************  copy error  ********************
+s.con
+/   payroll setup complete
+/
+.end
+s.con
+
+

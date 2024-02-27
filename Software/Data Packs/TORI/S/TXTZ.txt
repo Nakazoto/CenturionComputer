@@ -1,0 +1,28 @@
+.job txtz
+.nolog
+.notime
+.seta cc=0
+.setc 6='.'
+/   enter input library name or "newline" if no library
+.enter 5
+.skip 1 if ? le #5
+.setc 5='' 6=''
+.log
+.use #5#6z#0 on #1 for sys0
+.use @scr#i on #s for sys1
+.run s.xtext
+.skip to ok if 0 eq #c
+.seta cc = 0
+.use @scr#i on #s for sys0
+.use #5#6z#0 on #1 for sys1
+.run s.xcoput
+.skip to ok if 0 eq #c
+/*********     copy error     **********
+=ok
+.nolog
+/   end text for #5#6z#0 on #1
+.end
+.setc 6=''
+s.con
+*   05/04/79...created for cpu6...klf
+

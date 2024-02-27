@@ -1,0 +1,7 @@
+.seta upsi=0, cc=0
+.use crt#v for syslst
+.end
+.log
+.time
+.use crt#v for sysrdr
+

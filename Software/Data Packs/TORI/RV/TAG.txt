@@ -1,0 +1,28 @@
+.job tag
+*
+***   tag and sort master file (supplemental)
+*
+.seta upsi = 0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.run s.xtract
+print=yes, filtyp=b, arg, key
+/*
+.use rv#0l on #1 for sys0 shar
+.use rv#0l on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=inp,key=(1,4,bi)
+/*
+rvmenu
+.end
+s.con
+*   created  04-18-77  from rpsj91...klf
+*   revised  11-16-77  for directory "s"...klf
+*   added menu recall 10-24-78...jwb
+*   mod for vsi master file, changed all names to "rv" 03-04-80...ok
+

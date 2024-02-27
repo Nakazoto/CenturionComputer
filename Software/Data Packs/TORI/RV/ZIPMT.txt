@@ -1,0 +1,88 @@
+.job zipmt
+*
+***   zip code file maintenance utility
+*
+.setc 9=' '
+.fspec rv     on #d 8=size
+.skip 2 if 0 = #8
+.setc 9='rv.'
+.skip to go
+.fspec rvs    on #d 8=size
+.skip 2 if 0 = #8
+.setc 9='rvs.'
+=go
+.use zipcod on #1 for sys0
+.fspec ziptag on #1 8=size
+.skip to go if #8 ne 0
+.new ziptag on #1 'b' 1
+.use ziptag on #1 for sys1
+.run s.xwtag
+.seta upsi=0
+.use ziptag on #1 for sys0 shar
+.use ziptag on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=input,key=(1,4,bi)
+/*
+.use zipcod on #1 for sys0
+=go
+.use ziptag on #1 for sys1
+.run #9xzipmt
+.seta 7 = #c
+.skip to go if #u eq 0
+.use zipcod on #1 for sys0
+.use ziptag on #1 for sys1
+.run s.xwtag
+.seta upsi=0
+.use ziptag on #1 for sys0 shar
+.use ziptag on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=input,key=(1,4,bi)
+/*
+=go
+.skip to eoj if #7 eq 0
+.fspec zipcod on #1 8=size
+.seta 8=#8/16
+.seta 8=#8*110/100+1
+.new @zip@ on #1 'c' #8
+.use @zip@ on #1 for sys0
+.run s.xrint
+recsiz=20,paddng=0
+/*
+.use zipcod on #1 for sys0
+.use ziptag on #1 for sys1
+.use @zip@  on #1 for sys2
+.run #9xzipcp
+.skip to err if #c ne 0
+.del zipcod on #1
+.nam @zip@ on #1 to zipcod
+#9zipmt
+=eoj
+rvmenu
+=err
+*
+***   zip file copy failed
+*
+.end
+.fspec s.con on #d 9=size
+.skip 1 if 0 eq #9
+s.con
+con
+*   created  02-22-77 initial release...klf
+*   revised  04-11-77 to go into cust directory...klf
+*   revised  07-25-77 to run in or out of either directory...klf
+*   revised  11-16-77 for directory "s"...klf
+*   added menu recall 10-24-78...jwb
+*   modified to use #s for sort files 11-12-79...jwb
+*   11-27-79...modified for cpu-6...kag
+*   03-13-80...renamed all "rp" to "rv"...ok
+

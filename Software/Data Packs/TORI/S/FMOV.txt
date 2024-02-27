@@ -1,0 +1,6 @@
+.job fmov
+.use #0 on #1 for sys0
+.run s.xfilmv
+.end
+s.con
+

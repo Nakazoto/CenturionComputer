@@ -1,0 +1,116 @@
+.job restore abort=cancel
+.notime
+.nolog
+.run s.xeject
+/============================================================================
+/                         restore procedures
+/============================================================================
+/
+/     enter funcion:    1.  restore system
+/                       2.  restore payroll files
+/                       3.  restore general ledger files
+/                       4.  restore church and pledge files
+/
+/                      99.  end of restore procedures
+/
+/============================================================================
+/      awaiting response
+.enter upsi
+.seta 9 = #u
+.seta upsi = 0
+.skip 1 if 99 ne #9
+s.con
+.skip 2 if 0 ge #9
+.skip 1 if 5 le #9
+.skip to opt#9
+.skipr 0
+=opt1
+/
+/     please call scott or stephanie if you need to restore
+/    the complete system
+/    newline to acknowledge
+.pause
+.skipr 0
+=opt2
+/
+/     are you ready to restore the payroll files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+.setc 7=rvmove
+.skip to doit
+.end
+=opt3
+/
+/     are you ready to restore the general ledger files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+.setc 7=glmove
+.skip to doit
+.end
+=opt4
+/
+/     are you ready to restore the church and pledge files - y/n?
+.enter 9
+.skipr 0 if y ne #9
+.setc 7=chmove
+.skip to doit
+.end
+=doit
+.noguard 1
+.seta upsi=0, cc=0
+.seta 0 = 0
+.seta 1 = 1
+/     selective restore requires the index file (@sind0) be restored first.
+/     insert disk containing the index file (normally the last disk).
+/     newline to continue /
+.pause
+.fspec @sind0 on #1 9=size
+.skip to redo if #9 gt 0
+.new @sind0 #1 'c' 1t
+=redo
+.use @sind0 on #1 sys0
+.restore #0 to #1
+.skip to fil if #c eq 0
+.skip to end    if #c ne 99
+/    index file "@sind0 is not on this disk,
+/    insert previous disk
+/    newline to continue /
+.pause
+.skipr to redo
+=fil
+/     insert first diskette
+/     newline to continue
+.pause
+.seta 8=1
+.seta upsi=1
+.fspec #7 on #8 9=size
+.skip to ok if #9 gt 0
+/   error !   file "#7" is not on disk #8
+/
+.skipr to fil
+=ok
+.use #7 on #8 sys0
+=key
+.fspec @scr#i on #1 9=size
+.skip 1 if #9 gt 0
+.new @scr#i #1 'a' 1
+.use @sind0 on #1 sys1 shar
+.use @scr#i on #1 sys2
+.run s.xselrest on #s
+.skip to end if #c ne 0
+@scr#i on #1 #0 #1
+=end
+.guard 1
+.end
+.skipr 0
+
+
+
+
+
+
+
+
+
+
+

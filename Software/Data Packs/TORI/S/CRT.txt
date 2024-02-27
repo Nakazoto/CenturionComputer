@@ -1,0 +1,14 @@
+.nolog
+.notime
+.job crt abort=cancel
+.setc 6='.'
+/   enter library or "newline" for none /
+.enter 5
+.skip 1 if ? le #5
+.setc 5='' 6=''
+.use #5#6#0 on #1 for sys0 shar
+.run s.xcrtvu
+.end
+.setc 6=''
+s.con
+

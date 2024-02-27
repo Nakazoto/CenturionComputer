@@ -1,0 +1,33 @@
+:enter/update membership file with activity codes:2: 0:16: 2:
+: 5: 2:membership #....:n: 4: 0: 4:
+: 5:40:name............:e:    6:16:
+: 7: 2:activity........:n: 3: 0: 0:
+: 8: 2:activity........:n: 3: 0: 0:
+: 9: 2:activity........:n: 3: 0: 0:
+:10: 2:activity........:n: 3: 0: 0:
+:11: 2:activity........:n: 3: 0: 0:
+: 7:40:activity........:n: 3: 0: 0:
+: 8:40:activity........:n: 3: 0: 0:
+: 9:40:activity........:n: 3: 0: 0:
+:10:40:activity........:n: 3: 0: 0:
+:11:40:activity........:n: 3: 0: 0:
+:16: 2:occupation......:n: 3: 0: 0:
+:17: 2:employer........:c:23: 0: 0:
+:18: 2:age group.......:n: 5: 0: 0:
+:-1:
+
+:-1:
+
+
+
+
+
+
+
+
+
+
+
+
+
+

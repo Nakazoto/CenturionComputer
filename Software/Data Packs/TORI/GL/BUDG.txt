@@ -1,0 +1,175 @@
+.end
+.job glbudg
+.skip to dump if 8 eq #u  * this is option 10 (dump budget)
+.seta upsi=0, cc=0
+.run s.xeject
+.setc 9=budg
+.seta cc=0
+.use gl#0a on #1 for sys0
+.use gl#0b on #1  sys1
+.use @scrb#i on #s for sys2 shar
+.log
+*   enter option:  1  create/change  the budget
+.nolog
+.skip 5 if #u eq 2
+.log
+*                  2  print  the budget
+*                  3  automatic create using the chart of accounts
+.nolog
+.skip 2
+.log
+*                  3  automatic create using the chart of accounts
+.nolog
+.enter cc
+.seta 8=#c
+.seta cc=0
+.skip to dump1 if 2 eq #8
+.skip to err if 3 lt #8
+.skip to err if 0 ge #8
+.skip to create if 3 = #8
+=change
+.seta upsi=0
+/*   do you wish to clear the budget file for a new year? (y/n)..
+.enter 7
+/*            option correct ?  (y/n)..
+.enter 8
+.skipr to change if n eq #8
+.skip to chg1 if y ne #7 *     7=no
+.setc 6=chg
+.skip to dump
+=chg
+.seta upsi=1
+.use gl#0a on #1   sys0
+.use gl#0b on #1   sys1
+.use @scrb#i on #s sys2
+=chg1
+.run gl.xgl580
+.skip to gbnmst if 111 = #c
+.skip to recall
+=err
+.log
+*
+*   invalid option selected
+*   enter newline to recall program
+*
+.nolog
+.pause
+.skipr 0
+=create
+.use gl#0j on #1  sys3 shar
+.run gl.xgl581
+.skip to gbnmst if 111 = #c
+.skip to recall
+=gbnmst
+.log
+*
+*   standby while budget file is expanded
+*
+.nolog
+.fspec gl#0b on #1 7=use, 8=size
+.skip to go if 1 eq #7
+.log
+*
+*   budget file is being accessed by another partition
+*   close other partition and then "newline" to continue
+*
+.nolog
+.pause
+.log
+*
+*   did other partition expand budget master file ? (y/n)
+*
+.nolog
+.enter 9
+.skipr 0 if y eq #9
+=go
+.seta 8= #8/16
+.seta 8=#8*125/100+1
+.vspec #1 7=avail
+.seta 7=#7/16
+.skip to err if #7 lt #8
+.new gla#i #1 'c' #8
+.seta upsi=0, cc=0
+.use gl#0b on #1  sys0
+.use @scrb#i on #s sys1
+.run s.x?wtag
+.skip to fin if #c ne 0
+.use gla#i on #1  sys0
+.run s.x?rint
+recsiz=131,paddng=25
+/*
+.skip to fin if #c ne 0
+.use gl#0b on #1  sys0
+.use gla#i on #1  sys1
+.use @scrb#i on #s sys2
+.run gl.xgl510
+.skip to fin if #c ne 0
+.del gl#0b on #1
+.nam gla#i on #1 gl#0b
+.skip to fin if #c ne 0
+.skipr 0
+=err
+.log
+*
+*   insufficient disk space to expand budget file
+*
+.nolog
+.skip to fin
+=dump1
+.seta upsi=2
+.run s.xopt
+=dump
+.rel sys0, sys1, sys2
+.seta upsi=0 cc=0
+.log
+*   standby while budget master file is sorted
+.nolog
+.use gl#0b on #1 sys0 shar
+.use @scrb#i on #s for sys1
+.run s.x?wtag
+.seta upsi=0
+.use @scrb#i on #s for sys0 shar
+.use @scrb#i on #s for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=10
+work=4,output=inp,key=(1,6,bi)
+/*
+*
+.rel sys0, sys1, sys2
+.skipr to chg if chg = #6  *  setting up new year goback
+.seta upsi=0
+.use crt#v  syslst
+.seta upsi=2
+.skip to go if #2 eq crt
+.seta upsi=1
+.skip to go if #2 eq type
+.use prt#2  syslst
+.seta upsi=3
+=go
+.use gl#0a on #1 for sys0 shar
+.use gl#0b on #1 for sys1 shar
+.use @scrb#i on #s for sys2
+.run gl.xgl585
+=recall
+.skip to fin if #c ne 0
+.skip 1 if glmenu eq #4
+.skip 1 if glrepo ne #4
+glmenu
+=fin
+.end
+s.con
+*   6/08/79...took out gl#0i..ns
+*   7/06/79...added skip to fin at paragraph recall..ns
+*   10/04/79...moved sort to the beginning of the jcl to eliminate errors...jwb
+*   11/28/79...modified for cpu-6...kag
+*   12/20/29...added prt option message...kag
+*   02/26/80...moved sort to print section...kag
+*   06/27/80...added sort if setting up new year
+*          ...added printer device option for printing report...kag
+*   03/12/81...modified message from 'are you setting up a budget for a new year'
+*              to 'do you wish to clear the budget file for a new year'...dl
+

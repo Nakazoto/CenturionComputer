@@ -1,0 +1,157 @@
+.nolog
+.notime
+.run s.xeject
+/==============================================================================
+/                       special address master file
+/                 key: 100      disk: 1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - enter/update college student master file
+/                    2 - print college student master file
+/
+/                    3 - enter/update mailing list master file
+/                    4 - print mailing list master file
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if  5 le #9
+.skip to opt#9
+.skipr 0
+=chg
+/  enter printer or crt
+.enter 2
+.skipr 0
+=opt1
+.use ch#0m  on 1 for sys0 shar
+.use ch.chsm34 on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.setc 4 eq ch#0m
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt2
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm34 on 1 for sys0 shar
+.use ch#0m  on 1 for sys1 shar
+.use ch#0m  on 1 for sys3 shar
+.use ch#0n  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning college student number
+skip 4 if #0 le "0"
+in 1#4enter ending college student number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr 0
+define 1#4 "9999"
+da 5
+select 1 ge #0 and 1 le #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0n  on 1 for sys1 shar
+.use ch#0n  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch.chrm37 on 1 for sys0 shar
+.use ch#0m  on 1 for sys1
+.use ch#0a  on 1 for sys2 shar
+.use ch#0n  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt3
+.use ch#0o  on 1 for sys0 shar
+.use ch.chsm35 on 1 for sys1 shar
+.setc 4 eq ch#0o
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr 0
+=opt4
+/  standby for creation of new list file
+.seta upsi=0
+.use ch.chsm35 on 1 for sys0 shar
+.use ch#0o  on 1 for sys1 shar
+.use ch#0o  on 1 for sys3 shar
+.use ch#0p  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning mailing number
+skip 4 if #0 le "0"
+in 1#4enter ending mailing number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr 0
+define 1#4 "9999"
+da 3
+select 1 ge #0 and 1 le #1
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use ch#0p  on 1 for sys1 shar
+.use ch#0p  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 30
+key=(5,26,ch),/*
+.end
+.use ch.chrm38 on 1 for sys0 shar
+.use ch#0o  on 1 for sys1
+.use ch#0p  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr 0
+=opt97
+ch.church
+
+
+
+
+
+
+
+

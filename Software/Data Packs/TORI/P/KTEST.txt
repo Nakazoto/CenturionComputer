@@ -1,0 +1,16 @@
+.nolog
+.job ktest memory=wait abort=cancel
+.fspec #0 on #1 8=size 7=type
+.skip 2 if 0 ne #8
+/  file #0 not on disk #1 !!
+.skip to end
+.skip 2 if i eq #7
+/  file #0 on disk #1 is not vsi (indexed) file !!
+.skip to end
+.use #0 on #1 sys0
+.run p.xktest
+=end
+.end
+s.con
+
+

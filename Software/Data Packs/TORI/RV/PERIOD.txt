@@ -1,0 +1,26 @@
+.job period
+*
+***   random access payroll - period earnings report
+*
+.seta upsi=0
+.use dummy for syslst
+.skip to go if #2 eq no
+.use crt#v for syslst
+.skip to go if #2 eq type
+.skip to go if #2 eq crt
+.use prt#2 for syslst
+=go
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.use @scrc#i on #s for sys3
+.run rv.xrv580
+.skip to err if #c ne 0
+rvmenu
+=err
+.end
+s.con
+*   created  04-18-77  from rpsj80...klf
+*   revised  11-16-77  for directory "s"...klf
+*   added menu recall 10-24-78...jwb
+*   changed all names to "rv" and put scratch file on #s 04-02-80...ok
+

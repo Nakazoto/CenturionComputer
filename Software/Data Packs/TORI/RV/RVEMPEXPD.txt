@@ -1,0 +1,71 @@
+.nolog
+.seta cc=0 upsi=0
+.job year
+*
+***   year-end payroll file reset
+*
+.seta upsi = 0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.run s.xtract
+print=yes, filtyp=b, arg, key
+/*
+.use rv#0l on #1 for sys0 shar
+.use rv#0l on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=all,input=1,filtyp=b,recsiz=8
+work=4,output=inp,key=(1,4,bi)
+/*
+.fspec rv#0a on #1 8=size
+.new rva#0 on #1 'i' #8s recsiz=480 keylen=4 paddng=25
+.seta upsi=0
+.seta   cc=0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.use rva#0 on #1 for sys2
+.run rv.xrvexpd
+.skip to ok  if 1 eq #c
+.skip to err if 0 ne #c
+.skip to end
+=ok
+.del rv#0a on #1
+.nam rva#0 on #1 to rv#0a
+.seta upsi = 0
+.use rv#0a on #1 for sys0
+.use rv#0l on #1 for sys1
+.run s.xtract
+print=yes, filtyp=b, arg, key
+/*
+.use rv#0l on #1 for sys0 shar
+.use rv#0l on #1 for sys1 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,input=1,filtyp=b,recsiz=8
+work=4,output=inp,key=(1,4,bi)
+/*
+=end
+rvmenu
+=err
+.log
+*
+***   expandsion  has not been done
+*
+.nolog
+.end
+.fspec rva#0 on #1 8=size
+.skip 1 if 0 eq #8
+.del rva#0 on #1
+.end
+s.con
+
+
+
+
+

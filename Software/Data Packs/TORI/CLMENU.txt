@@ -1,0 +1,122 @@
+.nolog
+.notime
+.job clmenu memory=wait
+=main
+.seta upsi=0
+.run s.xeject
+/==============================================================================
+/                     customer master file maintenance
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - establish file set
+/                    2 - customer master file maintenance
+/                    3 - build customer list file
+/                    4 - customer master file listing
+/                    5 - build list file for inserting
+/
+/
+/                   98 - change key/disk/printer
+/                   99 - return to main menu
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.skip 2 if 99 ne #u
+.setc 6=menu
+wpmenu
+.skip to chg if 98 eq #u
+.skip 2 if 0 ge #u
+.skip 3 if 6 le #u
+.seta 9=#u
+.seta upsi=0
+.skip to opt#9
+.skipr 0
+=chg
+.seta upsi=4
+.run s.xopt
+.skipr 0
+=opt1
+.fspec wp#0a on #1 8=size
+.skip 2 if 0 eq #8
+/******* error files already exist **********
+.skipr 0
+/
+/  enter maximum number of names to be kept on file
+.enter 9
+.seta 7=#9/59+1
+.new wp#0a on #1 'i' #7 recsiz=108 keylen=4 paddng=25
+.new wp#0b on #1 'b' 4s
+.new wp#0c on #1 'c' 1t
+.end
+.skipr 0
+=opt2
+.use wp#0a  on #1 for sys0 shar
+.use cwp.wpsm0c on #d for sys1 shar
+.setc 4 eq wp#0a
+.setc 8 eq #i
+.run cwp.xmaint on #d
+.end
+.skipr 0
+=opt3
+/  standby for creation of new list file
+.seta upsi=0
+.use cwp.wpsm0c on #d for sys0 shar
+.use wp#0a on #1 for sys1 shar
+.use wp#0a on #1 for sys3 shar
+.use wp#0b on #1 for sys2
+.run cwp.xxtrct on #d
+in 0#8 enter beginning customer number or newline for all
+sk 2 if #0 eq "0"
+in 1#8 enter ending customer number
+da 1 se 1 ge #0 and 1 le #1 sk 1
+data 1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr 0
+.use wp#0b  on #1 for sys1 shar
+.use wp#0b  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz=8
+key=(5,4,bi),/*
+.end
+.skipr 0
+=opt4
+.use cwp.wprm0c on #d for sys0 shar
+.use wp#0a  on #1 for sys1
+.use wp#0b  on #1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run cwp.xreprt on #d
+.end
+.skipr 0
+=opt5
+.use wp#0a on #1 for sys0
+.use wp#0b on #1 for sys1
+.use wp#0c on #1 for sys2
+.run cwp.xwp105
+.end
+.skipr 0
+.end
+s.con
+
+
+
+
+
+
+
+
+
+

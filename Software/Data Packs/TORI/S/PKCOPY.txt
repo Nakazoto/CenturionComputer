@@ -1,0 +1,17 @@
+.job pkcopy
+.nolog
+/   enter source disk
+.enter 2
+.use @sdir0 on #2 for sys0
+.use @sual0 on #2 for sys1
+.use #0 on #1 for sys2
+.run s.xpcopy
+/   ready to execute copy?   (y/n)
+.enter 9
+.skip 2 if y ne #9
+.log
+#0 on #1
+.end
+s.con
+*   12/18/78...converted for cpu6...klf
+

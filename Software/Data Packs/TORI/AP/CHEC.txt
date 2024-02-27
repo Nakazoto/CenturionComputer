@@ -1,0 +1,49 @@
+.job apchec
+.seta upsi = 0
+.use dummy for syslst
+.skip to go if no eq #2
+.seta upsi = 1
+.use crt#v for syslst
+.skip to go if type eq #2
+.seta upsi = 2
+.skip to err1 if crt eq #2
+.seta upsi = 3
+.use prt#2 for syslst
+=go
+.seta upsi=0
+.use ap#0a on #1 for sys0
+.use ap#0x on #1 for sys1
+.use ap#0c on #1 for sys2
+.use ap#0z on #1 for sys3
+*
+*** run ap.xap260 or ap.xap261 depending on check format desired
+*
+.run ap.xap260
+.skip to error if #c ne 0
+.skip to recall if #u eq 1
+.nam ap#0q on #1 to apq#0
+.nam ap#0r on #1 to ap#0q
+.nam apq#0 on #1 to ap#0r
+.del ap#0x on #1
+.new ap#0x on #1 'c' 1
+.skip to recall
+=err1
+.log
+*   checks must be output to hard-copy device
+*   newline to acknowledge
+.nolog
+.pause
+=recall
+apmenu
+=error
+.end
+s.con
+* 11/10/76..put in expand and deleted parm..glg
+* 10/10/77...mod for new print options, added key #0 to salutation,
+             changed 'ap' to 'ap#0z' and 'aa#i' to 'apq#0'...nw
+*
+* 09/06/78   updated jcl to current standards...seh
+* 11/22/78   modified to bypass re-naming of files if run was a restart...jwb
+* 02/18/82...added option to run ap.xap260 or ap.xap261...pmr
+
+

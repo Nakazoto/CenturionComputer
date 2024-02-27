@@ -1,0 +1,44 @@
+: 1: 0:
+:132: 60:  2:
+:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:date:
+:               8:s:s:
+:              52:l:first united methodist church:
+:             121:l:page:
+:             126:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              50:l:church development fd method of payment edit:
+:::
+:h:  0:  0:     2:l:plra29:
+:              56:s:c:
+:::
+:h:  1:  1:     2:l:item:
+:              10:l:member:
+:              18:l:name:
+:              56:l:church development fd:
+:::
+:d:  0:  0:     2:s:#:
+:              12:f:   1:0:
+:              18:f:   6:1:
+:              56:f:   8:0:
+:              58:f:   9:0:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

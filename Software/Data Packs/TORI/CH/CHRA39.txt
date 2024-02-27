@@ -1,0 +1,38 @@
+: 84: 58:  0:
+:
+:h:- 1:  0:     1:l::
+:::
+:h:  0:  0:     2:l:date:
+:               8:s:s:
+:              27:l:first united methodist church:
+:              75:l:page:
+:              79:s:p:
+:::
+:h:  0:  0:     2:l:time:
+:               8:s:t:
+:              29:l:participation code master file:
+:::
+:h:  0:  1:     2:l:chrm39:
+:              33:s:c:
+:::
+:h:  0:  1:    15:l:participation code:
+:              38:l: :
+:::
+:d:  0:  0:    21:f:   1:0:
+:              38:f:   2:0:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

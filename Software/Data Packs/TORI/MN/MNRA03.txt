@@ -1,0 +1,38 @@
+:132: 60:  2:
+:
+:H:- 1:  0:     1:L::
+:::
+:H:  0:  0:     2:L:DATE:
+:               8:S:S:
+:              27:L:FIRST UNITED METHODIST CHURCH:
+:              75:L:PAGE:
+:              79:S:P:
+:::
+:H:  0:  0:     2:L:TIME:
+:               8:S:T:
+:              29:L:DESIGNATION CODE MASTER FILE:
+:::
+:H:  0:  1:     2:L:MNRA03:
+:              33:S:C:
+:::
+:H:  0:  1:    15:L:DESIGNATION CODE:
+:              38:L:DESCRIPTION:
+:::
+:D:  0:  0:    21:F:   1:0:
+:              38:F:   2:0:
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

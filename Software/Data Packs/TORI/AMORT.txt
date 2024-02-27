@@ -1,0 +1,20 @@
+.job amort  abort=cancel
+.nolog
+.setc 2=''
+.run s.xeject
+.seta upsi=2
+.run s.xopt
+.use dummy for syslst
+.skip to go if #2 eq no
+.use crt#v for syslst
+.skip to go if #2 eq type
+.skip to go if #2 eq crt
+.use prt#2 for syslst
+=go
+.run am.xamort
+.end
+s.con
+* 11-01-79...modified for correct print option chain...jwb
+* 12-13-79...modified to run out of am. run library on the cpu-6...kag
+* 12-14-79...inserted s.xopt for print option...kag
+

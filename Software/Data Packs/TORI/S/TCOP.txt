@@ -1,0 +1,29 @@
+.job tcop
+.nolog
+* s.tcop <tape file #> <tape unit> <filename> <disk> [ignore]
+.notime
+.setc 7 ='#4'
+.skip to tcop2 if ignore eq #7
+.setc 7=''
+=tcop2
+.setc 5='.'
+/enter output library name or "newline" if no library
+.enter 4
+.skip to tcop1 if ? le #4
+.setc 4='' 5=''
+=tcop1
+.fspec #4#5#2 on #3 6=size
+.skip to err1 if 0 ge #6
+.use #4#5#2 on #3 for sys1
+/positioning to file #0 on #1
+.use #0 on #1 sys0   #7
+/positioned
+.run s.xcoput
+.skip to tcopexit
+=err1
+/file #4#5#2 on #3 does not exist
+=tcopexit
+.end
+s.con
+.end
+

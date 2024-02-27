@@ -1,0 +1,6 @@
+.skip 2 if #1 = end
+.del #1 on #0
+s.del #0,#2,#3,#4,#5,#6,#7,#8,#9,end
+.end
+s.con
+

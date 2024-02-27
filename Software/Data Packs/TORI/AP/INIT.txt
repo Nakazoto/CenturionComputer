@@ -1,0 +1,38 @@
+.job apinit
+.log
+*
+*   enter number of vendors expected in master file
+*
+.nolog
+.enter 2
+.seta upsi=0
+.seta 2 = #2/48 + 1
+.new ap#0a on #1 'c' #2
+.use ap#0a on #1 for sys0
+.run s.xrint
+recsiz=131,paddng=25
+/*
+.new ap#0e on #1 'b' 1
+.new ap#0d on #1 'c' 1
+.use ap#0d on #1 for sys0
+.run s.xrint
+recsiz=29,paddng=25
+/*
+.new ap#0q on #1 'b' 1
+.new ap#0r on #1 'b' 1
+.seta 2 = #2/2 + 1
+.new ap#0m on #1 'c' #2
+.new ap#0x on #1 'c' #2
+.new ap#0n on #1 'b' 1
+.new ap#0b on #1 'b' 1
+.new ap#0c on #1 'b' 1
+apmenu
+.end
+s.con
+*
+*
+* 10/10/77   mod for new print options, directory s, and removed
+             parm statement, changed client # to key #, minor clean up...nw
+* 08/07/78...updated jcl to current standards...seh
+* 11/30/78...added creation of ap#0c file...jwb
+

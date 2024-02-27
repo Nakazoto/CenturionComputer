@@ -1,0 +1,93 @@
+.nolog
+.notime
+=again
+.run s.xeject
+/==============================================================================
+/                      display and print pledge tranasaction file
+/                       key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - display/update pledge transactions
+/                    2 - print pledge transaction edit
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip 7 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skip 2 if 0 ge #9
+.skip 1 if 3 le #9
+.skip to opt#9
+.skipr to again
+=chg
+/  enter printer or crt
+.enter 2
+.skipr to again
+=opt1
+* display/update pledge transactions
+.use pl#0g  on #1 for sys0 shar
+.use pl.plsm03 on #d for sys1 shar
+.use ch#0a  on #1 for sys2 shar
+.use pl#0e  on #1 for sys3 shar
+.setc 4 eq pl#0g
+.setc 8 eq #i
+.run asmlib.xmaint on #s
+.end
+.skipr to again
+=opt2
+* print  pledge transaction edit
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 20t
+.new sort3#i on 1 'b' 25t
+.new sort4#i on 1 'b' 20t
+.use pl#0g  on #1 for sys1 shar
+.use pl#0g  on #1 for sys0 shar
+.use sort1#i on #s for sys2
+.use sort2#i on #s for sys3
+.use sort3#i on #s for sys4
+.use sort4#i on #s for sys5
+.run s.dsort
+inpmod=(,xaisrt)
+print=no,filtyp=c,input=1,work=4,output=inp
+recsiz= 64
+key=(9,4,bi,35,26,ch),/*
+.end
+.use pl.plrm03 on #d for sys0 shar
+.use pl#0g  on #1 for sys1
+.use ch#0a  on #1 for sys2 shar
+.use pl#0e  on #1 for sys3 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on #s
+.end
+.skipr to again
+=opt97
+pl.pledge
+
+
+
+
+
+
+
+
+
+
+
+

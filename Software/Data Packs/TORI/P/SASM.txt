@@ -1,0 +1,71 @@
+.job #0
+.nolog
+.notime
+.seta cc=0 upsi=0
+.setc 9='.'
+/   enter storage library name or "newline" if no library
+.enter 6
+.skip 1 if ? lt #6
+.setc 6='' 9=''
+.setc 3=x 4=x 7=#3 8=#4
+.skip 1 if lib eq #7
+.skip 1 if lib ne #8
+.setc 3=lib
+.skip 1 if xref eq #7
+.skip 1 if xref ne #8
+.setc 4=xref
+.skip 1 if xrefs eq #7
+.skip 1 if xrefs ne #8
+.setc 4=xrefs
+.skip to asm if lib ne #3
+/
+/   enter compile library name
+.enter 5
+.skip to asm if ? ge #5
+.fspec #6#9#5 on #1 7=type 8=size
+.skip to go if 0 ne #8
+/
+/   library #6#9#5 is not on disk #1
+.skip to eoj
+=go
+.time
+.log
+.use #6#9z#0 on #1 sys0
+.use @scr#i on #s sys1
+.use #6#9#5 on #1 sys2 shar
+.run p.xasprp
+.use @scr#i on #s sys1
+.skip 4
+=asm
+.time
+.log
+.use #6#9z#0 on #1 sys1
+.fspec #6#9r#0 on #1 8=size
+.skip 1 if 0 ne #8
+.new #6#9r#0 on #1 'e' 1s
+.use #6#9r#0 on #1 sys2
+.skip 2 if lst ne #2
+.use @lst#i on #s for sys3
+.skip 1
+.use #2 for sys3
+.use dummy for sys4
+.seta upsi=0
+.skip 1 if xref ne #4
+.use @scrb#i on #s for sys4
+.skip 1 if xrefs ne #4
+.use @scrb#i on #s for sys4
+.run p.xassm
+.skip to eoj if #c=0
+/****   assm errors on !! #0 !!
+.skip 3 if lst ne #2
+.use @lst#i on #s for sys0
+.use crt#v for sys1
+.run s.xscan
+s.txtz
+=eoj
+.end
+.setc 9=''
+.use crt#v for syslog
+s.con
+*   calling seq: p.sasm (file) (disk) (print dev) (xref opt) (lib opt)
+

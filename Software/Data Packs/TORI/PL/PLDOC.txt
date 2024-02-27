@@ -1,0 +1,1061 @@
+^S1
+^m5
+/==============================================================================
+/                       FIRST UNITED METHODIST CHURCH
+/                            PLEDGE APPLICATION
+/==============================================================================
+^s1
+1.  The menu is called by entering:     PLEDGE
+2.  The operator should enter 98 to change the printer to Q.
+^s2
+** MAIN MENU OPTIONS **
+/=============================================================================
+/  enter function:   1 - MASTER FILE SERVICES
+/
+/                    2 - PLEDGE INFORMATION
+/                    3 - WEEKLY CONTRIBUTIONS DATA ENTRY
+/                    4 - STATEMENT INFORMATION
+/
+/                    5 - END OF YEAR CLEARING
+/
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^S2
+** MASTER FILE SERVICES **
+/=============================================================================
+/  enter function:   1 - ENTER/UPDATE FUND DESCRIPTION MASTER FILE
+/                    2 - PRINT FUND DESCRIPTION MASTER FILE
+/
+/                    3 - ENTER/UPDATE ENVELOPE MASTER FILE
+/                    4 - PRINT ENVELOPE MASTER FILE
+/                    5 - PRINT ENVELOPE LABELS
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^S2
+** PLEDGE INFORMATION **
+/=============================================================================
+/  enter function:   1 - DISPLAY PLEDGE MASTER FILE
+/                    2 - PRINT PLEDGE MASTER FILE - ALPHABETIC ORDER
+/                    3 - PRINT PLEDGE MASTER FILE - NUMERIC ORDER
+/                    4 - PRINT PLEDGE MASTER FILE - AMOUNT ORDER
+/                    5 - PRINT PLEDGE CONFIRMATION LETTER
+/
+/                    6 - PLEDGE METHOD OF PAYMENT MENU
+/
+/                    7 - NEW PLEDGES AT THE BEGINNING OF THE YEAR MENU
+/                    8 - NEW PLEDGES OR ADJUSTMENTS DURING THE YEAR MENU
+/
+/                    9 - DISPLAY AND PRINT PLEDGE TRANSACTIONS
+/                   10 - PRINT LAST YEAR'S PLEDGE MASTER FILE
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^P
+** PLEDGE METHOD OF PAYMENT MENU **
+/=============================================================================
+/  ENTER FUNCTION:   1 - ENTER/UPDATE METHOD OF PAYMENT MASTER FILE
+/                    2 - PRINT PLEDGE METHOD OF PAYMENT MASTER FILE
+/
+/                    3 - ENTER/EDIT/POST GF METHOD OF PAYMENT TRANSACTION FILE
+/                    4 - ENTER/EDIT/POST BF METHOD OF PAYMENT TRANSACTION FILE
+/                    5 - ENTER/EDIT/POST CDF METHOD OF PAYMENT TRANSACTION FILE
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^S2
+** NEW PLEDGES AT THE BEGINNING OF THE YEAR MENU **
+/=============================================================================
+/  ENTER FUNCTION:   1 - ENTER/UPDATE NEW PLEDGE TRANSACTIONS
+/                    2 - PRINT NEW PLEDGE TRANSACTION EDIT
+/
+/                    3 - PULL PLEDGES FROM LAST YEAR'S FILE
+/                    4 - PRINT PLEDGE BALANCE & ORIG PLEDGE EDIT
+/                    5 - ADJUST THE PLEDGE BALANCE & ORIG PLEDGE FILE
+/
+/                    6 - POST PLEDGE INFORMATION
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/=============================================================================
+^S2
+** NEW PLEDGES OR ADJUSTMENTS DURING THE YEAR MENU **
+/=============================================================================
+/  ENTER FUNCTION:   1 - ENTER/UPDATE NEW PLEDGE/ADJUSTMENT TX DURING THE YEAR
+/                    2 - PRINT NEW PLEDGE/ADJUSTMENT TRANSACTION EDT
+/
+/                    3 - POST PLEDGE INFORMATION
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/=============================================================================
+^S2
+** WEEKLY CONTRIBUTIONS DATA ENTRY **
+/=============================================================================
+/  enter function:   1 - BEGINNING OF A NEW QUARTER MENU
+/
+/                    2 - ENTER/UPDATE WEEKLY TRANSACTIONS
+/                    3 - PRINT WEEKLY TRANSACTION JOURNAL
+/                    4 - PRINT WEEKLY TRANSACTION JOURNAL  (SORTED)
+/                    5 - PRINT WEEKLY TRANSACTION SUMMARY
+/
+/                    6 - POST WEEKLY TRANSACTIONS
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^S2
+** BEGINNING OF A NEW QUARTER MENU **
+/=============================================================================
+/  enter funcion    1 - CREATE NEW QUARTERLY STATEMENT MASTER FILE
+/
+/                   2 - CREATE YEAR-TO-DATE CONTRIBUTIONS MASTER FILE
+/                   3 - PRINT YEAR-TO-DATE CONTRIBUTIONS JOURNAL
+/
+/                   4 - POST Y-T-D CONTRIBUTIONS AND PLEDGES TO THE
+/                       QUARTERLY STATEMENT MASTER FILE
+/
+/                   5 - WEEKLY CONTRIBUTIONS DATA ENTRY MENU
+/
+/                  97 - return to main menu
+/                  98 - change printer
+/                  99 - end processing
+/=============================================================================
+^S2
+** STATEMENT INFORMATION **
+/=============================================================================
+/  enter function:   1 - PRINT STATEMENTS
+/
+/                    2 - FILE BALANCING MENU
+/
+/                    3 - ENTER/UPDATE WEEKLY CONTRIBUTION CORRECTIONS
+/                    4 - PRINT WEEKLY CONTRIBUTION CORRECTIONS JOURNAL
+/                    5 - PRINT WEEKLY CONTRIBTUION CORRECTIONS SUMMARY
+/                    6 - POST WEEKLY CONTRIBUTION CORRECTIONS
+/
+/                    7 - ENTER/UPDATE YEAR-TO-DATE CONTRIBUTION CORRECTIONS
+/                    8 - PRINT YEAR-TO-DATE CONTRIBUTION CORRECTIONS
+/                    9 - PRINT YEAR-TO-DATE CONTRIBUTION CORRECTIONS SUMMARY
+/                   10 - POST YEAR-TO-DATE CONTRIBUTION CORRECTIONS
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^S2
+** FILE BALANCING MENU **
+/=============================================================================
+/  ENTER FUNCTION:   1 - PRINT FUND MASTER REPORT
+/                    2 - PRINT PLEDGE MASTER SUMMARY REPORT
+/                    3 - PRINT QUARTERLY STATEMENT MASTER SUMMARY REPORT
+/
+/                    4 - PRINT COMPARISON OF PLEDGE MASTER & QUARTERLY
+/                        STATEMENT DETAILS WHEN NOT IN BALANCE
+/
+/                    5 - PRINT VARIABLE QUARTERLY STATEMENT DETAILS
+/                    6 - PRINT VARIABLE UNPLEDGED STATEMENT DETAIL LIST
+/
+/                    7 - DISPLAY QUARTERLY STATEMENT MASTER FILE
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/==============================================================================
+^P
+** MASTER FILE SERVICES **
+^S1
+1 - ENTER/UPDATE FUND DESCRIPTION MASTER FILE
+^m9 65
+^^The FUND DESCRIPTION MASTER FILE contains the fund number, sort sequence,
+description, fund pledge code and the ytd contributions.^^
+^s1
+^^SPECIAL ATTENTION should be taken when entering funds and their
+descriptions.  Anything that money is contributed to should have
+a fund number.  Fund numbers can range from 2 to 99.^^
+^s1
+^^Unpledged money, including unpledged operating budget and special contributions,
+must have a sort sequence of 1.  The sort sequence determines the order
+of the contributions on the statements.  It is also the last digit
+of the key to the PLEDGE MASTER FILE.  The fund pledge code should be a zero
+for all unpledged money.^^
+^s1
+^^Pledged money, including pledged operating budget, building fund and church
+development fund, must have a sort sequence equal to the first digit of the
+fund code.  For example, operating budget pledge would be fund 60 with a sort
+sequence of 6, building fund pledge would be fund 70 with a sort sequence of 7.
+Remember, the sort sequence determines the order of the contributions on the
+statement, and it is also the last digit of the key to the PLEDGE MASTER FILE.
+Assign numbers accordingly.  The fund pledge code
+is the code in the CHURCH MASTER FILE to determine which funds the person has pledged to.
+For example, the operating budget code is 1, the building fund code is 10, the
+church development code is 100.  If a person pledged to all three funds, the
+code would be 111.^^
+^s1
+^^The year-to-date contributions are posted to the FUND DESCRIPTION MASTER FILE
+from the WEEKlY CONTRIBUTION DATA ENTRY.
+The year-to-date contributions in the FUND DESCRIPTION MASTER FILE should not need to be
+changed.  The weekly contribution corrections and year-to-date contribution
+corrections are automatically posted to the FUND DESCRIPTION MASTER FILE.
+The year-to-date contribution amount should balance with the PLEDGE MASTER FILE
+and the QUARTERLY STATEMENT MASTER FILE in the file balancing procedure.^^
+^s2
+^m5
+2 - PRINT FUND DESCRIPTION MASTER FILE
+^m9 65
+^^This option will print fund numbers, sort sequence, fund pledge code,
+description and ytd contributions for all the funds in the FUND MASTER FILE.
+The report will print in fund number order.^^
+^p
+^m5
+3 - ENTER/UPDATE ENVELOPE MASTER FILE
+^m9 65
+^^This option will give the operator the ability to assign envelope numbers
+to the members that desire envelopes.  At year-end-clearing the operator
+has the option to delete the ENVELOPE MASTER FILE and set it up again.  If
+the same numbers are to be used, the operator would not want to delete the file.^^
+^s1
+^^The operator will enter the envelope number and the membership number of the
+person who wants the envelopes.  The crt will display the name, family name,
+address and fund pledge code from the CHURCH MASTER FILE.^^
+^S2
+^m5
+4 - PRINT ENVELOPE MASTER FILE
+^m9 65
+^^This option will print the envelope number, membership number, name, family
+name, and address for all the records in the ENVELOPE MASTER FILE.  This
+report will print in either envelope number or alphabetic order.^^
+^s2
+^m5
+4 - PRINT ENVELOPE LABELS
+^m9 65
+^^This option will print the envelope labels in envelope number order.
+The envelope number is in the right-hand corner, the membership number
+is in the left-hand corner of the label.  The label also prints the
+name, address and zipcode.^^
+^s1
+^^The operator has the option to also print
+the membership explanation labels.  The labels will print in envelope
+number order.  The label says:^^
+^s1
+^m5
+          9999 IS THE NUMBER TO WHICH YOUR
+          CONTRIBUTIONS WILL BE CREDITED.
+          PLEASE PUT THIS NUMBER ON EACH
+          ENVELOPE YOU USE.  THANK YOU
+^p
+** PLEDGE INFORMATION **
+^S1
+1 - DISPLAY PLEDGE MASTER FILE
+^m9 65
+^^The PLEDGE MASTER FILE contains the pledge master key, membership number,
+pledge code (1/0), fund code, sort sequence, last posted date, amount pledged,
+contribution, pledge balance, alpha sort, and original pledge.  The name and
+address are also displayed on the CRT from the CHURCH MASTER FILE.^^
+^s1
+^^The key to the PLEDGE MASTER FILE is the membership number plus the sort
+sequence of the fund involved.  For example, member 9999 would be 99991 for
+unpledged and special contributions, 99996 for pledged operating budget, 99997
+for pledged building fund, 99999 for pledged church development fund.^^
+^s1
+^^The PLEDGE MASTER FILE is created from the POSTING OF PLEDGE INFORMATION and
+the POSTING OF WEEKLY TRANSACTIONS.  The information in the PLEDGE MASTER FILE
+should not need to be changed.  The pledge information should be changed through
+the NEW PLEDGES OR ADJUSTMENTS DURING THE YEAR MENU.  The weekly transaction information
+should be changed through the STATEMENT INFORMATION MENU.^^
+^m5
+^S1
+2 - PRINT PLEDGE MASTER FILE - ALPHABETIC ORDER
+^m9 65
+^^This option prints the PLEDGE MASTER FILE in alphabetic order.  The operator
+has the option to have the report sorted by fund, and to select the funds to
+be printed.  The report would total
+at the end of each fund and a grand total.  The operator also has the option
+to print in the format showing the original pledge.  The original pledge format
+shows the pledge master key, membership number, name, pledge code (1/0), fund
+code, description, last posted date, original pledge, amount pledged and
+pledge balance.  The other format shows the contributions instead of the original
+pledge.^^
+^s1
+^m5
+3 - PRINT PLEDGE MASTER FILE - NUMERIC ORDER
+^m9 65
+^^This option will print the PLEDGE MASTER FILE in numeric order.  The
+operator has the option to print the report by fund or by member number.
+The pledge master report sorted by fund allows the operator to select
+which funds are to be printed.  The report totals at the end of each fund
+and a grand total is printed at the end of the report.  The pledge master
+report sorted by member number totals at the end of each member with a
+grand total at the end of the report.^^
+^s1
+^^The format for both reports shows the pledge master key, membership number,
+name, pledge code(1/0), fund code, description, last posted date, amount
+pledged, contributions, and pledge balance.^^
+^s1
+^m5
+4 - PRINT PLEDGE MASTER FILE - AMOUNT ORDER
+^M9 65
+^^This option prints the PLEDGE MASTER FILE in amount order.
+The report is sorted by fund, in descending order of pledges and contributions.
+The report totals at the end of each fund and a grand total.
+The operator has the option to select the funds to be printed, and the option
+to print the report in the format showing original pledge.  The original pledge
+format shows the pledge master key, membership number, name, pledge code (1/0),
+fund code, description, last posted date, original pledge, amount pledged and
+pledge balance.  The other format shows the contributions instead of the original pledge.^^
+^S1
+^m5
+5 - PRINT PLEDGE CONFIRMATION LETTER
+^m9 65
+^^This option will print a letter to confirm pledges for
+5 members, a range of members, or all the members who have made a pledge
+to the church.  The
+letters are sorted in membership number and fund code order.  The letter shows
+the membership number, family name and address.  It is worded as follows:^^
+^s1
+THIS IS A CONFIRMATION OF YOUR PLEDGING FOR 1985 AND DOES NOT
+REFLECT ANY CONTRIBUTIONS RECEIVED IN 1985.
+^S1
+FUND            ORIGINAL PLEDGE          BALANCE AS OF 1/1/85
+^S1
+IF THESE AMOUNTS ARE NOT CORRECT OR IF YOU HAVE ANY QUESTIONS,
+PLEASE CALL THE CHURCH OFFICE , 686-3163.
+^s1
+^m5
+6 - PLEDGE METHOD OF PAYMENT MENU
+^m9 65
+^^Please see the PLEDGE METHOD OF PAYMENT MENU documentation.^^
+^s1
+^m5
+7 - NEW PLEDGES AT THE BEGINNING OF THE YEAR MENU
+^m9 65
+^^Please see the NEW PLEDGES AT THE BEGINNING OF THE YEAR documentation.^^
+^m5
+^S1
+8 - NEW PLEDGES OR ADJUSTMENTS DURING THE YEAR MENU
+^m9 65
+^^Please see the NEW PLEDGES OR ADJUSTMENTS DURING THE YEAR documentation.^^
+^s1
+^m5
+9 - DISPLAY AND PRINT PLEDGE TRANSACTIONS DURING THE YEAR
+^M9 65
+^^This option allows the operator to display and print the pledge transactions
+at any time after the first of the year.  This option should not be used to
+change a pledge.  Please use the NEW PLEDGES OR ADJUSTMENTS DURING THE YEAR
+menu to change a pledge.  This option may be used to delete a zero pledge so that it will not
+appear on a statement.^^
+^s1
+^^The report will print in fund code and alphabetic order.
+The report prints the record number, membership number, name, fund code,
+fund description, date and pledge amount.  The report totals the membership
+number and pledge amount at the end of each fund code, and a grand total.^^
+^s1
+^m5
+10 - PRINT LAST YEAR'S PLEDGE MASTER FILE.
+^m9 65
+^^This option will print LAST YEAR'S PLEDGE MASTER FILE in member number order, numeric order by fund, alphabetic order by fund or a
+amount order by fund.  She can also
+select the funds to be printed, and select the pledge balance less than or
+equal to a certain amount (99999.99).  The report shows the pledge master key,
+membership number, name, pledge code (1/0), fund code, description, last
+posted date, original pledge, amount pledged and pledge balance.  The report
+in member number order prints the contribution amount instead of the original
+pledge.  It also does not allow selection of funds or amounts.^^
+^p
+^m5
+** PLEDGE METHOD OF PAYMENT MENU **
+^S1
+1 - ENTER/UPDATE METHOD OF PAYMENT MASTER FILE
+^m9 65
+^^The PLEDGE METHOD OF PAYMENT MASTER FILE contains the membership #, name, alpha sort, the general fund
+method (i.e. weekly, monthly, quarterly or annually), general fund amount,
+the building fund method and amount, the church development method and amount,
+and a 30-character description field.  The name, alpha sort, family name,
+address and fund pledge code are displayed from the CHURCH MASTER FILE.^^
+^S1
+^^The METHOD OF PAYMENT MASTER FILE contains a record for each person
+who might give to the church.  When a record is added to the CHURCH MASTER
+FILE, it should also be added to this file.^^
+^S1
+^^This file is used to facilitate the entering of weekly transactions.
+When the operator enters the membership number, the name, fund pledge code
+and methods of payment are displayed on the CRT from the PLEDGE METHOD OF PAYMENT FILE .  This helps the operator
+apply the amounts received to the proper funds.  The weekly contribution
+corrections and the year-to-date contribution corrections also use the
+PLEDGE METHOD OF PAYMENT MASTER FILE to display the name, fund pledge code,
+and methods of payment.^^
+^s1
+^^If an incorrect name is displayed when the operator is entering the
+weekly contributions, the record may be incorrect in the PLEDGE METHOD OF
+PAYMENT MASTER FILE.  The operator should check the membership record in
+the CHURCH MASTER FILE,  and then call up the record in the PLEDGE METHOD
+OF PAYMENT MASTER FILE.  By entering the membership number in the PLEDGE
+METHOD OF PAYMENT MASTER FILE, the correct information will be pulled from
+the CHURCH MASTER FILE.^^
+^S1
+^m5
+2 - PRINT PLEDGE METHOD OF PAYMENT MASTER FILE
+^m9 65
+^^This option will print the PLEDGE METHOD OF PAYMENT MASTER FILE in alphabetic order.
+Since the file contains a record for each person in the CHURCH MASTER FILE,
+the report only selects those records with an amount in general fund amount,
+building fund amount or the church development fund amount.  The report
+shows the membership number, name, fund pledge code, general fund method and
+amount, the building fund method and amount, the church development fund
+method and amount, and the description.^^
+^s1
+^m5
+3 - ENTER/EDIT/POST GF METHOD OF PAYMENT TRANSACTION FILE
+^m9 65
+^^This option is used to enter/update/post the general fund method and amount of
+payment in the PLEDGE METHOD OF PAYMENT MASTER FILE.  This option will clear
+the general fund amount of payment and post the new amounts for all the records in the PLEDGE METHOD OF
+PAYMENT FILE.  Use this option ONLY if you want to enter all the members and
+methods of payment into the transaction file.^^
+^s1
+^^The membership number, general fund method and amount of payment are entered into a transaction
+file.  The name, family name and address are displayed from the CHURCH MASTER
+FILE.  The transaction file is printed as an edit report.  When the
+file is correct, the transaction file is posted to the master file.
+The posting procedure first clears the old general fund amount out
+of the PLEDGE METHOD OF PAYMENT MASTER FILE, then the new transactions
+are posted to the file.  The clearing procedure does not clear the
+method or description fields, so the operator must go into the
+PLEDGE METHOD OF PAYMENT MASTER FILE and clear any methods or descriptions
+that are not correct.^^
+^s1
+^^This option can be started before the end of the year.
+For example, the operator can enter and edit the general fund
+method and amounts of payment for the new year before the end of the
+old year.  When the old year is complete, the operator can then post
+the general fund method of payment transaction file to the master file.^^
+^s1
+^^The transaction file is a temporary file that is used for the general fund,
+building fund and church development fund method of payment transaction files.
+Therefore, only one fund can be entered/edited/posted at a time.^^
+^s1
+^m5
+4 - ENTER/EDIT/POST BF METHOD OF PAYMENT TRANSACTION FILE
+^m9 65
+^^This option will enter/edit/post the building fund method and amount of payment
+to the PLEDGE METHOD OF PAYMENT MASTER FILE.
+This file works the same as the GENERAL FUND METHOD OF PAYMENT TRANSACTION FILE.
+Please see the above instructions.^^
+^s1
+^^Since the building fund pledge is a three-year pledge,
+the building fund method and amount of payment may not need to be cleared at the end of
+each year.  The operator may want to update only those records that need
+to be adjusted in the PLEDGE METHOD OF PAYMENT MASTER FILE.^^
+^s1
+^m5
+5 - ENTER/EDIT/UPDATE CDF METHOD OF PAYMENT TRANSACTION FILE
+^m9 65
+^^This option will enter/edit/post the church development fund method and
+amount of payment to the PLEDGE METHOD OF PAYMENT MASTER FILE.  This file
+works the same as the GENERAL FUND METHOD OF PAYMENT TRANSACTION FILE.  Please
+see the above instructions.^^
+^s1
+^^Since the church development pledge is a three-year pledge,
+the church development method and amount of payment may not need to
+be cleared at the end of each year.  The operator may want to update only
+those records that need to be adjusted in the PLEDGE METHOD OF PAYMENT
+MASTER FILE.^^
+^p
+^m5
+** NEW PLEDGES AT THE BEGINNING OF THE YEAR MENU **
+^m9 65
+^s1
+^^This menu allows the operator to enter pledges for the new year,
+pull pledge balances from last year's file, save last year's PLEDGE MASTER FILE, and to post the pledge information
+to the CHURCH MASTER FILE and the PLEDGE MASTER FILE.^^
+^m5
+^s1
+1 - ENTER/UPDATE NEW PLEDGE TRANSACTIONS
+^m9 65
+^^This option allows the operator to enter pledges for the new year before the end of
+the old year.^^
+^s1
+^^The computer will ask for the number of records for the pledge transaction
+file.  The operator should enter the estimated number of new pledges received.^^
+^s1
+^^The date of the new pledges should be the first day of the year (i.e. 010185).^^
+^s1
+^^The operator enters the membership number, fund code, date and pledge amount.
+The fund code and date fields will auto-duplicate when the operator hits newline.
+The name, address, alpha sort, and family name will be
+displayed from the CHURCH MASTER FILE.  The fund description,
+sort sequence and fund pledge code will be displayed from the FUND DESCRIPTION
+FILE.  The pledge code (1/0), pledge master key and the quarterly statement key
+are automatically calculated by the computer.^^
+^s1
+^m5
+2 - PRINT NEW PLEDGE TRANSACTION EDIT
+^m9 65
+^^This option will print the NEW PLEDGE TRANSACTION FILE in fund code and
+alphabetic order.  The report prints the record number, membership number,
+name, fund code, fund description, date, and pledge amount.  The report totals
+the membership number and pledge amount at end of each fund code, and a
+grand total.^^
+^s1
+^^The operator should total the membership numbers and pledge amounts from
+the pledge cards to compare with the edit report.  When the cards and report
+agree, the pledges are ready to be
+posted.^^
+^s1
+^m5
+3 - PULL PLEDGES FROM LAST YEAR'S FILE
+^m9 65
+^^This option will allow the operator to pull pledge balances and original
+pledges from last year's file for designated funds.^^
+^s1
+^^The operator must have the relative day for the date of the pledge
+transactions.  The date should be the first day of the year (i.e. 010185).
+The computer will bring up the program to compute the relative day.^^
+^s1
+^^The program will automatically pull the pledge balances and original
+pledges from last year's file.  The operator is asked for the date of the
+pledges, the relative day, and the fund code wanted.  The program then
+verifies the answers the operator entered.  The program will pull the
+pledge balances and original pledges, and then ask the operator if she
+wants another fund.  The program ends when the operator does not want
+another fund.^^
+^S1
+^m5
+4 - PRINT PLEDGE BALANCE AND ORIGINAL PLEDGE EDIT
+^m9 65
+^^This option will print the PLEDGE BALANCE AND ORIGINAL PLEDGE EDIT in
+fund code and alphabetic order.  The report prints the pledge master key,
+membership number, alpha sort, pledge code (1/0), date, pledge amount,
+and original pledge.  The report totals the pledge amount and original
+pledge for each fund, and a grand total.^^
+^s1
+^m5
+5 - ADJUST THE PLEDGE BALANCE AND ORIGINAL PLEDGE FILE
+^m9 65
+^^This option allows the operator to adjust any of the pledge balances and
+original pledges pulled from last year's file.  She would want to do this
+for any pledges that have changed or have been cancelled.  A pledge balance
+and original pledge edit should be run before the pledges are posted.^^
+^s1
+^m5
+6 - POST PLEDGE INFORMATION
+^m9 65
+^^This option saves the last year's PLEDGE MASTER, and posts the new pledges and the pledges pulled from last year's
+ file to the CHURCH MASTER and PLEDGE MASTER FILE.  It should be run
+ONLY AT THE BEGINNING OF THE YEAR. And, the files should be BACKED-UP before
+this step is run.^^
+^s1
+^^This option automatically saves the last year's PLEDGE MASTER FILE.  The
+last year's PLEDGE MASTER FILE can be printed from the PLEDGE INFORMATION MENU.^^
+^S1
+^^The new PLEDGE MASTER FILE is created and should be about 4000 records
+for 1985.  The fund pledge code is cleared in the CHURCH MASTER FILE, and
+then the new fund pledge code is posted to CHURCH MASTER FILE.  The new
+pledges, pledge balances and original pledges are posted to the PLEDGE
+MASTER.^^
+^S1
+^^REMEMBER, THIS STEP IS ONLY RUN ONCE AT THE BEGINNING OF A NEW YEAR.^^
+^P
+^m5
+** NEW PLEDGES OR ADJUSTMENTS DURING THE YEAR **
+^S1
+^m9 65
+^^This menu allows the operator to enter new pledges or adjust pledges received
+during the year, edit and post the pledge information.^^
+^s1
+^m5
+1 - ENTER/UPDATE NEW PLEDGE/ADJUSTMENT TX DURING THE YEAR
+^m9 65
+^^This option allows the operator to enter new pledges received during the year or to adjust existing pledges.^^
+^s1
+^^The new pledges and adjustments should be dated the first day of the year (i.e. 010185).
+The computer will ask for the number of records for the pledge transaction file.
+The operator should enter the number of pledges she is entering or adjusting.^^
+^s1
+^^For new pledges the operator would enter the new pledged amount.  For adjustments
+to existing pledges, the operator has two options.  She may reverse the
+existing pledge (enter exactly as it is in the PLEDGE MASTER, but minus the
+amount fields), and enter the new pledge.  Or, she may enter the net change
+to the pledge in the pledge amount field.  It is very important that the
+membership number, date and fund agree with the existing pledge if she decides to only enter
+the net change.  After the adjustment has been posted to the PLEDGE MASTER,
+the operator should check the original pledge in the PLEDGE MASTER FILE.  The adjustment is also posted
+to the original pledge, but this might not be appropriate in all cases.^^
+^s1
+^^The operator enters the membership number, fund code, date and pledge amount (or adjustment).
+The fund code and date fields will auto-duplicate when the operator hits newline.
+The name, address, alpha sort, and family name will be displayed from the
+CHURCH MASTER FILE.  The fund description, sort sequence and fund pledge
+code will be displayed from the FUND DESCRIPTION FILE.  The pledge code (1/0),
+pledge master key and quarterly statement key are automatically calculated
+by the computer.^^
+^m5
+^s1
+2 - PRINT NEW PLEDGE/ADJUSTMENT TRANSACTION EDIT
+^m9 65
+^^This option will print the NEW PLEDGE/ADJUSTMENT TRANSACTION FILE in fund
+code and alphabetic order.  The report prints the record number, membership
+number, name, fund code, fund description, date and
+pledge amount.  The report totals at the end of each fund code, and a grand total.^^
+^S1
+^^The operator should total the membership numbers and pledge amounts/adjustments from
+the pledge cards to compare with the edit report.  When the cards and report
+agree, the pledges are ready to be posted.^^
+^s1
+^m5
+3 - POST PLEDGE INFORMATION
+^m9 65
+^^This option posts the new pledges and adjustments received during the year
+to the CHURCH MASTER FILE and the PLEDGE MASTER FILE.
+It also posts these transactions to the QUARTERLY STATEMENT MASTER FILE and
+adds to the end of the PLEDGE TRANSACTION FILE.^^
+^s1
+^^When the transactions are posted to the CHURCH MASTER FILE, the fund pledge
+code is added to the fund pledge code in the CHURCH MASTER FILE.
+If it is a new pledge, the fund pledge code would be as expected (i.e. 1,10,11,101, etc.).
+If it is a correction to an existing pledge, the new fund pledge code would
+add to old fund pledge code.  For example, a correction to a operating budget pledge would result in a fund pledge
+code of 2 (or 3 if the old pledge was backed out, and the new pledge entered).
+If a pledge has been cancelled, the operator should zero the fund pledge code
+in the CHURCH MASTER FILE.^^
+^s1
+^^Remember, you must add the new pledges and make the adjustment to the
+existing pledges in the PLEDGE METHOD OF PAYMENT MASTER FILE.^^
+^P
+^m5
+** WEEKLY CONTRIBUTIONS DATA ENTRY **
+^m9 65
+^s1
+^^This menu allows the operator to call the BEGINNING OF A NEW QUARTER MENU, enter the weekly contributions to the
+various funds, edit, summarize and post.^^
+^s1
+^m5
+1 - BEGINNING OF A NEW QUARTER MENU
+^m9 65
+^^Please see the BEGINNING OF A NEW QUARTER MENU documentation.^^
+^s1
+^m5
+2 - ENTER/UPDATE WEEKLY TRANSACTIONS
+^m9 65
+^^This option allows the operator to enter the weekly contributions to the
+various funds.^^
+^s1
+^^The operator is asked if it is the beginning of a new quarter. If it is,
+she is asked if she has completed the BEGINNING OF A NEW QUARTER MENU.
+See BEGINNING OF A NEW QUARTER MENU.^^
+^s1
+^^The operator enters the membership number.  The program then displays the
+name and the general fund, building fund and church development fund method and
+amount from the PLEDGE METHOD OF PAYMENT MASTER FILE.  The operator
+enters the pledge code (1/0), and the fund code.  The program then displays
+the fund description, sort sequence, calculates the pledge master key and
+displays the pledge balance from the PLEDGE MASTER FILE.  The operator
+enters the date and contribution.  The program displays the pledged contribution,
+calculates the quarterly statement key and stores the alpha sort in the file.^^
+^s1
+^m5
+3 - PRINT WEEKLY TRANSACTION JOURNAL
+^m9 65
+^^This option prints the record number, membership number, name, pledge code
+(1/0), fund code, description, date and contribution.  The report totals
+the membership numbers and contributions.^^
+^s1
+^^The operator should total the membership numbers and contributions from
+the envelopes to compare with the weekly transaction journal.  When the
+envelopes and journal agree, the journal is ready to be sorted.^^
+^s1
+^m5
+4 - PRINT WEEKLY TRANSACTION JOURNAL (SORTED)
+^m9 65
+^^This option sorts the weekly transaction by pledge code (1/0), fund code,
+and alpha sort.  The report prints the record number, membership number,
+fund pledge code, name, pledge code (1/0), fund code (from the transaction
+file), fund code (from the pledge master file), description, date and
+contribution.  The report totals the membership numbers and contributions at
+the end of each fund, pledge code (1/0) and a grand total.^^
+^s1
+^^The operator should review this report carefully.  The fund codes from
+the transaction file and pledge master file should match.  The fund pledge
+code and the fund code should agree and the pledge code (1/0) should
+agree with the fund code.  When this report is correct, the transactions
+are ready to be summarized.^^
+^s1
+^m5
+5 - PRINT WEEKLY TRANSACTION SUMMARY
+^m9 65
+^^This option summarizes the weekly transactions by fund code.  The report
+prints the
+fund code, description and total contributions for each fund.  The report also  prints the total contributions
+to be posted.^^
+^s1
+^^This report is used by the operator to record the weekly contributions
+in the general ledger.^^
+^s1
+^m5
+6 - POST PLEDGE INFORMATION
+^m9 65
+^^This option posts the weekly contributions to the PLEDGE MASTER, FUND MASTER
+and QUARTERLY STATEMENT FILE.^^
+^s1
+^p
+^m5
+** BEGINNING OF A NEW QUARTER MENU **
+^S1
+^m9 65
+^^This menu allows the operator to initialize the QUARTERLY STATEMENT MASTER
+FILE, create the Y-T-D CONTRIBUTIONS, print the y-t-d contribution journal,
+and post the y-t-d contributions and pledges to the QUARTERLY STATEMENT MASTER
+FILE.^^
+^S1
+^m5
+1 - CREATE NEW QUARTERLY STATEMENT MASTER FILE
+^m9 65
+^^This option allows the operator to initialize the QUARTERLY STATEMENT MASTER FILE for a new quarter.^^
+^s1
+^^The operator is asked if she has backed-up the CHURCH and PLEDGE FILES.  IF
+she has not, she should back-up before proceeding.^^
+^s1
+^^The QUARTERLY STATEMENT MASTER FILE is deleted, and set up again.^^
+^s1
+^m5
+2 - CREATE YEAR-TO-DATE CONTRIBUTION MASTER FILE
+^m9 65
+^^This option will create the YEAR-TO-DATE CONTRIBUTIONS MASTER FILE from
+the PLEDGE MASTER FILE.  This file needs to be created at the beginning
+of the second, third and fourth quarters.  The operator is asked if she
+wishes to proceed with this option.^^
+^s1
+^^The operator needs the relative day for the date of the y-t-d contributions.
+The computer will bring up the program to calculate the relative day.  The
+computer then initializes the new Y-T-D CONTRIBUTION MASTER FILE, and creates
+the y-t-d contributions.  The key to each record is displayed on the CRT as
+the computer writes the record.^^
+^s1
+^m5
+3 - PRINT YEAR-TO-DATE CONTRIBUTIONS JOURNAL
+^m9 65
+^^This option prints the YEAR-TO-DATE CONTRIBUTIONS JOURNAL.  This report
+prints the pledge master key, membership number, name, pledge code, fund code,
+sort sequence, description, statement key and contribution.  The report is
+sorted by pledge code, fund code and membership number.
+The total contributions are printed at the end of each fund, pledge code and
+a grand total at the end of the report.^^
+^s1
+^^If changes need to be made to a ytd contribution, they should be made
+after the contributions are posted.  The changes should be made through
+the STATEMENT INFORMATION menu.^^
+^s1
+^m5
+4 - POST Y-T-D CONTRIBUTIONS AND PLEDGES TO THE QUARTERLY
+    STATEMENT MASTER FILE
+^m9 65
+^^This option posts the year-to-date contributions and pledges to the
+QUARTERLY STATEMENT MASTER FILE.  This should be done only once at the
+beginning of each quarter.^^
+^s1
+^m5
+5 - WEEKLY CONTRIBUTIONS DATA ENTRY MENU
+^m9 65
+^^This option allows the operator to directly go to the WEEKLY CONTRIBUTIONS
+DATA ENTRY MENU.^^
+^S1
+^P
+^m5
+** STATEMENT INFORMATION **
+^S1
+^m9 65
+^^This menu allows the operator to print statements, call the FILE BALANCING
+menu, correct posted weekly contributions and correct post y-t-d contributions.^^
+^s1
+^m5
+1 - PRINT STATEMENTS
+^m9 65
+^^This option prints the statements and quarterly statement details in membership number order for
+5 members, a range of members, or all members who have contributed to the
+church.^^
+^s1
+^^The statements may be run through the spooler or directly to the printer.
+To print directly to the printer, the printer = 0 (zero), and the start routine
+cannot be running.^^
+^s1
+^^Statements can be run at anytime, and will show what has been contributed
+up to the time the statement was run.  This is possible because the pledges
+are posted to the QUARTERLY STATEMENT MASTER FILE at the beginning of the
+quarter.^^
+^s1
+^^Statements print the membership number, name and address.  They also print
+the pledges and contributions for all funds in fund number order.  In asterisks
+at the bottom of the statement, the total contributions for the year is printed.
+The statement shows the detail for one quarter only.  The previous quarters
+are summarized in the year-to-date contribution figure.  The statement was
+designed this way to keep the statements from being several pages long.
+The statements are printed on narrow white statement paper.^^
+^s1
+^^The quarterly statements details are printed on wide paper after the
+statements are printed.  This report prints the quarterly statement key,
+membership number, name, pledge code, fund code, description, date, pledge
+and contribution.  The details are printed in membership number, and sort
+sequence order.  This report is the church's copy of the statements and should
+be kept as a record of giving for each member.^^
+^S1
+^m5
+2 - FILE BALANCING MENU
+^m9 65
+^^Please see the FILE BALANCING MENU documentation.^
+^S1
+^m5
+3 - ENTER/UPDATE WEEKLY CONTRIBUTION CORRECTIONS
+^m9 65
+^^This option allows the operator to correct weekly contributions posted
+in the current quarter.^^
+^s1
+^^The operator has two options in correcting weekly contributions.  She may
+back out the original contribution (enter exactly as it was in weekly data entry, but minus the amount),
+and enter the new correct weekly contribution.  Or, she may enter the net change to the particular funds.
+It is very important that the operator use the same date as the original entry.^^
+^p
+^m5
+4 - PRINT WEEKLY CONTRIBUTION CORRECTION JOURNAL
+^m9 65
+^^This option prints the record number, membership number, name, pledge code
+(1/0), fund code, description, date and contribution.  The report totals
+the membership numbers and contributions.^^
+^s1
+^m5
+5 - PRINT WEEKLY CONTRIBUTION CORRECTIONS SUMMARY
+^m9 65
+^^This option summarizes the weekly transactions by fund code.  The report
+prints the fund code, description and total contributions for each fund.  The report also prints the total
+contributions to be posted.^^
+^s1
+^^This report is used by the operator to record the weekly contribution corrections
+in the general ledger.^^
+^S1
+^m5
+6 - POST WEEKLY CONTRIBUTION CORRECTIONS
+^m9 65
+^^This option posts the weekly contribution corrections to the PLEDGE MASTER,
+FUND MASTER, and the QUARTERLY STATEMENT MASTER FILE.^^
+^S1
+^m5
+7 - ENTER/UPDATE YEAR-TO-DATE CONTRIBUTION CORRECTIONS
+^m9 65
+^^This option allows the operator to correct the posted year-to-date contributions.^^
+^s1
+^^The operator has two options in correcting the posted year-to-date contributions.
+She may back out the original year-to-date contribution (enter exactly as it appears on the y-t-d contribution
+journal, but minus the amount field), and enter the new correct year-to-date
+contribution.  Or, she may enter only the net change to the particular funds.
+It is very important that the operator use the same date as the original y-t-d
+contribution, and only use the y-t-d fund numbers.^^
+^S1
+^m5
+8 - PRINT YEAR-TO-DATE CONTRIBUTION CORRECTIONS
+^m9 65
+^^This option prints the record number, membership number, name, pledge code (1/0),
+fund code, description, date and contribution.  The report totals the membership
+numbers and contributions.^^
+^S1
+^m5
+9 - PRINT YEAR-TO-DATE CONTRIBUTION CORRECTIONS SUMMARY
+^m9 65
+^^This option summarizes the y-t-d contribution corrections by fund code.
+The report prints the fund code, description and total contribution for each fund.  The report also prints the
+total contributions to be posted.^^
+^S1
+^^This report is used by the operator to record the year-to-date contribution
+corrections in the the general ledger.^^
+^m5
+^s1
+10 - POST YEAR-TO-DATE CONTRIBUTION CORRECTIONS
+^m9 65
+^^This option posts the y-t-d contribution corrections to the FUND MASTER,
+PLEDGE MASTER, and QUARTERLY STATEMENT MASTER FILE.^^
+^P
+^m5
+** FILE BALANCING MENU **
+^S1
+^m9 65
+^^The purpose of this menu is to allow the operator to prove that the
+FUND MASTER, PLEDGE MASTER and QUARTERLY STATEMENT MASTER files are in
+balance.
+This menu allows the operator to print the fund master report, the pledge
+master summary, the quarterly statement master summary, pledge master and
+quarterly statement details when the funds are not in balance,
+variable quarterly statement details AND VARIABLE UNPLEDGED STATEMENT DETAIL LIST.  She may also display the QUARTERLY
+STATEMENT MASTER FILE.^^
+^s1
+^m5
+1 - PRINT FUND MASTER REPORT
+^m9 65
+^^This option will print fund numbers, sort sequence, fund pledge code,
+description and y-t-d contributions for all the funds in the FUND MASTER
+FILE.  The report will print in fund number order.^^
+^S1
+^m5
+2 - PRINT PLEDGE MASTER SUMMARY REPORT
+^m9 65
+^^This option summarizes the PLEDGE MASTER FILE by fund code.  The report
+prints the pledge code, fund code, pledge, contribution and pledge balance.
+The report is sorted by pledge code, fund code and a grand total.^^
+^s1
+^m5
+3 - PRINT QUARTERLY STATEMENT MASTER SUMMARY REPORT
+^m9 65
+^^This report summarizes the QUARTERLY STATEMENT MASTER FILE by fund code.
+The report prints the pledge code, fund code, pledge and contribution.  The
+report is sorted by pledge code, fund code and a grand total.^^
+^S1
+^m5
+4 - PRINT COMPARISON OF PLEDGE MASTER AND QUARTERLY
+    STATEMENT DETAILS WHEN NOT IN BALANCE
+^m9 65
+^^This option allows the opertor to print a comparison of the PLEDGE MASTER
+and QUARTERLY STATEMENT MASTER when the files are not in balance.^^
+^s1
+^^The comparison can be run for only one fund at a time.
+The operator is required to enter the pledge code (1/0), and the sort
+sequence (1,6,7,9) of the fund you want printed.  She will be asked to
+enter these for both reports.^^
+^s1
+^^The PLEDGE MASTER and QUARTERLY STATEMENT MASTER file sort in membership number, pledge code and fund
+number order.  The reports print the membership number, pledge and contribution, with a grand total at the end
+of each report.^^
+^s1
+^^The operator then can review both reports line by line to see where the
+discrepancy between the files is.^^
+^S1
+^m5
+5 - PRINT VARIABLE QUARTERLY STATEMENT DETAILS
+^m9 65
+^^This option allows the operator to selectively print the quarterly
+statement details.  The operator selects the unique fields she wants
+printed.  For example, for a specific member she would select 2 eq "9999",
+or for a specific fund she would select 9 eq "99".  See PLSM05 in the
+program book for the field numbers.  She then must enter DATA 9 8 2 /*.^^
+^P
+^^If the operator wants to see the details for a member or group of
+members, it would be easier to print statements than to use this option.^^
+^s1
+^^If the operator wants a list of who has contributed to a unpledged fund
+(i.e. unpledged building fund), USE THE NEXT OPTION ON THE MENU.  If the operator
+wants a list of pledged contributions, see the PLEDGE INFORMATION MENU.^^
+^S1
+^m5
+6 - PRINT VARIABLE UNPLEDGED STATEMENT DETAIL LIST
+^M9 65
+^^THIS OPTION ALLOWS THE OPERATOR TO SELECTIVELY PRINT THE UNPLEDGED
+STATEMENT DETAIL LIST.  THE OPERATOR SELECTS THE UNIQUE FIELDS SHE WANTS
+PRINTED (SEE ABOVE).  SHE THEN MUST ENTER DATA 9 8 2 /*.^^
+^S1
+^^THE PROGRAM SORTS BY FUND CODE, PLEDGE CODE AND MEMBERSHIP NUMBER.
+THE REPORT PRINTS THE KEY, MEMBERSHIP NUMBER, NAME, PLEDGE CODE, FUND CODE,
+DESCRIPTION, DATE AND CONTRIBUTION.  IT ALSO PRINTS A GRAND TOTAL OF
+CONTRIBUTIONS.^^
+^S1
+^M5
+7 - DISPLAY QUARTERLY STATEMENT MASTER FILE
+^M9 65
+^^This option allows the operator to display the QUARTERLY STATEMENT MASTER FILE.
+This file contains the key (membership #, fund, and relative day), membership
+number, name, family name and address are displayed from the GENERAL MASTER FILE, pledge
+code, fund code, sort sequence, date, contribution and pledge amount.^^
+^s1
+^^This option should be used only to display records or to delete records
+with zero money.  If any other changes need to be made, the operator must
+use either the PLEDGE ADJUSTMENT MENU to correct a pledge or the STATEMENT INFORMATION MENU
+to correct contributions.^^
+^P
+^m5
+** PROBLEM SOLVING **
+^s2
+** BEGINNING OF A NEW YEAR **
+^s1
+^M9
+BEFORE THE END OF THE OLD YEAR
+1 - ENTER NEW PLEDGES
+2 - PRINT NEW PLEDGE TRANSACTION EDIT
+3 - ENTER/PRINT GF METHOD OF PAYMENT TRANSACTION FILE
+^S1
+AT THE END OF THE OLD YEAR
+4 - BACKUP CHURCH AND PLEDGE FILES
+5 - END OF YEAR CLEARING
+6 - PULL PLEDGES FROM LAST YEAR'S FILE
+7 - PRINT PLEDGE BALANCE AND ORIG PLEDGE EDIT
+8 - ADJUST THE PLEDGE BALANCE AND ORIG PLEDGE FILE
+9 - POST PLEDGE INFORMATION
+10 - POST GF METHOD OF PAYMENT TRANSACTION FILE
+11- ADJUST METHOD OF PAYMENT MASTER FILE FOR OTHER FUNDS
+12- BEGINNING OF A NEW QUARTER MENU
+13- PRINT PLEDGE CONFIRMATIONS
+14- ENTER WEEKLY CONTRIBUTIONS
+^S2
+^M5
+** TWO NUMBERS FOR THE SAME PERSON **
+^s1
+^M9 65
+^^If there are two numbers for the same person, the operator wants to
+combine the giving to one number.  The operator uses NEW PLEDGES OR ADJUSTMENTS
+DURING THE YEAR menu to correct the pledge if needed.  She uses the STATEMENT
+INFORMATION menu to move the contributions to the new number.
+If there are incorrect contributions in a previous quarter, she would use
+the YEAR-TO-DATE CONTRIBUTUION CORRECTIONS.  If there are incorrect contributions in the current quarter she would
+use the WEEKLY CONTRIBUTION CORRECTIONS.
+She would back out the contribution under the incorrect number, and put it in again
+under the new number.^^
+^s1
+^^The operator then needs to go to the CHURCH MASTER FILE, and change the
+name on the incorrect number.  She should enter "name - see 9999", and
+change the affiliation code to I for invalid number.  If there is a number
+in the fund pledge code, she should zero it out.  She should then go to
+the correct number and verify that everything is correct.  When she
+has finished in the CHURCH MASTER FILE, the program brings up the PLEDGE
+METHOD OF PAYMENT MENU.  The operator should call up both numbers and
+change the methods over to the correct number.^^
+^s1
+^^A statement will be printed for the incorrect number at the end of
+the quarter.  But it will be for a zero amount, and the name will
+say to see the correct number.^^
+^p
+^m5
+^s2
+** DEATH OF A CONTRIBUTING MEMBER **
+^S1
+^M9 65
+^^If the member is not married, do not make any changes until the end of
+the year.  After the statements have been printed at the end of the year,
+the operator can delete the member from the CHURCH MASTER FILE, and PLEDGE
+METHOD OF PAYMENT MASTER FILE.  She should make sure that
+multi-year pledges are not entered for the new year.^^
+^s1
+^^If the member is married, the operator should change the membership number
+of the surviving spouse to the number of
+the contributing member.  To do this, the operator would change the names
+on the records to the opposite spouse (i.e husband to wife, wife to husband).
+Then the operator needs to call up both numbers in the PLEDGE METHOD OF PAYMENT
+MASTER FILE to get the correct names and numbers in that file.^^
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

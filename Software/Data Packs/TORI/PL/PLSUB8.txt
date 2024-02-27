@@ -1,0 +1,674 @@
+.nolog
+.notime
+/
+/
+/
+/
+/
+/
+/
+/  * * *   e n t e r    p a s s w o r d  * * *
+/
+/
+/
+/
+/
+/
+.enter 3
+.skip 2 if #3 eq dollar
+/  * * *   i n v a l i d   p a s s w o r d  * * *
+s.con
+=again
+.run s.xeject
+/==============================================================================
+/                             pledge information
+/                 key: #0      disk: #1      printer: #2
+/==============================================================================
+/
+/  enter function:   1 - display pledge master file
+/                    2 - print pledge master file - aphabetic order
+/                    3 - print pledge master file - numeric order
+/                    4 - print pledge master file - amount order
+/                    5 - print pledge confirmation letter
+/
+/                    6 - pledge method of payment menu
+/
+/                    7 - new pledges at the beginning of the year menu
+/                    8 - new pledges or adjustments during the year menu
+/
+/                    9 - display and print pledge transactions
+/                   10 - print last year's pledge master file
+/
+/                   97 - return to main menu
+/                   98 - change printer
+/                   99 - end processing
+/
+/==============================================================================
+/  awaiting response
+.enter upsi
+.seta 9=#u
+.seta upsi=0
+.skip to opt97 if 97 eq #9
+.skip 1 if 99 ne #9
+s.con
+.seta 0=100
+.seta 1=1
+.skip to chg if 98 eq #9
+.skipr 0 if 0 ge #9
+.skipr 0 if 11 le #9
+.skip to opt1 if 1 eq #9
+.skip to opt6 if 6 eq #9
+.skip to opt7 if 7 eq #9
+.skip to opt8 if 8 eq #9
+.skip to opt9 if 9 eq #9
+.del sort1#i on 1
+.del sort2#i on 1
+.del sort3#i on 1
+.del sort4#i on 1
+.new sort1#i on 1 'b' 30t
+.new sort2#i on 1 'b' 20t
+.new sort3#i on 1 'b' 25t
+.new sort4#i on 1 'b' 20t
+.skip to opt#9
+=chg
+/  enter printer or crt
+.enter 2
+.skipr to again
+=opt1
+* enter/update pledge master file
+.use pl#0i  on 1 for sys0 shar
+.use pl.plsm04 on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.setc 4 eq pl#0i
+.setc 8 eq #i
+.run asmlib.xmaint on 1
+.end
+.skipr to again
+=opt2
+* print pledge master file - alphabetic order
+/
+/     do you want the pledge master report sorted by fund - y/n?
+/
+.enter 9
+.skip to sorted if y eq #9
+.setc 7 eq plrm04
+/
+/     do you want the pledge master report showing original pledge - y/n?
+/
+.enter 9
+.skip 1 if y ne #9
+.setc 7 eq plrm18
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use pl#0i  on 1 for sys3 shar
+.use pl#0j  on 1 for sys2
+.run asmlib.xxtrct on 1
+data 8 16 9/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl#0j  on 1 for sys1 shar
+.use pl#0j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 38
+key=(5,4,bi,9,26,ch,35,4,bi),/*
+.end
+.use pl.#7 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=sorted
+.setc 7 eq plrm17
+/
+/     do you want the pledge master report showing original pledge -y/n?
+/
+.enter 9
+.skip 1 if y ne #9
+.setc 7 eq plrm19
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use pl#0i  on 1 for sys3 shar
+.use pl#0j  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#2enter beginning fund code
+skip 4 if #0  le "0"
+in 1#2enter ending fund code
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "99"
+data 9 16
+select 9 ge #0 and 9 le #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl#0j  on 1 for sys1 shar
+.use pl#0j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 34
+key=(5,4,bi,9,26,ch),/*
+.end
+.use pl.#7 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt3
+* print pledge master file - numeric order
+/
+/     do you want the pledge master report sorted by fund - y/n?
+/
+.enter 9
+.skip to sorted if y eq #9
+/
+/     do you want the pledge master report sorted by member - y/n?
+/
+.enter 9
+.skipr to again if y ne #9
+.setc 7 eq plrm32
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use pl#0i  on 1 for sys3 shar
+.use pl#0j  on 1 for sys2
+.run asmlib.xxtrct on 1
+data  2 9/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl#0j  on 1 for sys1 shar
+.use pl#0j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,4,bi,9,4,bi),/*
+.end
+.use pl.#7 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=sorted
+.setc 7 eq plrm17
+/
+/     do you want the pledge master report showing original pledge -y/n?
+/
+.enter 9
+.skip 1 if y ne #9
+.setc 7 eq plrm19
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use pl#0i  on 1 for sys3 shar
+.use pl#0j  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#2enter beginning fund code
+skip 4 if #0  le "0"
+in 1#2enter ending fund code
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "99"
+data 9 2
+select 9 ge #0 and 9 le #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl#0j  on 1 for sys1 shar
+.use pl#0j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,4,bi,9,4,bi),/*
+.end
+.use pl.#7 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt4
+* print pledge master - amount order
+.setc 7 eq plrm17
+/
+/  do you want the pledge master report showing original pledge - y/n?
+.enter 9
+.skip 1 if y ne #9
+.setc 7 eq plrm19
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use pl#0i  on 1 for sys3 shar
+.use pl#0j  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#2enter beginning fund code
+skip 4 if #0  le "0"
+in 1#2enter ending fund code
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "99"
+data 9 13 14 2
+select 9 ge #0 and 9 le #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl#0j  on 1 for sys1 shar
+.use pl#0j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 20
+key=(5,4,bi,9,4,bi,13,4,bi,17,4,bi),/*
+.end
+.use pl.#7 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt5
+* pledge confirmation letter
+/
+/  do you want to print pledge confirmation letters for select members - y/n?
+/
+.enter 9
+.skip to range if y ne #9
+/
+/  you may enter up to 5 membership numbers for selection
+/  newline to continue
+.pause
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl#0i on 1 for sys1 shar
+.use pl#0i on 1 for sys3 shar
+.use pl#0j on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter membership number
+in 1#4enter membership number
+in 2#4enter membership number
+in 3#4enter membership number
+in 4#4enter membership number
+data 2 9
+select 8 eq "1" and 2 ne "0" and (2 eq #0 or 2 eq #1 or 2 eq #2 or 2 eq #3 or 2 eq #4)
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.skip to sort4
+=range
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl#0i on 1 for sys1 shar
+.use pl#0i on 1 for sys3 shar
+.use pl#0j on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#4enter beginning membership number
+skip 4 if #0 le "0"
+in 1#4enter ending membership number
+skip 2 if #1 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#4 "9999"
+data 2 9
+select 8 eq "1" and (2 ge #0 and 2 le #1)
+/*
+.end
+.seta upsi=0
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+=sort4
+.use pl#0j  on 1 for sys1 shar
+.use pl#0j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,4,bi,9,4,bi),/*
+.end
+/
+/     place narrow paper on printer for pledge confirmation letters
+/     newline to continue
+.pause
+.use pl.plrm20 on 1 for sys0 shar
+.use pl#0i  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl#0j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt6
+* pledge method of payment menu
+pl.plsub6 on #d
+=opt7
+* new pledges at the beginning of the year
+/
+/  this menu is only used at the beginning of a new year.
+/  newline to acknowledge
+/
+.pause
+pl.plsub7 on #d
+=opt8
+* new pledges or adjustments during the year
+pl.plsub13 on #d
+=opt9
+* display and print pledge transactions
+pl.plsub14
+=opt10
+* print last year's pledge master file
+/
+/  do you want last year's pledge master file sorted by member - y/n?
+/
+.enter 9
+.skip to member if y eq #9
+/     do you want last year's pledge master in numeric order by fund - y/n?
+/
+.enter 9
+.skip to numeric if y eq #9
+/     do you want last year's pledge file in alphabetic order by fund - y/n?
+/
+.enter 9
+.skip to alpha if y eq #9
+/    do you want last year's pledge file in amount order by fund - y/n?
+/
+.enter 9
+.skip to amount if y eq #9
+.skipr to again
+=member
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl101i  on 1 for sys1 shar
+.use pl101i  on 1 for sys3 shar
+.use pl101j  on 1 for sys2
+.run asmlib.xxtrct on 1
+data 2 9
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl101j  on 1 for sys1 shar
+.use pl101j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,4,bi,9,4,bi),/*
+.end
+.use pl.plrm32 on 1 for sys0 shar
+.use pl101i  on 1 for sys1
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl101j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=alpha
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl101i  on 1 for sys1 shar
+.use pl101i  on 1 for sys3 shar
+.use pl101j  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 3#8enter pledge balance less than or equal to
+in 0#2enter beginning fund code
+skip 4 if #0  le "0"
+in 1#2enter ending fund code
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "99"
+data 9 16
+select 9 ge #0 and 9 le #1 and 15 le #3
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl101j  on 1 for sys1 shar
+.use pl101j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 34
+key=(5,4,bi,9,26,ch),/*
+.end
+.use pl.plrm19 on 1 for sys0 shar
+.use pl101i  on 1 for sys1
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl101j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=numeric
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl101i  on 1 for sys1 shar
+.use pl101i  on 1 for sys3 shar
+.use pl101j  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 3#8enter pledge balance less than or equal to
+in 0#2enter beginning fund code
+skip 4 if #0  le "0"
+in 1#2enter ending fund code
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "99"
+data 9 2
+select 9 ge #0 and 9 le #1 and 15 le #3
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl101j  on 1 for sys1 shar
+.use pl101j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 12
+key=(5,4,bi,9,4,bi),/*
+.end
+.use pl.plrm19 on 1 for sys0 shar
+.use pl101i  on 1 for sys1
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl101j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=amount
+* print last year's pledge master - amount order
+.setc 7 eq plrm17
+/
+/ do you want the pledge master report showing original pledge - y/n?
+.enter 9
+.skip 1 if y ne #9
+.setc 7 eq plrm19
+/  standby for creation of new list file
+.seta upsi=0
+.use pl.plsm04 on 1 for sys0 shar
+.use pl101i  on 1 for sys1 shar
+.use pl101i  on 1 for sys3 shar
+.use pl101j  on 1 for sys2
+.run asmlib.xxtrct on 1
+in 0#2enter beginning fund code
+skip 4 if #0  le "0"
+in 1#2enter ending fund code
+skip 2 if #0 le "0"
+skip 2 if #0 le #1
+skipr to agn
+define 1#2 "99"
+data 9 13 14 2
+select 9 ge #0 and 9 le #1
+/*
+.end
+.skip 4 if 0 eq #c
+/  xxtrct abend condition #c
+/  newline to return to menu
+.pause
+.skipr to again
+.use pl101j  on 1 for sys1 shar
+.use pl101j  on 1 for sys0 shar
+.use sort1#i on 1  for sys2
+.use sort2#i on 1  for sys3
+.use sort3#i on 1  for sys4
+.use sort4#i on 1  for sys5
+.run s.dsort
+print=no,filtyp=b,input=1,work=4,output=inp
+recsiz= 20
+key=(5,4,bi,9,4,bi,13,4,bi,17,4,bi),/*
+.end
+.use pl.#7 on 1 for sys0 shar
+.use pl101i  on 1 for sys1 shar
+.use ch#0a  on 1 for sys2 shar
+.use pl#0e  on 1 for sys3 shar
+.use pl101j  on 1 for sys5 shar
+.skip 2 if crt ne #2
+.use crt#v for sys10
+.skip 1
+.use prt#2 for sys10
+.run asmlib.xreprt on 1
+.end
+.skipr to again
+=opt97
+pl.pledge
+
+
+
+
+
+
+
+
+

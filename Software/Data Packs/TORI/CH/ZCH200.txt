@@ -1,0 +1,159 @@
+system  (exp=d)
+;
+;
+define m00: 'zch200 1/12/87  PRINT AVAILABLE MEMBER numbers'
+;*****************************************************************************
+;*       files:
+;*       sys#      file-name     rec-name       description
+;*        0        listfile      listrec        list file type b
+;****************************************************************************
+;*                           program linkage
+;****************************************************************************
+;
+external cget,stat,f90,lfeed,ioerr,msg,ynget
+call msg                     ; this is to force linkage of f90 ?
+entrypoint crt
+;
+;****************************************************************************
+;*                           files
+;****************************************************************************
+;
+         file crt : sysipt
+;
+         file listfile : sys0,class=2,seq,filtyp=b,lsr=4,buffer=400,*
+;
+         FILE PRT : SYSLST,CLASS=1,SEQ
+;
+;*****************************************************************************
+;*                           records
+;*****************************************************************************
+;
+record listrec (8)                     ;record layout for b file
+         set relkey:0                  ;relative record (argument)
+         set lkey:0                    ;key to plfile
+endrec
+;
+;
+     format f02 : n6
+     define m02 : 'enter beginning number'
+     define m03 : 'enter ending number'
+     define m04 : 'is this correct - y/n'
+     set begnbr : 0
+     set endnbr : 0
+     SET LNCNT : 0
+;
+     DEFINE MH1 : ' FIRST UNITED METHODIST CHURCH'
+     DEFINE MH2 : '   AVAILABLE MEMBER NUMBERS'
+     DEFINE MH3A : 'MEMBER #     FAMILY #     NAME'
+     DEFINE MH3B : 'DATE'
+;
+     FORMAT FH01 : X30 C50
+     FORMAT FH02 : X5 C50 X45 C10
+     FORMAT FD01 : X5 N6
+     set lastkey : 1000
+     set differ : 0
+;
+;
+;*****************************************************************************
+;*                           logic
+;****************************************************************************
+;
+         entry
+;
+a000:
+;
+         open io (crt,listfile)
+         OPEN OUTPUT (PRT)
+;
+a010:
+         write (crt,f90) eject
+         call lfeed (crt,1)
+         call msg (m00)
+         call lfeed (crt,1)
+;
+a020:
+         call cget (m02,f02,begnbr)
+         if (status.ne.0) goto a020
+         if (begnbr.lt.0) goto a020
+;
+a030:
+         call cget (m03,f02,endnbr)
+         if (status.ne.0) goto a030
+         if (endnbr.lt.begnbr) goto a020
+;
+         call ynget (m04)
+         if (status.ne.1) goto a010
+;
+a100:
+         call rdblst                             ; read list file
+         if (status) go to final                 ; end of file
+         if (lkey.lt.begnbr) goto a100
+         if (lkey.gt.endnbr) goto final
+;
+a200:
+         differ = lkey - lastkey
+         if (differ.lt.0) goto a100
+         if (differ.eq.0) do
+            lastkey = lastkey + 1
+            goto a100
+            end do
+;
+A300:
+         IF (LNCNT.LE.0) CALL HEAD1
+         WRITE (PRT,FD01) LASTKEY
+         CALL LFEED (PRT,2)
+         LNCNT = LNCNT - 3
+         lastkey = lastkey + 1
+         goto a200
+;
+HEAD1:
+         WRITE (PRT,F90) EJECT
+         LNCNT = 54
+         CALL LFEED (PRT,2)
+         WRITE (PRT,FH01) MH1
+         WRITE (PRT,FH01) MH2
+         CALL LFEED (PRT,1)
+         WRITE (PRT,FH02) MH3A, MH3B
+         CALL LFEED (PRT,2)
+         RETURN
+ 
+final:
+          close crt,listfile, PRT
+          stop 0
+;
+;****************************************************************************
+;*
+;*            input/output routines
+;*
+;*****************************************************************************
+;
+rdblst:
+         readb (listfile,listrec) \ go to ioret1
+;
+ioret1:
+         if (status.gt.1) goto ioerr
+         return
+;
+     end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
