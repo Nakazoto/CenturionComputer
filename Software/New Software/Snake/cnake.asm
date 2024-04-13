@@ -130,7 +130,7 @@ II1       STA+      X+        ; Store A to C register, move X to P register.
           EI                  ; Enable interrupts.
           RSR                 ; Return.
 *
-* Timer interrupt handler for SELECT. If hit, sets level A in the timer
+* Timer interrupt handler for SELECT. If hit, sets register A in the timer
 * interrupt level to 0 and restores the default ISR for itself.
 SELTIMINT CLA                 ; A = 0.
           JMP/      TIMERINT  ; Jump to the default timer ISR.
@@ -342,8 +342,9 @@ MUXADDR   STK       X,4       ; Push X,Y to the stack.
           POP       X,4       ; Pop Y,X from the stack.
           RSR
 *
-* ADDS/VT100 beep implementation.
+* ADDS/ADM/VT100 beep implementation.
 ADDSBEEP
+ADMBEEP
 VT1BEEP   STK       A,2       ; Push A.
           LDAB=     X'87'     ; Bell.
           JSR/      PRINTONE  ; Print the character.
@@ -357,10 +358,17 @@ ADDSCLRS  STK       A,2       ; Push A.
           POP       A,2       ; Pop A.
           RSR                 ; Return.
 *
+* ADM clear screen implementation.
+ADMCLRS   STK       A,2       ; Push A.
+          LDAB=     X'9A'     ; SUB (Control-Z).
+          JSR/      PRINTONE  ; Print the character.
+          POP       A,2       ; Pop A.
+          RSR                 ; Return.
+*
 * VT100 clear screen implementation.
 VT1CLRS   JSR/      PRINTNULL ; Print the following string.
           DB        X'9B'     ; Escape.
-          DC        '[2J'
+          DC        '[2J'     ; ]
           DB        0         ; Null terminator.
           RSR                 ; Return.
 *
@@ -382,6 +390,23 @@ APCOL     DB        0         ; Column.
           DLY                 ; Delay to let the terminal process the request.
           RSR                 ; Return.
 *
+* ADM position row/col implementation.
+ADMRC     EQU       '  '      ; 0,0 is at ASCII space,space.
+ADMPOSRC  STK       B,2       ; Push B to the stack.
+          ADD=      ADMRC,B   ; Create the characters for the row/col.
+          STBB      ADMPCOL   ; Store BL as the column.
+          XFRB      BU,BL     ; Move the row to BL.
+          STBB      ADMPROW   ; Store BL as the row.
+          JSR/      PRINTNULL ; Print the following string.
+          DB        X'9B'     ; Escape.
+          DC        '='
+ADMPROW   DB        0         ; Row.
+ADMPCOL   DB        0         ; Column.
+          DB        0         ; Null terminator.
+          POP       B,2       ; Pop B from the stack.
+          DLY                 ; Delay to let the terminal process the request.
+          RSR                 ; Return.
+*
 * VT100 position row/col implementation.
 VT1POSRC  STK       A,4       ; Push A,B to the stack.
           MVF       (2)='#@',/VT1PROW ; Set row template.
@@ -393,10 +418,10 @@ VT1PRC    STB=      0         ; Save the row and column.
           CFB       /VT1PROW(10),/VT1PRC+1(1) ; Convert row to decimal.
           CLRB      AL,2      ; AL = 2 (length of string).
           LDBB=     '0'       ; BL = '0' (padding byte).
-          CFB       /VT1PCOL(10),/VT1PRC+2(1) ; Convert row to decimal.
+          CFB       /VT1PCOL(10),/VT1PRC+2(1) ; Convert column to decimal.
           JSR/      PRINTNULL ; Print the following string.
           DB        X'9B'     ; Escape.
-          DC        '['       ; CSI.
+          DC        '['       ; CSI. ]
 VT1PROW   DW        0         ; Row.
           DC        ';'
 VT1PCOL   DW        0         ; Column.
@@ -621,7 +646,9 @@ TPRINT    JSR/      PRINTNULL ; Print the prompt.
           DW        CRLF
           DC        '0 = ADDS'
           DW        CRLF
-          DC        '1 = VT100'
+          DC        '1 = ADM'
+          DW        CRLF
+          DC        '2 = VT100'
           DW        CRLF
           DC        'ENTER TYPE FOR CRT'
 TYPECRT   DC        'X> '
@@ -645,7 +672,23 @@ TYPECRT   DC        'X> '
           JMP       CCDONE    ; Done.
 CCT1      LDBB=     '1'       ; Load 1 to
           SABB                ; compare the ASCII to the type selection.
-          BNZ       CCT1      ; If not 1, go to the next check.
+          BNZ       CCT2      ; If not 1, go to the next check.
+          LDA=      ADMBEEP   ; A = ADM beep function.
+          LDB=      TCBEEP    ; B = pointer to beep table.
+          ADD       X,B       ; B = pointer to CRT in beep table.
+          STA+      B         ; Store beep function.
+          LDA=      ADMCLRS   ; A = ADM clear screen function.
+          LDB=      TCCLRS    ; B = pointer to clear screen table.
+          ADD       X,B       ; B = pointer to CRT in clear screen table.
+          STA+      B         ; Store clear screen function.
+          LDA=      ADMPOSRC  ; A = ADM position function.
+          LDB=      TCPOSRC   ; B = pointer to position table.
+          ADD       X,B       ; B = pointer to CRT in position table.
+          STA+      B         ; Store position function.
+          JMP       CCDONE    ; Done.
+CCT2      LDBB=     '2'       ; Load 2 to
+          SABB                ; compare the ASCII to the type selection.
+          BNZ       CCTBAD    ; If not 2, go to the next check.
           LDA=      VT1BEEP   ; A = VT100 beep function.
           LDB=      TCBEEP    ; B = pointer to beep table.
           ADD       X,B       ; B = pointer to CRT in beep table.
@@ -659,7 +702,7 @@ CCT1      LDBB=     '1'       ; Load 1 to
           ADD       X,B       ; B = pointer to CRT in position table.
           STA+      B         ; Store position function.
           JMP       CCDONE    ; Done.
-CCTBAD    JMP       TPRINT    ; Invalid choice, try again.
+CCTBAD    JMP/      TPRINT    ; Invalid choice, try again.
 CCDONE    POP       A,8       ; Pop Y,X,B,A from the stack.
           RSR                 ; Return.
 *
@@ -859,11 +902,11 @@ SCPRINT   JSR/      PRINTNULL ; Print the prompt.
 GAMENAME  JSR/      PRINTNULL ; Print.
  DC '                        -###             #######@'
  DW CRLF
- DC '                           #  CNAKE 1.0  #'
+ DC '                           #  CNAKE 1.1  #'
  DW CRLF
  DC '                           #     ON      #'
  DW CRLF
- DC '                           #   GOS 0.3   #'
+ DC '                           #   GOS 0.4   #'
  DW CRLF
  DC '                           ###############'
  DW CRLF
@@ -926,7 +969,7 @@ DBBOTTOM  LDB=      X'1700'   ; Row 23, column 0.
           JSR/      POSRC     ; Set cursor position.
           JSR/      PRINTNULL ; Print the bottom border.
           DC        '****************************************'
-          DC        '**************************** SCORE: 003'
+          DC        '**************************** SCORE:   3'
           DB        0
           LDB=      BOTRGHT   ; Bottom right position.
           JSR/      POSRC     ; Move the cursor.
@@ -1136,7 +1179,7 @@ EATFOOD   STK       X,2       ; Push X to the stack.
           STA/      GAMESCORE ; Store new score.
           MVF       (3)='@#@',/EFSCORE ; Set template.
           CLRB      AL,3      ; AL = 3 (length of string).
-          LDBB=     '0'       ; BL = '0' (padding byte).
+          LDBB=     ' '       ; BL = ' ' (padding byte).
           CFB       /EFSCORE(10),/GAMESCORE(2) ; Convert to decimal.
           LDB=      SCOREPOS  ; B = score row/col.
           LDX=      ACTVCRTS  ; X = active CRT table.
@@ -1210,4 +1253,3 @@ NFRAND    JSR/      RAND      ; Get a random number.
 *
 * End of source.
           END      ENTRY      ; Set the entry point.
-
