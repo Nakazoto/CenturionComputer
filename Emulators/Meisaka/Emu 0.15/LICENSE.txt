@@ -1,0 +1,28 @@
+The CenRE License
+
+Copyright (c) 2023 Meisaka Yukara
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the following
+conditions are met:
+
+1. The above copyright notice must appear in all copies of this software.
+2. Redistributions of source code must include the full unmodified text
+   of this license.
+3. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+4. Versions of this software with altered source code must be plainly marked
+   as such, and must not be misrepresented as being the original software.
+5. Neither the name of the copyright holder nor the names of contributors
+   to this software may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.

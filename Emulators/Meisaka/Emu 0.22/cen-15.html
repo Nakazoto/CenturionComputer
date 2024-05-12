@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Centurion</title>
+<link rel="stylesheet" href="main.css">
+<script>
+window.cen_version = 15;
+</script>
+<script src="js/cen.js"></script>
+<style>
+.mcl > div {
+	display: flex;
+}
+.mcl > div > div {
+	border: solid 1px #000;
+	display: inline-block;
+	padding: 0px 4px 0px 4px;
+}
+.mcl > div > div:nth-child(1) {
+	width: 6em;
+	text-align: right;
+	padding: 2px 4px 2px 4px;
+}
+.vwop {
+	border: solid 1px #000;
+}
+.fpl {
+	display: flex;
+}
+.fpl > div:nth-child(1) {
+	border: solid 1px #000;
+	width: 6em;
+	text-align: right;
+	display: inline-block;
+	padding: 2px 4px 2px 4px;
+}
+.fpl > span:nth-child(2), .fpb > span {
+	border: solid 1px #000;
+	display: inline-block;
+	padding: 0px 4px 0px 4px;
+}
+.fpl i {
+	display: inline-block;
+	font-style: normal;
+	padding: 2px 8px 2px 8px;
+	margin: 0px;
+	border: solid 1px rgb(78, 37, 37);
+	background: #000;
+	color: #444;
+}
+.fpl i.a {
+	border-color: #bb3838;
+	background: #ff3232;
+	color: #ffffff;
+}
+.mcc {
+	width: 92ch;
+}
+.ils {
+	border: solid 1px rgb(78, 37, 37);
+	background: #290707;
+	padding: 0;
+}
+.ils.dark {
+	background: #070000;
+}
+@keyframes alert {
+	from {
+		border-color: #cf2400;
+	}
+	to {
+		border-color: #ff8410;
+	}
+}
+.sysalert {
+	border: 2px solid #cf4400;
+	animation: alert 0.5s alternate 0s infinite both;
+}
+.sysmenu {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 5;
+}
+.sysmenu > div {
+	margin: 8px;
+	display: flex;
+}
+#dclisting {
+	overflow-y: scroll;
+	height: 700px;
+	margin: 10px;
+	border: 2px solid;
+	min-width: 350px;
+	flex-grow: 1;
+}
+.prow {
+	display: flex;
+	flex-wrap: wrap;
+	margin-right: 10px;
+}
+.pcol {
+	display: flex;
+	flex-direction: column;
+}
+.frontpanel {
+	display: flex;
+	border: solid 2px #666666;
+	box-shadow: 3px 3px 3px 3px #000;
+	margin-left: 10px;
+	margin-top: 10px;
+}
+button.small {
+	font-size: 16px;
+	padding: 2px 14px 2px 14px;
+}
+button.warn {
+	background: #d4552e;
+	border-color: #ff8059;
+}
+.diagc {
+	display: flex;
+	flex-direction: column;
+}
+.diagc > span {
+	height: 4px;
+	background-color: #290707;
+}
+.diagc > span.active {
+	background-color: #f4c455;
+}
+.termcon {
+	margin-top: 10px;
+	margin-right: 10px;
+}
+.termcon > div:first-child {
+	display: flex;
+}
+.termcon > div:first-child > button {
+	font-size: 16px;
+	padding: 2px 14px 2px 14px;
+}
+.termcon > div:first-child > span {
+	font-size: 16px;
+	padding: 2px 14px 2px 14px;
+	border: 2px solid #337;
+	background: #01050c;
+	color: #444;
+}
+.termcon > div:first-child > span.a {
+	background: #35f2af;
+	color: #090009;
+}
+.term {
+	border: 2px solid #77e;
+	background: #01050c;
+	height: 250px;
+	width: 640px;
+	image-rendering: crisp-edges;
+}
+.term.tall {
+	height: 500px;
+}
+.term.wide {
+	width: 1280px;
+}
+.term:focus {
+	border-color: #7af;
+	box-shadow: 0px 0px 3px 1px #eeeeee;
+}
+</style>
+</head>
+<body>
+	<div class="popwin" id="wset" style="display:none;top:40px;right:3%;float:right;z-index:90;">
+		<div style="display:flex;">
+			<div style="display:flex; flex-direction: column;">
+			<div>Show/Hide CPU6:</div>
+			<span class="conv-sel"><label><input type="checkbox" id="view_reg" checked>Registers</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="view_page" checked>Page Map</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="view_int" checked>Internal</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="view_uop" checked>&#x03bc;Instruction</label></span>
+			<div>Show/Hide Other:</div>
+			<span class="conv-sel"><label><input type="checkbox" id="view_ffc">FFC</label></span>
+			<div>Disassembly:</div>
+			<span class="conv-sel"><label><input type="checkbox" id="view_dis" checked>Disassembly</label></span>
+			<span class="conv-sel"><input type="radio" name="conv" id="conv_ee" value="ee"/><label for="conv_ee">EE200ish Style</label></span>
+			<span class="conv-sel"><input type="radio" name="conv" id="conv_mei" value="mei" checked/><label for="conv_mei">Modern Parametric</label></span>
+			<span class="conv-sel" style="display: none"><input type="radio" name="conv" id="conv_uew" value="uew"/><label for="conv_uew">Centurion RE Wiki</label></span>
+			<span class="conv-sel"><input type="checkbox" name="conv_hex" id="conv_hex"/><label for="conv_hex">Hex Prefix in Listing</label></span>
+			<div>Timer Interrupt:</div>
+			<span class="conv-sel"><label><input type="radio" name="rtcs" id="rtc_0" value="0" checked/>Cycle Locked</label></span>
+			<span class="conv-sel"><label><input type="radio" name="rtcs" id="rtc_1" value="1"/>Free (50k+)</label></span>
+			<span class="conv-sel"><label><input type="radio" name="rtcs" id="rtc_2" value="2"/>Disable</label></span>
+			</div>
+			</div>
+			<div style="display:flex; flex-direction: column;">
+			<div>CRT0 Terminal:</div>
+			<span class="conv-sel"><label><input type="checkbox" id="view_crt0" checked>Show</label></span>
+			<span class="conv-sel"><label><input type="radio" name="crt0l" id="crt0loc_t" value="top" checked>Top</label></span>
+			<span class="conv-sel"><label><input type="radio" name="crt0l" id="crt0loc_b" value="bot">Bottom</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="crttall0"/>Tall CRT</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="crtwide0"/>Wide CRT</label></span>
+			<div>CRT1 Terminal:</div>
+			<span class="conv-sel"><label><input type="checkbox" id="view_crt1" checked>Show</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="crttall1"/>Tall CRT</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="crtwide1"/>Wide CRT</label></span>
+			<div>CRT2 Terminal:</div>
+			<span class="conv-sel"><label><input type="checkbox" id="view_crt2" checked>Show</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="crttall2"/>Tall CRT</label></span>
+			<span class="conv-sel"><label><input type="checkbox" id="crtwide2"/>Wide CRT</label></span>
+			</div>
+		</div>
+	</div>
+	<div class="popwin" id="wload" style="display:none;top:100px;right:45%;padding:10px 20px 20px 20px;float:right;z-index:90;">
+		<div style="display:flex; flex-direction: column;">
+			<div>Loading File</div>
+			<div class="fpl"><div>File Name:</div><span id="wload_fn"></span></div>
+			<div class="fpl"><div>File Type:</div><span id="wload_ft"></span></div>
+			<div class="fpl"><div>File Size:</div><span id="wload_fs"></span></div>
+			<div class="fpl"><div>Load Type:</div>
+				<div style="display:flex; flex-direction: column;">
+					<span class="conv-sel"><input type="radio" name="wload_lt" id="wload_lt0" value="0"/><label for="wload_lt0">Raw Binary</label></span>
+					<!-- <span class="conv-sel"><input type="radio" name="wload_lt" id="wload_lt1" value="1"/><label for="wload_lt1">CPU-6 Relocatable</label></span> -->
+				</div>
+			</div>
+			<div class="fpl"><div>Load Address:</div><input class="conv-sel" id="wload_addr"/></div>
+			<div>
+				<button style="float:right;margin-top: 20px" id="wload_h">Accept and Load</button>
+				<button style="float:right;margin-top: 20px" id="wload_c">Cancel</button>
+			</div>
+		</div>
+	</div>
+	<div class="popwin" id="mclisting" style="display:none;top:100px;left:30%">
+		<div class="winfrm"><div>CPU6 &#x03bc;Code</div></div>
+		<div style="overflow-y: scroll;height:700px;width:1200px;margin:10px;border:2px solid;">
+			<div class="regs fixed mcl" id="micro"></div>
+		</div>
+	</div>
+	<div class="popwin" id="vercheck" style="display:none;top:100px;left:30%;padding:4px;z-index:100;">
+		<div class="sysalert" style="width:400px;padding:20px;font-size:18px">
+			<div>Version Check Failure</div>
+			<div>Full Reload Required (Shift-F5)</div>
+		</div>
+	</div>
+	<div class="popwin" id="memview" style="top:100px;left:30%;display:none">
+		<div class="winfrm"><div>Memory</div></div>
+		<div style="overflow-y:scroll;height:700px;width: 800px;margin:10px;border:solid 2px #000;position: relative;">
+			<div style="width:1px;height:360448px;position:absolute;left:0;top:0"></div>
+			<div class="fixed memv addr"></div>
+			<div class="fixed memv data"></div>
+			<div class="fixed memv text"></div>
+		</div>
+	</div>
+	<div class="popwin" id="diskview" style="top:100px;left:200px;display:none">
+		<div class="winfrm"><div>Disks</div></div>
+		<div style="overflow-y:scroll;height:700px;width: 600px;margin:10px;margin-right:0;border:solid 2px #000;position: relative;">
+			<div style="width:1px;height:4000px;position:absolute;left:0;top:0"></div>
+			<div class="fixed memv addr"></div>
+		</div>
+		<div style="overflow-y:scroll;height:700px;width: 800px;margin:10px;border:solid 2px #000;position: relative;">
+			<div style="width:1px;height:4000px;position:absolute;left:0;top:0"></div>
+			<div class="fixed memv addr"></div>
+			<div class="fixed memv data"></div>
+			<div class="fixed memv text"></div>
+		</div>
+	</div>
+	<div class="popwin" id="crtc1" style="position:absolute;top:100px;left:20px;display:flex;">
+		<div class="winfrm"><div>CRT1</div></div>
+		<div class="termcon">
+			<div>
+				<button>CTRL</button><span>BEL</span><label><input type="checkbox" checked/>Caps Lock</label>
+				<button>F1</button><button>F2</button><button>F3</button><button>F4</button>
+				<button>F5</button><button>F6</button><button>F7</button><button>F8</button>
+			</div>
+			<canvas id="term1" class="term" width="640" height="250" tabindex="0"></canvas>
+		</div>
+	</div>
+	<div class="popwin" id="crtc2" style="position:absolute;top:150px;left:70px;display:none;">
+		<div class="winfrm"><div>CRT2</div></div>
+		<div class="termcon">
+			<div>
+				<button>CTRL</button><span>BEL</span><label><input type="checkbox" checked/>Caps Lock</label>
+				<button>F1</button><button>F2</button><button>F3</button><button>F4</button>
+				<button>F5</button><button>F6</button><button>F7</button><button>F8</button>
+			</div>
+			<canvas id="term2" class="term" width="640" height="250" tabindex="0"></canvas>
+		</div>
+	</div>
+	<div class="sysmenu" id="button_row"><div>
+		<button id="b_reset">Reset</button>
+		<button id="b_step">Step</button>
+		<button id="b_run">Run/Stop</button>
+		<button id="b_r1">1</button>
+		<button id="b_r2">10</button>
+		<button id="b_r3">100</button>
+		<button id="b_r4">1k</button>
+		<button id="b_r5">10k</button>
+		<button id="b_r6">50k</button>
+		<button id="b_r7">100k</button>
+		<button id="b_r8" style="display:none">150k</button>
+		<button id="b_mstep">&#x03bc;Step</button>
+		<div style="flex-grow: 1"></div>
+		<button id="b_disks">Disks</button>
+		<button id="b_memory">Mem</button>
+		<button id="b_micro">&#x03bc;Code</button>
+		<button id="b_local">Local</button>
+		<button id="b_settings">Settings</button>
+	</div></div>
+	<div style="height:36px"></div>
+	<div class="prow" id="cd_r1">
+		<div class="pcol" id="cd_r1c1">
+		<div class="frontpanel" id="dcfpd">
+			<div>
+				<div>Front Panel Display:</div>
+				<div style="display:flex; align-items:flex-end;">
+					<button id="fp_r">R/F</button>
+					<button id="fp_l">OPSYS</button>
+					<button id="fp_s">SELECT</button>
+				</div>
+				<div style="display:flex; align-items:flex-end;">
+					<button class="small" id="ss1">S1</button>
+					<button class="small" id="ss2">S2</button>
+					<button class="small" id="ss3">S3</button>
+					<button class="small" id="ss4">S4</button>
+					<button class="small" id="ssR">R</button>
+					<button class="small" id="ssH">H</button>
+					<button class="small" id="ssI">I</button>
+				</div>
+				<div>Diag Select</div>
+				<div style="display:flex; align-items:flex-end;">
+					<span class="diagc"><button id="diag8">D8</button><span id="diag8s"></span></span>
+					<span class="diagc"><button id="diag4">D4</button><span id="diag4s"></span></span>
+					<span class="diagc"><button id="diag2">D2</button><span id="diag2s"></span></span>
+					<span class="diagc"><button id="diag1">D1</button><span id="diag1s"></span></span>
+					<button id="diagrun">&DownArrowBar;</button>
+				</div>
+				<div><input type="checkbox" name="diagins" id="diagins"/><label for="diagins">Diag ROMs Installed</label></div>
+				<div>Debug Commands / DisAsm Address:</div>
+				<div class="fpl"><div>[View]</div><input id="dbgcmd"/></div>
+			</div>
+			<div class="regs">
+				<div class="fpl"><div>Address:</div><span id="fp_addr" style="width: 2.5em">0000</span><canvas id="fp_addrc" class="ils dark" height="30" width="200"></canvas></div>
+				<div class="fpl"><div>Level:</div><span id="fp_level" style="width: 1em">0</span><canvas id="fp_levelc" class="ils dark" height="30" width="108"></canvas></div>
+				<div class="fpl"><div>Map:</div><canvas id="fp_flagsc" class="ils dark" height="30" width="250"></canvas></div>
+				<div class="fpl"><div>Status:</div><span id="fp_runstate"><i>RUN</i><i class="a">HALT</i><i>STEP</i></span></div>
+				<div class="fpl"><div>Extended:</div><span id="fp_extstate"><i>SIM</i><i>MF</i></span></div>
+				<div class="fpl"><div>Diag:</div><canvas id="fp_diag" class="ils" width="40" height="30"></canvas></div>
+				<div class="fpl"><div>Perf:</div><span id="fp_perf"></span></div>
+			</div>
+		</div>
+		</div>
+		<div class="pcol" id="cd_r1c2"></div>
+		<div class="termcon" id="dccrt0">
+			<div>
+				<button>CTRL</button><span>BEL</span><label><input type="checkbox" checked/>Caps Lock</label>
+				<button>F1</button><button>F2</button><button>F3</button><button>F4</button>
+				<button>F5</button><button>F6</button><button>F7</button><button>F8</button>
+			</div>
+			<canvas id="term0" class="term" width="640" height="250" tabindex="0"></canvas>
+		</div>
+	</div>
+	<div class="prow" id="cd_r2">
+		<div class="frontpanel" id="dcregs">
+			<div class="regs">
+				<div class="fpl fixed"><div>Level 0/1</div><span id="mcr_file0">----</span></div>
+				<div class="fpl fixed"><div>Level 2/3</div><span id="mcr_file2">----</span></div>
+				<div class="fpl fixed"><div>Level 4/5</div><span id="mcr_file4">----</span></div>
+				<div class="fpl fixed"><div>Level 6/7</div><span id="mcr_file6">----</span></div>
+				<div class="fpl fixed"><div>Level 8/9</div><span id="mcr_file8">----</span></div>
+				<div class="fpl fixed"><div>Level A/B</div><span id="mcr_fileA">----</span></div>
+				<div class="fpl fixed"><div>Level C/D</div><span id="mcr_fileC">----</span></div>
+				<div class="fpl fixed"><div>Level E/F</div><span id="mcr_fileE">----</span></div>
+			</div>
+		</div>
+		<div class="pcol" id="ccr2"></div>
+	</div>
+	<div class="prow" id="cd_r3">
+		<div class="frontpanel" id="dcint">
+			<div class="regs">
+				<div class="fpl"><div>Level</div><span id="mcr_level">--</span></div>
+				<div class="fpl"><div>Result</div><span id="mcr_res">--</span></div>
+				<div class="fpl"><div>Swap</div><span id="mcr_swap">--</span></div>
+			</div>
+			<div class="regs">
+				<div class="fpl"><div>RIndex</div><span id="mcr_rfir">--</span></div>
+				<div class="fpl"><div>RData</div><span id="mcr_rfdr">--</span></div>
+				<div class="fpl"><div>PTA</div><span id="mcr_pta">--</span></div>
+			</div>
+			<div class="regs">
+				<div class="fpl"><div>Nxt/&#x03bc;PC/&#x03bc;RH</div><span id="mcs_p">000 000 000</span></div>
+				<div class="fpl"><div>&#x03bc;STK</div><span id="mcs_s">000 000 000 000</span></div>
+				<div class="fpl"><div>BusCtl</div><span id="mcr_bus">--</span></div>
+				<div class="fpl"><div>SysCtl</div><span id="mcr_sys">--</span></div>
+			</div>
+			<div class="regs">
+				<div class="fpl"><div>ALU Q/Flag</div><span id="mcs_alu">--</span></div>
+				<div class="fpl"><div>ALU Reg0-7</div><span id="mcs_alu2">--</span></div>
+				<div class="fpl"><div>ALU Reg8-F</div><span id="mcs_alu3">--</span></div>
+				<div class="fpl"><div>WA/MA/PA</div><span id="mcr_addr">---- ---- -----</span></div>
+			</div>
+		</div>
+		<div class="frontpanel" id="dcpages">
+			<div class="regs">
+				<div class="fpl"><div>Page 00-3F</div><span id="mcp_0">--</span></div>
+				<div class="fpl"><div>40-7F</div><span id="mcp_1">--</span></div>
+				<div class="fpl"><div>80-BF</div><span id="mcp_2">--</span></div>
+				<div class="fpl"><div>C0-FF</div><span id="mcp_3">--</span></div>
+			</div>
+		</div>
+	</div>
+	<div class="prow" id="cd_r4">
+		<div class="frontpanel" id="dcuop">
+			<div class="regs">
+				<div class="fpl fixed"><div>&#x03bc;Op:SEQ</div><span class="mcc" id="mcs_op"></span></div>
+				<div class="fpl fixed"><div>&#x03bc;Op:ALU</div><span class="mcc" id="mcs_op_alu"></span></div>
+				<div class="fpl fixed"><div>&#x03bc;Op:Bus</div><span class="mcc" id="mcs_op_bus"></span></div>
+			</div>
+		</div>
+		<div class="frontpanel" id="dchawk">
+			<div class="regs">
+				<div>DSK II / Hawk Emu (Drag Drop to Load: F, R...)</div>
+				<div class="fpl fixed"><div>Fixed</div><label><input type="checkbox" id="dsk1wp"/>WP</label><button class="small" id="dsk1sel">Sel</button><button class="small" id="dsk1new">New</button><span id="dsk1_sta">-</span></div>
+				<div class="fpl fixed"><div>Removable</div><label><input type="checkbox" id="dsk0wp"/>WP</label><button class="small" id="dsk0sel">Sel</button><button class="small" id="dsk0new">New</button><span id="dsk0_sta">-</span></div>
+			</div>
+		</div>
+	</div>
+	<div class="prow" id="cd_r5">
+		<div class="frontpanel" id="dcffc">
+			<div class="regs">
+				<div class="fpl fixed"><div>FFC SEQ</div><span id="ffc_op"></span></div>
+				<div class="fpl fixed"><div>FFC ALU</div><span id="ffc_op_alu"></span></div>
+				<div class="fpl fixed"><div>FFC I/O</div><span id="ffc_op_bus"></span></div>
+				<div class="fpl fixed"><div>FFC Diag</div>
+					<span id="ffc1_sta"></span>
+					<input type="checkbox" id="ffc1wp" style="display:none;"/>
+					<button class="small" id="ffc1sel">Sel</button>
+					<button class="small" id="ffc1new">New</button>
+					<!--this button is evil--><button class="small" id="ffc_log" style="display:none;">Log</button>
+				</div>
+			</div>
+			<div class="regs">
+				<div class="fpl fixed"><div>ALU Q/Flag</div><span id="ffc_alu">--</span></div>
+				<div class="fpl fixed"><div>ALU Reg0-7</div><span id="ffc_alu2">--</span></div>
+				<div class="fpl fixed"><div>ALU Reg8-F</div><span id="ffc_alu3">--</span></div>
+				<div class="fpl fixed"><div>Disk</div><span id="ffc_disk">--</span></div>
+			</div>
+			<div class="regs">
+				<div class="fpl fixed"><div>Addr</div><span id="ffc_addr">--</span></div>
+				<div class="fpl fixed"><div>SysData</div><span id="ffc_sys">--</span></div>
+				<div class="fpl fixed"><div>IPL</div><span id="ffc_ipl">-</span></div>
+				<div class="fpl fixed"><div>Track</div><span id="ffc_track">---</span></div>
+			</div>
+			<div class="regs">
+				<div class="fpl fixed"><div>Ctrl</div><span id="ffc_ctrl">--</span></div>
+				<div class="fpl fixed"><div>Status</div><span id="ffc_status">--</span></div>
+			</div>
+			
+		</div>
+	</div>
+	<div class="prow" id="cd_r6">
+		<div id="dclisting" style="position:relative">
+			<div class="asm" id="listing"></div>
+			<div class="asmc" id="listingc"></div>
+		</div>
+		<div class="pcol" id="cd_r6c2">
+		<div id="dc_textio">
+			<div>
+				<button id="cm_imp">Annotate</button>
+				<button id="cm_vki">To Console</button>
+				<button id="cm_clear">Clear</button>
+			</div>
+			<textarea name="anno" id="anno" cols="85" rows="30" spellcheck="false"></textarea>
+		</div>
+		</div>
+	</div>
+	<div id="dld" style="display: none;"></div>
+<script>
+window.addEventListener('load', function() {
+	setTimeout(function() {
+		if(window.cen_ts_version !== window.cen_version) {
+			document.getElementById('vercheck').style.display = 'block';
+		}
+	}, 500);
+});
+</script>
+</body>
+</html>
