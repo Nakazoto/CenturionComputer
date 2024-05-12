@@ -7,7 +7,13 @@
 * a massive amount of help with figuring out assembly, DMA and other drive
 * shenanigans. And of course, Ken Romaine is an absolute legend for remembering
 * so much about the Centurion and the Hawk.
+* Notably, this program has been modified to work on CPU5 systems. Therefore,
+* it should work on just about any Centurion under the sun.
 * Thank you everyone so much for walking me through this!
+*
+* External symbols used by the program and provided by OSLIB
+          EXT       MVSSF          ; FILR instruction implementation (OSLIB)
+          EXT       HEX16
 *
           TITLE     'HKDUMP'
 ZHKDUMP   BEGIN     X'0100'
@@ -28,7 +34,8 @@ MUX3CB    EQU       X'F6'          ; Third MUX port at 19,200 8N1
 ********************************************************************************
 *                                 MAIN LOOP                                    *
 ********************************************************************************
-ENTRY     XFR=      X'F000',S      ; Set the stack pointer to just below MMIO
+ENTRY     LDA=      X'8000'        ; Set the stack pointer
+          XAS                      ; to the top of 32k RAM.
 * Initialize MUX ports
           LDAB=     MUX0CB         ; Load Mux 0 Control Byte into A
           STAB/     MUX0CTRL       ; Store A into MUX0CTRL, MMIO port for MUX0
@@ -90,7 +97,7 @@ ETRACK    DW        X'3200'        ; Define ending track
 INSTRING  DW        X'0000'        ; This is the area where we store
           DW        X'0000'        ; the incoming ASCII bytes
 INLENGTH  DB        4              ; Used to tell CTB how many bytes to check
-INVALUE   DW        X'0000'        ; Where CTB stores the converted bytes
+TEMPA     DW        X'0000'        ; Temp storage location for converted bytes
 PICKDR    JSR/      CHKBYTE
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load B with 0000 1111
@@ -120,9 +127,25 @@ CHKBYTE   LDAB/     MUX0CTRL       ; Load MUX status byte in to AL
           LDAB/     MUX0DATA       ; Read in the receive byte
           STAB/     MUX0DATA       ; Echo that digit back
           RSR
-CONVERTB  LDAB/     INLENGTH       ; AL = string length
-!!          CTB       /INSTRING(16),/INVALUE(2) !!
-          LDA/      INVALUE        ; The integer value represented by string
+CONVERTB  LDAB/     INSTRING       ; Grab ASCII value from loc. 0 of INSTRING
+          JSR/      HEX2INT        ; Convert that to a nibble
+          SLRB      AL,4           ; Shift that nibble to the upper half
+          STAB/     TEMPA          ; Stab it into TEMPA
+          LDAB/     INSTRING+1     ; Grab ASCII value from loc. 1 of INSTRING
+          JSR/      HEX2INT        ; Convert to nibble
+          LDBB/     TEMPA          ; Load the first nibble into BL
+          ORIB      BL,AL          ; OR AL and BL and store in AL
+          STAB/     TEMPA          ; Store that byte back into TEMPA
+          LDAB/     INSTRING+2     ; Grab ASCII value from loc. 2 of INSTRING
+          JSR/      HEX2INT        ; Convert that to a nibble
+          SLRB      AL,4           ; Shift that nibble to the upper half
+          STAB/     TEMPA+1        ; Stab it into TEMPA
+          LDAB/     INSTRING+3     ; Grab ASCII value from loc. 3 of INSTRING
+          JSR/      HEX2INT        ; Convert to nibble
+          LDBB/     TEMPA+1        ; Load the first nibble into BL
+          ORIB      BL,AL          ; OR AL and BL and store in AL
+          STAB/     TEMPA+1        ; Store that byte back into TEMPA
+          LDA/      TEMPA          ; Load new word built in TEMPA into A
           RSR
 *
 ********************************************************************************
@@ -168,8 +191,10 @@ PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
 WEGOTERR  JSR/      PRINTNULL      ; Print a 'X' to denote read error
           DC        'X'
           DB        0
-!!          FIL (200)=X'FF',/REDATA  ; Fill the 400 byte buffer in memory with FF !!
-!!          FIL (200)=X'FF',/REDATA+200 !!
+          LDA=      X'0190'        ; Load A with length to fill (400 bytes)
+          LDB=      REDATA         ; Load B with starting place to fill
+          JSR/      MVSSF          ; Fill buffer
+          DB        X'FF'          ; with FF
           RSR
 CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
           XAYB                     ; AL -> YL
@@ -194,7 +219,7 @@ CRCDATA   DS 2                     ; 2 byte CRC
           DW X'0D0A'               ; CR, LF to terminate sector data
 DUMPLEN   EQU *-MARKER             ; Amount of data to dump
 CRCINT    DW        0              ; Define CRCINT as 0
-!!CRCMARK   STK       X,2            ; Push return address (X reg) onto stack !!
+CRCMARK   STX-      S-             ; Push return address (X reg) onto stack
           CLA                      ; A = 0.
           STA/      CRCINT         ; A -> *CRCINT
           LDA=      REDATA         ; Load A with the location of the read data
@@ -203,15 +228,22 @@ NEXTCRC   LDAB+     Y+             ; Load value pointed at by Y and incrmnt Y
           XAZB                     ; Transfer AL into ZL
           LDA=      X'80'          ; A = 0x80.
           LDB/      CRCINT         ; *CRCINT -> B.
-CRCLOOP   AND=      X'8000',B,X    ; 0x8000 & B -> X.
+CRCLOOP   LDX=      X'8000'        ; Load X with literal value X'8000'
+          AND       B,X            ; AND B and X and store in X
           XFRB      ZL,ZU          ; ZL -> ZU.
           ANDB      AL,ZU          ; AL & ZU -> ZU.
           BZ        SKIPXOR        ; If 0, don't XOR with high bit.
-          ORE=      X'8000',X      ; 0x8000 ^ X -> X.
+          STA-      S-             ; Push A reg onto stack
+          LDA=      X'8000'        ; Load A with literal X'8000'
+          ORE       A,X            ; Exclusive OR A and X and store in X
+          LDA+      S+             ; Pop A from the stack
 SKIPXOR   SLR       B              ; B <<= 1.
           XFR       X,X            ; X -> X.
           BZ        SKIPPOLY       ; If 0, don't XOR with poly.
-          ORE=      X'1021',B      ; 0x1021 ^ B -> B.
+          STB-      S-             ; Push A reg onto stack
+          LDA=      X'1021'        ; Load A with literal X'1021'
+          ORE       B,X            ; Exclusive OR A and X and store in X
+          LDB+      S+             ; Pop A from the stack
 SKIPPOLY  SRA                      ; A >>= 1.
           BNZ       CRCLOOP        ; If not zero, do the next bit.
           STB/      CRCINT         ; B -> *CRCINT.
@@ -219,7 +251,7 @@ CHECKY    LDA=      CRCDATA        ; A = one past end of sector data
           SUB       Y,A            ; Compare Y to one past the end
           BZ        CRCEND         ; Branch to the end of CRC junk if A is zero
           JMP       NEXTCRC        ; Jump back up and go again
-!!CRCEND    POP       X,2            ; Pop X back off of stack so we can return !!
+CRCEND    LDX+      S+             ; Pop X back off of stack so we can return
           LDA/      HWKSCT         ; Load the Hawk sectors into A
           STA/      MKDATA         ; Store it into memory for transfer out
           LDA/      CRCINT         ; Load calculated CRC into A
@@ -268,14 +300,22 @@ INCRMNT2  LDB/      PRTSCT         ; Load the printable sector
           SUB       A,B            ; Subtract that from PRTSCT to see if diff.
           BNZ       PREPRPROG      ; If so, then update and print
           RSR                      ; Return to main loop
+          
+          
+          
+          
 TRKDIGITS EQU       4              ; Digits to display for the track.
 PREPRPROG LDA/      HWKSCT         ; Load the Hawk sectors into A
           SRR       A,5            ; Shift right 5 times to just get the cyl.
           STA/      PRTSCT         ; Store that new value into PRTSCT
-!!PRPROG    MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format. !!
+PRPROG    
+
+          LDA       
+
+ !! MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format. !!
           LDAB=     TRKDIGITS      ; AL = digits to display for the track.
           LDBB=     '0'            ; BL = padding character.
-!!          CFB       /PRPROGTRK(16),/PRTSCT(2) ; Convert READCMD+5(w) to hex !!
+ !!          CFB       /PRPROGTRK(16),/PRTSCT(2) ; Convert READCMD+5(w) to hex !!
           JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed        
           DC        'TRACK: '
@@ -370,3 +410,33 @@ GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
           DB        0
           JMP/      TOP            ; Jump to top of program
           END       ENTRY          ; Set the entry point
+*
+********************************************************************************
+*                        EXTRA SUBROUTINES FOR CPU5                            *
+********************************************************************************
+*
+* Convert a hex character to integer value. The character is in AL and the value
+* is returned in AL. AL is set to negative on error.
+HEX2INT   STB-      S-        ; Push B to the stack.
+          LDBB=     '0'       ; Load 0 to
+          SABB                ; convert the ASCII to the value.
+          XFRB      BL,BU     ; BL -> BU.
+          BM        H2IERROR  ; If less than 0, error.
+          LDBB=     ':'       ; Load : to
+          SABB                ; compare against decimal digits.
+          BM        H2IEND    ; If 0-9, done.
+          LDBB=     'A'       ; Load A to
+          SABB                ; convert the ASCII to a hex digit > 9.
+          XFRB      BL,BU     ; BL -> BU.
+          BM        H2IERROR  ; If less than 0, error.
+          LDBB=     'G'       ; Load G to
+          SABB                ; compare against hex digits A-F.
+          BP        H2IERROR  ; If G or more, error.
+          LDBB=     10        ; BL = 10.
+          ADDB      BL,BU     ; BL + BU -> BU.
+          JMP       H2IEND    ; Successful end.
+H2IERROR  LDB=      -1        ; Signal an error.
+H2IEND    XFRB      BU,AL     ; BU -> AL.
+          LDB+      S+        ; Pop B from the stack.
+          RSR                 ; Return.
+*
