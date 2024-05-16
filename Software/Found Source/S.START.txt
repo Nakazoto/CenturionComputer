@@ -1,0 +1,56 @@
+*
+***   allocate memory
+*
+.nolog
+.skip to mem if 0 eq #1
+.setc 6=' '
+.fspec s on #d 8=size
+.skip 1 if #8 eq 0
+.setc 6='s.'
+.seta 7 = 1
+.fspec @spool on #7 8=size
+.skip to go if #8 ne 0
+.seta 7 = 0
+.fspec @spool on #7 8=size
+.skip to go if #8 ne 0
+.log
+*     spooler file "@spool" is not on disk 0 or disk 1
+*     spooler will not be started
+.nolog
+.skip to mem
+=go
+.seta 9 = #0 * 400 + 3000
+.skip 1 if #9 ge 4096
+.seta 9 eq 4096
+.give p#0 #9
+.start p#0 #6spool @spool #7 #1
+.log
+*     spooler started using "@spool" on disk #7
+.nolog
+=mem
+.skip to eoj if #0 le 1
+.seta 9=#m/#0
+.skip 1 if #9 ge 0
+.seta 9=21846/#0*3#9
+.seta 8=9-#0
+.skip #8
+.give p8 #9
+.give p7 #9
+.give p6 #9
+.give p5 #9
+.give p4 #9
+.give p3 #9
+.give p2 #9
+.give p1 #9
+=eoj
+.end
+.log
+.sta
+.use crt#v for sysrdr
+*
+*  10/22/76..revised for correct spooler partition size...klf
+*  11/03/76..revised to correct partition size on minimum number of
+*            partitions...klf
+*  11/19/76..???...(unknown)
+*  03/24/77..???...(unknown)
+*  08/27/77..revised to handle variable disk for @spool...klf
