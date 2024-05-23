@@ -1,0 +1,35 @@
+.job loader
+*
+***   write disk loader track
+*
+.nolog
+.setc 9=' '
+.fspec s on #d 8=size
+.skip 1 if 0 = #8
+.setc 9='s.'
+.log
+*     enter disk number
+.nolog
+.enter upsi
+.vspec #u 6=vol, 7=used, 8=avail
+.seta 7 = #7 + #8
+.skip to atn if 0 ge #7
+.skip to hard if #7 ge 800
+.use #9fdipl on #d for sys0
+.run #9xfdwip
+.skip to done
+=hard
+.use #9hdipl on #d for sys0
+.run #9xhdwip
+=done
+.log
+*     volume "#6" has new loader
+.nolog
+.skip to eoj
+=atn
+.log
+*
+*     that disk is not online_
+*
+.nolog
+=eoj

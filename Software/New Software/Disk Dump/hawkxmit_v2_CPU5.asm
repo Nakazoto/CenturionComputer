@@ -13,7 +13,7 @@
 *
 * External symbols used by the program and provided by OSLIB
           EXT       MVSSF          ; FILR instruction implementation (OSLIB)
-          EXT       HEX16
+          EXT       @HEX           ; Converts a stored value to hex (OSLIB)
 *
           TITLE     'HKDUMP'
 ZHKDUMP   BEGIN     X'0100'
@@ -34,6 +34,7 @@ MUX3CB    EQU       X'F6'          ; Third MUX port at 19,200 8N1
 ********************************************************************************
 *                                 MAIN LOOP                                    *
 ********************************************************************************
+*
 ENTRY     LDA=      X'8000'        ; Set the stack pointer
           XAS                      ; to the top of 32k RAM.
 * Initialize MUX ports
@@ -298,31 +299,23 @@ INCRMNT2  LDB/      PRTSCT         ; Load the printable sector
           LDA/      HWKSCT         ; Load the current hawk sector
           SRR       A,5            ; Shift A 5-bits to the right (high bit = 0)
           SUB       A,B            ; Subtract that from PRTSCT to see if diff.
-          BNZ       PREPRPROG      ; If so, then update and print
+          BNZ       PRPROG         ; If so, then update and print
           RSR                      ; Return to main loop
-          
-          
-          
-          
-TRKDIGITS EQU       4              ; Digits to display for the track.
-PREPRPROG LDA/      HWKSCT         ; Load the Hawk sectors into A
+
+!! This is still all fucked up!!
+PRPROG    LDA/      HWKSCT         ; Load the Hawk sectors into A
           SRR       A,5            ; Shift right 5 times to just get the cyl.
-          STA/      PRTSCT         ; Store that new value into PRTSCT
-PRPROG    
-
-          LDA       
-
- !! MVF       (TRKDIGITS)='@@#@',/PRPROGTRK ; Set the track format. !!
-          LDAB=     TRKDIGITS      ; AL = digits to display for the track.
-          LDBB=     '0'            ; BL = padding character.
- !!          CFB       /PRPROGTRK(16),/PRTSCT(2) ; Convert READCMD+5(w) to hex !!
+          JSR/      @HEX           ; Jump to Hex conversion routine thing
+          STA/      PRTSCT
           JSR/      PRINTNULL
           DW        X'8D8A'        ; Carriage return and line feed        
           DC        'TRACK: '
-PRPROGTRK DS        TRKDIGITS
+          DW        PRTSCT
           DC        ', SECTOR: '
           DB        0              ; Null terminator
           RSR                      ; Return back to main loop
+!! This is still all fucked up!!
+
 *
 ********************************************************************************
 *                             PRINT SUBROUTINES                                *
