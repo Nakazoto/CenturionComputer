@@ -86,6 +86,7 @@ HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
 * Y is a constant needs to be protected. A and B are also blitzed.
 FORMAT    CLA                      ; Set A register to all zeros
           XFR       A,Y            ; Move A over to Y
+          JSR/      CHKSEEK        ; Check to make sure that the RTZ is finished
 FLOOP     JSR/      CHKRDY         ; Check if DSK2 is ready
           XFR       Y,A            ; Transfer Y into A (cylinder count)
           STA/      X'F141'        ; Store cylinder count in sector address reg.
