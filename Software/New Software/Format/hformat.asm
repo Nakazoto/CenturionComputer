@@ -86,18 +86,20 @@ HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
 * Y is a constant needs to be protected. A and B are also blitzed.
 FORMAT    CLA                      ; Set A register to all zeros
           XFR       A,Y            ; Move A over to Y
-FLOOP     JSR/      CHKRDY         ; Check if the drive is ready
+FLOOP     JSR/      CHKRDY         ; Check if DSK2 is ready
           XFR       Y,A            ; Transfer Y into A (cylinder count)
           STA/      X'F141'        ; Store cylinder count in sector address reg.
-          JSR/      CHKRDY         ; Check if the drive is ready
+          JSR/      CHKRDY         ; Check if DSK2 is ready
           LDAB=     X'02'          ; Load 02 into A reg. byte
           STAB/     X'F148'        ; Seek to cylinder sector address
-          JSR/      CHKRDY         ; Check if the drive is ready
+          JSR/      CHKRDY         ; Check if DSK2 is ready
+          JSR/      CHKSEEK        ; Check that seek has completed succesfully
           LDAB=     X'06'          ; Load 06 into A reg. byte
           STAB/     X'F148'        ; Store 06 in F148 -> Format write step 1
-          JSR/      CHKRDY         ; Check if the drive is ready
+          JSR/      CHKRDY         ; Check if DSK2 is ready
           LDAB=     X'05'          ; Load 05 into A reg. byte
           STAB/     X'F148'        ; Store 05 in F148 -> Format write step 2
+          JSR/      CHKOKNG        ; Jump to a subroutine that checks error
 NEXTADD   INR       Y              ; Increment Y (sector address)
           XFR       Y,A            ; Copy Y into A for testing
           LDB=      X'3200'        ; Load B with max cylinder count
@@ -106,28 +108,69 @@ NEXTADD   INR       Y              ; Increment Y (sector address)
           JMP/      FLOOP          ; Loop back around
 * Check if the Drive is ready. 
 * Blasts A and B registers.
-CHKRDY    LDAB/     X'F144'        ; Load the status register of the Hawk
-          XABB                     ; AL -> BL
-          LDAB=     X'FF'          ; Load A with X'FF' inverse of all good
-          ANDB      BL,AL          ; AND AL and BL
-          BZ        GOODJOB        ; Success, print dot and go
-          LDAB=     X'F0'          ; Load A with X'F0' to check for errors
-          ANDB      BL,AL          ; AND AL and BL, should give zero
-          BNZ       WEGOTERR       ; If not 0, then we have an error
-          JMP/      CHKRDY         ; If value is '01', DSK is busy, so loop
-GOODJOB   JSR/      PRINTNULL
+CHKRDY    LDAB/     X'F144'        ; Load Hawk status, flag set if status is 00
+          BNZ       CHKRDY         ; If A not zero, status reg. has some bits
+          LDAB/     X'F145'        ; Load the status register of the Hawk
+          LDBB=     X'30'          ; Load A with X'30' => On Cyl, Drive Rdy
+          ANDB      BL,AL          ; AND BL with AL, store in AL
+          SUBB      BL,AL          ; Subtract BL-AL, store in AL
+          BNZ       CHKRDY         ; If not zero, we aren't ready yet
+          RSR
+CHKSEEK   LDAB/     X'F145'        ; Load the status register of the Hawk
+          LDBB=     X'0F'          ; Load A with X'0F' => Any seek complete
+          ANDB      BL,AL          ; AND BL with AL, store in AL
+          BZ        CHKSEEK        ; If zero, seek not complete, so loop
+          RSR
+* Check if the format actually worked
+* Blasts A and B registers.
+CHKOKNG   JSR/      CHKRDY         ; Check if the drive is ready
+          LDAB=     X'00'          ; Load 00 into A reg. byte
+          STAB/     X'F148'        ; Read the sector that we just formatted
+          JSR/      CHKRDY         ; Check if the drive is ready
+          LDBB/     X'F144'        ; Read the Hawk status register
+          BNZ       BADRD1         ; If not zero, something is up
+          JSR/      PRINTNULL      ; Good job, you get a dot
           DC        '.'
           DB        0
-          RSR
-WEGOTERR  JSR/      PRINTNULL
-          DC        'X'
+          RSR                      ; If it is zero, we're good to go
+BADRD1    LDAB=     X'10'          ; Load A with X'10' which is format error
+          ANDB      BL,AL          ; AND AL and BL
+          BZ        BADRD2         ; If zero, then different error
+          JSR/      PRINTNULL
+          DC        'F'
           DB        0
           RSR
+BADRD2    LDAB=     X'20'          ; Load A with X'20' which is sector add error
+          ANDB      BL,AL          ; AND AL and BL
+          BZ        BADRD3         ; If zero, then different error
+          JSR/      PRINTNULL
+          DC        'A'
+          DB        0
+          RSR
+BADRD3    LDAB=     X'40'          ; Load A with X'40' which is CRC error
+          ANDB      BL,AL          ; AND AL and BL
+          BZ        BADRD4         ; If zero, then different error
+          JSR/      PRINTNULL
+          DC        'C'
+          DB        0
+          RSR
+BADRD4    LDAB=     X'80'          ; Load A with X'80' which is timeout error
+          ANDB      BL,AL          ; AND AL and BL
+          BZ        BADRD5         ; If zero, then different error
+          JSR/      PRINTNULL
+          DC        'T'
+          DB        0
+          RSR
+BADRD5    JSR/      PRINTNULL      ; Something went wrong, print a ? to tell
+          DC        '?'            ; the programmer that his code sucks.
+          DB        0
+          RSR
+*End of the line brother.
 DONEZO    JSR/      PRINTNULL
           DW        X'8D8A'
           DC        'EITHER IT WENT PERFECTLY, OR IT FAILED DRAMATICALLY.'
           DW        X'8D8A'
-          DC        'REGARDLESS, I QUIT.'
+          DC        'REGARDLESS, I QUIT. -I--I- L(O-O)L'
           DB        0
           HLT
           END       ENTRY          ; Set the entry point

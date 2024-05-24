@@ -80,7 +80,7 @@ TOP       JSR/      PRINTNULL
           JSR/      PICKEND        ; Pick the ending track
           JSR/      HWKRTZ         ; RTZ the Hawk
           JSR/      PRPROG         ; Print track 0
-          JSR/      CHKRDY         ; Check for Ready byte from PC
+          JSR/      CHKPCRDY       ; Check for Ready byte from PC
 LOOP      JSR/      DMAREAD        ; Read 400 bytes, DMA it to memory
           JSR/      CRCMARK        ; Calculate the CRC and create marker
 TRYAGAIN  JSR/      DMPDATA        ; Dump out 400 bytes of data
@@ -200,7 +200,7 @@ WEGOTERR  JSR/      PRINTNULL      ; Print a 'X' to denote read error
 CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
           XAYB                     ; AL -> YL
 CHKONCYL  LDAB/     X'F145'        ; Load the drive status
-          ANDB      YL,AL          ; clear all the other bits
+          ANDB      YL,AL          ; Clear all the other bits
           OREB      YL,AL          ; Desired bits will both be zero when ready
           BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
           RSR
@@ -264,7 +264,7 @@ CRCEND    LDX+      S+             ; Pop X back off of stack so we can return
 ********************************************************************************
 *
 * PC SHOULD SEND X'FF' WHEN READY
-CHKRDY    LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
+CHKPCRDY  LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
           SRAB                     ; Shift AL to the right by 1
           BNL       CHKRDY         ; Loop back to top if Link is not set
           LDAB/     MUX3DATA       ; Read in the receive byte
