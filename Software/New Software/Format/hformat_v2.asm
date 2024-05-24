@@ -43,7 +43,6 @@ ENTRY     LDA=      X'8000'        ; Set the stack pointer
 * Start Doing Productive Stuff
           JSR/      PICKDR         ; Pick your drive and platter
           JSR/      HWKRTZ         ; RTZ the Hawk
-          JSR/      BRUTEFO        ; Brute force a format on sector 00
           JMP/      FORMAT         ; Format the Hawk
 *
 ********************************************************************************
@@ -83,31 +82,6 @@ HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
           DW        X'8D8A'
           DB        0
           RSR
-* Brute force.
-* Formats sector 00 the slow/hard way to ensure we have a clean starting point
-* Blows A to smithereens.
-BRUTEFO   LDA=      X'0100'        ; Load A with a counter
-          JSR/      BFLOOP         ; Go wait in the corner
-          CLA                      ; Set A to X'0000'
-          STA/      X'F141'        ; Store cylinder count in sector address reg.
-          LDA=      X'0010'        ; Load A with a counter
-          JSR/      BFLOOP         ; Go wait in the corner
-          LDAB=     X'02'          ; Load 02 into A reg. byte
-          STAB/     X'F148'        ; Seek to cylinder sector address
-          LDA=      X'0010'        ; Load A with a counter
-          JSR/      BFLOOP         ; Go wait in the corner
-          LDAB=     X'06'          ; Load 06 into A reg. byte
-          STAB/     X'F148'        ; Store 06 in F148 -> Format write step 1
-          LDA=      X'0010'        ; Load A with a counter
-          JSR/      BFLOOP         ; Go wait in the corner
-          LDAB=     X'05'          ; Load 05 into A reg. byte
-          STAB/     X'F148'        ; Store 05 in F148 -> Format write step 2
-          RSR
-BFLOOP    DLY                      ; Literally just do nothing for 4.55ms
-          DCR       A              ; Decrement the A reg
-          BNZ       BFLOOP
-          RSR
-
 * Main format loop. 
 * Y is a constant needs to be protected. A and B are also blitzed.
 FORMAT    CLA                      ; Set A register to all zeros
@@ -135,6 +109,8 @@ NEXTADD   INR       Y              ; Increment Y (sector address)
 * Check if the Drive is ready. 
 * Blasts A and B registers.
 CHKRDY    LDAB/     X'F144'        ; Load Hawk status, flag set if status is 00
+          LDBB=     X'0F'          ; Load A with X'0F' => Just the lower nibble
+          ANDB      BL,AL          ; AND BL with AL, store in AL
           BNZ       CHKRDY         ; If A not zero, status reg. has some bits
           LDAB/     X'F145'        ; Load the status register of the Hawk
           LDBB=     X'30'          ; Load A with X'30' => On Cyl, Drive Rdy
