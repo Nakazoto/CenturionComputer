@@ -93,8 +93,8 @@ FLOOP     JSR/      CHKRDY         ; Check if DSK2 is ready
           JSR/      CHKRDY         ; Check if DSK2 is ready
           LDAB=     X'02'          ; Load 02 into A reg. byte
           STAB/     X'F148'        ; Seek to cylinder sector address
-          JSR/      CHKRDY         ; Check if DSK2 is ready
           JSR/      CHKSEEK        ; Check that seek has completed succesfully
+          JSR/      CHKRDY         ; Check if DSK2 is ready
           LDAB=     X'06'          ; Load 06 into A reg. byte
           STAB/     X'F148'        ; Store 06 in F148 -> Format write step 1
           JSR/      CHKRDY         ; Check if DSK2 is ready

@@ -13,7 +13,7 @@
 *
 * External symbols used by the program and provided by OSLIB
           EXT       MVSSF          ; FILR instruction implementation (OSLIB)
-          EXT       @HEX           ; Converts a stored value to hex (OSLIB)
+          EXT       @HEX16         ; Converts a stored value to hex (OSLIB)
 *
           TITLE     'HKDUMP'
 ZHKDUMP   BEGIN     X'0100'
@@ -68,7 +68,7 @@ ENTRY     LDA=      X'8000'        ; Set the stack pointer
           JSR/      PICKDR         ; Pick your drive and platter
 TOP       JSR/      PRINTNULL
           DW        X'8D8A'
-          DC        'THE HAWK HAS X3200 TOTAL TRACKS'
+          DC        'THE HAWK HAS X3300 TOTAL TRACKS'
           DW        X'8D8A'
           DC        'ENTER START TRACK IN HEX: '
           DB        0
@@ -94,7 +94,7 @@ TRYAGAIN  JSR/      DMPDATA        ; Dump out 400 bytes of data
 *                               UNIT SETUP                                     *
 ********************************************************************************
 *
-ETRACK    DW        X'3200'        ; Define ending track
+ETRACK    DW        X'3300'        ; Define ending track
 INSTRING  DW        X'0000'        ; This is the area where we store
           DW        X'0000'        ; the incoming ASCII bytes
 INLENGTH  DB        4              ; Used to tell CTB how many bytes to check
@@ -176,6 +176,10 @@ DMAREAD   JSR/      CHKREADY
           DMA       SCT,A          ; How many bytes to read (X'0190')
           LDAB=     X'00'          ; Load read command into A
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
+          LDB=      X'FFFF'        ; Load B with all 1's
+CHKDMA    DMA       RCT,A          ; Load the DMA count register into A
+          SUB       B,A            ; Add B and A and store in A
+          BNZ       CHKDMA         ; If the link bit isn't set, DMA aint done
 CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
           XAYB                     ; AL -> YL
           LDAB=     X'FF'          ; Load A with X'FF' inverse of all good
@@ -266,11 +270,11 @@ CRCEND    LDX+      S+             ; Pop X back off of stack so we can return
 * PC SHOULD SEND X'FF' WHEN READY
 CHKPCRDY  LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
           SRAB                     ; Shift AL to the right by 1
-          BNL       CHKRDY         ; Loop back to top if Link is not set
+          BNL       CHKPCRDY       ; Loop back to top if Link is not set!!
           LDAB/     MUX3DATA       ; Read in the receive byte
           LDBB=     X'01'          ; Load BL with 01
           ADDB      BL,AL          ; ADD BL and AL (if AL is FF, this sets link)
-          BNL       CHKRDY         ; Loop back up to CHKRDY and try again
+          BNL       CHKPCRDY       ; Loop back up to CHKPCRDY and try again!!
           RSR
 * PC SHOULD SEND X'FF' WHEN CRC CHECKS GOOD
 CHKNGOK   LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
@@ -301,21 +305,22 @@ INCRMNT2  LDB/      PRTSCT         ; Load the printable sector
           SUB       A,B            ; Subtract that from PRTSCT to see if diff.
           BNZ       PRPROG         ; If so, then update and print
           RSR                      ; Return to main loop
-
-!! This is still all fucked up!!
 PRPROG    LDA/      HWKSCT         ; Load the Hawk sectors into A
+          XAB                      ; A -> B.
           SRR       A,5            ; Shift right 5 times to just get the cyl.
-          JSR/      @HEX           ; Jump to Hex conversion routine thing
-          STA/      PRTSCT
-          JSR/      PRINTNULL
+          STA/      PRTSCT   
+          JSR/      @HEX16         ; Convert A to hex at PTRK
+          DW        PTRK
+          XFR       B,A
+          JSR/      @HEX16         ; Convert A to hex at PSCT
+          DW        PSCT
+          JSR/      PRINTNULL      
           DW        X'8D8A'        ; Carriage return and line feed        
-          DC        'TRACK: '
-          DW        PRTSCT
-          DC        ', SECTOR: '
+          DC        'TRACK: '      
+PTRK      DC        'XXXX, SECTOR: '
+PSCT      DC        'XXXX'
           DB        0              ; Null terminator
-          RSR                      ; Return back to main loop
-!! This is still all fucked up!!
-
+          RSR
 *
 ********************************************************************************
 *                             PRINT SUBROUTINES                                *
