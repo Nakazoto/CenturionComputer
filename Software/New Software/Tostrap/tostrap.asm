@@ -35,14 +35,11 @@ BOOTSTR   LDAB=     MUX0CB         ; Load MUX settings into A
           DC        'D='
           DB        0
 PICKDR    JSR/      CHKBYTE        ; Check if we received an input
-          XAYB                     ; AL -> YL
-          LDAB/     X'C8'          ; Load A with ASCII for "H"
-          ANDB      YL,AL          ; AND YL and AL and store in AL
-          OREB      YL,AL          ; Exclusive OR should be zero if a match
+          LDBB/     X'C8'          ; Load A with ASCII for "H"
+          SABB                     ; AL-BL and store in AL
           BZ        PICKPLT        ; If it is a match, move to next step of boot
-          LDAB/     X'D4'          ; Load A with ASCII for "T"
-          ANDB      YL,AL          ; AND YL and AL and store in AL
-          OREB      YL,AL          ; Exclusive OR should be zero if a match
+          LDBB/     X'D4'          ; Load A with ASCII for "T"
+          SABB                     ; AL-BL and store in AL
           BZ        STARTTOS       ; If it is a match, jump to starting TOS
           JMP/      BOOTSTR        ; You didn't pick one I had, so start again
 *
@@ -52,10 +49,6 @@ PICKDR    JSR/      CHKBYTE        ; Check if we received an input
 *
 NUBYTE    EQU       X'E5FF'        ; How many bytes the WIPL is (FFFF-1A00)
 REDATA    EQU       X'0100'        ; Where the WIPL is stored in memory
-          JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        '#='
-          DB        0
 PICKPLT   JSR/      CHKBYTE        ; Check if we received an input
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load A with 0000 1111
