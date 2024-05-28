@@ -48,8 +48,9 @@ PICKDR    LDBB=     'H'-X'80'      ; Load B with ASCII for "H", asm does trans.
 *                               HAWK BOOTING                                   *
 ********************************************************************************
 *
-NUBYTE    EQU       X'E5FF'        ; How many bytes the WIPL is (FFFF-1A00)
+NUBYTE    EQU       X'FE6F'        ; How many bytes to read X'FFFF'-X'0190'
 REDATA    EQU       X'0100'        ; Where the WIPL is stored in memory
+HWKSCT    DW        X'0000'
 PICKPLT   JSR/      CHKBYTE        ; Check if we received an input
           XAYB                     ; AL -> YL
           LDAB=     X'0F'          ; Load A with 0000 1111
@@ -58,7 +59,7 @@ PICKPLT   JSR/      CHKBYTE        ; Check if we received an input
 HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
 DMAREAD   JSR/      CHKREADY
-          CLA
+          LDA/      HWKSCT         ; Load in the current sector to read
           STA/      X'F141'        ; Stab it into F141, the MMIO register
           LDAB=     X'02'          ; Load seek command into A
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
@@ -75,7 +76,13 @@ DMAREAD   JSR/      CHKREADY
 CHKDMA    DMA       RCT,A          ; Load the DMA count register into A
           SUB       B,A            ; Add B and A and store in A
           BNZ       CHKDMA         ; If the link bit isn't set, DMA aint done
-          JMP/      REDATA         ; Jump to beginning of WIPL and go
+WIPINC    LDA/      HWKSCT         ; Load the current hawk sector into A
+          INR       A              ; Increment it by 1
+          STA/      HWKSCT         ; Store it back into 
+          LDB=      X'0010'        ; Load B with X'0010'
+          AND       B,A            ; Ignore every bit except 'X0010'
+          BZ        DMAREAD        ; If it's still zero, jump back up and loop
+          JMP/      REDATA+3       ; If it's not zero, go run the WIPL
           END       ENTRY
 CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
           XAYB                     ; AL -> YL

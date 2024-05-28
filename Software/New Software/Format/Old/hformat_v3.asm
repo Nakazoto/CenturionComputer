@@ -78,15 +78,14 @@ PICKDR    JSR/      CHKBYTE        ; Check to see if we received input
           ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
           STAB/     X'F140'        ; Stab it into F140, the MMIO register
           JSR/      CHKREADY       ; Check if the drive is ready
-          LDAB/     X'F140'        ; Read back the drive select byte
-          XAYB                     ; AL -> YL
-          LDAB=     X'0F'          ; Load A with 0000 1111
-          ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
           LDBB=     X'01'          ; Slap a 1 into B (for later use)
-          BZ        WBITM          ; If AL is zero, jump to writing bitmask
-MLOOP     SLRB      BL             ; Shift BL left one bit
+          LDAB=     X'0F'          ; Load B with 0000 1111
+          XAYB                     ; AL -> YL
+          LDAB/     X'F140'        ; Load Hawk drive select back into AL
+          ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
+MLOOP     BZ        WBITM          ; If AL is zero, jump to writing bitmask
           DCRB      AL             ; Decrement AL
-          BZ        WBITM          ; If AL is zero, jump to writing bitmask
+          SLRB      BL             ; Shift BL left one bit
           JMP       MLOOP          ; Loop back around and repeat until 0
 WBITM     STBB/     X'F143'        ; Setup format write bitmask
           RSR                      ; Back to main loop
