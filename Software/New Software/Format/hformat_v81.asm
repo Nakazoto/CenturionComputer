@@ -116,8 +116,11 @@ FORMAT    JSR/      CHKREADY
           STA/      X'F141'        ; Stab it into F141, the MMIO register
           LDAB=     X'02'          ; Load seek command into A
           STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          JSR/      CHKREADY
+          JSR/      CHKSEEK        ; Check that the seek has completed
 * This part actually DMA's a bunch of X'00' into the sector
+* The format write operation both formats the sector and fills it with data
+* using DMA and the data we specify.
+          JSR/      CHKREADY
           DMA       SDV,0          ; Set DMA device to 0
           DMA       EAB            ; Enable DMA
           LDA=      REDATA         ; Load location where the bytes in memory are
@@ -130,6 +133,7 @@ FORMAT    JSR/      CHKREADY
           LDAB=     X'05'          ; Load 05 into A reg. byte
           STAB/     X'F148'        ; Store 05 in F148 -> Format write step 2
 * This part verifies the format
+          JSR/      CHKREADY
           DMA       SDV,0          ; Set DMA device to 0
           DMA       EAB            ; Enable DMA
           LDA=      REDATA         ; Load location where the bytes in memory are
@@ -146,8 +150,6 @@ PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
 * This checks the status first.
 CHKREADY  LDAB/     X'F144'        ; Load Hawk status
           XAYB                     ; AL -> YL
-          CLA                      ; Clear A to all 0's
-          ANDB      YL,AL          ; Clear all the other bits
           BZ        CHKONCYL       ; If it's zero, all good, next check
 CHKERR    LDAB=     B'11110110'    ; Load AL with all the fault bits
           ANDB      YL,AL          ; And YL and AL together
@@ -163,6 +165,13 @@ CHKONCYL  LDAB=     B'00110000'    ; Load AL w/ Drive Ready and On Cylinder bits
           ANDB      YL,AL          ; Clear all the other bits
           OREB      YL,AL          ; Desired bits will both be zero when ready
           BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
+          RSR
+* This subroutine is for checking that the seek is complete.
+CHKSEEK   LDAB/     X'F145'        ; Load the drive status
+          XAYB                     ; Move over to YL
+          LDAB=     X'0F'          ; Load AL with B'0000 1111'
+          ANDB      YL,AL          ; AND Yl with AL (just look at low nibble)
+          BZ        CHKSEEK        ; If the low nibble is zero, seek not done
           RSR
 *
 ********************************************************************************
