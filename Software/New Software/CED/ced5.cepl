@@ -1,0 +1,237 @@
+; Centurion EDitor by ren14500. Public domain.
+;
+; Note: limitations are 9999 lines and 120 characters per line.
+TITLE 'CED5'
+SYSTEM ZCED5(LL=125)           ; 125 col display.
+FILE CRT:SYSIPT,CLASS=0,SEQ    ; CRT for user interaction.
+FILE INFILE:SYS000,CLASS=2,SEQ ; Input file.
+FILE TMPFILE:SYS001,CLASS=2,SEQ ; Temporary file.
+FILE PRT:SYS002,CLASS=1,SEQ    ; Print device.
+STRING CURRLINE(120),CMD(1)    ; Strings to read lines and the command.
+INTEGER CURR,START,FINISH      ; Current line, start line, finish line.
+SET RDFILE:0                   ; Which file to read from.
+SET MAXLINE:9999               ; Maximum lines supported.
+SET RDIN:0
+SET RDTMP:1
+SET LINE1:1
+SET GOODSTATUS:0
+DEFINE SPLASH:'CED5 1.4'
+DEFINE CMDPRMPT:'COMMAND>'
+DEFINE CMDQ:'Q'
+DEFINE CMDP:'P'
+DEFINE CMDL:'L'
+DEFINE CMDC:'C'
+DEFINE CMDD:'D'
+DEFINE CMDA:'A'
+DEFINE CMDI:'I'
+DEFINE NEW2END:'NEWLINE TO END'
+DEFINE CPCHNG:'COPYING CHANGES...'
+DEFINE CEDDONE:'CED DONE'
+DEFINE LNPRMPT:'LINE>'
+DEFINE SPRMPT:'START>'
+DEFINE FPRMPT:'FINISH>'
+DEFINE DOT2END:'. BY ITSELF TO END'
+DEFINE DOT:'.'
+FORMAT FULLLINE:C120           ; A full line is 120 characters.
+FORMAT CMDINPUT:C1             ; Command input is 1 character.
+FORMAT INTINPUT:N4             ; Integer input up to 4 characters.
+FORMAT PRINTLINE:N4,X1,C120    ; Display 4 character line number, space, text.
+ENTRYPOINT CRT,INFILE,TMPFILE,PRT ; Files used by external commands.
+ENTRY
+OPEN IO(CRT,INFILE,TMPFILE)    ; Open CRT, in, and tmp for input and output.
+OPEN OUTPUT(PRT)               ; Open the print file for output.
+WRITE(CRT,FULLLINE)SPLASH      ; Splash screen.
+; Main loop start.
+TOP:
+  ; Start at line one of the file, prompt for the next command.
+  CURR=1
+  REWIND INFILE,TMPFILE
+  WRITEN(CRT,FULLLINE)CMDPRMPT
+  READ(CRT,CMDINPUT)CMD
+  ; Quit.
+  IFS(CMD.EQ.CMDQ)GO TO DONE
+  ; Print a section of the file with line numbers.
+  IFS(CMD.NE.CMDP)GO TO CHECKL
+    CALL GETSF                      ; Get the start/finish range.
+PSTART:
+    IF(CURR.GT.FINISH)GO TO TOP     ; If all lines read, get next command.
+    IF(RDFILE.EQ.RDIN)GO TO PRDIN
+    READ(TMPFILE,FULLLINE)CURRLINE  ; Read from tmp file.
+    GO TO PRDEND
+PRDIN:
+    READ(INFILE,FULLLINE)CURRLINE   ; Read from in file.
+PRDEND:
+    IF(STATUS.NE.GOODSTATUS)GO TO PBADSTAT
+    IF(CURR.LT.START)GO TO PEND
+    WRITE(PRT,PRINTLINE)CURR,CURRLINE ; Print if >= start.
+    GO TO PEND
+PBADSTAT:
+    CURR=FINISH                   ; On error, assume we hit the end.
+PEND:
+    INCR CURR                     ; Another line read.
+    GO TO PSTART
+CHECKL:
+  ; Print a section of the file without line numbers.
+  IFS(CMD.NE.CMDL)GO TO CHECKC
+    CALL GETSF                      ; Get the start/finish range.
+LSTART:
+    IF(CURR.GT.FINISH)GO TO TOP     ; If all lines read, get next command.
+    IF(RDFILE.EQ.RDIN)GO TO LRDIN
+    READ(TMPFILE,FULLLINE)CURRLINE  ; Read from tmp file.
+    GO TO LRDEND
+LRDIN:
+    READ(INFILE,FULLLINE)CURRLINE   ; Read from in file.
+LRDEND:
+    IF(STATUS.NE.GOODSTATUS)GO TO LBADSTAT
+    IF(CURR.LT.START)GO TO LEND
+    WRITE(PRT,FULLLINE)CURRLINE ; Print if >= start.
+    GO TO LEND
+LBADSTAT:
+    CURR=FINISH                   ; On error, assume we hit the end.
+LEND:
+    INCR CURR                     ; Another line read.
+    GO TO LSTART
+CHECKC:
+  ; Change a line.
+  IFS(CMD.NE.CMDC)GO TO CHECKD
+    CALL GETL                       ; Get the line to change.
+    CALL COPYTOSTART                ; Copy lines up to the line to change.
+    IF(RDFILE.EQ.RDIN)GO TO CRDIN
+    READ(TMPFILE,FULLLINE)CURRLINE  ; Ignore the line to change from tmp file.
+    GO TO CRDEND
+CRDIN:
+    READ(INFILE,FULLLINE)CURRLINE   ; Ignore the line to change from in file.
+CRDEND:
+    WRITE(CRT,FULLLINE)NEW2END
+    READ(CRT,FULLLINE)CURRLINE      ; Get the replacement line.
+    IF(RDFILE.EQ.RDIN)GO TO CRD2IN
+    WRITE(INFILE,FULLLINE)CURRLINE  ; Write it to the in file.
+    GO TO CRD2END
+CRD2IN:
+    WRITE(TMPFILE,FULLLINE)CURRLINE ; Write it to the tmp file.
+CRD2END:
+    START=MAXLINE
+    CALL COPYTOSTART                ; Copy the rest of the file.
+    CALL SWAPFILES                  ; Swap files.
+    GO TO TOP                       ; Get next command.
+CHECKD:
+  ; Delete lines.
+  IFS(CMD.NE.CMDD)GO TO CHECKA
+    CALL GETSF                      ; Get the line to change.
+    CALL COPYTOSTART                ; Copy lines up to the line to change.
+DSTART:
+    IF(CURR.GT.FINISH)GO TO DEND    ; If all lines read, copy the rest.
+    IF(RDFILE.EQ.RDIN)GO TO DRDIN
+    READ(TMPFILE,FULLLINE)CURRLINE  ; Read the line from the tmp file.
+    GO TO DRDEND
+DRDIN:
+    READ(INFILE,FULLLINE)CURRLINE   ; Read the line from the in file.
+DRDEND:
+    IF(STATUS.EQ.GOODSTATUS)GO TO DOKSTATUS
+    CURR=FINISH                     ; On error, assume we hit the end.
+DOKSTATUS:
+    INCR CURR                       ; Another line read.
+    GO TO DSTART
+DEND:
+    START=MAXLINE
+    CALL COPYTOSTART                ; Copy the rest of the file.
+    CALL SWAPFILES                  ; Swap files.
+    GO TO TOP                       ; Get next command.
+CHECKA:
+  ; Append lines to the file.
+  IFS(CMD.NE.CMDA)GO TO CHECKI
+    START=MAXLINE
+    CALL COPYTOSTART                ; Copy the file.
+    START=CURR+RDFILE               ; Add the line number to the file choice.
+    IF(START.NE.LINE1)GO TO ARD
+    RDFILE=RDTMP                    ; If in file empty, pretend read from tmp.
+ARD:
+    CALL INSERTTODOT                ; Insert lines.
+    CALL SWAPFILES                  ; Swap files.
+    GO TO TOP                       ; Get next command.
+CHECKI:
+  ; Insert lines before a line.
+  IFS(CMD.NE.CMDI)GO TO TOP
+    CALL GETL                       ; Get the line to insert before.
+    CALL COPYTOSTART                ; Copy lines up to that.
+    CALL INSERTTODOT                ; Insert lines.
+    START=MAXLINE
+    CALL COPYTOSTART                ; Copy the rest of the file.
+    CALL SWAPFILES                  ; Swap files.
+    GO TO TOP                       ; Get next command.
+; Cleanup.
+DONE:
+; If reading from the tmp file, copy it to the actual file.
+IF(RDFILE.EQ.RDIN)GO TO DONE2
+WRITEN(CRT,FULLLINE)CPCHNG
+START=MAXLINE
+CALL COPYTOSTART               ; Copy the file.
+ENDFILE INFILE                 ; End the file.
+DONE2:
+; Close files. Exit the program with condition code 0 for success.
+CLOSE INFILE,TMPFILE,PRT
+WRITE(CRT,FULLLINE)CEDDONE
+CLOSE CRT
+STOP 0
+; Query for a line in START.
+SUBROUTINE GETL
+  WRITEN(CRT,FULLLINE)LNPRMPT
+  READ(CRT,INTINPUT)START
+RETURN
+; Query for START/FINISH.
+SUBROUTINE GETSF
+  WRITEN(CRT,FULLLINE)SPRMPT
+  READ(CRT,INTINPUT)START
+  WRITEN(CRT,FULLLINE)FPRMPT
+  READ(CRT,INTINPUT)FINISH
+RETURN
+; Insert text until '.'.
+SUBROUTINE INSERTTODOT
+  WRITE(CRT,FULLLINE)DOT2END
+ITDLOOP:
+  READ(CRT,FULLLINE)CURRLINE        ; Get the line to insert.
+  IFS(CURRLINE.EQ.DOT)GO TO ITDEND  ; If not '.' by itself,
+  IF(RDFILE.EQ.RDIN)GO TO ITDRDIN
+  WRITE(INFILE,FULLLINE)CURRLINE    ; Write it to in file.
+  GO TO ITDRDEND
+ITDRDIN:
+  WRITE(TMPFILE,FULLLINE)CURRLINE   ; Write it to tmp file.
+ITDRDEND:
+  GO TO ITDLOOP                     ; Get the next line.
+ITDEND:
+RETURN
+; Copy up to, but not including, START, or EOF.
+SUBROUTINE COPYTOSTART
+CTSSTART:
+  IF(CURR.GE.START)GO TO CTSEND     ; Keep going until start.
+  IF(RDFILE.EQ.RDIN)GO TO CTSRDIN
+  READ(TMPFILE,FULLLINE)CURRLINE    ; Read a line from in file.
+  GO TO CTSRDEND
+CTSRDIN:
+  READ(INFILE,FULLLINE)CURRLINE     ; Read a line from in file.
+CTSRDEND:
+  IF(STATUS.NE.GOODSTATUS)GO TO CTSEND
+  IF(RDFILE.EQ.RDIN)GO TO CTS2RDIN
+  WRITE(INFILE,FULLLINE)CURRLINE    ; Write to in file.
+  GO TO CTS2RDEND
+CTS2RDIN:
+  WRITE(TMPFILE,FULLLINE)CURRLINE   ; Write to tmp file.
+CTS2RDEND:
+  INCR CURR                         ; Next line.
+  GO TO CTSSTART
+CTSEND:
+RETURN
+; Swap files.
+SUBROUTINE SWAPFILES
+  IF(RDFILE.NE.RDIN)GO TO SFT ; If reading from the in file,
+  ENDFILE TMPFILE             ; end the tmp file and
+  RDFILE=RDTMP                ; set the tmp file as input.
+  GO TO SFEND
+SFT:                          ; If reading from the tmp file,
+  ENDFILE INFILE              ; end the in file and
+  RDFILE=RDIN                 ; set the in file as input.
+SFEND:
+RETURN
+; End of source.
+END
+
