@@ -49,17 +49,18 @@ MMIOSTRT  EQU       X'F000'        ; lowest address of MMIO space
 ******************************************************************
 ** Uncommeont the appropriate line for real machine or Emulator **
 ******************************************************************
-*TRMRDY    EQU       MXTXEM         ; Use this for real machine (Transmit Buffer Empty
-TRMRDY    EQU       MXCTS          ; Use this for Emulator (Clear To Send)
+TRMRDYC   EQU       MXTXEM         ; Use this for Centurion
+TRMRDYE   EQU       MXCTS          ; Use this for Emulator 
 *
-* Print the null-terminated string at X to the CRT
-PRINTNULL STAB-     S-             ; Push AL to the stack
+* Print the null-terminated string. Z -> string
+*
+PRTNULL   STAB-     S-             ; Push AL to the stack
           STBB-     S-             ; Push BL to the stack
           XFRB      YL,AL          ; YL -> AL
           STAB-     S-             ; Push YL to the stack
-          LDAB=     MXTXEM         ; Set mask to check for tx buffer empty
+          LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
-PNLOOP    LDBB+     X+             ; Load the next byte
+PNLOOP    LDBB+     Z+             ; Load the next byte
           BZ        PNEND          ; If 0, we are done
 PNWAIT    LDAB/     MUX0CTRL       ; AL = MUX status byte
           ANDB      YL,AL          ; Check if transmit buffer empty
@@ -71,11 +72,45 @@ PNEND     LDAB+     S+             ; Pop YL from the stack
           LDBB+     S+             ; Pop BL from the stack
           LDAB+     S+             ; Pop AL from the stack
           RSR                      ; Return
+*
+*****************************************************************************
+* Simple linear congruential random number generator. Returns the next random
+* number in B.
+*****************************************************************************
+RANDA     EQU       30303
+RANDSEED  DW        7717            ; Current seed value.
+RAND      LDB       RANDSEED        ; B = current seed value.
+          MUL=      RANDA,B         ; B = B * random multiplier.
+          INR       B               ; B = B + 1.
+          STB       RANDSEED        ; Store the new seed value.
+          RSR                       ; Return
+*
+*******************************
+* hit a key - actuall rand seed
+*******************************
+HITAKEY   DC        
+          dc        'HIT A KEY>'    ; DISPLAY MESSAGE
+HITKEY    EQU       *
+          LDA=      HITAKEY        ; A -> Hit a key message
+          LDAB=     MXRXDI         ; AL = Mux control value mask
+	  XAYB                     ; YL = AL
+HK0001    EQU       *
+          LDA/      RANDSEED       ; A = Random seed.
+	  INR       A              ; A = A + 1
+	  STA/      RANDSEED       ; .. save the seed 
+          LDAB/     MUX0CTRL       ; al = MUX 0 control register
+          ANDB      YL,AL          ; q. byte received?
+          BZ        HK0001         ; a. no .. loop until we get one.
+	  LDAB/     MUX0DATA       ; AL = the received byte (who cares?)
+	  RSR                  
 	 
 BANNER    EQU       *              ; The program begins here
 *
 * Start of execution
 *
-          XFR=      MMIOX
+          XFR=      MMIOSTRT,S     ; Stack -> Start of MMIO space
+*
+          LDAB=     R9800E71       ; A = 9600E71 value 
+          STAB/     MUX0CTRL       ; MUX 0 Control = speed/parity/databits/stopbits
 
           END       BANNER    ; --> The entry point is BANNER
