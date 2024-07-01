@@ -14,9 +14,13 @@ class Program
             {
                 if (chars[linePos] != ' ')
                 {
-                    Console.WriteLine($"\tDB\t{lineNum}");
-                    Console.WriteLine($"\tDB\t{linePos}");
+                    Console.WriteLine($"\tDB\tX'1b'");
+                    Console.WriteLine($"\tDB\t'Y'");
+                    Console.WriteLine($"\tDB\t{lineNum|32}");
+                    Console.WriteLine($"\tDB\t{linePos|32}");
                     Console.WriteLine($"\tDB\t'{chars[linePos]}'");
+                    Console.WriteLine($"\tDB\t0");
+                    Console.WriteLine($"\tDB\t0");
                     Console.WriteLine($"\tDB\t0");
                     Console.WriteLine("*");
                 }
@@ -24,6 +28,6 @@ class Program
             lineNum++;
         }
         Console.WriteLine("ELAYOUT\tEQU\t*");
-        Console.WriteLine("LOLEN\tEQU\t(*-LAYOUT)/4");
+        Console.WriteLine("LOLEN\tEQU\t(*-LAYOUT)/8");
     }
 }

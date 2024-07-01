@@ -54,24 +54,24 @@ TRMRDYE   EQU       MXCTS          ; Use this for Emulator
 *
 * Print the null-terminated string. Z -> string
 *
-PRTNULL   STAB-     S-             ; Push AL to the stack
-          STBB-     S-             ; Push BL to the stack
-          XFRB      YL,AL          ; YL -> AL
-          STAB-     S-             ; Push YL to the stack
-          LDAB=     B'10'          ; Set mask to check for tx buffer empty
-          XAYB                     ; AL -> YL
-PNLOOP    LDBB+     Z+             ; Load the next byte
-          BZ        PNEND          ; If 0, we are done
-PNWAIT    LDAB/     MUX0CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Check if transmit buffer empty
-          BZ        PNWAIT         ; If not empty, loop
-          STBB/     MUX0DATA       ; Store the character to the MUX data
-          JMP       PNLOOP         ; Go to the next character
-PNEND     LDAB+     S+             ; Pop YL from the stack
-          XAYB                     ; AL -> YL
-          LDBB+     S+             ; Pop BL from the stack
-          LDAB+     S+             ; Pop AL from the stack
-          RSR                      ; Return
+PRTNULL   STAB-     S-              ; Push AL to the stack
+          STBB-     S-              ; Push BL to the stack
+          XFRB      YL,AL           ; YL -> AL
+          STAB-     S-              ; Push YL to the stack
+          LDAB=     MXTXEM          ; Set mask to check for tx buffer empty
+          XAYB                      ; AL -> YL
+PNLOOP    LDBB+     Z+              ; Load the next byte
+          BZ        PNEND           ; If 0, we are done
+PNWAIT    LDAB/     MUX0CTRL        ; AL = MUX status byte
+          ANDB      YL,AL           ; Check if transmit buffer empty
+          BZ        PNWAIT          ; If not empty, loop
+          STBB/     MUX0DATA        ; Store the character to the MUX data
+          JMP       PNLOOP          ; Go to the next character
+PNEND     LDAB+     S+              ; Pop YL from the stack
+          XAYB                      ; AL -> YL
+          LDBB+     S+              ; Pop BL from the stack
+          LDAB+     S+              ; Pop AL from the stack
+          RSR                       ; Return
 *
 *****************************************************************************
 * Simple linear congruential random number generator. Returns the next random
@@ -91,26 +91,33 @@ RAND      LDB       RANDSEED        ; B = current seed value.
 HITAKEY   DC        
           dc        'HIT A KEY>'    ; DISPLAY MESSAGE
 HITKEY    EQU       *
-          LDA=      HITAKEY        ; A -> Hit a key message
-          LDAB=     MXRXDI         ; AL = Mux control value mask
-	  XAYB                     ; YL = AL
-HK0001    EQU       *
-          LDA/      RANDSEED       ; A = Random seed.
-	  INR       A              ; A = A + 1
-	  STA/      RANDSEED       ; .. save the seed 
-          LDAB/     MUX0CTRL       ; al = MUX 0 control register
-          ANDB      YL,AL          ; q. byte received?
-          BZ        HK0001         ; a. no .. loop until we get one.
-	  LDAB/     MUX0DATA       ; AL = the received byte (who cares?)
-	  RSR                  
-	 
-BANNER    EQU       *              ; The program begins here
+          LDA=      HITAKEY         ; A -> Hit a key message
+          LDAB=     MXRXDI          ; AL = Mux control value mask
+	  XAYB                      ; YL = AL
+HK0001    EQU       * 
+          LDA/      RANDSEED        ; A = Random seed.
+	  INR       A               ; A = A + 1
+	  STA/      RANDSEED        ; .. save the seed 
+          LDAB/     MUX0CTRL        ; al = MUX 0 control register
+          ANDB      YL,AL           ; q. byte received?
+          BZ        HK0001          ; a. no .. loop until we get one.
+	  LDAB/     MUX0DATA        ; AL = the received byte (who cares?)
+	  RSR                       ; .. and return to caller
+*
+* Storage
+*
+MYRAND    DW        0               ; My random value
+*
+BANNER    EQU       *               ; The program begins here
 *
 * Start of execution
 *
-          XFR=      MMIOSTRT,S     ; Stack -> Start of MMIO space
+          XFR=      MMIOSTRT,S      ; Stack -> Start of MMIO space
 *
-          LDAB=     R9800E71       ; A = 9600E71 value 
-          STAB/     MUX0CTRL       ; MUX 0 Control = speed/parity/databits/stopbits
-
-          END       BANNER    ; --> The entry point is BANNER
+          LDAB=     R9800E71        ; A = 9600E71 value 
+          STAB/     MUX0CTRL        ; MUX 0 Control = speed/parity/databits/stopbits
+          JSR/      HITAKEY         ; ... wait for a key & random seed
+          JSR/      RAND            ; b = random number
+          JSR       HITAKEY         ; ... wait for key & new random seed
+*
+          END       BANNER          ; --> The entry point is BANNER
