@@ -4,9 +4,9 @@ class Program
 {
     static void Main(string[] args)
     {
-        var lines = File.ReadAllLines("layout.txt");
+        var lines = File.ReadAllLines("layoutbob.txt");
         int lineNum = 0;
-        Console.WriteLine("LAYOUT\tEQU\t*");
+        Console.WriteLine("LAYOUT EQU *");
         foreach (var line in lines)
         {
             char[] chars = line.ToCharArray();
@@ -14,20 +14,20 @@ class Program
             {
                 if (chars[linePos] != ' ')
                 {
-                    Console.WriteLine($"\tDB\tX'1b'");
-                    Console.WriteLine($"\tDB\t'Y'");
-                    Console.WriteLine($"\tDB\t{lineNum|32}");
-                    Console.WriteLine($"\tDB\t{linePos|32}");
-                    Console.WriteLine($"\tDB\t'{chars[linePos]}'");
-                    Console.WriteLine($"\tDB\t0");
-                    Console.WriteLine($"\tDB\t0");
-                    Console.WriteLine($"\tDB\t0");
+                    Console.WriteLine($" DB X'1b'");
+                    Console.WriteLine($" DB 'Y'");
+                    Console.WriteLine($" DB {lineNum + 32}");
+                    Console.WriteLine($" DB {linePos + 32}");
+                    Console.WriteLine($" DB {(int)chars[linePos]} ; {chars[linePos]}");
+                    Console.WriteLine($" DB 0");
+                    Console.WriteLine($" DB 0");
+                    Console.WriteLine($" DB 0");
                     Console.WriteLine("*");
                 }
             }
             lineNum++;
         }
-        Console.WriteLine("ELAYOUT\tEQU\t*");
-        Console.WriteLine("LOLEN\tEQU\t(*-LAYOUT)/8");
+        Console.WriteLine("ELAYOUT EQU *");
+        Console.WriteLine("LOLEN EQU (*-LAYOUT)/8");
     }
 }
