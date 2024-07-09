@@ -1,0 +1,49 @@
+Usagi System 1
+     Location: Hico, TX
+     Cards : CPU6, DSK/AUT, DSKII, MUX, MUX, CMD, 128k MEM, 128k MEM, FFC, PRT
+     Drives: Hawk x1, Finch x1, DSDD Floppy x1, Phoenix x1
+     Terms : ADDS Regent 100, EDS PC w/ Procomm Plus
+     Print : ODEC/Data 100 125 LPM chain printer
+     Notes : Originally used by Glen Smith Oil Company in Muskogee, OK
+           : Also includes customer engineering DIAG card
+           : All drives except Phoenix and a spare Hawk are working
+
+Usagi System 2
+     Location: Hico, TX
+     Cards : CPU5, DSK1, DSK2, MUX, 32k MEM
+     Drives: Hawk x1
+     Terms : ADDS Regent 200
+     Print : None
+     Notes : Custom built chassis using Counterfeit card cage, front panel
+           : All cards are originally from the desk system in OH
+           : This Regent 200 is not an original Centurion supplied terminal
+           : Counterfeit originally used by McCommons Oil Company in Dallas, TX
+
+Vintage Geek MicroPlus
+     Location: Knoxville, TN at Vintage Geek Museum
+     Cards : CPU6, MUX, 128k MEM, FFC
+     Drives: Finch x1, DSDD Floppy x1
+     Terms : 2x ADDS Regent 40
+     Print : TI-810 serial printer (maybe?)
+     Notes : Originally used by XXXX church in Lakeland, FL
+           : Neither Finch nor Floppy currently work
+           : However, all data from Finch has been backed up
+
+Butler Tech Desk System
+     Location: Cincinnati, OH at Butler Tech
+     Cards : CPU6, DSK1, DSK2, MUX, 128k MEM
+     Drives: Hawk x1 (single platter only)
+     Terms : 1x ADDS Regent 40
+     Print : TI-810 serial printer
+     Notes : Originally used by XXXX in Cincinnati, OH
+           : The Hawk drive is a single platter drive due to lack of heads
+           : This system originally used the cards currently in Usagi System 2
+           : The cards currently in use are from the counterfeit system
+
+SDF System
+     Location: Seattle, WA at SDF
+     Cards : CPU6, MUX, MUX, MUX, MUX, MUX, MUX, CMD, 128k MEM, 128k MEM
+     Drives: Phoenix x1
+     Terms : 1x ADDS ????
+     Print : None?
+     Notes : Currently no other information is known about this system

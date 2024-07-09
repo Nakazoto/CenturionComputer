@@ -1,0 +1,24 @@
+Centurion Applications
+
+Finch
+
+RRMENU - Centurion Payroll to General Ledger Communication
+RVMENU - Centurion Random Access Payroll Application (Without State Tax Support)
+GLEMNU - Centurion General Ledger Application
+ASMART - Centurion Computer Systems ASMART Generator
+SMART - Centurion Computer Systems SMART I Generator
+CLMENU - Customer Master File Maintenance
+APMENU - Centurion Accounts Payable Application
+MEMORIAL - Memorial Gift System
+
+CPU5
+
+GLMENU - Centurion General Ledger Application
+PRMENU - Centurion Payroll Accumulation Package
+DPMENU - Centurion Depreciation Application
+SPMENU - Special Analysis Reporting
+ASMART - Centurion Computer Corporation ASMART Application Generator
+
+CPU6
+
+OMMENU - Oil Management Package

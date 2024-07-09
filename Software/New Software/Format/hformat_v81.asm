@@ -180,7 +180,7 @@ CHKSEEK   LDAB/     X'F145'        ; Load the drive status
 *
 * Hawk has X'0190' cylinders, 2 tracks per cyl., 16 sectors per track.
 * Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'. 
-* This increments up through the sectors. Shabloinks A, B, and Z regsiters.
+* This increments up through the sectors. Shabloinks A, B, and Z registers.
 INCRMENT  LDA=      ETRACK         ; Load max cylinder (ETRACK) count into A
           XFR       A,Z            ; Transfer A over to Z
           LDA/      HWKSCT         ; Load current sector into A
