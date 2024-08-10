@@ -6,7 +6,7 @@ Usagi System 1
      Print : ODEC/Data 100 125 LPM chain printer
      Notes : Originally used by Glen Smith Oil Company in Muskogee, OK
            : Also includes customer engineering DIAG card
-           : All drives except Phoenix and a spare Hawk are working
+           : Everything except Phoenix drive currently functions
 
 Usagi System 2
      Location: Hico, TX
