@@ -210,28 +210,28 @@ CONVERTB  LDAB/     INSTRING       ; Grab ASCII value from loc. 0 of INSTRING
           RSR
 * Convert a hex character to integer value. The character is in AL and the value
 * is returned in AL. AL is set to negative on error.
-HEX2INT   STB-      S-        ; Push B to the stack.
-          LDBB=     '0'       ; Load 0 to
-          SABB                ; convert the ASCII to the value.
-          XFRB      BL,BU     ; BL -> BU.
-          BM        H2IERROR  ; If less than 0, error.
-          LDBB=     ':'       ; Load : to
-          SABB                ; compare against decimal digits.
-          BM        H2IEND    ; If 0-9, done.
-          LDBB=     'A'       ; Load A to
-          SABB                ; convert the ASCII to a hex digit > 9.
-          XFRB      BL,BU     ; BL -> BU.
-          BM        H2IERROR  ; If less than 0, error.
-          LDBB=     'G'       ; Load G to
-          SABB                ; compare against hex digits A-F.
-          BP        H2IERROR  ; If G or more, error.
-          LDBB=     10        ; BL = 10.
-          ADDB      BL,BU     ; BL + BU -> BU.
-          JMP       H2IEND    ; Successful end.
-H2IERROR  LDB=      -1        ; Signal an error.
-H2IEND    XFRB      BU,AL     ; BU -> AL.
-          LDB+      S+        ; Pop B from the stack.
-          RSR                 ; Return.
+HEX2INT   STB-      S-             ; Push B to the stack.
+          LDBB=     '0'            ; Load 0 to
+          SABB                     ; convert the ASCII to the value.
+          XFRB      BL,BU          ; BL -> BU.
+          BM        H2IERROR       ; If less than 0, error.
+          LDBB=     ':'            ; Load : to
+          SABB                     ; compare against decimal digits.
+          BM        H2IEND         ; If 0-9, done.
+          LDBB=     'A'            ; Load A to
+          SABB                     ; convert the ASCII to a hex digit > 9.
+          XFRB      BL,BU          ; BL -> BU.
+          BM        H2IERROR       ; If less than 0, error.
+          LDBB=     'G'            ; Load G to
+          SABB                     ; compare against hex digits A-F.
+          BP        H2IERROR       ; If G or more, error.
+          LDBB=     10             ; BL = 10.
+          ADDB      BL,BU          ; BL + BU -> BU.
+          JMP       H2IEND         ; Successful end.
+H2IERROR  LDB=      -1             ; Signal an error.
+H2IEND    XFRB      BU,AL          ; BU -> AL.
+          LDB+      S+             ; Pop B from the stack.
+          RSR                      ; Return.
 * Convert a raw binary value to ASCII to be printed out. The binary byte is in
 * AL and the ASCII is returned as a word in A.
 INT2HEX
