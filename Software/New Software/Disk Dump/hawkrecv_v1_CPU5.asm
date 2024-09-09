@@ -11,11 +11,7 @@
 * it should work on just about any Centurion under the sun.
 * Thank you everyone so much for walking me through this!
 *
-* External symbols used by the program and provided by OSLIB
-          EXT       MVSSF          ; FILR instruction implementation (OSLIB)
-          EXT       @HEX16         ; Converts a stored value to hex (OSLIB)
-*
-          TITLE     'HKDUMP'
+          TITLE     'HWKRCV'
 ZHKDUMP   BEGIN     X'0100'
 *
 ********************************************************************************
@@ -24,6 +20,8 @@ ZHKDUMP   BEGIN     X'0100'
 * Control address = F200 + (MUX# * 2)
 * Data address = control address + 1
 NUBYTE    EQU       X'FE6F'        ; How many bytes to write X'FFFF'-X'0190'
+REDATA    EQU       X'0800'        ; Location in memory where our bytes are at
+ETRACK    EQU       X'3300'        ; Total number of sectors
 MUX0CTRL  EQU       X'F200'        ; First MUX port control MMIO address
 MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
@@ -85,159 +83,114 @@ TOP       JSR/      PRINTNULL
           DB        0
           JSR/      CHKBYTE        ; Check for any key pressed
           JSR/      HWKRTZ         ; RTZ the Hawk
-          JSR/      CHKPCRDY       ; Check for Ready byte from PC
-LOOP      JSR/      CHKRXBT        ; Check if a byte has been received from PC
-          JSR/      PUTBYTE        ; Place the byte in the appropriate place
-          JSR/      CHKFULSEC      ; Check if a full sector and CRC is here
-          BNL       LOOP           ; If not, grab next byte
-          JSR/      CRCMARK        ; Calculate CRC and compare to received
-          JSR/      CHKNGOK        ; Send confirmation to PC if data is NG or OK
-          JSR/      PRINTPROG      ; Print progress on the screen
+LOOP      JSR/      CHKPCRDY       ; Check for Ready byte from PC
+          JSR/      RCVSECT        ; Receive a sector worth from PC
+          JSR/      CRCOKNG        ; Calculate CRC and compare to received
+          JSR/      SENDHWK        ; Copy the contents of memory to the Hawk
           JSR/      CHKESC         ; Check if user pressed escape sequence
           JMP/      LOOP           ; What it says on the tin
 *
 ********************************************************************************
-*                               UNIT SETUP                                     *
+*                         UNIVERSAL SUBROUTINES                                *
 ********************************************************************************
 *
-!! How much of this is needed? !!
-ETRACK    DW        X'3300'        ; Define ending track
-INSTRING  DW        X'0000'        ; This is the area where we store
-          DW        X'0000'        ; the incoming ASCII bytes
-INLENGTH  DB        4              ; Used to tell CTB how many bytes to check
-TEMPA     DW        X'0000'        ; Temp storage location for converted bytes
-!! How much of this is needed? !!
-
-PICKDR    JSR/      CHKBYTE
-          XAYB                     ; AL -> YL
-          LDAB=     X'0F'          ; Load B with 0000 1111
-          ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
-          STAB/     X'F140'        ; Stab it into F140, the MMIO register
-          RSR                      ; Back to main loop
 CHKBYTE   LDAB/     MUX0CTRL       ; Load MUX status byte in to AL
           SRAB                     ; Shift AL to the right by 1
           BNL       CHKBYTE        ; Loop back to top if Link is not set
           LDAB/     MUX0DATA       ; Read in the receive byte
           STAB/     MUX0DATA       ; Echo that digit back
           RSR
-
-
-
-PICKST    JSR/      FILLSTR        ; Jump to routine that fills incoming ASCII
-          STA/      HWKSCT         ; Store A (starting track) into read cmd str
-          STA/      PRTSCT         ; Store A (starting track) into print cmd str
-          RSR                      ; Return to main loop
-PICKEND   JSR/      FILLSTR        ; Jump to routine that fills incoming ASCII
-          STA/      ETRACK         ; Store A (ending track) into memory
-          RSR                      ; Return to main loop
-FILLSTR   JSR/      CHKBYTE        ; Grab the 1st incoming ASCII byte
-          STAB/     INSTRING       ; Drop it into location 0 of INSTRING
-          JSR/      CHKBYTE        ; Grab the 2nd incoming ASCII byte
-          STAB/     INSTRING+1     ; Drop it into location 1 of INSTRING
-          JSR/      CHKBYTE        ; Grab the 3rd incoming ASCII byte
-          STAB/     INSTRING+2     ; Drop it into location 2 of INSTRING
-          JSR/      CHKBYTE        ; Grab the 4th incoming ASCII byte
-          STAB/     INSTRING+3     ; Drop it into location 3 of INSTRING
-          JSR/      CONVERTB       ; Jump to subroutine to convert byte
-          RSR                      ; Return to main loop
-
-CONVERTB  LDAB/     INSTRING       ; Grab ASCII value from loc. 0 of INSTRING
-          JSR/      HEX2INT        ; Convert that to a nibble
-          SLRB      AL,4           ; Shift that nibble to the upper half
-          STAB/     TEMPA          ; Stab it into TEMPA
-          LDAB/     INSTRING+1     ; Grab ASCII value from loc. 1 of INSTRING
-          JSR/      HEX2INT        ; Convert to nibble
-          LDBB/     TEMPA          ; Load the first nibble into BL
-          ORIB      BL,AL          ; OR AL and BL and store in AL
-          STAB/     TEMPA          ; Store that byte back into TEMPA
-          LDAB/     INSTRING+2     ; Grab ASCII value from loc. 2 of INSTRING
-          JSR/      HEX2INT        ; Convert that to a nibble
-          SLRB      AL,4           ; Shift that nibble to the upper half
-          STAB/     TEMPA+1        ; Stab it into TEMPA
-          LDAB/     INSTRING+3     ; Grab ASCII value from loc. 3 of INSTRING
-          JSR/      HEX2INT        ; Convert to nibble
-          LDBB/     TEMPA+1        ; Load the first nibble into BL
-          ORIB      BL,AL          ; OR AL and BL and store in AL
-          STAB/     TEMPA+1        ; Store that byte back into TEMPA
-          LDA/      TEMPA          ; Load new word built in TEMPA into A
+CHKRXB    LDAB/     MUX3CTRL       ; Load MUX status byte in to AL
+          SRAB                     ; Shift AL to the right by 1
+          BNL       CHKRXB         ; Loop back to top if Link is not set
+          LDAB/     MUX3DATA       ; Read in the receive byte
           RSR
-*
-********************************************************************************
-*                            HAWK SUBROUTINES                                  *
-********************************************************************************
-*
-HWKSCT    DW        X'0000'        ; Sector address
-PRTSCT    DW        X'0000'        ; Printable sector count
-HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
-          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'HAWK RTZ INITIATED'
-          DB        0
-          RSR
-DMAREAD   JSR/      CHKREADY
-          LDA/      HWKSCT         ; Load sector count into A
-          STA/      X'F141'        ; Stab it into F141, the MMIO register
-          LDAB=     X'02'          ; Load seek command into A
-          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          JSR/      CHKREADY
-          DMA       SDV,0          ; Set DMA device to 0
-          DMA       EAB            ; Enable DMA
-          LDA=      REDATA         ; Load location where to put bytes
-          DMA       SAD,A          ; Where to put the bytes (X'1000')
-          LDA=      NUBYTE         ; Load how many bytes to drop down
-          DMA       SCT,A          ; How many bytes to read (X'0190')
-          LDAB=     X'00'          ; Load read command into A
-          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
-          LDB=      X'FFFF'        ; Load B with all 1's
-CHKDMA    DMA       RCT,A          ; Load the DMA count register into A
-          SUB       B,A            ; Add B and A and store in A
-          BNZ       CHKDMA         ; If the link bit isn't set, DMA aint done
-CHKRED    LDAB/     X'F144'        ; Load the status register of the Hawk
+BFORPC    LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
-          LDAB=     X'FF'          ; Load A with X'FF' inverse of all good
-          ANDB      YL,AL          ; AND AL and YL
-          BZ        PRINTDOT       ; Success, print dot and go
-          LDAB=     X'F0'          ; Load A with X'F0' to check for errors
-          ANDB      YL,AL          ; AND AL and YL, should give zero
-          BNZ       WEGOTERR       ; If not 0, then we have an error
-          JMP/      CHKRED         ; If value is '01', DSK is busy, so loop
-PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
-          DC        '.'
-          DB        0
+DWAIT     LDAB/     MUX3CTRL       ; AL = MUX status byte
+          ANDB      YL,AL          ; Check if transmit buffer empty
+          BZ        DWAIT          ; If not empty, loop
+          STBB/     MUX3DATA       ; Store the character to the MUX data
           RSR
-WEGOTERR  JSR/      PRINTNULL      ; Print a 'X' to denote read error
-          DC        'X'
-          DB        0
-          LDA=      X'0190'        ; Load A with length to fill (400 bytes)
-          LDB=      REDATA         ; Load B with starting place to fill
-          JSR/      MVSSF          ; Fill buffer
-          DB        X'FF'          ; with FF
-          RSR
-CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
+* Print the null-terminated string at X to the CRT
+PRINTNULL STAB-     S-             ; Push AL to the stack
+          STBB-     S-             ; Push BL to the stack
+          XFRB      YL,AL          ; YL -> AL
+          STAB-     S-             ; Push YL to the stack
+          LDAB=     B'10'          ; Set mask to check for tx buffer empty
           XAYB                     ; AL -> YL
-CHKONCYL  LDAB/     X'F145'        ; Load the drive status
-          ANDB      YL,AL          ; Clear all the other bits
-          OREB      YL,AL          ; Desired bits will both be zero when ready
-          BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
+PNLOOP    LDBB+     X+             ; Load the next byte
+          BZ        PNEND          ; If 0, we are done
+PNWAIT    LDAB/     MUX0CTRL       ; AL = MUX status byte
+          ANDB      YL,AL          ; Check if transmit buffer empty
+          BZ        PNWAIT         ; If not empty, loop
+          STBB/     MUX0DATA       ; Store the character to the MUX data
+          JMP       PNLOOP         ; Go to the next character
+PNEND     LDAB+     S+             ; Pop YL from the stack
+          XAYB                     ; AL -> YL
+          LDBB+     S+             ; Pop BL from the stack
+          LDAB+     S+             ; Pop AL from the stack
           RSR
 *
 ********************************************************************************
-*                         MARKER AND CRC SUBROUTINE                            *
+*                               UNIT SETUP                                     *
 ********************************************************************************
 *
-MARKER    DW 'HA'.XOR.X'80A0'
-          DW 'WK'.XOR.X'A0A0'
-          DW 'DU'.XOR.X'80A0'
-          DW 'MP'.XOR.X'A0A0'      ; Marker "HawkDump"
-          DW X'0D0A'               ; CR, LF to terminate marker
-MKDATA    DS 2                     ; 2 byte sector address
-REDATA    DS 400                   ; 400 bytes of sector data
-CRCDATA   DS 2                     ; 2 byte CRC
-          DW X'0D0A'               ; CR, LF to terminate sector data
-DUMPLEN   EQU *-MARKER             ; Amount of data to dump
+PICKDR    JSR/      CHKBYTE        ; Check to see if we received input
+          XAYB                     ; AL -> YL
+          LDAB=     X'0F'          ; Load A with 0000 1111
+          ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
+          STAB/     X'F140'        ; Stab it into F140, the MMIO register
+          JSR/      CHKREADY       ; Check if the drive is ready
+          LDAB/     X'F140'        ; Read back the drive select byte
+          LDBB=     X'01'          ; Slap a 1 into B (for later use)
+          XAYB                     ; AL -> YL
+          LDAB=     X'0F'          ; Load A with 0000 1111
+          ANDB      YL,AL          ; And with 0000 1111, looking at low nibble
+          BZ        WBITM          ; If AL is zero, jump to writing bitmask
+MLOOP     SLRB      BL             ; Shift BL left one bit
+          DCRB      AL             ; Decrement AL
+          BZ        WBITM          ; If AL is zero, jump to writing bitmask
+          JMP       MLOOP          ; Loop back around and repeat until 0
+WBITM     STBB/     X'F143'        ; Setup format write bitmask
+          RSR                      ; Back to main loop
+*
+********************************************************************************
+*                              RECEIVE SECTOR                                  *
+********************************************************************************
+*
+* PC SHOULD SEND X'FF' WHEN READY
+CHKPCRDY  LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
+          SRAB                     ; Shift AL to the right by 1
+          BNL       CHKPCRDY       ; Loop back to top if Link is not set!!
+          LDAB/     MUX3DATA       ; Read in the receive byte
+          LDBB=     X'01'          ; Load BL with 01
+          ADDB      BL,AL          ; ADD BL and AL (if AL is FF, this sets link)
+          BNL       CHKPCRDY       ; Loop back up to CHKPCRDY and try again!!
+          RSR
+* CENTURION SHOULD SEND FF TO PC TO CONFIRM IT'S GO TIME
+RCVSECT   LDBB=     X'FF'          ; Load X'FF' into B
+          JSR/      BFORPC         ; Transmit that out MUX port 3
+          LDA/      REDATA         ; Load the temporary memory location into A
+          XAY                      ; Transfer it to Y for counting
+LETSGO    JSR/      CHKRXB         ; Check if we've received a byte from PC
+          STAB+     Y              ; Store the byte into memory
+* Check if we have a full Sector
+CHKFULL   XFR       Y,A            ; Transfer Y register into A register
+          LDB=      REDATA+X'0192' ; Load B with max value (400b Data + 2b CRC)
+          SUB       B,A            ; Subtract max minus current
+          BNZ       NXTBYT         ; If not zero, time for next byte
+          RSR                      ; If it is zero, jump back to main loop
+NXTBYT    INR       Y              ; Increment Y
+          JMP/      LETSGO         ; Jump back up and grab next byte
+*
+********************************************************************************
+*                                CRC SUBROUTINE                                *
+********************************************************************************
+*
 CRCINT    DW        0              ; Define CRCINT as 0
-CRCMARK   STX-      S-             ; Push return address (X reg) onto stack
+CRCDATA   DS        2              ; 2 byte CRC
+CRCOKNG   STX-      S-             ; Push return address (X reg) onto stack
           CLA                      ; A = 0.
           STA/      CRCINT         ; A -> *CRCINT
           LDA=      REDATA         ; Load A with the location of the read data
@@ -270,41 +223,104 @@ CHECKY    LDA=      CRCDATA        ; A = one past end of sector data
           BZ        CRCEND         ; Branch to the end of CRC junk if A is zero
           JMP       NEXTCRC        ; Jump back up and go again
 CRCEND    LDX+      S+             ; Pop X back off of stack so we can return
-          LDA/      HWKSCT         ; Load the Hawk sectors into A
-          STA/      MKDATA         ; Store it into memory for transfer out
           LDA/      CRCINT         ; Load calculated CRC into A
           STA/      CRCDATA        ; Store it into memory for transfer out
-          RSR                      ; Return back to main loop
-*
-********************************************************************************
-*                            PC COMMS SUBROUTINE                               *
-********************************************************************************
-*
-* PC SHOULD SEND X'FF' WHEN READY
-CHKPCRDY  LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
-          SRAB                     ; Shift AL to the right by 1
-          BNL       CHKPCRDY       ; Loop back to top if Link is not set!!
-          LDAB/     MUX3DATA       ; Read in the receive byte
-          LDBB=     X'01'          ; Load BL with 01
-          ADDB      BL,AL          ; ADD BL and AL (if AL is FF, this sets link)
-          BNL       CHKPCRDY       ; Loop back up to CHKPCRDY and try again!!
+* CENTURION DOES A CHECK OF THE CRC HERE
+* CENTURION SHOULD SEND X'FF' TO PC TO CONFIRM CRC IS GOOD
+* OR SEND X'00' IF CRC IS BAD, AT WHICH POINT, PC REPEATS SECTOR
+CHKNGOK   LDB/      REDATA+X'0191' ; Load B register with the received CRC
+          SUB       B,A            ; Subtract B-A and store in A
+          BNZ       NGTOG          ; If not zero, CRCs don't match
+GTOG      LDBB=     X'FF'          ; Load X'FF' into B
+          JSR/      BFORPC         ; Transmit that out MUX port 3
           RSR
-* PC SHOULD SEND X'FF' WHEN CRC CHECKS GOOD
-CHKNGOK   LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
-          SRAB                     ; Shift AL to the right by 1
-          BNL       CHKNGOK        ; Loop back to top if Link is not set
-          LDAB/     MUX3DATA       ; Read in the received byte
-          LDBB=     X'01'          ; Load BL with 01
-          ADDB      BL,AL          ; ADD BL and AL (if AL is FF, this sets link)
+NGTOG     LDBB=     X'00'          ; Load X'00' into B
+          JSR/      BFORPC         ; Transmit that out MUX port 3
+          JMP/      RCVSECT        ; No good, receive that same sector again
+*
+********************************************************************************
+*                            HAWK SUBROUTINES                                  *
+********************************************************************************
+*
+HWKSCT    DW        X'0000'        ; Sector address
+HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
+          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
+          JSR/      PRINTNULL
+          DW        X'8D8A'
+          DC        'HAWK RTZ INITIATED'
+          DB        0
+          RSR
+SENDHWK   JSR/      CHKREADY
+          LDA/      HWKSCT         ; Load sector count into A
+          STA/      X'F141'        ; Stab it into F141, the MMIO register
+          LDAB=     X'02'          ; Load seek command into A
+          STAB/     X'F148'        ; Stab it into F148, the MMIO cmd register
+          JSR/      CHKSEEK        ; Check that the seek has completed
+* This is the start of the DMA operations
+          JSR/      CHKREADY
+          DMA       SDV,0          ; Set DMA device to 0
+          DMA       EAB            ; Enable DMA
+          LDA=      REDATA         ; Load location where the bytes in memory are
+          DMA       SAD,A          ; Where the bytes are (X'0800')
+          LDA=      NUBYTE         ; Load how many bytes to drop down
+          DMA       SCT,A          ; How many bytes to read (X'0190')
+*          LDAB=     X'01'          ; Load 01 into A reg. byte
+*          STAB/     X'F148'        ; Store 01 in F148 -> Write operation
+          LDAB=     X'06'          ; Load 06 into A reg. byte
+          STAB/     X'F148'        ; Store 06 in F148 -> Format write step 1
+          JSR/      CHKREADY       ; Check if DSK2 is ready
+          LDAB=     X'05'          ; Load 05 into A reg. byte
+          STAB/     X'F148'        ; Store 05 in F148 -> Format write step 2
+* This part verifies the format
+          JSR/      CHKREADY
+          DMA       SDV,0          ; Set DMA device to 0
+          DMA       EAB            ; Enable DMA
+          LDA=      REDATA         ; Load location where the bytes in memory are
+          DMA       SAD,A          ; Where the bytes are (X'0500')
+          LDA=      NUBYTE         ; Load how many bytes to drop down
+          DMA       SCT,A          ; How many bytes to read (X'0190')
+          LDAB=     X'04'          ; Load verify command into A
+          STAB/     X'F148'        ; Stab it into F148, starting the DMA madness
+          JSR/      CHKREADY
+PRINTDOT  JSR/      PRINTNULL      ; Print a '.' to denote sector progress
+          DC        '.'
+          DB        0
+          RSR
+* This checks the status first.
+CHKREADY  LDAB/     X'F144'        ; Load Hawk status
+          XAYB                     ; AL -> YL
+          BZ        CHKONCYL       ; If it's zero, all good, next check
+CHKERR    LDAB=     B'11110110'    ; Load AL with all the fault bits
+          ANDB      YL,AL          ; And YL and AL together
+          BZ        CHKREADY       ; If it's zero, it's just busy
+WEGOTERR  JSR/      PRINTNULL      ; Print a 'X' to denote read error
+          DC        'X'
+          DB        0
+          RSR
+* If the status is good, we check that we're in place.
+CHKONCYL  LDAB=     B'00110000'    ; Load AL w/ Drive Ready and On Cylinder bits
+          XAYB                     ; AL -> YL
+          LDAB/     X'F145'        ; Load the drive status
+          ANDB      YL,AL          ; Clear all the other bits
+          OREB      YL,AL          ; Desired bits will both be zero when ready
+          BNZ       CHKONCYL       ; Loop back, waiting for drive to be ready
+          RSR
+* This subroutine is for checking that the seek is complete.
+CHKSEEK   LDAB/     X'F145'        ; Load the drive status
+          XAYB                     ; Move over to YL
+          LDAB=     X'0F'          ; Load AL with B'0000 1111'
+          ANDB      YL,AL          ; AND Yl with AL (just look at low nibble)
+          BZ        CHKSEEK        ; If the low nibble is zero, seek not done
           RSR
 *
 ********************************************************************************
 *                           INCREMENT SUBROUTINE                               *
 ********************************************************************************
 *
-* Hawk has X'0190' cylinders, 2 tracks per cyl., 16 sectors per track
-* Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'
-INCRMNT1  LDA=      ETRACK         ; Load max cylinder (ETRACK) count into A
+* Hawk has X'0190' cylinders, 2 tracks per cyl., 16 sectors per track.
+* Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'. 
+* This increments up through the sectors. Shabloinks A, B, and Z registers.
+INCRMENT  LDA=      ETRACK         ; Load max cylinder (ETRACK) count into A
           XFR       A,Z            ; Transfer A over to Z
           LDA/      HWKSCT         ; Load current sector into A
           INR       A              ; Increment it by one
@@ -312,81 +328,7 @@ INCRMNT1  LDA=      ETRACK         ; Load max cylinder (ETRACK) count into A
           SUB       Z,A            ; Subtract A from Z
           BNZ       INCRMNT2       ; If we haven't reached ETRACK yet, proceed
           JMP/      THEEND         ; If we have reached ETRACK, all done
-INCRMNT2  LDB/      PRTSCT         ; Load the printable sector
-          LDA/      HWKSCT         ; Load the current hawk sector
-          SRR       A,5            ; Shift A 5-bits to the right (high bit = 0)
-          SUB       A,B            ; Subtract that from PRTSCT to see if diff.
-          BNZ       PRPROG         ; If so, then update and print
-          RSR                      ; Return to main loop
-PRPROG    LDA/      HWKSCT         ; Load the Hawk sectors into A
-          XAB                      ; A -> B.
-          SRR       A,5            ; Shift right 5 times to just get the cyl.
-          STA/      PRTSCT   
-          JSR/      @HEX16         ; Convert A to hex at PTRK
-          DW        PTRK
-          XFR       B,A
-          JSR/      @HEX16         ; Convert A to hex at PSCT
-          DW        PSCT
-          JSR/      PRINTNULL      
-          DW        X'8D8A'        ; Carriage return and line feed        
-          DC        'TRACK: '      
-PTRK      DC        'XXXX, SECTOR: '
-PSCT      DC        'XXXX'
-          DB        0              ; Null terminator
-          RSR
-*
-********************************************************************************
-*                             PRINT SUBROUTINES                                *
-********************************************************************************
-*
-* Print the null-terminated string at X to the CRT
-PRINTNULL STAB-     S-             ; Push AL to the stack
-          STBB-     S-             ; Push BL to the stack
-          XFRB      YL,AL          ; YL -> AL
-          STAB-     S-             ; Push YL to the stack
-          LDAB=     B'10'          ; Set mask to check for tx buffer empty
-          XAYB                     ; AL -> YL
-PNLOOP    LDBB+     X+             ; Load the next byte
-          BZ        PNEND          ; If 0, we are done
-PNWAIT    LDAB/     MUX0CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Check if transmit buffer empty
-          BZ        PNWAIT         ; If not empty, loop
-          STBB/     MUX0DATA       ; Store the character to the MUX data
-          JMP       PNLOOP         ; Go to the next character
-PNEND     LDAB+     S+             ; Pop YL from the stack
-          XAYB                     ; AL -> YL
-          LDBB+     S+             ; Pop BL from the stack
-          LDAB+     S+             ; Pop AL from the stack
-          RSR
-*
-* Dump data out CRT3
-DMPDATA   STAB-     S-             ; Push AL to the stack
-          STBB-     S-             ; Push BL to the stack
-          XFRB      YL,AL          ; YL -> AL
-          STAB-     S-             ; Push YL to the stack
-          LDA=      DUMPLEN        ; Total number of bytes to count
-          XFR       A,Z            ; Transfer result of ADD to Z
-          LDA=      MARKER         ; Start Marker which is followed by data/crc
-          ADD       A,Z            ; Add total length to start
-          XFR       A,B            ; Transfer A -> B
-          XAY                      ; Transfer A -> Y
-DCHECK    SUB       Z,Y            ; Subtracts Z-Y and stores in Y
-          BZ        DEND           ; Branch is zero to da end yo
-          LDAB=     B'10'          ; Set mask to check for tx buffer empty
-          XAYB                     ; AL -> YL
-DWAIT     LDAB/     MUX3CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; Check if transmit buffer empty
-          BZ        DWAIT          ; If not empty, loop
-          LDAB+     B              ; Load byte at address pointed to by B
-          STAB/     MUX3DATA       ; Store the character to the MUX data
-          INR       B              ; Increment B
-          XFR       B,Y            ; Transfer B -> Y
-          JMP       DCHECK         ; Go to the next character
-DEND      LDAB+     S+             ; Pop YL from the stack
-          XAYB                     ; AL -> YL
-          LDBB+     S+             ; Pop BL from the stack
-          LDAB+     S+             ; Pop AL from the stack
-          RSR                      ; Return
+INCRMNT2  RSR                      ; Return to main loop
 *
 ********************************************************************************
 *                        ESCAPE AND END SUBROUTINES                            *
@@ -405,49 +347,11 @@ CHKRX     LDAB=     X'03'          ; Set mask to check if rx byte is ctrl+c
           BZ        THEEND         ; If zero, then we're all done here
           RSR                      ; If not zero, then go back to business
 THEEND    JSR/      PRINTNULL
-          DW        X'8D8A'        ; Carriage return and line feed
-          DC        'All done!'
-          DW        X'8D8A'        ; Carriage return and line feed
-          DC        'Press any key to return to top of program.'
+          DW        X'8D8A'
+          DC        'EITHER IT WENT PERFECTLY, OR IT FAILED DRAMATICALLY.'
+          DW        X'8D8A'
+          DC        'REGARDLESS, I QUIT. -I--I- L(O-O)L'
           DB        0
-GOODBYE   LDAB=     B'01'          ; Set mask to check if rx byte available
-          XAYB                     ; AL -> YL
-          LDAB/     MUX0CTRL       ; AL = MUX status byte
-          ANDB      YL,AL          ; AND AL and YL
-          BZ        GOODBYE        ; If not zero, loop back to checking for rx
-          LDAB/     MUX0DATA       ; Read in the receive byte to the B 
-          JSR/      PRINTNULL
-          DB        X'8C'          ; Clear the screen
-          DB        0
-          JMP/      TOP            ; Jump to top of program
+          HLT
           END       ENTRY          ; Set the entry point
-*
-********************************************************************************
-*                        EXTRA SUBROUTINES FOR CPU5                            *
-********************************************************************************
-*
-* Convert a hex character to integer value. The character is in AL and the value
-* is returned in AL. AL is set to negative on error.
-HEX2INT   STB-      S-             ; Push B to the stack.
-          LDBB=     '0'            ; Load 0 to
-          SABB                     ; convert the ASCII to the value.
-          XFRB      BL,BU          ; BL -> BU.
-          BM        H2IERROR       ; If less than 0, error.
-          LDBB=     ':'            ; Load : to
-          SABB                     ; compare against decimal digits.
-          BM        H2IEND         ; If 0-9, done.
-          LDBB=     'A'            ; Load A to
-          SABB                     ; convert the ASCII to a hex digit > 9.
-          XFRB      BL,BU          ; BL -> BU.
-          BM        H2IERROR       ; If less than 0, error.
-          LDBB=     'G'            ; Load G to
-          SABB                     ; compare against hex digits A-F.
-          BP        H2IERROR       ; If G or more, error.
-          LDBB=     10             ; BL = 10.
-          ADDB      BL,BU          ; BL + BU -> BU.
-          JMP       H2IEND         ; Successful end.
-H2IERROR  LDB=      -1             ; Signal an error.
-H2IEND    XFRB      BU,AL          ; BU -> AL.
-          LDB+      S+             ; Pop B from the stack.
-          RSR                      ; Return.
 *
