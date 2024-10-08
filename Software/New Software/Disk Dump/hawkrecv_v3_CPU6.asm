@@ -210,7 +210,7 @@ SKIPXOR   SLR       B              ; B <<= 1.
 SKIPPOLY  SRA                      ; A >>= 1.
           BNZ       CRCLOOP        ; If not zero, do the next bit.
           STB/      CRCINT         ; B -> *CRCINT.
-CHECKY    LDA=      CRCDATA        ; A = one past end of sector data
+CHECKY    LDA=      REDATA+X'0190' ; A = one past end of sector data
           SUB       Y,A            ; Compare Y to one past the end
           BZ        CRCEND         ; Branch to the end of CRC junk if A is zero
           JMP       NEXTCRC        ; Jump back up and go again
