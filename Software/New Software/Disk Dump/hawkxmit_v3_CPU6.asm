@@ -12,7 +12,7 @@
 * Thank you everyone so much for walking me through this!
 *
           EXT       MVSSF          ; FILR instruction implementation (OSLIB)
-          TITLE     'HKDUMP'
+          TITLE     'HWKXMIT'
 ZHKDUMP   BEGIN     X'0100'
 *
 ********************************************************************************

@@ -27,7 +27,7 @@ MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX3CTRL  EQU       X'F206'        ; Fourth MUX port data MMIO address
 MUX3DATA  EQU       X'F207'        ; Fourth MUX port control MMIO address
 MUX0CB    EQU       X'C5'          ; First MUX port at 9,600 7E1
-MUX3CB    EQU       X'D6'          ; Third MUX port at 19,200 8N1 (F6)
+MUX3CB    EQU       X'F6'          ; Third MUX port at 19,200 8N1 (F6)
 *
 ********************************************************************************
 *                                 MAIN LOOP                                    *
@@ -72,7 +72,7 @@ TOP       JSR/      PRINTNULL
           DC        'ONE MORE TIME, ALL DATA ON PLATTER WILL BE OVERWRITTEN!'
           DW        X'8D8A'
           DW        X'8D8A'
-          DC        'YOU HAVE BEEN WARNED TWICE, DON'T COME CRYING TO ME'
+          DC        'YOU HAVE BEEN WARNED TWICE, DONT COME CRYING TO ME'
           DW        X'8D8A'
           DC        'WHEN YOU BLITZ ALL YOUR DATA.'
           DW        X'8D8A'
@@ -83,10 +83,11 @@ TOP       JSR/      PRINTNULL
           DB        0
           JSR/      CHKBYTE        ; Check for any key pressed
           JSR/      HWKRTZ         ; RTZ the Hawk
-LOOP      JSR/      CHKPCRDY       ; Check for Ready byte from PC
-          JSR/      RCVSECT        ; Receive a sector worth from PC
+          JSR/      CHKPCRDY       ; Check for Ready byte from PC
+LOOP      JSR/      RCVSECT        ; Receive a sector worth from PC
           JSR/      CRCOKNG        ; Calculate CRC and compare to received
           JSR/      SENDHWK        ; Copy the contents of memory to the Hawk
+          JSR/      INCRMNT1       ; Increment the track
           JSR/      CHKESC         ; Check if user pressed escape sequence
           JMP/      LOOP           ; What it says on the tin
 *
@@ -167,10 +168,6 @@ CHKPCRDY  LDAB/     MUX3CTRL       ; Load MUX3 status byte in to AL
           LDBB=     X'01'          ; Load BL with 01
           ADDB      BL,AL          ; ADD BL and AL (if AL is FF, this sets link)
           BNL       CHKPCRDY       ; Loop back up to CHKPCRDY and try again!!
-          JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'PC READY!'
-          DB        0
           RSR
 * CENTURION SHOULD SEND FF TO PC TO CONFIRM IT'S GO TIME
 RCVSECT   LDBB=     X'FF'          ; Load X'FF' into B
@@ -190,13 +187,9 @@ CHKFULL   XFR       Y,A            ; Transfer Y register into A register
 *                                CRC SUBROUTINE                                *
 ********************************************************************************
 *
-CRCINT    DW        0              ; Define CRCINT as 0
 CRCDATA   DS        2              ; 2 byte CRC
-CRCOKNG   JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'SECTOR RECEIVED, CHECKING CRC'
-          DB        0
-          STK       X,2            ; Push return address (X reg) onto stack
+CRCINT    DW        0              ; Define CRCINT as 0
+CRCOKNG   STK       X,2            ; Push return address (X reg) onto stack
           CLA                      ; A = 0.
           STA/      CRCINT         ; A -> *CRCINT
           LDA=      REDATA         ; Load A with the location of the read data
@@ -227,19 +220,17 @@ CRCEND    POP       X,2            ; Pop X back off of stack so we can return
 * CENTURION DOES A CHECK OF THE CRC HERE
 * CENTURION SHOULD SEND X'FF' TO PC TO CONFIRM CRC IS GOOD
 * OR SEND X'00' IF CRC IS BAD, AT WHICH POINT, PC REPEATS SECTOR
-CHKNGOK   LDB/      REDATA+X'0191' ; Load B register with the received CRC
+CHKNGOK   LDB/      REDATA+X'0190' ; Load B register with the received CRC
           SUB       B,A            ; Subtract B-A and store in A
           BNZ       NGTOG          ; If not zero, CRCs don't match
 GTOG      JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'CRC GOOD, TELLING PC'
+          DC        '/'
           DB        0
           LDBB=     X'FF'          ; Load X'FF' into B
           JSR/      BFORPC         ; Transmit that out MUX port 3
           RSR
 NGTOG     JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'CRC BAD, TELLING PC'
+          DC        'C'
           DB        0
           LDBB=     X'00'          ; Load X'00' into B
           JSR/      BFORPC         ; Transmit that out MUX port 3
@@ -257,11 +248,7 @@ HWKRTZ    LDAB=     X'03'          ; Load in the RTZ command byte
           DC        'HAWK RTZ INITIATED'
           DB        0
           RSR
-SENDHWK   JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'DATA ALL GOOD, SENDING TO HAWK'
-          DB        0
-          JSR/      CHKREADY
+SENDHWK   JSR/      CHKREADY
           LDA/      HWKSCT         ; Load sector count into A
           STA/      X'F141'        ; Stab it into F141, the MMIO register
           LDAB=     X'02'          ; Load seek command into A
@@ -275,13 +262,13 @@ SENDHWK   JSR/      PRINTNULL
           DMA       SAD,A          ; Where the bytes are (X'0800')
           LDA=      NUBYTE         ; Load how many bytes to drop down
           DMA       SCT,A          ; How many bytes to read (X'0190')
-*          LDAB=     X'01'          ; Load 01 into A reg. byte
-*          STAB/     X'F148'        ; Store 01 in F148 -> Write operation
-          LDAB=     X'06'          ; Load 06 into A reg. byte
-          STAB/     X'F148'        ; Store 06 in F148 -> Format write step 1
-          JSR/      CHKREADY       ; Check if DSK2 is ready
-          LDAB=     X'05'          ; Load 05 into A reg. byte
-          STAB/     X'F148'        ; Store 05 in F148 -> Format write step 2
+          LDAB=     X'01'          ; Load 01 into A reg. byte
+          STAB/     X'F148'        ; Store 01 in F148 -> Write operation
+*          LDAB=     X'06'          ; Load 06 into A reg. byte
+*          STAB/     X'F148'        ; Store 06 in F148 -> Format write step 1
+*          JSR/      CHKREADY       ; Check if DSK2 is ready
+*          LDAB=     X'05'          ; Load 05 into A reg. byte
+*          STAB/     X'F148'        ; Store 05 in F148 -> Format write step 2
 * This part verifies the format
           JSR/      CHKREADY
           DMA       SDV,0          ; Set DMA device to 0
@@ -331,11 +318,7 @@ CHKSEEK   LDAB/     X'F145'        ; Load the drive status
 * Hawk has X'0190' cylinders, 2 tracks per cyl., 16 sectors per track.
 * Layout is 00CC CCCC CCCH SSSS, which makes max count X'3200'. 
 * This increments up through the sectors. Shabloinks A, B, and Z registers.
-INCRMENT  JSR/      PRINTNULL
-          DW        X'8D8A'
-          DC        'TRANSMIT FINISHED, INCREMENTING'
-          DB        0
-          LDA=      ETRACK         ; Load max cylinder (ETRACK) count into A
+INCRMNT1  LDA=      ETRACK         ; Load max cylinder (ETRACK) count into A
           XFR       A,Z            ; Transfer A over to Z
           LDA/      HWKSCT         ; Load current sector into A
           INR       A              ; Increment it by one

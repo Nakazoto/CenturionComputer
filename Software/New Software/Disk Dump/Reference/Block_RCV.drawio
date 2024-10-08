@@ -1,0 +1,118 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram id="8RVYsCVlXgSEWsRMvYCl" name="Page-1">
+    <mxGraphModel dx="1434" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Y-HcOz_CuZ-3CJsuge8j-5" value="PC pings Centurion with X&#39;FF&#39;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="280" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Y-HcOz_CuZ-3CJsuge8j-6" value="Centurion sends X&#39;FF&#39;&lt;div&gt;to let PC know it&#39;s ready to receive next sector&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="360" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Y-HcOz_CuZ-3CJsuge8j-7" value="400 bytes data + 2 bytes CRC transfers from PC to Centurion" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="440" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Y-HcOz_CuZ-3CJsuge8j-8" value="Centurion calculates CRC" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="520" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Y-HcOz_CuZ-3CJsuge8j-20" value="" style="endArrow=classic;html=1;rounded=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="Y-HcOz_CuZ-3CJsuge8j-5" target="Y-HcOz_CuZ-3CJsuge8j-6" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="780" y="400" as="sourcePoint" />
+            <mxPoint x="830" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y-HcOz_CuZ-3CJsuge8j-21" value="" style="endArrow=classic;html=1;rounded=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="Y-HcOz_CuZ-3CJsuge8j-6" target="Y-HcOz_CuZ-3CJsuge8j-7" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="790" y="640" as="sourcePoint" />
+            <mxPoint x="840" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y-HcOz_CuZ-3CJsuge8j-22" value="" style="endArrow=classic;html=1;rounded=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" target="Y-HcOz_CuZ-3CJsuge8j-8" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="780" y="520" as="sourcePoint" />
+            <mxPoint x="840" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="qoaIgza9Bo8pHiFNoi-O-1" value="CRC OK" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="680" y="600" width="80" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="qoaIgza9Bo8pHiFNoi-O-2" value="" style="endArrow=classic;html=1;rounded=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;curved=0;" parent="1" source="Y-HcOz_CuZ-3CJsuge8j-8" target="qoaIgza9Bo8pHiFNoi-O-1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="790" y="550" as="sourcePoint" />
+            <mxPoint x="840" y="500" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="780" y="580" />
+              <mxPoint x="720" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="qoaIgza9Bo8pHiFNoi-O-5" value="Centurion sends X&#39;FF&#39;&lt;div&gt;to let PC know CRC was good and to increment to next sector&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="680" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="qoaIgza9Bo8pHiFNoi-O-9" value="Centurion commences does data copy from memory to drive then increments internal counter" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="760" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="qoaIgza9Bo8pHiFNoi-O-10" value="" style="endArrow=classic;html=1;rounded=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="qoaIgza9Bo8pHiFNoi-O-5" target="qoaIgza9Bo8pHiFNoi-O-9" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="770" y="640" as="sourcePoint" />
+            <mxPoint x="820" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-1" value="CRC NG" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="600" width="80" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-3" value="" style="endArrow=classic;html=1;rounded=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;curved=0;" edge="1" parent="1" source="Y-HcOz_CuZ-3CJsuge8j-8" target="EKjuQGUebMLusc5rMmOh-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="820" y="730" as="sourcePoint" />
+            <mxPoint x="870" y="680" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="780" y="580" />
+              <mxPoint x="840" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-5" value="Centurion sends X&#39;00&#39;&lt;div&gt;to let PC know CRC was bad and to resend same sector&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="920" y="600" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-6" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="EKjuQGUebMLusc5rMmOh-1" target="EKjuQGUebMLusc5rMmOh-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1020" y="610" as="sourcePoint" />
+            <mxPoint x="1070" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-7" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="Y-HcOz_CuZ-3CJsuge8j-7" target="Y-HcOz_CuZ-3CJsuge8j-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="900" y="550" as="sourcePoint" />
+            <mxPoint x="950" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-8" value="" style="endArrow=classic;html=1;rounded=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=0;" edge="1" parent="1" source="EKjuQGUebMLusc5rMmOh-5" target="Y-HcOz_CuZ-3CJsuge8j-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="900" y="550" as="sourcePoint" />
+            <mxPoint x="950" y="500" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1020" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-9" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="qoaIgza9Bo8pHiFNoi-O-1" target="qoaIgza9Bo8pHiFNoi-O-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="830" y="710" as="sourcePoint" />
+            <mxPoint x="880" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EKjuQGUebMLusc5rMmOh-10" value="" style="endArrow=classic;html=1;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=0;" edge="1" parent="1" source="qoaIgza9Bo8pHiFNoi-O-9" target="Y-HcOz_CuZ-3CJsuge8j-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="790" y="820" as="sourcePoint" />
+            <mxPoint x="840" y="770" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1160" y="785" />
+              <mxPoint x="1160" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
