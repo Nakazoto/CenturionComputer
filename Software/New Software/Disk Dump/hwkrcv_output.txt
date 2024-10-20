@@ -1,0 +1,395 @@
+
+                FE6F   NUBYTE   EQU    X'FE6F'                     ; HOW MANY BYTES TO WRITE X'FFFF'-X'0190'
+                1000   REDATA   EQU    X'1000'                     ; LOCATION IN MEMORY WHERE OUR BYTES ARE AT
+                3300   ETRACK   EQU    X'3300'                     ; TOTAL NUMBER OF SECTORS
+                F200   MUX0CTRL EQU    X'F200'                     ; FIRST MUX PORT CONTROL MMIO ADDRESS
+                F201   MUX0DATA EQU    X'F201'                     ; FIRST MUX PORT DATA MMIO ADDRESS
+                F206   MUX3CTRL EQU    X'F206'                     ; FOURTH MUX PORT DATA MMIO ADDRESS
+                F207   MUX3DATA EQU    X'F207'                     ; FOURTH MUX PORT CONTROL MMIO ADDRESS
+                00C5   MUX0CB   EQU    X'C5'                       ; FIRST MUX PORT AT 9,600 7E1
+                00F6   MUX3CB   EQU    X'F6'                       ; THIRD MUX PORT AT 19,200 8N1 (F6)
+0100                   *
+0100                   ********************************************************************************
+0100                   *                                 MAIN LOOP                                    *
+0100                   ********************************************************************************
+0100                   *
+0100 907000            ENTRY    LDA=   X'7000'                     ; SET THE STACK POINTER
+0103 5F                         XAS                                ; TO THE TOP OF 32K RAM.
+0104                   * INITIALIZE MUX PORTS
+0104 80C5                       LDAB=  MUX0CB                      ; LOAD MUX 0 CONTROL BYTE INTO A
+0106 A1F200                     STAB/  MUX0CTRL                    ; STORE A INTO MUX0CTRL, MMIO PORT FOR MUX0
+0109 80F6                       LDAB=  MUX3CB                      ; LOAD MUX 3 CONTROL BYTE INTO A
+010B A1F206                     STAB/  MUX3CTRL                    ; STORE A INTO MUX3CTRL, MMIO PORT FOR MUX3
+010E                   * PRINT WELCOME SCREEN
+010E                   * 8D = CR, 8A = LF, 8C = CLEAR
+010E 7903D1                     JSR/   PRINTNULL
+0111 8C                         DB     X'8C'
+0112 C8C1D7CBA0D2C5+            DC     'HAWK RECEIVE PROGRAM'
+0126 8D8A                       DW     X'8D8A'
+0128 D0C3A0D3C9C4C5+            DC     'PC SIDE TRANSMIT PROGRAM MUST BE RUNNING!'
+0151 8D8A                       DW     X'8D8A'
+0153 D0D2C5D3D3A0D3+            DC     'PRESS SELECT ON FRONT PANEL TO RETURN TO LOADER'
+0182 8D8A                       DW     X'8D8A'
+0184 8D8A                       DW     X'8D8A'
+0186 C3C1D5D4C9CFCE+            DC     'CAUTION! THIS PROGRAM HAS NO ERROR HANDLING'
+01B1 8D8A                       DW     X'8D8A'
+01B3 C9CED0D5D4A0D3+            DC     'INPUT SANE VALUES ARE YOU WILL GET GARBAGE'
+01DD 8D8A                       DW     X'8D8A'
+01DF C1CCCCA0C4C1D4+            DC     'ALL DATA ON SELECTED PLATTER WILL BE OVERWRITTEN!'
+0210 8D8A                       DW     X'8D8A'
+0212 8D8A                       DW     X'8D8A'
+0214 C3C5CED4D5D2C9+            DC     'CENTURION COUNTS TOP DOWN'
+022D 8D8A                       DW     X'8D8A'
+022F D0CCC1D4D4C5D2+            DC     'PLATTER 0 = DRIVE 0 REMOVABLE, PLATTER 1 = DRIVE 0 FIXED, ETC.'
+026D 8D8A                       DW     X'8D8A'
+⇊
+
+
+
+
+
+
+PAGE   3   ERRORS   0   ASSM 6.05  08/23/84  00:00:18   HWKRCV
+
+
+026F C5CED4C5D2A0D0+            DC     'ENTER PLATTER NUMBER (0 ~ 7): '
+028D 00                         DB     0                           ; NULL TERMINATOR
+028E                   * START DOING PRODUCTIVE STUFF
+028E 7903F4                     JSR/   PICKDR                      ; PICK YOUR DRIVE AND PLATTER
+0291 7903D1            TOP      JSR/   PRINTNULL
+0294 8D8A                       DW     X'8D8A'
+0296 8D8A                       DW     X'8D8A'
+0298 CFCEC5A0CDCFD2+            DC     'ONE MORE TIME, ALL DATA ON PLATTER WILL BE OVERWRITTEN!'
+02CF 8D8A                       DW     X'8D8A'
+02D1 8D8A                       DW     X'8D8A'
+02D3 D9CFD5A0C8C1D6+            DC     'YOU HAVE BEEN WARNED TWICE, DONT COME CRYING TO ME'
+0305 8D8A                       DW     X'8D8A'
+0307 D7C8C5CEA0D9CF+            DC     'WHEN YOU BLITZ ALL YOUR DATA.'
+0324 8D8A                       DW     X'8D8A'
+0326 8D8A                       DW     X'8D8A'
+0328 D0D2C5D3D3A0D3+            DC     'PRESS SELECT BUTTON ON FRONT PANEL TO RUN AWAY,'
+0357 8D8A                       DW     X'8D8A'
+0359 CFD2A0D0D2C5D3+            DC     'OR PRESS ANY KEY ON THE TERMINAL TO DO SOME WILD STUFF.'
+0390 00                         DB     0
+0391 7903AC          I          JSR/   CHKBYTE                     ; CHECK FOR ANY KEY PRESSED
+0394 7904A8                     JSR/   HWKRTZ                      ; RTZ THE HAWK
+0397 790419          I          JSR/   CHKPCRDY                    ; CHECK FOR READY BYTE FROM PC
+039A 790429            LOOP     JSR/   RCVSECT                     ; RECEIVE A SECTOR WORTH FROM PC
+039D 790445                     JSR/   CRCOKNG                     ; CALCULATE CRC AND COMPARE TO RECEIVED
+03A0 7904C6                     JSR/   SENDHWK                     ; COPY THE CONTENTS OF MEMORY TO THE HAWK
+03A3 790536                     JSR/   INCRMNT1                    ; INCREMENT THE TRACK
+03A6 790549                     JSR/   CHKESC                      ; CHECK IF USER PRESSED ESCAPE SEQUENCE
+03A9 71039A          I          JMP/   LOOP                        ; WHAT IT SAYS ON THE TIN
+03AC                   *
+03AC                   ********************************************************************************
+03AC                   *                         UNIVERSAL SUBROUTINES                                *
+03AC                   ********************************************************************************
+03AC                   *
+03AC 81F200            CHKBYTE  LDAB/  MUX0CTRL                    ; LOAD MUX STATUS BYTE IN TO AL
+03AF 2C                         SRAB                               ; SHIFT AL TO THE RIGHT BY 1
+03B0 11FA       03AC            BNL    CHKBYTE                     ; LOOP BACK TO TOP IF LINK IS NOT SET
+03B2 81F201                     LDAB/  MUX0DATA                    ; READ IN THE RECEIVE BYTE
+03B5 A1F201                     STAB/  MUX0DATA                    ; ECHO THAT DIGIT BACK
+03B8 09                         RSR
+03B9 81F206            CHKRXB   LDAB/  MUX3CTRL                    ; LOAD MUX STATUS BYTE IN TO AL
+03BC 2C                         SRAB                               ; SHIFT AL TO THE RIGHT BY 1
+03BD 11FA       03B9            BNL    CHKRXB                      ; LOOP BACK TO TOP IF LINK IS NOT SET
+03BF 81F207                     LDAB/  MUX3DATA                    ; READ IN THE RECEIVE BYTE
+03C2 09                         RSR
+03C3 8002              BFORPC   LDAB=  B'10'                       ; SET MASK TO CHECK FOR TX BUFFER EMPTY
+03C5 4C                         XAYB                               ; AL -> YL
+03C6 81F206            DWAIT    LDAB/  MUX3CTRL                    ; AL = MUX STATUS BYTE
+03C9 4271                       ANDB   YL,AL                       ; CHECK IF TRANSMIT BUFFER EMPTY
+03CB 14F9       03C6            BZ     DWAIT                       ; IF NOT EMPTY, LOOP
+03CD E1F207                     STBB/  MUX3DATA                    ; STORE THE CHARACTER TO THE MUX DATA
+03D0 09                         RSR
+⇊
+
+
+
+
+
+
+PAGE   4   ERRORS   0   ASSM 6.05  08/23/84  00:00:18   HWKRCV
+
+
+03D1                   * PRINT THE NULL-TERMINATED STRING AT X TO THE CRT
+03D1 A5A2              PRINTNULLSTAB-  S-                          ; PUSH AL TO THE STACK
+03D3 E5A2                       STBB-  S-                          ; PUSH BL TO THE STACK
+03D5 4571                       XFRB   YL,AL                       ; YL -> AL
+03D7 A5A2                       STAB-  S-                          ; PUSH YL TO THE STACK
+03D9 8002                       LDAB=  B'10'                       ; SET MASK TO CHECK FOR TX BUFFER EMPTY
+03DB 4C                         XAYB                               ; AL -> YL
+03DC C541              PNLOOP   LDBB+  X+                          ; LOAD THE NEXT BYTE
+03DE 140C       03EC            BZ     PNEND                       ; IF 0, WE ARE DONE
+03E0 81F200            PNWAIT   LDAB/  MUX0CTRL                    ; AL = MUX STATUS BYTE
+03E3 4271                       ANDB   YL,AL                       ; CHECK IF TRANSMIT BUFFER EMPTY
+03E5 14F9       03E0            BZ     PNWAIT                      ; IF NOT EMPTY, LOOP
+03E7 E1F201                     STBB/  MUX0DATA                    ; STORE THE CHARACTER TO THE MUX DATA
+03EA 73F0       03DC            JMP    PNLOOP                      ; GO TO THE NEXT CHARACTER
+03EC 85A1              PNEND    LDAB+  S+                          ; POP YL FROM THE STACK
+03EE 4C                         XAYB                               ; AL -> YL
+03EF C5A1                       LDBB+  S+                          ; POP BL FROM THE STACK
+03F1 85A1                       LDAB+  S+                          ; POP AL FROM THE STACK
+03F3 09                         RSR
+03F4                   *
+03F4                   ********************************************************************************
+03F4                   *                               UNIT SETUP                                     *
+03F4                   ********************************************************************************
+03F4                   *
+03F4 7903AC          I PICKDR   JSR/   CHKBYTE                     ; CHECK TO SEE IF WE RECEIVED INPUT
+03F7 4C                         XAYB                               ; AL -> YL
+03F8 800F                       LDAB=  X'0F'                       ; LOAD A WITH 0000 1111
+03FA 4271                       ANDB   YL,AL                       ; AND WITH 0000 1111, LOOKING AT LOW NIBBLE
+03FC A1F140                     STAB/  X'F140'                     ; STAB IT INTO F140, THE MMIO REGISTER
+03FF 79050C                     JSR/   CHKREADY                    ; CHECK IF THE DRIVE IS READY
+0402 81F140                     LDAB/  X'F140'                     ; READ BACK THE DRIVE SELECT BYTE
+0405 C001                       LDBB=  X'01'                       ; SLAP A 1 INTO B (FOR LATER USE)
+0407 4C                         XAYB                               ; AL -> YL
+0408 800F                       LDAB=  X'0F'                       ; LOAD A WITH 0000 1111
+040A 4271                       ANDB   YL,AL                       ; AND WITH 0000 1111, LOOKING AT LOW NIBBLE
+040C 1407       0415            BZ     WBITM                       ; IF AL IS ZERO, JUMP TO WRITING BITMASK
+040E 2530              MLOOP    SLRB   BL                          ; SHIFT BL LEFT ONE BIT
+0410 29                         DCRB   AL                          ; DECREMENT AL
+0411 1402       0415            BZ     WBITM                       ; IF AL IS ZERO, JUMP TO WRITING BITMASK
+0413 73F9       040E            JMP    MLOOP                       ; LOOP BACK AROUND AND REPEAT UNTIL 0
+0415 E1F143            WBITM    STBB/  X'F143'                     ; SETUP FORMAT WRITE BITMASK
+0418 09                         RSR                                ; BACK TO MAIN LOOP
+0419                   *
+0419                   ********************************************************************************
+0419                   *                              RECEIVE SECTOR                                  *
+0419                   ********************************************************************************
+0419                   *
+0419                   * PC SHOULD SEND X'FF' WHEN READY
+0419 81F206            CHKPCRDY LDAB/  MUX3CTRL                    ; LOAD MUX3 STATUS BYTE IN TO AL
+041C 2C                         SRAB                               ; SHIFT AL TO THE RIGHT BY 1
+041D 11FA       0419            BNL    CHKPCRDY                    ; LOOP BACK TO TOP IF LINK IS NOT SET!!
+⇊
+
+
+
+
+
+
+PAGE   5   ERRORS   0   ASSM 6.05  08/23/84  00:00:18   HWKRCV
+
+
+041F 81F207                     LDAB/  MUX3DATA                    ; READ IN THE RECEIVE BYTE
+0422 C001                       LDBB=  X'01'                       ; LOAD BL WITH 01
+0424 4031                       ADDB   BL,AL                       ; ADD BL AND AL (IF AL IS FF, THIS SETS LINK)
+0426 11F1       0419            BNL    CHKPCRDY                    ; LOOP BACK UP TO CHKPCRDY AND TRY AGAIN!!
+0428 09                         RSR
+0429                   * CENTURION SHOULD SEND FF TO PC TO CONFIRM IT'S GO TIME
+0429 C0FF              RCVSECT  LDBB=  X'FF'                       ; LOAD X'FF' INTO B
+042B 7903C3          I          JSR/   BFORPC                      ; TRANSMIT THAT OUT MUX PORT 3
+042E 901000                     LDA=   REDATA                      ; LOAD THE TEMPORARY MEMORY LOCATION INTO A
+0431 5C                         XAY                                ; TRANSFER IT TO Y FOR COUNTING
+0432 7903B9          I LETSGO   JSR/   CHKRXB                      ; CHECK IF WE'VE RECEIVED A BYTE FROM PC
+0435 A561                       STAB+  Y+                          ; STORE THE BYTE INTO MEMORY
+0437                   * CHECK IF WE HAVE A FULL SECTOR
+0437 5560              CHKFULL  XFR    Y,A                         ; TRANSFER Y REGISTER INTO A REGISTER
+0439 D01192                     LDB=   REDATA+X'0192'              ; LOAD B WITH MAX VALUE (400B DATA + 2B CRC)
+043C 5120                       SUB    B,A                         ; SUBTRACT MAX MINUS CURRENT
+043E 15F2       0432            BNZ    LETSGO                      ; IF NOT ZERO, TIME FOR NEXT BYTE
+0440 09                         RSR                                ; IF IT IS ZERO, JUMP BACK TO MAIN LOOP
+0441                   *
+0441                   ********************************************************************************
+0441                   *                                CRC SUBROUTINE                                *
+0441                   ********************************************************************************
+0441                   *
+0441            0002   CRCDATA  DS     2                           ; 2 BYTE CRC
+0443 0000              CRCINT   DW     0                           ; DEFINE CRCINT AS 0
+0445 7E41              CRCOKNG  STK    X,2                         ; PUSH RETURN ADDRESS (X REG) ONTO STACK
+0447 3A                         CLA                                ; A = 0.
+0448 B10443          I          STA/   CRCINT                      ; A -> *CRCINT
+044B 901000                     LDA=   REDATA                      ; LOAD A WITH THE LOCATION OF THE READ DATA
+044E 5C                         XAY                                ; TRANSFER THAT OVER TO Y
+044F 8561              NEXTCRC  LDAB+  Y+                          ; LOAD VALUE POINTED AT BY Y AND INCRMNT Y
+0451 4E                         XAZB                               ; TRANSFER AL INTO ZL
+0452 900080                     LDA=   X'80'                       ; A = 0X80.
+0455 D10443          I          LDB/   CRCINT                      ; *CRCINT -> B.
+0458 52348000          CRCLOOP  AND=   X'8000',B,X                 ; 0X8000 & B -> X.
+045C 4598                       XFRB   ZL,ZU                       ; ZL -> ZU.
+045E 4218                       ANDB   AL,ZU                       ; AL & ZU -> ZU.
+0460 1404       0466            BZ     SKIPXOR                     ; IF 0, DON'T XOR WITH HIGH BIT.
+0462 54548000                   ORE=   X'8000',X                   ; 0X8000 ^ X -> X.
+0466 3520              SKIPXOR  SLR    B                           ; B <<= 1.
+0468 5544                       XFR    X,X                         ; X -> X.
+046A 1404       0470            BZ     SKIPPOLY                    ; IF 0, DON'T XOR WITH POLY.
+046C 54321021                   ORE=   X'1021',B                   ; 0X1021 ^ B -> B.
+0470 3C                SKIPPOLY SRA                                ; A >>= 1.
+0471 15E5       0458            BNZ    CRCLOOP                     ; IF NOT ZERO, DO THE NEXT BIT.
+0473 F10443          I          STB/   CRCINT                      ; B -> *CRCINT.
+0476 901190            CHECKY   LDA=   REDATA+X'0190'              ; A = ONE PAST END OF SECTOR DATA
+0479 5160                       SUB    Y,A                         ; COMPARE Y TO ONE PAST THE END
+047B 1402       047F            BZ     CRCEND                      ; BRANCH TO THE END OF CRC JUNK IF A IS ZERO
+047D 73D0       044F            JMP    NEXTCRC                     ; JUMP BACK UP AND GO AGAIN
+047F 7F41              CRCEND   POP    X,2                         ; POP X BACK OFF OF STACK SO WE CAN RETURN
+⇊
+
+
+
+
+
+
+PAGE   6   ERRORS   0   ASSM 6.05  08/23/84  00:00:18   HWKRCV
+
+
+0481 910443          I          LDA/   CRCINT                      ; LOAD CALCULATED CRC INTO A
+0484 B10441          I          STA/   CRCDATA                     ; STORE IT INTO MEMORY FOR TRANSFER OUT
+0487                   * CENTURION DOES A CHECK OF THE CRC HERE
+0487                   * CENTURION SHOULD SEND X'FF' TO PC TO CONFIRM CRC IS GOOD
+0487                   * OR SEND X'00' IF CRC IS BAD, AT WHICH POINT, PC REPEATS SECTOR
+0487 D11190            CHKNGOK  LDB/   REDATA+X'0190'              ; LOAD B REGISTER WITH THE RECEIVED CRC
+048A 5120                       SUB    B,A                         ; SUBTRACT B-A AND STORE IN A
+048C 150B       0499            BNZ    NGTOG                       ; IF NOT ZERO, CRCS DON'T MATCH
+048E 7903D1            GTOG     JSR/   PRINTNULL
+0491 AF                         DC     '/'
+0492 00                         DB     0
+0493 C0FF                       LDBB=  X'FF'                       ; LOAD X'FF' INTO B
+0495 7903C3                     JSR/   BFORPC                      ; TRANSMIT THAT OUT MUX PORT 3
+0498 09                         RSR
+0499 7903D1            NGTOG    JSR/   PRINTNULL
+049C C3                         DC     'C'
+049D 00                         DB     0
+049E C000                       LDBB=  X'00'                       ; LOAD X'00' INTO B
+04A0 7903C3                     JSR/   BFORPC                      ; TRANSMIT THAT OUT MUX PORT 3
+04A3 710429          I          JMP/   RCVSECT                     ; NO GOOD, RECEIVE THAT SAME SECTOR AGAIN
+04A6                   *
+04A6                   ********************************************************************************
+04A6                   *                            HAWK SUBROUTINES                                  *
+04A6                   ********************************************************************************
+04A6                   *
+04A6 0000              HWKSCT   DW     X'0000'                     ; SECTOR ADDRESS
+04A8 8003              HWKRTZ   LDAB=  X'03'                       ; LOAD IN THE RTZ COMMAND BYTE
+04AA A1F148                     STAB/  X'F148'                     ; STAB IT INTO F148, THE MMIO CMD REGISTER
+04AD 7903D1                     JSR/   PRINTNULL
+04B0 8D8A                       DW     X'8D8A'
+04B2 C8C1D7CBA0D2D4+            DC     'HAWK RTZ INITIATED'
+04C4 00                         DB     0
+04C5 09                         RSR
+04C6 79050C          I SENDHWK  JSR/   CHKREADY
+04C9 9104A6          I          LDA/   HWKSCT                      ; LOAD SECTOR COUNT INTO A
+04CC B1F141                     STA/   X'F141'                     ; STAB IT INTO F141, THE MMIO REGISTER
+04CF 8002                       LDAB=  X'02'                       ; LOAD SEEK COMMAND INTO A
+04D1 A1F148                     STAB/  X'F148'                     ; STAB IT INTO F148, THE MMIO CMD REGISTER
+04D4 79052B          I          JSR/   CHKSEEK                     ; CHECK THAT THE SEEK HAS COMPLETED
+04D7                   * THIS IS THE START OF THE DMA OPERATIONS
+04D7 79050C          I          JSR/   CHKREADY
+04DA 2F04                       DMA    SDV,0                       ; SET DMA DEVICE TO 0
+04DC 2F06                       DMA    EAB                         ; ENABLE DMA
+04DE 901000                     LDA=   REDATA                      ; LOAD LOCATION WHERE THE BYTES IN MEMORY ARE
+04E1 2F00                       DMA    SAD,A                       ; WHERE THE BYTES ARE (X'0800')
+04E3 90FE6F                     LDA=   NUBYTE                      ; LOAD HOW MANY BYTES TO DROP DOWN
+04E6 2F02                       DMA    SCT,A                       ; HOW MANY BYTES TO READ (X'0190')
+04E8 8001                       LDAB=  X'01'                       ; LOAD 01 INTO A REG. BYTE
+04EA A1F148                     STAB/  X'F148'                     ; STORE 01 IN F148 -> WRITE OPERATION
+04ED                   *          LDAB=     X'06'          ; LOAD 06 INTO A REG. BYTE
+04ED                   *          STAB/     X'F148'        ; STORE 06 IN F148 -> FORMAT WRITE STEP 1
+⇊
+
+
+
+
+
+
+PAGE   7   ERRORS   0   ASSM 6.05  08/23/84  00:00:18   HWKRCV
+
+
+04ED                   *          JSR/      CHKREADY       ; CHECK IF DSK2 IS READY
+04ED                   *          LDAB=     X'05'          ; LOAD 05 INTO A REG. BYTE
+04ED                   *          STAB/     X'F148'        ; STORE 05 IN F148 -> FORMAT WRITE STEP 2
+04ED                   * THIS PART VERIFIES THE FORMAT
+04ED 79050C          I          JSR/   CHKREADY
+04F0 2F04                       DMA    SDV,0                       ; SET DMA DEVICE TO 0
+04F2 2F06                       DMA    EAB                         ; ENABLE DMA
+04F4 901000                     LDA=   REDATA                      ; LOAD LOCATION WHERE THE BYTES IN MEMORY ARE
+04F7 2F00                       DMA    SAD,A                       ; WHERE THE BYTES ARE (X'0500')
+04F9 90FE6F                     LDA=   NUBYTE                      ; LOAD HOW MANY BYTES TO DROP DOWN
+04FC 2F02                       DMA    SCT,A                       ; HOW MANY BYTES TO READ (X'0190')
+04FE 8004                       LDAB=  X'04'                       ; LOAD VERIFY COMMAND INTO A
+0500 A1F148                     STAB/  X'F148'                     ; STAB IT INTO F148, STARTING THE DMA MADNESS
+0503 79050C          I          JSR/   CHKREADY
+0506 7903D1            PRINTDOT JSR/   PRINTNULL                   ; PRINT A '.' TO DENOTE SECTOR PROGRESS
+0509 AE                         DC     '.'
+050A 00                         DB     0
+050B 09                         RSR
+050C                   * THIS CHECKS THE STATUS FIRST.
+050C 81F144            CHKREADY LDAB/  X'F144'                     ; LOAD HAWK STATUS
+050F 4C                         XAYB                               ; AL -> YL
+0510 140C       051E            BZ     CHKONCYL                    ; IF IT'S ZERO, ALL GOOD, NEXT CHECK
+0512 80F6              CHKERR   LDAB=  B'11110110'                 ; LOAD AL WITH ALL THE FAULT BITS
+0514 4271                       ANDB   YL,AL                       ; AND YL AND AL TOGETHER
+0516 14F4       050C            BZ     CHKREADY                    ; IF IT'S ZERO, IT'S JUST BUSY
+0518 7903D1            WEGOTERR JSR/   PRINTNULL                   ; PRINT A 'X' TO DENOTE READ ERROR
+051B D8                         DC     'X'
+051C 00                         DB     0
+051D 09                         RSR
+051E                   * IF THE STATUS IS GOOD, WE CHECK THAT WE'RE IN PLACE.
+051E 8030              CHKONCYL LDAB=  B'00110000'                 ; LOAD AL W/ DRIVE READY AND ON CYLINDER BITS
+0520 4C                         XAYB                               ; AL -> YL
+0521 81F145                     LDAB/  X'F145'                     ; LOAD THE DRIVE STATUS
+0524 4271                       ANDB   YL,AL                       ; CLEAR ALL THE OTHER BITS
+0526 4471                       OREB   YL,AL                       ; DESIRED BITS WILL BOTH BE ZERO WHEN READY
+0528 15F4       051E            BNZ    CHKONCYL                    ; LOOP BACK, WAITING FOR DRIVE TO BE READY
+052A 09                         RSR
+052B                   * THIS SUBROUTINE IS FOR CHECKING THAT THE SEEK IS COMPLETE.
+052B 81F145            CHKSEEK  LDAB/  X'F145'                     ; LOAD THE DRIVE STATUS
+052E 4C                         XAYB                               ; MOVE OVER TO YL
+052F 800F                       LDAB=  X'0F'                       ; LOAD AL WITH B'0000 1111'
+0531 4271                       ANDB   YL,AL                       ; AND YL WITH AL (JUST LOOK AT LOW NIBBLE)
+0533 14F6       052B            BZ     CHKSEEK                     ; IF THE LOW NIBBLE IS ZERO, SEEK NOT DONE
+0535 09                         RSR
+0536                   *
+0536                   ********************************************************************************
+0536                   *                           INCREMENT SUBROUTINE                               *
+0536                   ********************************************************************************
+0536                   *
+0536                   * HAWK HAS X'0190' CYLINDERS, 2 TRACKS PER CYL., 16 SECTORS PER TRACK.
+0536                   * LAYOUT IS 00CC CCCC CCCH SSSS, WHICH MAKES MAX COUNT X'3200'.
+⇊
+
+
+
+
+
+
+PAGE   8   ERRORS   0   ASSM 6.05  08/23/84  00:00:18   HWKRCV
+
+
+0536                   * THIS INCREMENTS UP THROUGH THE SECTORS. SHABLOINKS A, B, AND Z REGISTERS.
+0536 903300            INCRMNT1 LDA=   ETRACK                      ; LOAD MAX CYLINDER (ETRACK) COUNT INTO A
+0539 5E                         XFR    A,Z                         ; TRANSFER A OVER TO Z
+053A 9104A6                     LDA/   HWKSCT                      ; LOAD CURRENT SECTOR INTO A
+053D 38                         INR    A                           ; INCREMENT IT BY ONE
+053E B104A6                     STA/   HWKSCT                      ; STORE IT BACK IN MEMORY
+0541 5180                       SUB    Z,A                         ; SUBTRACT A FROM Z
+0543 1503       0548            BNZ    INCRMNT2                    ; IF WE HAVEN'T REACHED ETRACK YET, PROCEED
+0545 71055F          I          JMP/   THEEND                      ; IF WE HAVE REACHED ETRACK, ALL DONE
+0548 09                INCRMNT2 RSR                                ; RETURN TO MAIN LOOP
+0549                   *
+0549                   ********************************************************************************
+0549                   *                        ESCAPE AND END SUBROUTINES                            *
+0549                   ********************************************************************************
+0549                   *
+0549 8001              CHKESC   LDAB=  B'01'                       ; SET MASK TO CHECK IF RX BYTE AVAILABLE
+054B 4C                         XAYB                               ; AL -> YL
+054C 81F200                     LDAB/  MUX0CTRL                    ; AL = MUX STATUS BYTE
+054F 4271                       ANDB   YL,AL                       ; AND AL AND YL
+0551 1501       0554            BNZ    CHKRX                       ; IF NOT ZERO, THEN RECEIVE BIT SET
+0553 09                         RSR                                ; IF ZERO, THEN GO BACK TO BUSINESS
+0554 8003              CHKRX    LDAB=  X'03'                       ; SET MASK TO CHECK IF RX BYTE IS CTRL+C
+0556 4C                         XAYB                               ; AL -> YL
+0557 81F201                     LDAB/  MUX0DATA                    ; READ IN THE RECEIVE BYTE
+055A 4171                       SUBB   YL,AL                       ; SUBTRACT AL FROM YL
+055C 1401       055F            BZ     THEEND                      ; IF ZERO, THEN WE'RE ALL DONE HERE
+055E 09                         RSR                                ; IF NOT ZERO, THEN GO BACK TO BUSINESS
+055F 7903D1            THEEND   JSR/   PRINTNULL
+0562 8D8A                       DW     X'8D8A'
+0564 C5C9D4C8C5D2A0+            DC     'EITHER IT WENT PERFECTLY, OR IT FAILED DRAMATICALLY.'
+0598 8D8A                       DW     X'8D8A'
+059A D2C5C7C1D2C4CC+            DC     'REGARDLESS, I QUIT. -I--I- L(O-O)L'
+05BC 00                         DB     0
+05BD 00                         HLT
+05BE            0100            END    ENTRY                       ; SET THE ENTRY POINT
+05BE                   *
