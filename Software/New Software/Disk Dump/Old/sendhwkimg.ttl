@@ -1,0 +1,116 @@
+; Open file to send, start at beginning, and read-only
+filename = 'myfile.img'
+fileopen fp filename 0 1
+if fp == -1 goto the_end
+
+; Set timeout to 100ms
+mtimeout=100
+; Handle received bytes as hex for convenient comparison
+setdebug 2
+
+; Dimension useful arrays
+intdim sector_data 400
+intdim sector_crc16 2
+
+; Set range of sectors to send
+sa_start = $0
+sa_count = $3200
+
+
+; Start the process with a handshake
+call handshake
+
+; Iterate over the sectors to send
+sa = sa_start
+do
+	call read_img_ue_hwk_sector
+	call send_sector
+	; Check if we had a good or bad reception
+	wait 'FF' '00'
+	if result=2 goto retry_sector
+	if result=0 goto the_send_timeout
+	; If we made it here, it was good, go to next sector
+	sa = sa + 1
+	:retry_sector	
+loop while sa < sa_count
+
+
+;##
+:send_sector
+	call send_sector_data
+	call send_sector_crc
+return
+;##
+
+;## Read UE HAWKDUMP image format
+;10b Marker (HAWKDUMPcrlf)
+;2b Sector Address
+;400b Data
+;2b CRC
+:read_img_ue_hwk_sector
+	; Calculate offset to beginning of image block for given sa and seek to it
+	img_ue_hwk_blksize=414
+	o=sa*img_ue_hwk_blksize
+	fileseek fp o 0
+
+	; Read mark 'HAWKDUMP\r\n'
+	fileread fp 10 blk_mark
+	if result == 1 goto :the_EOF
+	; Read 2 byte sector address from image
+	fileread fp 2 blk_sa
+	if result == 1 goto :the_EOF
+	
+	; Read 400 bytes of sector data into array sector_data[]
+	for i 0 399
+		; Read a byte from the file and detect EOF
+		fileread fp 1 b
+		if result == 1 goto :the_EOF
+		sector_data[i]=b
+	next
+	
+	; Read 16 bit CRC as two bytes
+	fileread fp 1 sector_crc16[0]
+	if result == 1 goto :the_EOF
+	fileread fp 1 sector_crc16[1]
+	if result == 1 goto :the_EOF
+	
+return
+;##
+
+;##
+:send_sector_data
+	for i 0 399
+		send sector_data[i]
+	next
+return
+;##
+
+;##
+:send_sector_crc
+	send sector_crc16[0]
+	send sector_crc16[1]
+return
+;##
+
+
+
+;##
+:handshake
+	; Send 0xFF and look for a 0xFF in reply
+	do
+		send $FF
+		wait 'FF'
+	loop while result=0
+return
+;##
+
+
+:the_EOF
+:the_send_timeout
+fileclose fp
+:the_end
+
+
+
+
+

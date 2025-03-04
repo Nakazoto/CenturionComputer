@@ -102,10 +102,10 @@ STARTTOS  JSR/      PRINTNULL
           DB        0
           JSR/      CHKBYTE        ; Check if we received an input
           XAYB                     ; AL -> YL
-          LDBB=     'M'-X'80'      ; Load B with ASCII for "H", asm does trans.
+          LDBB=     'M'-X'80'      ; Load B with ASCII for "M", asm does trans.
           SUBB      YL,BL          ; YL-BL and store in BL
           BZ        MODTOS         ; If it is a match, move to next step of boot
-          LDBB=     'G'-X'80'      ; Load B with ASCII for "T", asm does trans.
+          LDBB=     'G'-X'80'      ; Load B with ASCII for "G", asm does trans.
           SUBB      YL,BL          ; YL-BL and store in BL
           BZ        GOTOS          ; If it is a match, jump to starting TOS
           JMP/      STARTTOS       ; You typed the wrong thing, start over
