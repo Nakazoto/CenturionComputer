@@ -1,0 +1,823 @@
+title:'ap270 cash projection by vendor or dept'
+;
+system
+;
+define m00:'ap270 (cash projection by vendor or department) 09-29-78'
+;
+; notes:
+;       initial release 08-07-78...seh
+;
+;       09-29-78...corrected printing by departments...jwb
+;
+;==============================================================
+;                   f i l e s
+;==============================================================
+;
+file crt:sysipt
+;
+file prt:syslst,class=1,seq
+;
+file mst:sys0,class=2,random,recsiz=131,key=rel1
+set rel1:0
+;
+file aptran:sys1,class=2,seq,lsr=4,filtyp=b,buffer=400,buf1
+buffer buf1(400)
+;
+file depfle:sys2,class=2,random,recsiz=29,key=depkey
+set depkey:0
+;
+external cget,lfeed,msg,getkey,ioerr,stat,ynget,f90
+;
+;==============================================================
+;              r e c o r d s
+;==============================================================
+;
+record headb(131)
+ set hvend:0
+ string client(25)
+endrec
+;
+record mstb(131)
+ set ven:0
+ string name(25)
+ string ad1(25)
+ string ad2(25)
+ string ad3(25)
+ set ygros:0
+ set ydisc:0
+endrec
+;
+record detrec(47)
+ set vend:0
+ set inv:0
+ set dept:0
+ set idte:0
+ set gro:0
+ set disc:0
+ set due:0
+ set cd:0
+ set glref:0
+endrec
+;
+record xchr(1)
+ string chr(1)
+endrec
+;
+record deprec(29)
+ set deptno:0
+ string depdes(25)
+endrec
+;
+entrypoint crt
+;
+;===============================================================
+;                   l o g i c
+;===============================================================
+   ;
+entry
+   ;
+   open io (mst, aptran, crt, depfle)
+   ldate (current)
+   sdate (string, rptdte)
+   call getkey (mst, zero)
+   goto (q0800, ioerr) on status
+   readb (mst, headb)
+   call stat(1)
+   call bltrun (client)
+   call center (client, fc01)
+   call header (m114, fc02)
+   call header (m113, fc03)
+   call header (m207, fc04)
+   call header (m208, fc05)
+   ;
+   ;
+a0100:
+   ;
+   call msg (eject)
+   call msg (m00)
+   call msg (null)
+   ;
+a0103:
+   ;
+   call msg (m101)
+   write (crt, f01) m102
+   write (crt, f01) m103
+   ;
+a0104:
+   ;
+   read (crt, f02) option
+   if (option.le.0) goto a0100
+   if (option.eq.9) goto q0900
+   ;
+   if (option.le.2) goto a0106
+   call msg(invalid)
+   goto a0104
+   ;
+a0106:
+   ;
+   call getit(m108,f03,cmpdte)
+   ldate(grin,cmpdte)
+   sdate(integer, curdte)
+   sdate(string,prjdte)
+   if(status.ne.0)goto a0106
+   dte15=curdte+15
+   dte30=curdte+30
+   dte45=curdte+45
+   ;
+   call msg(null)
+   opersw=option
+   ;
+   goto (a0110, a0120) on option
+   ;
+a0110:
+   ;
+   call msg (m104)
+   write (crt, f01) m105
+   write (crt, f01) m122
+   ;
+a0113:
+   ;
+   read (crt, f02) option
+   if (option.eq.0) goto a0100
+   goto (a0115, a0117, a0119) on option
+   call msg(invalid)
+   goto a0113
+   ;
+a0115:
+   ;
+   vndopt=1
+   goto a0129
+   ;
+a0117:
+   ;
+   vndopt=2
+   call getit (m109, f04, vndbeg)
+   if (vndbeg.le.0) goto a0117
+   call getit (m110, f04, vndlst)
+   if (vndlst.ne.0) goto a0129
+   vndlst=vndbeg
+   goto a0129
+   ;
+a0119:
+   ;
+   vndopt=1
+   sumopt=3
+   goto a0129
+   ;
+a0120:
+   ;
+   call msg (m106)
+   write (crt, f01) m107
+   write (crt, f01) m123
+   ;
+a0121:
+   ;
+   read (crt, f02) depopt
+   if (option.eq.0) goto a0100
+   goto (a0129, a0126, a0128) on depopt
+   call msg(invalid)
+   goto a0121
+   ;
+a0126:
+   ;
+   call getit (m111, f05, depbeg)
+   if (depbeg.le.0) goto a0126
+   call getit (m112, f05, deplst)
+   if (deplst.ne.0) goto a0129
+   deplst=depbeg
+   goto a0129
+   ;
+a0128:
+   ;
+   depopt=1
+   sumopt=3
+;
+a0129:
+   ;
+   open output prt
+ 
+   ;
+a0130:
+   ;
+   if (lnecnt.gt.62) call head
+   readb (aptran, detrec)
+   if (status.eq.1) goto a0135
+   if (vndopt.eq.2) goto a0133
+   if (depopt.eq.2) goto a0133
+   if (cd.eq.1) goto a0138
+   ;
+a0133:
+   ;
+   call getkey (mst, vend)
+   goto (q0805, ioerr) on status
+   readb (mst, mstb)
+   call stat(1)
+   if (ven.eq.0) goto a0130
+   'duedte'='blk6'
+   encode (duedte, f03) due
+   decode (duedte, f15) yr, mo, da
+   wrkdte=mo*100+da*100+yr
+   ldate (grin, wrkdte)
+   sdate (integer, cmpdue)
+   sdate (string, dtedue)
+   'invdte'='blk6'
+   encode (invdte, f03) idte
+   decode (invdte, f15) yr, mo, da
+   wrkdte=mo*100+da*100+yr
+   ldate (grin, wrkdte)
+   sdate (string, dteinv)
+   netlt=gro-disc
+   if (cmpdue.le.curdte) goto a0150
+   if (cmpdue.lt.dte15) goto a0150
+   if (cmpdue.eq.dte15) goto a0153
+   if (cmpdue.lt.dte30) goto a0153
+   if (cmpdue.eq.dte30) goto a0156
+   if (cmpdue.lt.dte45) goto a0156
+   if (cmpdue.ge.dte45) goto a0159
+   ;
+a0135:
+   ;
+   lastsw=1
+   goto a0220
+   ;
+a0138:
+   ;
+   pgro=pgro+gro
+   pdisc=pdisc+disc
+   goto a0130
+   ;
+a0150:
+   ;
+   detcur=netlt
+   goto a0162
+   ;
+a0153:
+   ;
+   det15=netlt
+   goto a0162
+   ;
+a0156:
+   ;
+   det30=netlt
+   goto a0162
+   ;
+a0159:
+   ;
+   det45=netlt
+   ;
+a0162:
+   ;
+   goto (a0165, a0180) on opersw
+   ;
+a0165:
+   ;
+   if (frstsw.eq.1) goto a0168
+   vndcmp=vend
+   frstsw=1
+   goto a0200
+   ;
+a0168:
+   ;
+   if (vndopt.eq.2) goto a0200
+   if (vend.ne.vndcmp) goto a0220
+   goto a0200
+   ;
+a0180:
+   ;
+   if (frstsw.eq.1) goto a0183
+   depcmp=dept
+   frstsw=1
+   goto a0206
+   ;
+a0183:
+   ;
+   if (depopt.eq.2) goto a0206
+   if (dept.ne.depcmp) goto a0220
+   goto a0206
+   ;
+a0200:
+   ;
+   goto (a0215, a0201) on vndopt
+   ;
+a0201:
+   ;
+   if (vend.lt.vndbeg) goto a0130
+   if (cd.eq.1) goto a0203
+   if (fndsw.eq.1) goto a0204
+   vndcmp=vend
+   fndsw=1
+   goto a0205
+   ;
+a0203:
+   ;
+   pgro=pgro+gro
+   pdisc=pdisc+disc
+   goto a0130
+   ;
+a0204:
+   ;
+   if (vend.ne.vndcmp) goto a0220
+   ;
+a0205:
+   ;
+   if (vend.gt.vndlst) goto q0802
+   goto a0215
+   ;
+a0206:
+   ;
+   goto (a0215, a0207) on depopt
+   ;
+a0207:
+   ;
+   if (dept.lt.depbeg) goto a0130
+   if (cd.eq.1) goto a0208
+   if (fndsw.eq.1) goto a0210
+   depcmp=dept
+   fndsw=1
+   goto a0211
+   ;
+a0208:
+   ;
+   pgro=pgro+gro
+   pdisc=pdisc+disc
+   goto a0130
+   ;
+a0210:
+   ;
+   if (dept.ne.depcmp) goto a0220
+   ;
+a0211:
+   ;
+   if (dept.gt.deplst) goto q0802
+   ;
+a0215:
+   ;
+   if (lnecnt.ge.62) call head
+   if (option. eq. 2) goto a0216a
+   if (frslne.eq.1) goto a0216
+   ;
+a0216a:
+   ;
+   'prtlne'='lnebuf'
+   encode (prtlne, f03) ven
+   'prtlne'='prtlne+name'
+   goto a0217
+   ;
+a0216:
+   ;
+   'prtlne'='null'
+   ;
+a0217:
+   ;
+   if (sumopt.eq.3) goto a0218
+   write (prt, f10) prtlne,dept,inv,dteinv,dtedue,gro,disc,detcur,det15,det30,det45
+   goto a0219
+   ;
+a0218:
+   ;
+   'prtlne'='lnebuf'
+   encode (prtlne, f03) ven
+   'prtlne'='prtlne+name'
+   ;
+a0219:
+   ;
+   call add (gro, tltgro)
+   call add (disc, tltdis)
+   call add (gro, fnlgro)
+   call add (disc, fnldis)
+   call add (detcur, curtlt)
+   call add (det15, tlt15)
+   call add (det30, tlt30)
+   call add (det45, tlt45)
+   call add (detcur, curfnl)
+   call add (det15, fnl15)
+   call add (det30, fnl30)
+   call add (det45, fnl45)
+   call clear (detcur,det15,det30,det45,0)
+   if (sumopt.eq.3) goto a0228
+   call add (1, lnecnt)
+   ;
+a0228:
+   ;
+   frslne=1
+   goto a0130
+   ;
+a0220:
+   ;
+   if (sumopt.eq.3) goto a0221
+   if (opersw.eq.2) goto a0225
+   write (prt, f11) m115,tltgro,tltdis,curtlt,tlt15,tlt30,tlt45
+   call lfeed (prt, 1)
+   goto a0222
+   ;
+a0221:
+   ;
+   if (opersw.eq.2) goto a0225
+   write (prt, f16) prtlne,tltgro,tltdis,curtlt,tlt15,tlt30,tlt45
+   ;
+a0222:
+   ;
+   if (lastsw.eq.1) goto q0802
+   goto (a0223, a0224) on opersw
+   ;
+a0223:
+   ;
+   vndcmp=vend
+   goto a0230
+   ;
+a0224:
+   ;
+   depcmp=dept
+   call add (2, lnecnt)
+   call clear (frslne,tltgro,tltdis,curtlt,tlt15,tlt30,tlt45,0)
+   goto (a0215, a0211) on depopt
+   ;
+a0225:
+   ;
+   call getkey (depfle, depcmp)
+   goto (a0227, ioerr) on status
+   readb (depfle, deprec)
+   call stat(1)
+   'deplne'='depdes'
+   goto a0229
+   ;
+a0227:
+   ;
+   'deplne'='m211'
+   ;
+a0229:
+   ;
+   write (prt, f18) deplne,depcmp,m115,tltgro,tltdis,curtlt,tlt15,tlt30,tlt45
+   write (prt, f19) aster, aster, aster, aster
+   call lfeed (prt, 1)
+   call add (3, lnecnt)
+   if (lnecnt.gt.62) call head
+   goto a0222
+   ;
+a0230:
+   ;
+   call add (2, lnecnt)
+   call clear (frslne,tltgro,tltdis,curtlt,tlt15,tlt30,tlt45,0)
+   goto (a0215, a0205) on vndopt
+   ;
+q0800:
+   ;
+   call msg (m117)
+   stop 100
+   ;
+q0802:
+   ;
+   call lfeed (prt, 1)
+   write (prt, f12) m116, fnlgro, fnldis, curfnl, fnl15, fnl30, fnl45
+   call lfeed (prt, 1)
+   pnet=pgro-pdisc
+   write (prt, f20) m210, m212
+   write (prt, f21) m213, pgro, pdisc, pnet
+   call lfeed (prt, 1)
+   fnlgro=fnlgro+pgro
+   fnldis=fnldis+pdisc
+   fnlnet=fnlgro-fnldis
+   write (prt, f21) m214, fnlgro, fnldis, fnlnet
+   call clear (frslne,tltgro,tltdis,curtlt,tlt15,tlt30,tlt45,frstsw,0)
+   call clear (sumopt,lastsw,fnlgro,fnldis,curfnl,fnl15,fnl30,fnl45,0)
+   call clear (fndsw,page,pgro,pdisc,pnet,fnlnet,0)
+   goto q0900
+   ;
+q0805:
+   ;
+   write (prt, f13) vend,dept,m119
+   call lfeed (prt, 1)
+   call add (2, lnecnt)
+   goto a0130
+   ;
+q0900:
+   ;
+   call msg (m118)
+   close crt, prt, mst, aptran, depfle
+   stop 0
+   ;
+;===============================================================
+subroutine head
+;===============================================================
+   ;
+   write (prt, f90) eject
+   page=page+1
+   call lfeed (prt, 2)
+   write (prt, fc01) client
+   if (opersw.eq.1) goto c0150
+   if (sumopt.eq.3) goto c0100
+   write (prt, fc02) rptdte, m114, pagemg, page
+   goto c0103
+   ;
+c0100:
+   ;
+   write (prt, fc04) rptdte, m207, pagemg, page
+   ;
+c0103:
+   ;
+   write (prt, f14) m121, prjdte
+   call lfeed (prt, 1)
+   write (prt, f08) m200, m210, m201
+   if (sumopt.eq.3) goto c0120
+   write (prt, f09) m202, m203, m204
+   goto c0200
+   ;
+c0120:
+   ;
+   write (prt, f09) m205, m203, m204
+   goto c0200
+   ;
+c0150:
+   ;
+   if (sumopt.eq.3) goto c0160
+   write (prt, fc03) rptdte, m113, pagemg, page
+   goto c0170
+   ;
+c0160:
+   ;
+   write (prt, fc05) rptdte, m208, pagemg, page
+   ;
+c0170:
+   ;
+   write (prt, f14) m121, prjdte
+   ;
+   call lfeed (prt, 1)
+   write (prt, f08) m200, m210, m201
+   write (prt, f09) m202, m203, m204
+   ;
+c0200:
+   ;
+   call lfeed (prt, 1)
+   lnecnt=9
+   return
+   ;
+;=========================
+subroutine bltrun
+;=========================
+;
+;       to truncate trailing blanks from a character string
+;
+;       calling sequence:
+;
+;       call bltrun (string)
+;
+direct
+ lda- x+ get string address
+ xay
+ cla clear string char count
+ sta= *-* save it for later
+@p1 set *-2
+@p2 set *
+ ina increment char count
+ ldbb- y+ check for terminator
+ bnz @p2 loop if not terminator
+ ldbb- y- back up past terminator
+ dca adjust char count
+ bz bltrx exit now if null string
+@p3 set *
+ sta @p1 save char count
+ ldbb- y- get suspect char
+ ldab= c' ' check for trailing blank
+ sabb
+ bnz bltrx skip exit if non-blank
+ cla else move term
+ stab- y
+ lda @p1 check char count
+ dca
+ bnz @p3 loop if more to check
+cpl
+bltrx:
+return
+;
+;=========================
+subroutine center
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string centered on a 132 column print line.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call center (string, fmtx); set the format
+;       write (prt, fmtx) string;   write the centered string
+;
+;   where: format fmtx: x100, c100; values of x & c are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb- x+ get address of format statement
+ inr b incr to address of x-specification
+ xfr b,y save x-spec address for later
+ inr b,3 incr to address of c-specification
+ sta- b set new char count in c-spec of format statement
+ ldb= 132 get standard page width
+ sub b,a subtract chars in this string
+ sra divide result by 2 for leading spaces
+ sta- y set new space count in x-spec of format statement
+cpl
+return
+;
+;=========================
+subroutine header
+;=========================
+;
+;       to cause a format statement to be set for printing a character
+;       string as a report header with date and page.
+;
+;       calling sequence:
+;
+;       call bltrun (string);       truncate trailing blanks in the string
+;       call header (string, fmtx); set the format
+;       write (prt, fmtx) date,string,pagemg,pageno;   write the centered string
+;
+;   where: format fmtx:x100,c100,c100,c100,n100;   values x,c,n are arbitrary
+;
+direct
+ lda- x+ get address of string
+ xay save string address
+ cla clear character count
+ dca preset to count characters
+@p1 set *
+ ina incr char count
+ ldbb- y+ get char from string
+ bnz @p1 loop if not terminator
+ ldb= 1 test for odd string length
+ nab
+ bnz *+3 skip if odd length
+ dca
+ ina
+ sta= *-* save even char count
+@p2 set *-2
+ ldb= 96 get header width
+ sub b,a subtract string width
+ sra divide remainder by 2
+ ldb- x+ get address of format statement
+ inr b
+ xfr b,y
+ ldb= 10 set leading space count in 'x' spec
+ stb- y+
+ inr y incr index to first 'c' spec
+ ldb= 8 get width of first 'c' spec (date message)
+ aab add half-header width
+ stb- y+ set count in first 'c' spec
+ inr y incr index to second 'c' spec
+ ldb @p2 get actual string count
+ aab add half-header length
+ stb- y+ set count in second 'c' spec
+ inr y incr index to third 'c' spec (page message)
+ ldb= 4 force char count for page
+ stb- y+
+ inr y incr index to 'n' spec (page number)
+ stb- y+ force count for page number
+cpl
+return
+;
+;===============================================================
+subroutine clear
+;===============================================================
+;
+direct
+clo     lda-   x+
+        bnz    *+3
+        rsr
+        sta    cl1+8
+cpl
+cl1:
+cl1=0
+goto clo
+;
+;==============================================================
+subroutine getit
+;==============================================================
+;
+direct
+        lda-    x+
+        sta     get1+3
+        lda-    x+
+        sta     get1+5
+        lda-    x+
+        sta     get1+7
+cpl
+get1:
+   call cget (zero,zero,zero)
+   if (status.ne.0) goto get1
+   return
+   ;
+;=========================
+subroutine add
+;=========================
+;
+;       to add two 4-byte integers with reduced memory requirements
+;
+;       calling sequence:
+;
+;       call add (source, target)
+;
+direct
+@p1 set *+23
+@p2 set *+13
+@p3 set *+18
+ lda- x+ get source integer
+ sta @p3
+ lda- x+ get target parameter
+ sta @p1
+ sta @p2
+cpl
+@p1 = @p2 + @p3
+return
+;
+;================================================================
+;                 s t o r a g e
+;================================================================
+;
+define m101:'enter option:  1  cash projection by vendor'
+define m102:'2  cash projection by department'
+define m103:'9  end program'
+define m104:'enter option:  1  all vendors'
+define m105:'2  single vendor or vendor range'
+define m106:'enter option:  1  all departments'
+define m107:'2  single department or department range'
+define m108:'enter payment due date (mmddyy)'
+define m109:'enter beginning vendor #'
+define m110:'enter ending vendor #, or newline for single vendor'
+define m111:'enter beginning department #'
+define m112:'enter ending department #, or newline for single department'
+define m113:'cash projection by vendor'
+define m114:'cash projection by department'
+define m115:'total'
+define m116:'final projection total'
+define m117:'error - vendor master file not established'
+define m118:'end of program'
+define m119:'vendor not on file'
+define m121:'cash projection date '
+define m122:'3  summary by vendor'
+define m123:'3  summary by department'
+;
+define m200:'invoice'
+define m201:'--------------net due amounts---------------'
+define m202:'vendor name'
+define m203:' dept invoice   date    due date     amount   amount'
+define m204:'current    15 days    30 days  45 & over'
+define m205:'dept name'
+define m206:'all'
+define m207:'cash projection summary by department'
+define m208:'cash projection summary by vendor'
+define m209:' to '
+define m210:'gross   discount'
+define m211:'department not file'
+define m212:'net'
+define m213:'prepaid total'
+define m214:'final balance total'
+;
+define lnebuf:'       '
+define pagemg:'page '
+define blk6:'      '
+define aster:'======================================='
+define invalid:'invalid - enter option'
+;
+format f01:x15,c50
+format f02:n1
+format f03:n6
+format f04:n5
+format f05:n2
+format f08:x46,c7,x16,c16,x3,c42
+format f09:c11,x21,c52,x6,c40
+format f10:c32,x1,n4,x2,n6,x1,c10,c8,n-12.2,n-10.2,n-12.2,n-11.2,n-11.2,n-11.2
+format f11:x59,c5,n-12.2,n-10.2,n-12.2,n-11.2,n-11.2,n-11.2
+format f12:x42,c22,n-12.2,n-10.2,n-12.2,n-11.2,n-11.2,n-11.2
+format f13:n5,x2,n4,x1,c25
+format f14:x51,c20,x1,c8
+format f15:n2,n2,n2
+format f16:c32,x34,n-10.2,n-10.2,n-12.2,n-11.2,n-11.2,n-11.2
+format f17:c21,c8,x2,c12,c10,x1,n6,c4,n6
+format f18:x1,c32,n4,x22,c5,x1,n-11.2,n-10.2,n-12.2,n-11.2,n-11.2,n-11.2
+format f19:c33,c33,c33,c33
+format f20:x69,c16,x9,c3
+format f21:x42,c22,n-12.2,n-10.2,n-12.2
+;
+format fc01:x100,c100
+format fc02:x100,c100,c100,c100,n100
+format fc03:x100,c100,c100,c100,n100
+format fc04:x100,c100,c100,c100,n100
+format fc05:x100,c100,c100,c100,n100
+;
+set opersw:0, option:0, lnecnt:99, cmpdte:0, curdte:0, dte15:0, dte30:0, dte45:0
+set curtlt:0, curfnl:0, tlt15:0, fnl15:0, tlt30:0, fnl30:0, tlt45:0, fnl45:0
+set netlt:0, vndbeg:0, vndlst:0, depbeg:0, deplst:0, page:0, vndopt:0, depopt:0
+set frstsw:0, vndcmp:0, depcmp:0, detcur:0, det15:0, det30:0, det45:0, cmpdue:0
+set frslne:0, tltgro:0, tltdis:0, fnlgro:0, fnldis:0, sumopt:0
+set mo:0, da:0, yr:0, wrkdte:0, lastsw:0, fndsw:0, pgro:0, pdisc:0, pnet:0
+set fnlnet:0
+;
+string null(0), rptdte(8), dtedue(8), dteinv(8), hldnam(25), prtlne(32)
+string duedte(6), invdte(6), prjdte(8), hldtyp(10), deplne(32)
+;
+end

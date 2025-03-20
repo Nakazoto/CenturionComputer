@@ -1,0 +1,225 @@
+copy sys
+;
+define m00:'cm160 - customer by product category sales report  (05-01-81)'
+;
+;notes:
+;    08-31-78...written for fullerton & reints...pel
+;    11-30-78...added m-t-d & y-t-d clear option...dz
+;     5-18-79...added selective list by customer...pel
+;    05-21-79...corrected line count problem...dz
+;    05-01-81...put slashes in date...dz
+;
+;
+file crt:sysipt
+file prt:syslst,class=1,seq
+;
+file chist:sys0,class=2,ind,recsiz=65,key=chkey
+set chkey:0
+;
+copy chrec
+;
+;
+file chlst:sys1,class=2,seq,filtyp=b,lsr=4,buffer=400,buf1
+buffer buf1(400)
+;
+record lstrec(20)
+ integer lkey
+ integer ?lnum
+ integer ?lcust
+ integer lpcat
+endrec
+;
+;
+file cmst:sys2,class=2,ind,key=ckey
+set ckey:0
+;
+copy custom
+;
+;
+external cget,stat,ioerr,msg,lfeed,getk,getr,putr,ynget,clrec
+entrypoint crt
+;
+;
+;
+entry
+   open io crt
+   open io (chist,chlst,cmst)
+   open output prt
+   write(crt,f00)eject
+   call lfeed(crt,1)
+   call msg(m00)
+   call lfeed(crt,1)
+;
+a010:
+   call cget(m01,f01,date)    ;  get date (mmddyy)
+   ldate (grin,date)
+   sdate (string,rdate)
+   if (status.ne.0) goto a010
+   page=t1=t2=t3=t4=t5=t6=t7=t8=0
+   t11=t12=t13=t14=t15=t16=t17=t18=0
+   flg1=0
+   call ynget (m02)     ; clear m-t-d
+   if (status.eq.0) goto a20
+   flg1=1                     ; yes to clear
+a20:
+   flg2=0
+   call ynget (m03)           ; clear ytd
+   if (status.eq.0) goto a30  ; no
+   flg2=1
+a30:
+   if (flg2.eq.1) goto a40
+   if (flg1.eq.1) goto a40
+   goto a50
+a40:
+   call ynget (m04)            ; are sure
+   if (status.ne.1) goto a010
+;
+a50:
+   call cget(m05,f02,?bcust)    ;  beginning cust#
+   call cget(m06,f02,?ecust)    ;  ending cust#
+   call head     ;  print page headings
+;
+a100:
+   readb(chlst,lstrec)
+   goto (eoj,ioerr) on status
+   if(?lnum.le.0)goto a100
+   if(?lcust.lt.?bcust)goto a100   ;  not there yet
+   if(?ecust.le.0)goto a110
+   if(?lcust.gt.?ecust)goto eoj    ;  done
+a110:
+   call getk(chist,?lnum)
+   goto (a100,ioerr) on status
+   call getr(chist,chrec)
+   call stat(1)
+   call getk(cmst,?lcust)
+   goto (a100,ioerr) on status
+   call getr(cmst,crec)
+   call stat(1)
+   call print
+   ?last=?lcust
+   goto a100
+;
+;
+eoj:
+   call subtot
+   call total
+   close chist,chlst
+   stop 0
+;
+;
+;
+head:
+   write(prt,f00)eject
+   call lfeed(prt,1)
+   write(prt,f10)m10
+   page=page+1
+   write(prt,f11)m11,rdate,m12,page
+   call lfeed(prt,1)
+   write(prt,f12)m15,m16,m17,m18,m15,m16,m17,m18
+   write(prt,f13)m19,m20,m21,m22,m22,m22,m22,m23,m23,m23,m23
+   call lfeed(prt,1)
+   lcnt=51
+   return
+;
+;
+print:
+   if(?last.eq.?lcust)goto prt10
+   call subtot
+   write(prt,f17)?ccust,cnam,lpcat,cwsmtd,cwcmtd,cwsytd,cwcytd,cdsmtd,cdcmtd,cdsytd,cdcytd
+   goto prt20
+prt10:
+   write(prt,f16)lpcat,cwsmtd,cwcmtd,cwsytd,cwcytd,cdsmtd,cdcmtd,cdsytd,cdcytd
+prt20:
+   t1=t1+cwsmtd
+   t2=t2+cwcmtd
+   t3=t3+cwsytd
+   t4=t4+cwcytd
+   t5=t5+cdsmtd
+   t6=t6+cdcmtd
+   t7=t7+cdsytd
+   t8=t8+cdcytd
+   t11=t11+cwsmtd
+   t12=t12+cwcmtd
+   t13=t13+cwsytd
+   t14=t14+cwcytd
+   t15=t15+cdsmtd
+   t16=t16+cdcmtd
+   t17=t17+cdsytd
+   t18=t18+cdcytd
+   lcnt=lcnt-1
+   if(lcnt.le.0)call head
+   call update              ; clear mtd & ytd
+   return
+;
+;
+;
+update:
+   if (flg2.eq.0) goto up5        ; dont clear ytd
+   cwsytd=cwcytd=cdsytd=cdcytd=0
+   goto up6                       ; clear mtd
+up5:
+   if (flg1.eq.0) goto up10       ; dont clear anything
+up6:
+   cwsmtd=cwcmtd=cdsmtd=cdcmtd=0
+   call putr (chist,chrec)
+   call stat(1)
+up10:
+   return
+;
+subtot:
+   call lfeed(prt,1)
+   write(prt,f14)m09,t1,t2,t3,t4,t5,t6,t7,t8
+   call lfeed(prt,1)
+   lcnt=lcnt-3
+   t1=t2=t3=t4=t5=t6=t7=t8=0
+   ?last=?lcust
+   return
+;
+;
+total:
+   write(prt,f14)m08,t11,t12,t13,t14,t15,t16,t17,t18
+   write(prt,f00)eject
+   return
+;
+;
+;
+format f00:c80
+format f01:n6
+format f02:d6
+format f10:x30 c50
+format f11:x10 c4 x2 c8 x35 c4 n5
+format f12:x41 c9 x1 c9 x1 c9 x1 c9 x1 c9 x1 c9 x1 c9 x1 c9
+format f13:x3 c5 x5 c13 x10 c4 x5 c4 x6 c4 x6 c4 x6 c4 x3 c7 x4 c7 x4 c7 x4 c7
+format f14:x25 c15 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2
+format f16:x36 n4 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2
+format f17:d8 x2 c25 x1 n4 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2 n-10.2
+;
+define m01:'enter date (mmddyy)'
+define m02:'clear m-t-d figures?? (y/n)'
+define m03:'clear y-t-d figures?? (y/n)'
+define m04:'are you sure?? (y/n)'
+define m05:'beginning customer#'
+define m06:'ending customer#'
+define m08:'grand total'
+define m09:'customer total'
+define m10:'customer by product sales report'
+define m11:'date'
+define m12:'page'
+define m15:'sales mtd'
+define m16:' cost mtd'
+define m17:'sales ytd'
+define m18:' cost ytd'
+define m19:'cust#'
+define m20:'customer name'
+define m21:'cat#'
+define m22:'whse'
+define m23:'direct'
+;
+set flg1:0, flg2:0
+set t1:0,t2:0,t3:0,t4:0,t5:0,t6:0,t7:0,t8:0
+set t11:0,t12:0,t13:0,t14:0,t15:0,t16:0,t17:0,t18:0
+set page:0,lcnt:0,?last:0,date:0,?bcust:0,?ecust:0
+;
+string rdate(8)
+;
+end
