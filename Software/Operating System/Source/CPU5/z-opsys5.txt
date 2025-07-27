@@ -1,0 +1,37 @@
+- All names starting with `>` were created by me.
+- All names starting with '@', a letter, and a hex address were created by the
+  disassembler.
+- All other names are the original Centurion names, gleaned from a number of
+  sources on the platter.
+
+- OSNZ is the bootstrap code and extends far beyond 0x2FB1, which is where the
+  first user program is loaded. This is because after it runs it is no longer
+  needed (other than a little bit of it at the beginning to hold the bad-sector
+  table), so it effectively releases that memory back for other use. They put a
+  lot of effort in to reducing the memory footprint of OPSYS (at least
+  pre-OPSYS6).
+- As such, OSNZ must be linked last, and the OSNLB libraries are designed so
+  that will happen automatically.
+- There are a few functions after OSNZ, but they are only used by OSNZ so
+  they can also be overwritten by user applications...
+- Though TX004 and TX005 are demand-loaded by applications when they need
+  them. OSNZ just borrowed them for their functionality needed during boot (like
+  dealing with the system date).
+
+- All of the code before OSN1 is the "sysgen" code that defines how you want
+  the system configured. The procedure to create a different configuration is to
+  modify that code, assemble it, and then link to OSNLB to actually pull in the
+  OS code the sysgen refers to.
+
+- The sector size is not at all hard-coded in OPSYS5 (or even OPSYS3). It is a
+  sysgen setting.
+- I suspect they tried other sector sizes and possibly ran in to reliability
+  issues. Even if they stuck with 400 for compatibility between CPU-4 and -5
+  (OPSYS3/5), the move to CPU-6 and OPSYS6 with an all-new filesystem would have
+  let them switch to 512 byte sectors and they didn't even though the OPSYS
+  itself was fully prepared to switch.
+- Is it possible that pre-erase heads with their shortcut of erasing and
+  writing at the same wouldn't work well without the longer data
+  lengths/preambles/whatever?
+- Ken has mentioned that the drive would occasionally read the wrong sector or
+  something like that.
