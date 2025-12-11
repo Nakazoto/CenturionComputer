@@ -5,7 +5,7 @@
 * This assembly should be compatible with both CPU5 and CPU6 processors.
 * Theoretically, it should be able to be assembled, then the raw hex can
 * be written to a ROM that will sit on the backplane and bootstrap the
-* system. The user can type H# to boot from the Hawk, or type T0 to go to
+* system. The user can type H# to boot from the Hawk, or type T to go to
 * the TOS memory monitor.
 *
           TITLE     'TSTR'
@@ -22,10 +22,21 @@ MUX0DATA  EQU       X'F201'        ; First MUX port data MMIO address
 MUX0CB    EQU       X'C5'          ; First MUX port at 9,600 7E1
 *
 ********************************************************************************
+*                                  VARIABLES                                   *
+********************************************************************************
+*
+INSTRING EQU        X'00B0'        ; Incoming ASCII address stored here
+TEMPA    EQU        INSTRING+4     ; Temp storage location for converted byte
+MODSTR   EQU        TEMPA+2        ; Incoming mod ASCII stored here
+TEMPB    EQU        MODSTR+2       ; Temp storage location for modified bytes
+*
+********************************************************************************
 *                                  BOOTSTRAP                                   *
 ********************************************************************************
 *
-ENTRY     BS1       DIAGBD         ; If sense switch one is set, start DIAG
+ENTRY     LDA=      X'00F0'        ; Set the top of the stack
+          XAS                      ; Transfer A to S
+          BS1       DIAGBD         ; If sense switch one is set, start DIAG
           JMP       BOOTSTR        ; Skip down to start bootstrapping
 DIAGBD    JMP/      X'8001'        ; The DIAG card lives at X'8001'
 BOOTSTR   LDAB=     MUX0CB         ; Load MUX settings into A
@@ -36,10 +47,10 @@ BOOTSTR1  JSR/      PRINTNULL
           DB        0
 PICKDR    JSR/      CHKBYTE        ; Check if we received an input
           XAYB                     ; AL -> YL
-          LDBB=     'H'-X'80'      ; Load B with ASCII for "H", asm does trans.
+          LDBB=     'H'            ; Load B with ASCII for "H", asm does trans.
           SUBB      YL,BL          ; YL-BL and store in BL
           BZ        PICKPLT        ; If it is a match, move to next step of boot
-          LDBB=     'T'-X'80'      ; Load B with ASCII for "T", asm does trans.
+          LDBB=     'T'            ; Load B with ASCII for "T", asm does trans.
           SUBB      YL,BL          ; YL-BL and store in BL
           BZ        STARTTOS       ; If it is a match, jump to starting TOS
           JMP/      BOOTSTR1       ; You didn't pick one I had, so start again
@@ -77,7 +88,6 @@ CHKDMA    DMA       RCT,A          ; Load the DMA count register into A
           BNZ       CHKDMA         ; If it aint zero, DMA aint done
           JSR/      CHKREADY       ; Make sure we're doing alright
           JMP/      REDATA+3       ; Jump to beginning of WIPL and go
-          END       ENTRY
 CHKREADY  LDAB=     B'00110000'    ; Load AL with '0011 0000'
           XAYB                     ; AL -> YL
 CHKONCYL  LDAB/     X'F145'        ; Load the drive status
@@ -90,21 +100,16 @@ CHKONCYL  LDAB/     X'F145'        ; Load the drive status
 *                                    TOS                                       *
 ********************************************************************************
 *
-INSTRING  DW        X'0000'        ; This is the area where we store
-          DW        X'0000'        ; the incoming ASCII bytes
-TEMPA     DW        X'0000'        ; Temp storage location for converted bytes
-MODSTR    DW        X'0000'        ; Incoming mod ASCII stored here
-TEMPB     DB        X'00'          ; Temp storage location for modified bytes
 STARTTOS  JSR/      PRINTNULL
           DW        X'8D8A'
           DC        'TOS> '
-          DB        0
+          DB        00
           JSR/      CHKBYTE        ; Check if we received an input
           XAYB                     ; AL -> YL
-          LDBB=     'M'-X'80'      ; Load B with ASCII for "M", asm does trans.
+          LDBB=     'M'            ; Load B with ASCII for "M", asm does trans.
           SUBB      YL,BL          ; YL-BL and store in BL
           BZ        MODTOS         ; If it is a match, move to next step of boot
-          LDBB=     'G'-X'80'      ; Load B with ASCII for "G", asm does trans.
+          LDBB=     'G'            ; Load B with ASCII for "G", asm does trans.
           SUBB      YL,BL          ; YL-BL and store in BL
           BZ        GOTOS          ; If it is a match, jump to starting TOS
           JMP/      STARTTOS       ; You typed the wrong thing, start over
@@ -112,17 +117,16 @@ MODTOS    JSR/      GETADDR        ; Jump to a routine to get an address
 MODLOP    JSR/      PRINTNULL      ; Print a space for sanity
           DC        ' '
           DB        00
-          LDAB/     TEMPA          ; Load the value at input address into AL
+          LDAB$     TEMPA          ; Load the value at input address into AL
           JSR/      HEXBYTE        ; Print that shiz using Ren's dope subroutine
           JSR/      CHKBYTE        ; Grab the 1st incoming ASCII byte
-          XAYB                     ; AL -> YL
 * Check if Enter was pressed
-          LDBB=     X'0D'          ; Load B with ASCII for "CR"/"ENTER"
-          SUBB      YL,BL          ; YL-BL and store in BL
+          LDBB=     X'8D'          ; Load B with ASCII for "CR"/"ENTER"
+          SUBB      AL,BL          ; AL-BL and store in BL
           BZ        STARTTOS       ; If it is a match, newline and TOS prompt
 * Check if Space was pressed
-          LDBB=     X'20'          ; Load B with ASCII for "SPACE"
-          SUBB      YL,BL          ; YL-BL and store in BL
+          LDBB=     X'A0'          ; Load B with ASCII for "SPACE"
+          SUBB      AL,BL          ; AL-BL and store in BL
           BZ        INCRMT         ; If it is a match, increment and start again
 * Start modifying the byte
 MODBYT    STAB/     MODSTR         ; Drop it into location 0 of MODSTR
@@ -136,7 +140,7 @@ MODBYT    STAB/     MODSTR         ; Drop it into location 0 of MODSTR
           JSR/      HEX2INT        ; Convert to nibble
           LDBB/     TEMPB          ; Load the first nibble into BL
           ORIB      BL,AL          ; OR AL and BL and store in AL
-          STAB/     TEMPA          ; New byte into loc. pointed at by TEMPA
+          STAB$     TEMPA          ; New byte into loc. pointed at by TEMPA
 INCRMT    LDA/      TEMPA          ; Load TEMPA address into A
           INR       A              ; Increment that address by 1
           STA/      TEMPA          ; Store it back into TEMPA
@@ -173,6 +177,8 @@ CHKBYTE   LDAB/     MUX0CTRL       ; Load MUX status byte in to AL
           SRAB                     ; Shift AL to the right by 1
           BNL       CHKBYTE        ; Loop back to top if Link is not set
           LDAB/     MUX0DATA       ; Read in the receive byte
+          LDBB=     X'80'          ; BL = high bit set.
+          ORIB      BL,AL          ; AL = AL | BL.
           STAB/     MUX0DATA       ; Echo that digit back
           RSR
 * Get an address from the user
@@ -233,7 +239,9 @@ H2IEND    XFRB      BU,AL          ; BU -> AL.
           RSR                      ; Return.
 * Convert a raw binary value to ASCII to be printed out.
 * The binary byte is in AL.
-HEXBYTE   XABB                ; AL -> BL.
+HEXBYTE   STA-      S-        ; Push A to the stack.
+          STBB-     S-        ; Push BL to the stack.
+          XABB                ; AL -> BL.
           CLA                 ; A = 0.
           XFRB      BL,AL     ; BL -> AL.
           SRA       ,4        ; A >>= 4.
@@ -241,6 +249,8 @@ HEXBYTE   XABB                ; AL -> BL.
           LDAB=     X'0F'     ; AL = mask for low nibble.
           ANDB      BL,AL     ; BL & AL -> AL.
           JSR       HEXNIBBLE ; Print the lowest nibble.
+          LDBB+     S+        ; Pop BL from the stack.
+          LDA+      S+        ; Pop A from the stack.
           RSR                 ; Return.
 * Print AL in hex. It must be a value in the range [0,15]. Clobbers AL.
 HEXNIBBLE STBB-     S-        ; Push BL to the stack.
@@ -257,3 +267,4 @@ PRTBYT    DB        X'00'
           DB        00
           LDBB+     S+        ; Pop BL from the stack.
           RSR                 ; Return.
+          END       ENTRY
