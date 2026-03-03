@@ -239,32 +239,32 @@ H2IEND    XFRB      BU,AL          ; BU -> AL.
           RSR                      ; Return.
 * Convert a raw binary value to ASCII to be printed out.
 * The binary byte is in AL.
-HEXBYTE   STA-      S-        ; Push A to the stack.
-          STBB-     S-        ; Push BL to the stack.
-          XABB                ; AL -> BL.
-          CLA                 ; A = 0.
-          XFRB      BL,AL     ; BL -> AL.
-          SRA       ,4        ; A >>= 4.
-          JSR       HEXNIBBLE ; Print the highest nibble.
-          LDAB=     X'0F'     ; AL = mask for low nibble.
-          ANDB      BL,AL     ; BL & AL -> AL.
-          JSR       HEXNIBBLE ; Print the lowest nibble.
-          LDBB+     S+        ; Pop BL from the stack.
-          LDA+      S+        ; Pop A from the stack.
-          RSR                 ; Return.
+HEXBYTE   STA-      S-             ; Push A to the stack.
+          STBB-     S-             ; Push BL to the stack.
+          XABB                     ; AL -> BL.
+          CLA                      ; A = 0.
+          XFRB      BL,AL          ; BL -> AL.
+          SRA       ,4             ; A >>= 4.
+          JSR       HEXNIBBLE      ; Print the highest nibble.
+          LDAB=     X'0F'          ; AL = mask for low nibble.
+          ANDB      BL,AL          ; BL & AL -> AL.
+          JSR       HEXNIBBLE      ; Print the lowest nibble.
+          LDBB+     S+             ; Pop BL from the stack.
+          LDA+      S+             ; Pop A from the stack.
+          RSR                      ; Return.
 * Print AL in hex. It must be a value in the range [0,15]. Clobbers AL.
-HEXNIBBLE STBB-     S-        ; Push BL to the stack.
-          LDBB=     9         ; BL = 9.
-          SABB                ; AL - BL -> BL.
-          BGZ       HNLETTER  ; If greater than 9, branch to print a letter.
-          LDBB=     '0'       ; BL = ASCII 0.
-          JMP       HNPRINT   ; Jump to print.
-HNLETTER  LDAB=     'A'-1     ; AL = ASCII A minus 1.
-HNPRINT   ADDB      BL,AL     ; BL + AL -> AL.
-          STAB/     PRTBYT    ; Drop AL into the print location
-          JSR/      PRINTNULL ; Print it.
+HEXNIBBLE STBB-     S-             ; Push BL to the stack.
+          LDBB=     9              ; BL = 9.
+          SABB                     ; AL - BL -> BL.
+          BGZ       HNLETTER       ; If greater than 9, branch to print letter
+          LDBB=     '0'            ; BL = ASCII 0.
+          JMP       HNPRINT        ; Jump to print.
+HNLETTER  LDAB=     'A'-1          ; AL = ASCII A minus 1.
+HNPRINT   ADDB      BL,AL          ; BL + AL -> AL.
+          STAB/     PRTBYT         ; Drop AL into the print location
+          JSR/      PRINTNULL      ; Print it.
 PRTBYT    DB        X'00'
           DB        00
-          LDBB+     S+        ; Pop BL from the stack.
-          RSR                 ; Return.
+          LDBB+     S+             ; Pop BL from the stack.
+          RSR                      ; Return.
           END       ENTRY
