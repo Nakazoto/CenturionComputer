@@ -1,24 +1,23 @@
 10 LET M = 68
 20 DIM X (M)
-30 FOR I = 0 TO M
-40   LET X(I) = INT(RND(1)*2) * 3
+30 FOR I = 1 TO M
+40   LET X(I) = INT(RND * 2) * 3
 50 NEXT I
 
-60 LET X(0) = 0
-61 LET X(1) = 0
-62 LET X(M-2) = 0
-63 LET X(M-1) = 0
-
+60 LET X(1) = 0
+61 LET X(2) = 0
+62 LET X(M-1) = 0
+63 LET X(M) = 0
 
 100 FOR T = 0 TO 25
-110   FOR I = 2 TO M-2
-120     LET ALIVE = (X(I) MOD 2)
-130     IF ALIVE = 1 THEN 133
+110   FOR I = 3 TO M-2
+120     LET ALIVE = (X(I)-2 * INT(X(I)/2))
+130     IF ALIVE = 1 THEN GOTO 133
 131     PRINT " ";
 132     GOTO 200
 133     PRINT "*";
 
-200     S = INT(X(I-2) / 2) + INT(X(I-1) / 2) + (X(I+1) MOD 2) + (X(I+2) MOD 2)
+200     LET S = INT(X(I-2) / 2) + INT(X(I-1) / 2) + (X(I+1)-2 * INT(X(I+1)/2)) + (X(I+2)-2 * INT(X(I+2)/2))
 210     IF ALIVE = 0 THEN 400
 
 300     IF S = 0 THEN GOTO 330
@@ -26,9 +25,9 @@
 302     IF S = 2 THEN GOTO 310
 303     IF S = 3 THEN GOTO 330
 304     IF S = 4 THEN GOTO 310
-310     X(I) = 3
+310     LET X(I) = 3
 320     GOTO 900
-330     X(I) = 2
+330     LET X(I) = 2
 340     GOTO 900
 
 400     IF S = 0 THEN GOTO 410
@@ -36,9 +35,9 @@
 402     IF S = 2 THEN GOTO 430
 403     IF S = 3 THEN GOTO 430
 404     IF S = 4 THEN GOTO 410
-410     X(I) = 0
+410     LET X(I) = 0
 420     GOTO 900
-430     X(I) = 1
+430     LET X(I) = 1
 440     GOTO 900
 
 900   NEXT I
