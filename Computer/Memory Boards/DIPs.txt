@@ -1,0 +1,18 @@
+Small DIP Swith
+     1234
+     *
+      ***
+     OPEN
+1: Closed = Parity Enabled, Open = Parity Disabled
+2 ~ 3: Rotate the rows of chips around (for troubleshooting)
+
+Large DIP Switch
+     High Bank      Low Bank
+     12345678       12345678
+          ***       *   ****
+     *****           ***
+     --OPEN--       --OPEN--
+1 ~ 4: End Address
+5 ~ 8: Start Address
+Low bank  = 0111 ~ 0000
+High bank = 1111 ~ 1000
